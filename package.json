@@ -39,6 +39,9 @@
     "@radix-ui/react-progress": "^1.1.1",
     "tailwindcss-animate": "^1.0.7"
   },
+  "overrides": {
+    "esbuild": "^0.25.0"
+  },
   "devDependencies": {
     "typescript": "^5.7.2",
     "@types/node": "^22.10.2",
