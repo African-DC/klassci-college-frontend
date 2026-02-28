@@ -2,7 +2,6 @@
 name: commit
 description: Create a conventional commit for the frontend. Use when the user asks to commit changes.
 disable-model-invocation: true
-allowed-tools: Bash(git *)
 ---
 
 Create a conventional commit for the KLASSCI frontend following these steps:
