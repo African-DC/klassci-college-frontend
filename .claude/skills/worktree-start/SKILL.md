@@ -1,7 +1,6 @@
 ---
 name: worktree-start
 description: Start work on a GitHub issue using a git worktree. Use when starting a new feature or fix from an issue number.
-allowed-tools: Bash(git *), Bash(gh *)
 ---
 
 # Démarrage worktree — KLASSCI Frontend
@@ -54,6 +53,20 @@ Ouvre ce dossier dans ton éditeur ou navigue avec :
   cd ../worktree-front-<issue>-<slug>
 ```
 
+### Étape 5 — Proposer le serveur de développement
+
+Après création du worktree, proposer :
+
+> Veux-tu que je lance le serveur de développement dans le worktree ?
+> ```bash
+> cd ../worktree-front-<issue>-<slug>
+> npm install   # si node_modules absent
+> npm run dev   # démarre sur http://localhost:3000
+> ```
+> Ou tu le lances toi-même ?
+
+Attendre que l'utilisateur valide visuellement dans le navigateur avant de passer à la PR.
+
 ### Règles importantes
 
 - **Jamais travailler directement sur `develop` ou `main`**
@@ -61,5 +74,6 @@ Ouvre ce dossier dans ton éditeur ou navigue avec :
 - Toujours partir de `origin/develop` (pas du local)
 - Branche naming : `feature/N-desc`, `fix/N-desc`, `hotfix/N-desc`, `chore/desc`
 - Dans le worktree, lancer `npm install` si `node_modules` absent
+- Une fois le travail terminé dans le worktree, invoquer `/worktree-finish`
 
 $ARGUMENTS

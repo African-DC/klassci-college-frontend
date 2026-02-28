@@ -2,7 +2,6 @@
 name: new-page
 description: Scaffold a new Next.js App Router page with layout, loading, error boundaries, and proper portal routing. Use when asked to add a new page.
 argument-hint: "[portal/path] e.g. admin/enrollments"
-allowed-tools: Read, Glob, Write, Bash(ls *)
 ---
 
 Scaffold a new Next.js App Router page: $ARGUMENTS

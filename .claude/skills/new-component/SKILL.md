@@ -2,7 +2,6 @@
 name: new-component
 description: Scaffold a new React component following KLASSCI conventions (Server/Client decision, Skeleton, Modal pattern). Use when asked to create a new component.
 argument-hint: "[ComponentName] [type: page-section|modal|table|card|form]"
-allowed-tools: Read, Glob, Write
 ---
 
 Scaffold a new component: $ARGUMENTS
