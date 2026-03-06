@@ -1,12 +1,5 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { LoginForm } from "@/components/forms/LoginForm"
 
 export default async function LoginPage() {
@@ -18,16 +11,22 @@ export default async function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">KLASSCI Coll&egrave;ge</CardTitle>
-        <CardDescription>
-          Connectez-vous pour acc&eacute;der &agrave; votre espace
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <LoginForm />
-      </CardContent>
-    </Card>
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          Bienvenue
+        </h1>
+        <p className="text-muted-foreground">
+          Connectez-vous pour acceder a votre espace
+        </p>
+      </div>
+
+      <LoginForm />
+
+      <p className="text-center text-xs text-muted-foreground">
+        En vous connectant, vous acceptez les conditions d&apos;utilisation
+        de la plateforme KLASSCI.
+      </p>
+    </div>
   )
 }

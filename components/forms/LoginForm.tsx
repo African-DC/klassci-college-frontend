@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Mail, Lock, ArrowRight, AlertCircle } from "lucide-react"
 import { loginSchema, type LoginInput } from "@/lib/validators/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -51,20 +52,24 @@ export function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <FormField
           control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel className="text-sm font-medium">Adresse email</FormLabel>
               <FormControl>
-                <Input
-                  type="email"
-                  placeholder="nom@etablissement.cd"
-                  autoComplete="email"
-                  {...field}
-                />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="nom@etablissement.cd"
+                    autoComplete="email"
+                    className="h-11 pl-10"
+                    {...field}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -76,14 +81,27 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mot de passe</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel className="text-sm font-medium">Mot de passe</FormLabel>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                  tabIndex={-1}
+                >
+                  Mot de passe oublie ?
+                </button>
+              </div>
               <FormControl>
-                <Input
-                  type="password"
-                  placeholder="********"
-                  autoComplete="current-password"
-                  {...field}
-                />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="Entrez votre mot de passe"
+                    autoComplete="current-password"
+                    className="h-11 pl-10"
+                    {...field}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -91,15 +109,26 @@ export function LoginForm() {
         />
 
         {error && (
-          <p className="text-sm text-destructive">{error}</p>
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
+            <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
         )}
 
         <Button
           type="submit"
-          className="w-full"
+          size="lg"
+          className="w-full h-11 text-sm font-semibold"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? "Connexion..." : "Se connecter"}
+          {form.formState.isSubmitting ? (
+            "Connexion en cours..."
+          ) : (
+            <>
+              Se connecter
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </>
+          )}
         </Button>
       </form>
     </Form>
