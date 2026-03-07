@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 
 interface KpiCardProps {
   title: string
-  value: string | number
+  value: React.ReactNode
   description?: string
   icon: React.ComponentType<{ className?: string }>
   trend?: {

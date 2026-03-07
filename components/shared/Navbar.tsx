@@ -43,11 +43,9 @@ export function Navbar({ onMenuClick }: NavbarProps) {
       {/* Right side actions */}
       <div className="flex items-center gap-2">
         {/* Notifications */}
+        {/* TODO: remplacer par un hook useNotificationCount() */}
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5 text-muted-foreground" />
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
-            3
-          </span>
         </Button>
 
         <Separator orientation="vertical" className="h-8 mx-1" />
@@ -71,7 +69,8 @@ export function Navbar({ onMenuClick }: NavbarProps) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            {/* TODO: lier a /settings/profile */}
+            <DropdownMenuItem disabled>
               <User className="mr-2 h-4 w-4" />
               Profil
             </DropdownMenuItem>
