@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+import { apiFetch } from "@/lib/api/client"
 
 export interface Enrollment {
   id: number
@@ -53,61 +53,31 @@ export const enrollmentsApi = {
         query.set(key, String(value))
       }
     })
-    const res = await fetch(`${BASE_URL}/enrollments?${query.toString()}`, {
-      headers: { "Content-Type": "application/json" },
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors du chargement des inscriptions")
-    }
-    return res.json()
+    return apiFetch<PaginatedResponse<Enrollment>>(`/enrollments?${query.toString()}`)
   },
 
   getById: async (id: number): Promise<Enrollment> => {
-    const res = await fetch(`${BASE_URL}/enrollments/${id}`, {
-      headers: { "Content-Type": "application/json" },
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Inscription introuvable")
-    }
-    return res.json().then((r) => r.data ?? r)
+    const json = await apiFetch<{ data?: Enrollment } | Enrollment>(`/enrollments/${id}`)
+    return (json as { data?: Enrollment }).data ?? (json as Enrollment)
   },
 
   create: async (data: EnrollmentCreateBody): Promise<Enrollment> => {
-    const res = await fetch(`${BASE_URL}/enrollments`, {
+    const json = await apiFetch<{ data?: Enrollment } | Enrollment>(`/enrollments`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors de la creation")
-    }
-    return res.json().then((r) => r.data ?? r)
+    return (json as { data?: Enrollment }).data ?? (json as Enrollment)
   },
 
   update: async (id: number, data: EnrollmentUpdateBody): Promise<Enrollment> => {
-    const res = await fetch(`${BASE_URL}/enrollments/${id}`, {
+    const json = await apiFetch<{ data?: Enrollment } | Enrollment>(`/enrollments/${id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors de la mise a jour")
-    }
-    return res.json().then((r) => r.data ?? r)
+    return (json as { data?: Enrollment }).data ?? (json as Enrollment)
   },
 
   remove: async (id: number): Promise<void> => {
-    const res = await fetch(`${BASE_URL}/enrollments/${id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors de la suppression")
-    }
+    await apiFetch<void>(`/enrollments/${id}`, { method: "DELETE" })
   },
 }

@@ -1,6 +1,6 @@
 import { CalendarDays, AlertTriangle, UserX } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata = { title: "Accueil Enseignant | KLASSCI" }
 
@@ -8,58 +8,54 @@ export default function TeacherDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold tracking-tight">Bonjour, Enseignant</h1>
+        <h1 className="text-xl font-bold tracking-tight">Espace Enseignant</h1>
         <p className="text-sm text-muted-foreground">
-          Voici votre journee en un coup d&apos;oeil
+          Votre journee en un coup d&apos;oeil
         </p>
       </div>
 
-      {/* Next course highlight */}
+      {/* Next course placeholder */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="flex items-center gap-4 p-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <CalendarDays className="h-6 w-6" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 space-y-1.5">
             <p className="text-xs font-medium text-primary uppercase tracking-wider">Prochain cours</p>
-            <p className="text-base font-bold truncate">Mathematiques — 6eA</p>
-            <p className="text-sm text-muted-foreground">10:00 - 11:00 | Salle 204</p>
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-4 w-32" />
           </div>
         </CardContent>
       </Card>
 
-      {/* Today's courses */}
+      {/* Today's courses placeholder */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Cours du jour</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {[
-            { time: "08:00 - 09:00", subject: "Physique", class: "5eB", room: "Lab 1" },
-            { time: "10:00 - 11:00", subject: "Mathematiques", class: "6eA", room: "Salle 204" },
-            { time: "14:00 - 15:00", subject: "Mathematiques", class: "4eC", room: "Salle 102" },
-          ].map((course) => (
-            <div key={course.time} className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <p className="text-sm font-medium">{course.subject} — {course.class}</p>
-                <p className="text-xs text-muted-foreground">{course.room}</p>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-3 w-20" />
               </div>
-              <Badge variant="outline" className="text-xs shrink-0">{course.time}</Badge>
+              <Skeleton className="h-6 w-24" />
             </div>
           ))}
         </CardContent>
       </Card>
 
-      {/* Alerts */}
+      {/* Alerts placeholder */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
               <AlertTriangle className="h-5 w-5" />
             </div>
-            <div>
+            <div className="space-y-1">
               <p className="text-sm font-medium">Notes manquantes</p>
-              <p className="text-xs text-muted-foreground">3 evaluations a saisir</p>
+              <Skeleton className="h-3 w-28" />
             </div>
           </CardContent>
         </Card>
@@ -69,9 +65,9 @@ export default function TeacherDashboardPage() {
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
               <UserX className="h-5 w-5" />
             </div>
-            <div>
+            <div className="space-y-1">
               <p className="text-sm font-medium">Absences signalees</p>
-              <p className="text-xs text-muted-foreground">5 eleves aujourd&apos;hui</p>
+              <Skeleton className="h-3 w-28" />
             </div>
           </CardContent>
         </Card>

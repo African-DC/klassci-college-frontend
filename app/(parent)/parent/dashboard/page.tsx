@@ -1,98 +1,73 @@
-import { UserX, ClipboardList, Wallet, ChevronRight } from "lucide-react"
+import { Users, ClipboardList, Wallet } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata = { title: "Accueil Parent | KLASSCI" }
-
-const children = [
-  {
-    name: "Marie Kabila",
-    class: "6eA",
-    absences: 2,
-    lastGrade: { subject: "Maths", value: 16.5 },
-    fees: { paid: 800, total: 1200 },
-  },
-  {
-    name: "Jean Kabila",
-    class: "4eC",
-    absences: 0,
-    lastGrade: { subject: "Francais", value: 13 },
-    fees: { paid: 1200, total: 1200 },
-  },
-]
 
 export default function ParentDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold tracking-tight">Bonjour, Parent</h1>
+        <h1 className="text-xl font-bold tracking-tight">Espace Parent</h1>
         <p className="text-sm text-muted-foreground">
           Resume de vos enfants
         </p>
       </div>
 
-      {children.map((child, index) => (
-        <Card key={child.name}>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between text-base">
-              <span>{child.name}</span>
-              <Badge variant="secondary" className="text-xs">{child.class}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Absences */}
-            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
-              <div className="flex items-center gap-2">
-                <UserX className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Absences recentes</span>
+      {/* Children summary — will be loaded from API */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            Mes enfants
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex h-32 items-center justify-center rounded-lg border border-dashed bg-muted/20">
+            <p className="text-sm text-muted-foreground">
+              Chargement depuis l&apos;API...
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent grades placeholder */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+            Dernieres notes
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
               </div>
-              <Badge variant={child.absences > 0 ? "destructive" : "outline"} className="text-xs">
-                {child.absences} absence{child.absences !== 1 ? "s" : ""}
-              </Badge>
+              <Skeleton className="h-8 w-12" />
             </div>
+          ))}
+        </CardContent>
+      </Card>
 
-            {/* Last grade */}
-            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
-              <div className="flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Derniere note — {child.lastGrade.subject}</span>
-              </div>
-              <span className="text-sm font-bold text-primary">{child.lastGrade.value}/20</span>
-            </div>
-
-            {/* Fees */}
-            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
-              <div className="flex items-center gap-2">
-                <Wallet className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Frais scolaires</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">
-                  {child.fees.paid}/{child.fees.total} $
-                </span>
-                {child.fees.paid >= child.fees.total ? (
-                  <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 text-[10px]">
-                    Solde
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-[10px]">
-                    {child.fees.total - child.fees.paid} $ restant
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            {/* View details link */}
-            <button className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary">
-              Voir le detail
-              <ChevronRight className="h-3 w-3" />
-            </button>
-
-            {index < children.length - 1 && <Separator className="mt-2" />}
-          </CardContent>
-        </Card>
-      ))}
+      {/* Fees placeholder */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+            Frais scolaires
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex h-16 items-center justify-center rounded-lg border border-dashed bg-muted/20">
+            <p className="text-sm text-muted-foreground">
+              En attente de l&apos;API backend
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

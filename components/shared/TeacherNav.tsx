@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, CalendarDays, ClipboardList, UserCheck, MessageSquare } from "lucide-react"
+import { signOut } from "next-auth/react"
+import { LayoutDashboard, CalendarDays, ClipboardList, UserCheck, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -10,7 +11,6 @@ const navItems = [
   { label: "Mon EDT", href: "/teacher/timetable", icon: CalendarDays },
   { label: "Notes", href: "/teacher/grades", icon: ClipboardList },
   { label: "Appel", href: "/teacher/attendance", icon: UserCheck },
-  { label: "Messages", href: "/teacher/messages", icon: MessageSquare },
 ]
 
 export function TeacherNav() {
@@ -37,8 +37,14 @@ export function TeacherNav() {
             </Link>
           )
         })}
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium text-muted-foreground transition-colors min-w-[56px] hover:text-destructive"
+        >
+          <LogOut className="h-5 w-5" />
+          Quitter
+        </button>
       </div>
-      {/* Safe area for iOS */}
       <div className="h-[env(safe-area-inset-bottom)]" />
     </nav>
   )

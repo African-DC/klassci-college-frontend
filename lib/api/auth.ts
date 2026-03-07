@@ -1,4 +1,9 @@
+import type { UserRole } from "@/types/next-auth"
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+if (!BASE_URL) {
+  throw new Error("NEXT_PUBLIC_API_URL is not defined — check your .env file")
+}
 
 interface LoginResponse {
   access_token: string
@@ -7,7 +12,7 @@ interface LoginResponse {
   user: {
     id: number
     email: string
-    role: string
+    role: UserRole
     first_name: string
     last_name: string
   }

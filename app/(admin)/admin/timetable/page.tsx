@@ -9,7 +9,7 @@ import { useGenerateTimetable } from "@/lib/hooks/useTimetable"
 import { timetableApi } from "@/lib/api/timetable"
 import { useQueryClient } from "@tanstack/react-query"
 import { timetableKeys } from "@/lib/hooks/useTimetable"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import { TimetableGrid } from "@/components/admin/timetable/TimetableGrid"
 
 export default function TimetablePage() {
@@ -22,7 +22,7 @@ export default function TimetablePage() {
     if (!selectedClassId) return
     generateMutation.mutate(selectedClassId, {
       onSuccess: (data) => {
-        toast({ title: "Generation lancee", description: "Veuillez patienter..." })
+        toast.info("Generation lancee", { description: "Veuillez patienter..." })
         // Poll task status every 3 seconds
         pollingRef.current = setInterval(async () => {
           try {
@@ -31,11 +31,11 @@ export default function TimetablePage() {
               clearInterval(pollingRef.current!)
               pollingRef.current = null
               queryClient.invalidateQueries({ queryKey: timetableKeys.all })
-              toast({ title: "Generation terminee", description: "L'emploi du temps a ete genere avec succes." })
+              toast.success("Generation terminee", { description: "L'emploi du temps a ete genere avec succes." })
             } else if (status.status === "failed") {
               clearInterval(pollingRef.current!)
               pollingRef.current = null
-              toast({ title: "Echec de la generation", description: status.message ?? "Une erreur est survenue.", variant: "destructive" })
+              toast.error("Echec de la generation", { description: status.message ?? "Une erreur est survenue." })
             }
           } catch {
             clearInterval(pollingRef.current!)
@@ -44,7 +44,7 @@ export default function TimetablePage() {
         }, 3000)
       },
       onError: (error) => {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" })
+        toast.error("Erreur", { description: error.message })
       },
     })
   }
