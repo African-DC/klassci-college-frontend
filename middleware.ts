@@ -73,5 +73,9 @@ export const config = {
     "/teacher/:path*",
     "/student/:path*",
     "/parent/:path*",
+    "/dashboard/:path*",
+    "/enrollments/:path*",
+    "/grades/:path*",
+    "/timetable/:path*",
   ],
 }

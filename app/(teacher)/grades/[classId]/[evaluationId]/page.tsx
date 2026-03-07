@@ -1,14 +1,14 @@
-"use client"
-
-import { useParams } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { GradeEntryGrid } from "@/components/teacher/grades/GradeEntryGrid"
 
-export default function GradeEntryPage() {
-  const params = useParams<{ classId: string; evaluationId: string }>()
-  const evaluationId = Number(params.evaluationId)
+interface GradeEntryPageProps {
+  params: Promise<{ classId: string; evaluationId: string }>
+}
+
+export default async function GradeEntryPage({ params }: GradeEntryPageProps) {
+  const { classId, evaluationId } = await params
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
@@ -21,12 +21,12 @@ export default function GradeEntryPage() {
         <div>
           <h1 className="text-xl font-bold tracking-tight">Saisie des notes</h1>
           <p className="text-sm text-muted-foreground">
-            Classe {params.classId} — Evaluation #{params.evaluationId}
+            Classe {classId} — Evaluation #{evaluationId}
           </p>
         </div>
       </div>
 
-      <GradeEntryGrid evaluationId={evaluationId} />
+      <GradeEntryGrid evaluationId={Number(evaluationId)} />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+import { apiFetch } from "@/lib/api/client"
 
 export interface Evaluation {
   id: number
@@ -40,54 +40,32 @@ export interface GradeBatchUpdateBody {
 
 export const gradesApi = {
   listEvaluations: async (classId: number): Promise<Evaluation[]> => {
-    const res = await fetch(`${BASE_URL}/evaluations?class_id=${classId}`, {
-      headers: { "Content-Type": "application/json" },
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors du chargement")
-    }
-    const json = await res.json()
-    return json.data ?? json
+    const json = await apiFetch<{ data?: Evaluation[] } | Evaluation[]>(
+      `/evaluations?class_id=${classId}`,
+    )
+    return Array.isArray(json) ? json : json.data ?? []
   },
 
   getGrades: async (evaluationId: number): Promise<Grade[]> => {
-    const res = await fetch(`${BASE_URL}/evaluations/${evaluationId}/grades`, {
-      headers: { "Content-Type": "application/json" },
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors du chargement des notes")
-    }
-    const json = await res.json()
-    return json.data ?? json
+    const json = await apiFetch<{ data?: Grade[] } | Grade[]>(
+      `/evaluations/${evaluationId}/grades`,
+    )
+    return Array.isArray(json) ? json : json.data ?? []
   },
 
   createEvaluation: async (data: EvaluationCreateBody): Promise<Evaluation> => {
-    const res = await fetch(`${BASE_URL}/evaluations`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors de la creation")
-    }
-    const json = await res.json()
-    return json.data ?? json
+    const json = await apiFetch<{ data?: Evaluation } | Evaluation>(
+      `/evaluations`,
+      { method: "POST", body: JSON.stringify(data) },
+    )
+    return (json as { data?: Evaluation }).data ?? (json as Evaluation)
   },
 
   updateGrades: async (evaluationId: number, data: GradeBatchUpdateBody): Promise<Grade[]> => {
-    const res = await fetch(`${BASE_URL}/evaluations/${evaluationId}/grades`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors de la sauvegarde")
-    }
-    const json = await res.json()
-    return json.data ?? json
+    const json = await apiFetch<{ data?: Grade[] } | Grade[]>(
+      `/evaluations/${evaluationId}/grades`,
+      { method: "PUT", body: JSON.stringify(data) },
+    )
+    return Array.isArray(json) ? json : json.data ?? []
   },
 }

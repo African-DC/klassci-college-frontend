@@ -1,11 +1,15 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Save, Loader2, CheckCircle2 } from "lucide-react"
+import { Save, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
+import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 import { useGrades, useUpdateGrades } from "@/lib/hooks/useGrades"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
+
+type CellStatus = "idle" | "pending" | "saved" | "error"
 
 interface GradeEntryGridProps {
   evaluationId: number
@@ -13,11 +17,12 @@ interface GradeEntryGridProps {
 
 export function GradeEntryGrid({ evaluationId }: GradeEntryGridProps) {
   const { data: grades, isLoading, error } = useGrades(evaluationId)
-  const { mutate: saveGrades, isPending } = useUpdateGrades(evaluationId)
+  const updateMutation = useUpdateGrades(evaluationId)
   const [localGrades, setLocalGrades] = useState<Map<number, number | null>>(new Map())
+  const [cellStatus, setCellStatus] = useState<Map<number, CellStatus>>(new Map())
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const autoSaveRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const dirtyRef = useRef(false)
+  const doSaveRef = useRef<() => void>(() => {})
 
   // Sync from server
   useEffect(() => {
@@ -34,26 +39,61 @@ export function GradeEntryGrid({ evaluationId }: GradeEntryGridProps) {
       student_id: g.student_id,
       value: localGrades.get(g.student_id) ?? null,
     }))
-    saveGrades(
-      { grades: payload },
-      { onSuccess: () => { setLastSaved(new Date()); dirtyRef.current = false } }
-    )
-  }, [grades, localGrades, saveGrades])
 
-  // Auto-save every 30s
+    // Mark all dirty cells as pending
+    const pendingStatus = new Map(cellStatus)
+    for (const g of grades) {
+      pendingStatus.set(g.student_id, "pending")
+    }
+    setCellStatus(pendingStatus)
+
+    updateMutation.mutate(
+      { grades: payload },
+      {
+        onSuccess: () => {
+          setLastSaved(new Date())
+          dirtyRef.current = false
+          const savedStatus = new Map<number, CellStatus>()
+          for (const g of grades) {
+            savedStatus.set(g.student_id, "saved")
+          }
+          setCellStatus(savedStatus)
+          toast.success("Notes sauvegardees")
+          // Reset to idle after 3s
+          setTimeout(() => setCellStatus(new Map()), 3000)
+        },
+        onError: () => {
+          const errorStatus = new Map<number, CellStatus>()
+          for (const g of grades) {
+            errorStatus.set(g.student_id, "error")
+          }
+          setCellStatus(errorStatus)
+        },
+      },
+    )
+  }, [grades, localGrades, cellStatus, updateMutation])
+
+  // Keep ref in sync for stable interval
   useEffect(() => {
-    autoSaveRef.current = setInterval(() => doSave(), 30000)
-    return () => { if (autoSaveRef.current) clearInterval(autoSaveRef.current) }
+    doSaveRef.current = doSave
   }, [doSave])
+
+  // Auto-save every 30s with stable interval
+  useEffect(() => {
+    const id = setInterval(() => doSaveRef.current(), 30000)
+    return () => clearInterval(id)
+  }, [])
 
   function handleGradeChange(studentId: number, value: string) {
     const num = value === "" ? null : Math.min(20, Math.max(0, parseFloat(value)))
     setLocalGrades((prev) => new Map(prev).set(studentId, num))
     dirtyRef.current = true
-  }
-
-  function handleSave() {
-    doSave()
+    // Reset cell status on edit
+    setCellStatus((prev) => {
+      const next = new Map(prev)
+      next.set(studentId, "idle")
+      return next
+    })
   }
 
   if (error) {
@@ -95,13 +135,13 @@ export function GradeEntryGrid({ evaluationId }: GradeEntryGridProps) {
             </span>
           )}
         </div>
-        <Button onClick={handleSave} disabled={isPending} className="h-10">
-          {isPending ? (
+        <Button onClick={() => doSave()} disabled={updateMutation.isPending} className="h-10">
+          {updateMutation.isPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
             <Save className="mr-2 h-4 w-4" />
           )}
-          {isPending ? "Sauvegarde..." : "Enregistrer toutes les notes"}
+          {updateMutation.isPending ? "Sauvegarde..." : "Enregistrer toutes les notes"}
         </Button>
       </div>
 
@@ -115,32 +155,49 @@ export function GradeEntryGrid({ evaluationId }: GradeEntryGridProps) {
 
       {/* Grade entries */}
       <div className="rounded-lg border bg-card divide-y">
-        {grades.map((grade, index) => (
-          <div
-            key={grade.student_id}
-            className="flex items-center justify-between gap-4 px-4 py-3"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="text-xs text-muted-foreground font-mono w-6 shrink-0">
-                {index + 1}.
-              </span>
-              <span className="text-sm font-medium truncate">
-                {grade.student_name}
-              </span>
+        {grades.map((grade, index) => {
+          const status = cellStatus.get(grade.student_id) ?? "idle"
+          return (
+            <div
+              key={grade.student_id}
+              className={cn(
+                "flex items-center justify-between gap-4 px-4 py-3 transition-colors",
+                status === "saved" && "bg-emerald-50",
+                status === "error" && "bg-destructive/5",
+              )}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-xs text-muted-foreground font-mono w-6 shrink-0">
+                  {index + 1}.
+                </span>
+                <span className="text-sm font-medium truncate">
+                  {grade.student_name}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <input
+                  type="number"
+                  min={0}
+                  max={20}
+                  step={0.5}
+                  value={localGrades.get(grade.student_id) ?? ""}
+                  onChange={(e) => handleGradeChange(grade.student_id, e.target.value)}
+                  placeholder="--"
+                  className={cn(
+                    "h-11 w-20 rounded-lg border bg-transparent px-3 text-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring placeholder:text-muted-foreground/40",
+                    status === "saved" && "border-emerald-400",
+                    status === "error" && "border-destructive",
+                    status === "idle" && "border-input",
+                  )}
+                  tabIndex={index + 1}
+                />
+                {status === "pending" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                {status === "saved" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                {status === "error" && <AlertCircle className="h-4 w-4 text-destructive" />}
+              </div>
             </div>
-            <input
-              type="number"
-              min={0}
-              max={20}
-              step={0.5}
-              value={localGrades.get(grade.student_id) ?? ""}
-              onChange={(e) => handleGradeChange(grade.student_id, e.target.value)}
-              placeholder="--"
-              className="h-11 w-20 shrink-0 rounded-lg border border-input bg-transparent px-3 text-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring placeholder:text-muted-foreground/40"
-              tabIndex={index + 1}
-            />
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
