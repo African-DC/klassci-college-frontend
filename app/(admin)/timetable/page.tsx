@@ -1,7 +1,8 @@
 "use client"
 
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { ChevronLeft, ChevronRight, Wand2, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useTimetableStore } from "@/lib/stores/useTimetableStore"
@@ -9,7 +10,6 @@ import { useGenerateTimetable } from "@/lib/hooks/useTimetable"
 import { timetableApi } from "@/lib/api/timetable"
 import { useQueryClient } from "@tanstack/react-query"
 import { timetableKeys } from "@/lib/hooks/useTimetable"
-import { toast } from "@/hooks/use-toast"
 import { TimetableGrid } from "@/components/admin/timetable/TimetableGrid"
 
 export default function TimetablePage() {
@@ -17,34 +17,50 @@ export default function TimetablePage() {
   const generateMutation = useGenerateTimetable()
   const queryClient = useQueryClient()
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollFnRef = useRef<(() => Promise<void>) | null>(null)
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current)
+      }
+    }
+  }, [])
 
   function handleGenerate() {
     if (!selectedClassId) return
     generateMutation.mutate(selectedClassId, {
       onSuccess: (data) => {
-        toast({ title: "Generation lancee", description: "Veuillez patienter..." })
-        // Poll task status every 3 seconds
-        pollingRef.current = setInterval(async () => {
+        toast.info("Generation lancee", { description: "Veuillez patienter..." })
+
+        // Store the poll function in a ref so the interval always calls the latest version
+        pollFnRef.current = async () => {
           try {
             const status = await timetableApi.taskStatus(data.task_id)
             if (status.status === "completed") {
-              clearInterval(pollingRef.current!)
+              if (pollingRef.current) clearInterval(pollingRef.current)
               pollingRef.current = null
               queryClient.invalidateQueries({ queryKey: timetableKeys.all })
-              toast({ title: "Generation terminee", description: "L'emploi du temps a ete genere avec succes." })
+              toast.success("Generation terminee", { description: "L'emploi du temps a ete genere avec succes." })
             } else if (status.status === "failed") {
-              clearInterval(pollingRef.current!)
+              if (pollingRef.current) clearInterval(pollingRef.current)
               pollingRef.current = null
-              toast({ title: "Echec de la generation", description: status.message ?? "Une erreur est survenue.", variant: "destructive" })
+              toast.error("Echec de la generation", { description: status.message ?? "Une erreur est survenue." })
             }
           } catch {
-            clearInterval(pollingRef.current!)
+            if (pollingRef.current) clearInterval(pollingRef.current)
             pollingRef.current = null
           }
+        }
+
+        // Start polling with stable interval
+        pollingRef.current = setInterval(() => {
+          pollFnRef.current?.()
         }, 3000)
       },
       onError: (error) => {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" })
+        toast.error("Erreur", { description: error.message })
       },
     })
   }
@@ -104,7 +120,7 @@ export default function TimetablePage() {
 
       {/* Grid */}
       {selectedClassId ? (
-        <TimetableGrid classId={selectedClassId} />
+        <TimetableGrid classId={selectedClassId} weekOffset={weekOffset} />
       ) : (
         <div className="flex h-64 items-center justify-center rounded-lg border border-dashed bg-muted/20">
           <p className="text-sm text-muted-foreground">

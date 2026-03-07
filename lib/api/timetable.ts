@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+import { apiFetch } from "@/lib/api/client"
 
 export interface TimetableSlot {
   id: number
@@ -40,89 +40,52 @@ export interface GenerateTaskResponse {
 }
 
 export const timetableApi = {
-  listByClass: async (classId: number): Promise<TimetableSlot[]> => {
-    const res = await fetch(`${BASE_URL}/timetable?class_id=${classId}`, {
-      headers: { "Content-Type": "application/json" },
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors du chargement")
+  listByClass: async (classId: number, weekOffset?: number): Promise<TimetableSlot[]> => {
+    const params = new URLSearchParams({ class_id: String(classId) })
+    if (weekOffset !== undefined && weekOffset !== 0) {
+      params.set("week_offset", String(weekOffset))
     }
-    const json = await res.json()
-    return json.data ?? json
+    const json = await apiFetch<{ data?: TimetableSlot[] } | TimetableSlot[]>(
+      `/timetable?${params}`,
+    )
+    return Array.isArray(json) ? json : json.data ?? []
   },
 
   listByTeacher: async (teacherId: number): Promise<TimetableSlot[]> => {
-    const res = await fetch(`${BASE_URL}/timetable?teacher_id=${teacherId}`, {
-      headers: { "Content-Type": "application/json" },
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors du chargement")
-    }
-    const json = await res.json()
-    return json.data ?? json
+    const json = await apiFetch<{ data?: TimetableSlot[] } | TimetableSlot[]>(
+      `/timetable?teacher_id=${teacherId}`,
+    )
+    return Array.isArray(json) ? json : json.data ?? []
   },
 
   create: async (data: TimetableSlotCreateBody): Promise<TimetableSlot> => {
-    const res = await fetch(`${BASE_URL}/timetable`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors de la creation")
-    }
-    const json = await res.json()
-    return json.data ?? json
+    const json = await apiFetch<{ data?: TimetableSlot } | TimetableSlot>(
+      `/timetable`,
+      { method: "POST", body: JSON.stringify(data) },
+    )
+    return (json as { data?: TimetableSlot }).data ?? (json as TimetableSlot)
   },
 
   update: async (id: number, data: TimetableSlotUpdateBody): Promise<TimetableSlot> => {
-    const res = await fetch(`${BASE_URL}/timetable/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors de la mise a jour")
-    }
-    const json = await res.json()
-    return json.data ?? json
+    const json = await apiFetch<{ data?: TimetableSlot } | TimetableSlot>(
+      `/timetable/${id}`,
+      { method: "PATCH", body: JSON.stringify(data) },
+    )
+    return (json as { data?: TimetableSlot }).data ?? (json as TimetableSlot)
   },
 
   remove: async (id: number): Promise<void> => {
-    const res = await fetch(`${BASE_URL}/timetable/${id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-    })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors de la suppression")
-    }
+    await apiFetch<void>(`/timetable/${id}`, { method: "DELETE" })
   },
 
   generate: async (classId: number): Promise<GenerateTaskResponse> => {
-    const res = await fetch(`${BASE_URL}/timetable/generate`, {
+    return apiFetch<GenerateTaskResponse>(`/timetable/generate`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ class_id: classId }),
     })
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-      throw new Error(error.detail || "Erreur lors de la generation")
-    }
-    return res.json()
   },
 
   taskStatus: async (taskId: string): Promise<GenerateTaskResponse> => {
-    const res = await fetch(`${BASE_URL}/timetable/tasks/${taskId}`, {
-      headers: { "Content-Type": "application/json" },
-    })
-    if (!res.ok) {
-      throw new Error("Erreur lors de la verification du statut")
-    }
-    return res.json()
+    return apiFetch<GenerateTaskResponse>(`/timetable/tasks/${taskId}`)
   },
 }

@@ -3,20 +3,22 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   timetableApi,
+  type TimetableSlot,
   type TimetableSlotCreateBody,
   type TimetableSlotUpdateBody,
 } from "@/lib/api/timetable"
 
 export const timetableKeys = {
   all: ["timetable"] as const,
-  byClass: (classId: number) => ["timetable", "class", classId] as const,
+  byClass: (classId: number, weekOffset?: number) =>
+    ["timetable", "class", classId, weekOffset ?? 0] as const,
   byTeacher: (teacherId: number) => ["timetable", "teacher", teacherId] as const,
 }
 
-export function useTimetable(classId: number) {
+export function useTimetable(classId: number, weekOffset: number = 0) {
   return useQuery({
-    queryKey: timetableKeys.byClass(classId),
-    queryFn: () => timetableApi.listByClass(classId),
+    queryKey: timetableKeys.byClass(classId, weekOffset),
+    queryFn: () => timetableApi.listByClass(classId, weekOffset),
     enabled: !!classId,
     staleTime: 1000 * 60 * 5,
   })
@@ -35,7 +37,39 @@ export function useCreateSlot() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: TimetableSlotCreateBody) => timetableApi.create(data),
-    onSuccess: () => {
+    onMutate: async (newSlot) => {
+      await queryClient.cancelQueries({ queryKey: timetableKeys.all })
+      const queries = queryClient.getQueriesData<TimetableSlot[]>({
+        queryKey: timetableKeys.all,
+      })
+      const optimistic: TimetableSlot = {
+        id: -Date.now(),
+        class_id: newSlot.class_id,
+        class_name: "",
+        teacher_id: newSlot.teacher_id,
+        teacher_name: "",
+        subject_id: newSlot.subject_id,
+        subject_name: "",
+        day: newSlot.day as TimetableSlot["day"],
+        start_time: newSlot.start_time,
+        end_time: newSlot.end_time,
+        room: newSlot.room,
+      }
+      for (const [key, data] of queries) {
+        if (data) {
+          queryClient.setQueryData(key, [...data, optimistic])
+        }
+      }
+      return { queries }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queries) {
+        for (const [key, data] of context.queries) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: timetableKeys.all })
     },
   })
@@ -45,7 +79,29 @@ export function useUpdateSlot(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: TimetableSlotUpdateBody) => timetableApi.update(id, data),
-    onSuccess: () => {
+    onMutate: async (updatedFields) => {
+      await queryClient.cancelQueries({ queryKey: timetableKeys.all })
+      const queries = queryClient.getQueriesData<TimetableSlot[]>({
+        queryKey: timetableKeys.all,
+      })
+      for (const [key, data] of queries) {
+        if (data) {
+          queryClient.setQueryData(
+            key,
+            data.map((s) => (s.id === id ? { ...s, ...updatedFields } : s)),
+          )
+        }
+      }
+      return { queries }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queries) {
+        for (const [key, data] of context.queries) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: timetableKeys.all })
     },
   })
@@ -55,7 +111,29 @@ export function useDeleteSlot() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => timetableApi.remove(id),
-    onSuccess: () => {
+    onMutate: async (deletedId) => {
+      await queryClient.cancelQueries({ queryKey: timetableKeys.all })
+      const queries = queryClient.getQueriesData<TimetableSlot[]>({
+        queryKey: timetableKeys.all,
+      })
+      for (const [key, data] of queries) {
+        if (data) {
+          queryClient.setQueryData(
+            key,
+            data.filter((s) => s.id !== deletedId),
+          )
+        }
+      }
+      return { queries }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queries) {
+        for (const [key, data] of context.queries) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: timetableKeys.all })
     },
   })
