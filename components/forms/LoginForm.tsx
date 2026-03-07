@@ -21,7 +21,8 @@ import {
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/"
+  const rawCallback = searchParams.get("callbackUrl") ?? "/"
+  const callbackUrl = rawCallback.startsWith("/") && !rawCallback.startsWith("//") ? rawCallback : "/"
   const [error, setError] = useState<string | null>(null)
 
   const form = useForm<LoginInput>({

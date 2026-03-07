@@ -4,10 +4,11 @@ import { AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function DashboardError({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   error,
   reset,
 }: {
-  error: Error
+  error: Error & { digest?: string }
   reset: () => void
 }) {
   return (
@@ -17,7 +18,9 @@ export default function DashboardError({
       </div>
       <div className="text-center space-y-1">
         <h2 className="text-lg font-semibold">Une erreur est survenue</h2>
-        <p className="text-sm text-muted-foreground max-w-md">{error.message}</p>
+        <p className="text-sm text-muted-foreground max-w-md">
+          Un probleme est survenu lors du chargement. Veuillez reessayer.
+        </p>
       </div>
       <Button onClick={reset} variant="outline">
         Reessayer
