@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-table"
 import { Pencil, Trash2, MoreHorizontal } from "lucide-react"
 import { useEnrollments, useDeleteEnrollment } from "@/lib/hooks/useEnrollments"
-import type { Enrollment, EnrollmentListParams } from "@/lib/api/enrollments"
+import type { Enrollment, EnrollmentListParams } from "@/lib/contracts/enrollment"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"

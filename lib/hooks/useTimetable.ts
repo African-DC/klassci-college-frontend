@@ -1,12 +1,12 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import {
-  timetableApi,
-  type TimetableSlot,
-  type TimetableSlotCreateBody,
-  type TimetableSlotUpdateBody,
-} from "@/lib/api/timetable"
+import { timetableApi } from "@/lib/api/timetable"
+import type {
+  TimetableSlot,
+  TimetableSlotCreate,
+  TimetableSlotUpdate,
+} from "@/lib/contracts/timetable"
 
 export const timetableKeys = {
   all: ["timetable"] as const,
@@ -36,7 +36,7 @@ export function useTeacherTimetable(teacherId: number) {
 export function useCreateSlot() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: TimetableSlotCreateBody) => timetableApi.create(data),
+    mutationFn: (data: TimetableSlotCreate) => timetableApi.create(data),
     onMutate: async (newSlot) => {
       await queryClient.cancelQueries({ queryKey: timetableKeys.all })
       const queries = queryClient.getQueriesData<TimetableSlot[]>({
@@ -78,7 +78,7 @@ export function useCreateSlot() {
 export function useUpdateSlot(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: TimetableSlotUpdateBody) => timetableApi.update(id, data),
+    mutationFn: (data: TimetableSlotUpdate) => timetableApi.update(id, data),
     onMutate: async (updatedFields) => {
       await queryClient.cancelQueries({ queryKey: timetableKeys.all })
       const queries = queryClient.getQueriesData<TimetableSlot[]>({

@@ -2,14 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import {
-  enrollmentsApi,
-  type Enrollment,
-  type EnrollmentListParams,
-  type EnrollmentCreateBody,
-  type EnrollmentUpdateBody,
-  type PaginatedResponse,
-} from "@/lib/api/enrollments"
+import { enrollmentsApi } from "@/lib/api/enrollments"
+import type {
+  Enrollment,
+  EnrollmentListParams,
+  EnrollmentCreate,
+  EnrollmentUpdate,
+} from "@/lib/contracts/enrollment"
+import type { PaginatedResponse } from "@/lib/contracts"
 
 export const enrollmentKeys = {
   all: ["enrollments"] as const,
@@ -36,7 +36,7 @@ export function useEnrollment(id: number) {
 export function useCreateEnrollment() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: EnrollmentCreateBody) => enrollmentsApi.create(data),
+    mutationFn: (data: EnrollmentCreate) => enrollmentsApi.create(data),
     onMutate: async (newData) => {
       await queryClient.cancelQueries({ queryKey: enrollmentKeys.all })
       const queries = queryClient.getQueriesData<PaginatedResponse<Enrollment>>({
@@ -77,7 +77,7 @@ export function useCreateEnrollment() {
 export function useUpdateEnrollment(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: EnrollmentUpdateBody) => enrollmentsApi.update(id, data),
+    mutationFn: (data: EnrollmentUpdate) => enrollmentsApi.update(id, data),
     onMutate: async (newData) => {
       await queryClient.cancelQueries({ queryKey: enrollmentKeys.all })
       await queryClient.cancelQueries({ queryKey: enrollmentKeys.detail(id) })

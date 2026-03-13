@@ -2,10 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  enrollmentUpdateSchema,
-  type EnrollmentUpdateInput,
-} from "@/lib/validators/enrollment"
+import { EnrollmentUpdateSchema, type EnrollmentUpdate } from "@/lib/contracts/enrollment"
 import { useEnrollment, useUpdateEnrollment } from "@/lib/hooks/useEnrollments"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -56,8 +53,8 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
   const { data: enrollment, isLoading } = useEnrollment(enrollmentId)
   const { mutate, isPending, error } = useUpdateEnrollment(enrollmentId)
 
-  const form = useForm<EnrollmentUpdateInput>({
-    resolver: zodResolver(enrollmentUpdateSchema),
+  const form = useForm<EnrollmentUpdate>({
+    resolver: zodResolver(EnrollmentUpdateSchema),
     values: enrollment
       ? {
           class_id: enrollment.class_id,
@@ -69,7 +66,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
 
   if (isLoading || !enrollment) return <EditFormSkeleton />
 
-  function onSubmit(data: EnrollmentUpdateInput) {
+  function onSubmit(data: EnrollmentUpdate) {
     mutate(data, {
       onSuccess: () => onClose(),
     })

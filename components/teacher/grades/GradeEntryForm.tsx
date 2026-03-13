@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { evaluationCreateSchema, type EvaluationCreateInput } from "@/lib/validators/grades"
+import { EvaluationCreateSchema, type EvaluationCreate } from "@/lib/contracts/grade"
 import { useCreateEvaluation } from "@/lib/hooks/useGrades"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,8 +35,8 @@ interface GradeEntryFormProps {
 }
 
 export function GradeEntryForm({ classId, onSuccess }: GradeEntryFormProps) {
-  const form = useForm<EvaluationCreateInput>({
-    resolver: zodResolver(evaluationCreateSchema),
+  const form = useForm<EvaluationCreate>({
+    resolver: zodResolver(EvaluationCreateSchema),
     defaultValues: {
       title: "",
       date: "",
@@ -47,7 +47,7 @@ export function GradeEntryForm({ classId, onSuccess }: GradeEntryFormProps) {
 
   const { mutate, isPending, error } = useCreateEvaluation()
 
-  function onSubmit(data: EvaluationCreateInput) {
+  function onSubmit(data: EvaluationCreate) {
     mutate(data, {
       onSuccess: () => {
         form.reset()

@@ -2,9 +2,9 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { timetableSlotSchema, type TimetableSlotInput } from "@/lib/validators/timetable"
+import { TimetableSlotCreateSchema, type TimetableSlotCreate } from "@/lib/contracts/timetable"
 import { useCreateSlot, useUpdateSlot } from "@/lib/hooks/useTimetable"
-import type { TimetableSlot } from "@/lib/api/timetable"
+import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -48,8 +48,8 @@ export function TimetableSlotForm({
 }: TimetableSlotFormProps) {
   const isEdit = !!slot
 
-  const form = useForm<TimetableSlotInput>({
-    resolver: zodResolver(timetableSlotSchema),
+  const form = useForm<TimetableSlotCreate>({
+    resolver: zodResolver(TimetableSlotCreateSchema),
     defaultValues: isEdit
       ? {
           day: slot.day,
@@ -61,7 +61,7 @@ export function TimetableSlotForm({
           room: slot.room ?? "",
         }
       : {
-          day: defaultDay as TimetableSlotInput["day"] | undefined,
+          day: defaultDay as TimetableSlotCreate["day"] | undefined,
           start_time: defaultStartTime ?? "",
           end_time: "",
           class_id: classId,
@@ -75,7 +75,7 @@ export function TimetableSlotForm({
   const isPending = mutation.isPending
   const error = mutation.error
 
-  function onSubmit(data: TimetableSlotInput) {
+  function onSubmit(data: TimetableSlotCreate) {
     if (isEdit) {
       updateMutation.mutate(
         {
