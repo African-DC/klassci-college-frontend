@@ -1,32 +1,21 @@
-import type { UserRole } from "@/types/next-auth"
+import {
+  LoginResponseSchema,
+  RefreshResponseSchema,
+  type LoginResponse,
+  type RefreshResponse,
+} from "@/lib/contracts/auth"
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
-if (!BASE_URL) {
-  throw new Error("NEXT_PUBLIC_API_URL is not defined — check your .env file")
+function getBaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_API_URL
+  if (!url) throw new Error("NEXT_PUBLIC_API_URL is not defined — check your .env file")
+  return url
 }
 
-interface LoginResponse {
-  access_token: string
-  refresh_token: string
-  token_type: string
-  user: {
-    id: number
-    email: string
-    role: UserRole
-    first_name: string
-    last_name: string
-  }
-}
-
-interface RefreshResponse {
-  access_token: string
-  refresh_token: string
-  token_type: string
-}
+export type { LoginResponse, RefreshResponse }
 
 export const authApi = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
-    const res = await fetch(`${BASE_URL}/auth/login`, {
+    const res = await fetch(`${getBaseUrl()}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -35,11 +24,12 @@ export const authApi = {
       const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
       throw new Error(error.detail || "Identifiants invalides")
     }
-    return res.json()
+    const data = await res.json()
+    return LoginResponseSchema.parse(data)
   },
 
   refresh: async (refreshToken: string): Promise<RefreshResponse> => {
-    const res = await fetch(`${BASE_URL}/auth/refresh`, {
+    const res = await fetch(`${getBaseUrl()}/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: refreshToken }),
@@ -47,6 +37,7 @@ export const authApi = {
     if (!res.ok) {
       throw new Error("Refresh token expired")
     }
-    return res.json()
+    const data = await res.json()
+    return RefreshResponseSchema.parse(data)
   },
 }
