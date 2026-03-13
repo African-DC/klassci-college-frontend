@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api/client"
+import { apiFetch } from "./client"
 
 export interface Enrollment {
   id: number
@@ -53,31 +53,31 @@ export const enrollmentsApi = {
         query.set(key, String(value))
       }
     })
-    return apiFetch<PaginatedResponse<Enrollment>>(`/enrollments?${query.toString()}`)
+    return apiFetch(`/enrollments?${query.toString()}`)
   },
 
   getById: async (id: number): Promise<Enrollment> => {
-    const json = await apiFetch<{ data?: Enrollment } | Enrollment>(`/enrollments/${id}`)
-    return (json as { data?: Enrollment }).data ?? (json as Enrollment)
+    const res = await apiFetch<{ data?: Enrollment }>(`/enrollments/${id}`)
+    return (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
   },
 
   create: async (data: EnrollmentCreateBody): Promise<Enrollment> => {
-    const json = await apiFetch<{ data?: Enrollment } | Enrollment>(`/enrollments`, {
+    const res = await apiFetch<{ data?: Enrollment }>("/enrollments", {
       method: "POST",
       body: JSON.stringify(data),
     })
-    return (json as { data?: Enrollment }).data ?? (json as Enrollment)
+    return (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
   },
 
   update: async (id: number, data: EnrollmentUpdateBody): Promise<Enrollment> => {
-    const json = await apiFetch<{ data?: Enrollment } | Enrollment>(`/enrollments/${id}`, {
+    const res = await apiFetch<{ data?: Enrollment }>(`/enrollments/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     })
-    return (json as { data?: Enrollment }).data ?? (json as Enrollment)
+    return (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
   },
 
   remove: async (id: number): Promise<void> => {
-    await apiFetch<void>(`/enrollments/${id}`, { method: "DELETE" })
+    await apiFetch(`/enrollments/${id}`, { method: "DELETE" })
   },
 }

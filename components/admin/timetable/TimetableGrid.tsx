@@ -38,13 +38,15 @@ function getSlotColor(subjectId: number): string {
 
 interface TimetableGridProps {
   classId: number
+  weekOffset?: number
 }
 
-export function TimetableGrid({ classId }: TimetableGridProps) {
-  const { data: slots, isLoading } = useTimetable(classId)
+export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
+  const { data: slots, isLoading } = useTimetable(classId, weekOffset)
   const deleteMutation = useDeleteSlot()
   const [createModal, setCreateModal] = useState<{ day: string; time: string } | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<TimetableSlot | null>(null)
+  const [editSlot, setEditSlot] = useState<TimetableSlot | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
   function getSlot(day: string, hour: string): TimetableSlot | undefined {
@@ -152,6 +154,21 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
         </DialogContent>
       </Dialog>
 
+      {/* Edit modal */}
+      <Dialog open={editSlot !== null} onOpenChange={() => setEditSlot(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Modifier le creneau</DialogTitle>
+          </DialogHeader>
+          {editSlot && (
+            <TimetableSlotForm
+              slot={editSlot}
+              onSuccess={() => setEditSlot(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Slot detail modal */}
       <Dialog open={selectedSlot !== null} onOpenChange={() => setSelectedSlot(null)}>
         <DialogContent className="max-w-sm">
@@ -195,7 +212,13 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
               <Trash2 className="mr-2 h-4 w-4" />
               Supprimer
             </Button>
-            <Button size="sm" onClick={() => setSelectedSlot(null)}>
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditSlot(selectedSlot)
+                setSelectedSlot(null)
+              }}
+            >
               <Pencil className="mr-2 h-4 w-4" />
               Modifier
             </Button>

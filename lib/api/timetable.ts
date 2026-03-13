@@ -40,9 +40,13 @@ export interface GenerateTaskResponse {
 }
 
 export const timetableApi = {
-  listByClass: async (classId: number): Promise<TimetableSlot[]> => {
+  listByClass: async (classId: number, weekOffset?: number): Promise<TimetableSlot[]> => {
+    const params = new URLSearchParams({ class_id: String(classId) })
+    if (weekOffset !== undefined && weekOffset !== 0) {
+      params.set("week_offset", String(weekOffset))
+    }
     const json = await apiFetch<{ data?: TimetableSlot[] } | TimetableSlot[]>(
-      `/timetable?class_id=${classId}`,
+      `/timetable?${params}`,
     )
     return Array.isArray(json) ? json : json.data ?? []
   },

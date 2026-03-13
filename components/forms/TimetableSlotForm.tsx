@@ -3,7 +3,8 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { timetableSlotSchema, type TimetableSlotInput } from "@/lib/validators/timetable"
-import { useCreateSlot } from "@/lib/hooks/useTimetable"
+import { useCreateSlot, useUpdateSlot } from "@/lib/hooks/useTimetable"
+import type { TimetableSlot } from "@/lib/api/timetable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -34,6 +35,7 @@ interface TimetableSlotFormProps {
   defaultDay?: string
   defaultStartTime?: string
   classId?: number
+  slot?: TimetableSlot
   onSuccess: () => void
 }
 
@@ -41,28 +43,59 @@ export function TimetableSlotForm({
   defaultDay,
   defaultStartTime,
   classId,
+  slot,
   onSuccess,
 }: TimetableSlotFormProps) {
+  const isEdit = !!slot
+
   const form = useForm<TimetableSlotInput>({
     resolver: zodResolver(timetableSlotSchema),
-    defaultValues: {
-      day: defaultDay as TimetableSlotInput["day"] | undefined,
-      start_time: defaultStartTime ?? "",
-      end_time: "",
-      class_id: classId,
-      room: "",
-    },
+    defaultValues: isEdit
+      ? {
+          day: slot.day,
+          start_time: slot.start_time,
+          end_time: slot.end_time,
+          class_id: slot.class_id,
+          teacher_id: slot.teacher_id,
+          subject_id: slot.subject_id,
+          room: slot.room ?? "",
+        }
+      : {
+          day: defaultDay as TimetableSlotInput["day"] | undefined,
+          start_time: defaultStartTime ?? "",
+          end_time: "",
+          class_id: classId,
+          room: "",
+        },
   })
 
-  const { mutate, isPending, error } = useCreateSlot()
+  const createMutation = useCreateSlot()
+  const updateMutation = useUpdateSlot(slot?.id ?? 0)
+  const mutation = isEdit ? updateMutation : createMutation
+  const isPending = mutation.isPending
+  const error = mutation.error
 
   function onSubmit(data: TimetableSlotInput) {
-    mutate(data, {
-      onSuccess: () => {
-        form.reset()
-        onSuccess()
-      },
-    })
+    if (isEdit) {
+      updateMutation.mutate(
+        {
+          teacher_id: data.teacher_id,
+          subject_id: data.subject_id,
+          day: data.day,
+          start_time: data.start_time,
+          end_time: data.end_time,
+          room: data.room,
+        },
+        { onSuccess },
+      )
+    } else {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          form.reset()
+          onSuccess()
+        },
+      })
+    }
   }
 
   return (
@@ -214,7 +247,11 @@ export function TimetableSlotForm({
           className="w-full h-11 font-semibold"
           disabled={isPending}
         >
-          {isPending ? "Enregistrement..." : "Ajouter le creneau"}
+          {isPending
+            ? "Enregistrement..."
+            : isEdit
+              ? "Enregistrer les modifications"
+              : "Ajouter le creneau"}
         </Button>
       </form>
     </Form>
