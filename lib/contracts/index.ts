@@ -2,10 +2,6 @@ export * from "./auth"
 export * from "./enrollment"
 export * from "./timetable"
 export * from "./grade"
-export * from "./student"
-export * from "./teacher"
-export * from "./class"
-export * from "./notification"
 
 // Shared pagination contract
 import { z } from "zod"
@@ -19,10 +15,6 @@ export const PaginatedResponseSchema = <T extends z.ZodType>(itemSchema: T) =>
     total_pages: z.number(),
   })
 
-export interface PaginatedResponse<T> {
-  data: T[]
-  total: number
-  page: number
-  per_page: number
-  total_pages: number
-}
+const _basePaginatedSchema = PaginatedResponseSchema(z.unknown())
+type _BasePaginated = z.infer<typeof _basePaginatedSchema>
+export type PaginatedResponse<T> = Omit<_BasePaginated, "data"> & { data: T[] }

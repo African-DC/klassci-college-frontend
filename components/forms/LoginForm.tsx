@@ -36,19 +36,23 @@ export function LoginForm() {
   async function onSubmit(data: LoginRequest) {
     setError(null)
 
-    const result = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    })
+    try {
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      })
 
-    if (result?.error) {
-      setError("Email ou mot de passe incorrect")
-      return
+      if (result?.error) {
+        setError("Email ou mot de passe incorrect")
+        return
+      }
+
+      router.push(callbackUrl as never)
+      router.refresh()
+    } catch {
+      setError("Erreur de connexion au serveur")
     }
-
-    router.push(callbackUrl as never)
-    router.refresh()
   }
 
   return (

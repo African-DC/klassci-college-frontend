@@ -38,7 +38,7 @@ lib/
 ├── api/                 ← fonctions fetch vers le backend
 ├── hooks/               ← hooks custom TanStack Query
 ├── stores/              ← Zustand stores
-├── validators/          ← schémas Zod
+├── contracts/           ← schémas Zod (contrats API partagés)
 └── utils/               ← helpers purs
 ```
 

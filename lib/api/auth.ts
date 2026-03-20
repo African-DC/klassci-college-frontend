@@ -4,6 +4,7 @@ import {
   type LoginResponse,
   type RefreshResponse,
 } from "@/lib/contracts/auth"
+import { safeValidate } from "./client"
 
 function getBaseUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_URL
@@ -25,7 +26,7 @@ export const authApi = {
       throw new Error(error.detail || "Identifiants invalides")
     }
     const data = await res.json()
-    return LoginResponseSchema.parse(data)
+    return safeValidate(LoginResponseSchema, data, "/auth/login")
   },
 
   refresh: async (refreshToken: string): Promise<RefreshResponse> => {
@@ -38,6 +39,6 @@ export const authApi = {
       throw new Error("Refresh token expired")
     }
     const data = await res.json()
-    return RefreshResponseSchema.parse(data)
+    return safeValidate(RefreshResponseSchema, data, "/auth/refresh")
   },
 }

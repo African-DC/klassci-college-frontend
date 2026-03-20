@@ -1,4 +1,4 @@
-import { apiFetch } from "./client"
+import { apiFetch, safeValidate } from "./client"
 import {
   EnrollmentSchema,
   type Enrollment,
@@ -27,7 +27,7 @@ export const enrollmentsApi = {
   getById: async (id: number): Promise<Enrollment> => {
     const res = await apiFetch<{ data?: Enrollment }>(`/enrollments/${id}`)
     const enrollment = (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
-    return EnrollmentSchema.parse(enrollment)
+    return safeValidate(EnrollmentSchema, enrollment, `/enrollments/${id}`)
   },
 
   create: async (data: EnrollmentCreate): Promise<Enrollment> => {
@@ -36,7 +36,7 @@ export const enrollmentsApi = {
       body: JSON.stringify(data),
     })
     const enrollment = (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
-    return EnrollmentSchema.parse(enrollment)
+    return safeValidate(EnrollmentSchema, enrollment, "POST /enrollments")
   },
 
   update: async (id: number, data: EnrollmentUpdate): Promise<Enrollment> => {
@@ -45,7 +45,7 @@ export const enrollmentsApi = {
       body: JSON.stringify(data),
     })
     const enrollment = (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
-    return EnrollmentSchema.parse(enrollment)
+    return safeValidate(EnrollmentSchema, enrollment, `PATCH /enrollments/${id}`)
   },
 
   remove: async (id: number): Promise<void> => {

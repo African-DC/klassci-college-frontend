@@ -15,7 +15,7 @@ export const TimetableSlotSchema = z.object({
   day: DaySchema,
   start_time: z.string(),
   end_time: z.string(),
-  room: z.string().optional(),
+  room: z.string().nullish(),
 })
 
 export const TimetableSlotCreateSchema = z.object({
@@ -25,7 +25,7 @@ export const TimetableSlotCreateSchema = z.object({
   day: DaySchema,
   start_time: z.string({ required_error: "L'heure de debut est requise" }).regex(/^\d{2}:\d{2}$/, "Format HH:MM"),
   end_time: z.string({ required_error: "L'heure de fin est requise" }).regex(/^\d{2}:\d{2}$/, "Format HH:MM"),
-  room: z.string().optional(),
+  room: z.string().nullish(),
 })
 
 export const TimetableSlotUpdateSchema = TimetableSlotCreateSchema.omit({ class_id: true }).partial()

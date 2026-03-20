@@ -228,7 +228,7 @@ export function TimetableSlotForm({
             <FormItem>
               <FormLabel>Salle</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Salle 201" className="h-11" {...field} />
+                <Input placeholder="Ex: Salle 201" className="h-11" {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>

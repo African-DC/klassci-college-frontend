@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { apiFetch } from "./client"
+import { apiFetch, safeValidate } from "./client"
 import {
   EvaluationSchema,
   GradeSchema,
@@ -20,7 +20,7 @@ export const gradesApi = {
       `/evaluations?class_id=${classId}`,
     )
     const arr = Array.isArray(json) ? json : json.data ?? []
-    return EvaluationArraySchema.parse(arr)
+    return safeValidate(EvaluationArraySchema, arr, `/evaluations?class_id=${classId}`)
   },
 
   getGrades: async (evaluationId: number): Promise<Grade[]> => {
@@ -28,7 +28,7 @@ export const gradesApi = {
       `/evaluations/${evaluationId}/grades`,
     )
     const arr = Array.isArray(json) ? json : json.data ?? []
-    return GradeArraySchema.parse(arr)
+    return safeValidate(GradeArraySchema, arr, `/evaluations/${evaluationId}/grades`)
   },
 
   createEvaluation: async (data: EvaluationCreate): Promise<Evaluation> => {
@@ -37,7 +37,7 @@ export const gradesApi = {
       { method: "POST", body: JSON.stringify(data) },
     )
     const evaluation = (json as { data?: Evaluation }).data ?? (json as Evaluation)
-    return EvaluationSchema.parse(evaluation)
+    return safeValidate(EvaluationSchema, evaluation, "POST /evaluations")
   },
 
   updateGrades: async (evaluationId: number, data: GradeBatchUpdate): Promise<Grade[]> => {
@@ -46,6 +46,6 @@ export const gradesApi = {
       { method: "PUT", body: JSON.stringify(data) },
     )
     const arr = Array.isArray(json) ? json : json.data ?? []
-    return GradeArraySchema.parse(arr)
+    return safeValidate(GradeArraySchema, arr, `PUT /evaluations/${evaluationId}/grades`)
   },
 }

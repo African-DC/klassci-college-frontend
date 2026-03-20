@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { apiFetch } from "./client"
+import { apiFetch, safeValidate } from "./client"
 import {
   TimetableSlotSchema,
   GenerateTaskResponseSchema,
@@ -23,7 +23,7 @@ export const timetableApi = {
       `/timetable?${params}`,
     )
     const arr = Array.isArray(json) ? json : json.data ?? []
-    return TimetableSlotArraySchema.parse(arr)
+    return safeValidate(TimetableSlotArraySchema, arr, `/timetable?class_id=${classId}`)
   },
 
   listByTeacher: async (teacherId: number): Promise<TimetableSlot[]> => {
@@ -31,7 +31,7 @@ export const timetableApi = {
       `/timetable?teacher_id=${teacherId}`,
     )
     const arr = Array.isArray(json) ? json : json.data ?? []
-    return TimetableSlotArraySchema.parse(arr)
+    return safeValidate(TimetableSlotArraySchema, arr, `/timetable?teacher_id=${teacherId}`)
   },
 
   create: async (data: TimetableSlotCreate): Promise<TimetableSlot> => {
@@ -40,7 +40,7 @@ export const timetableApi = {
       { method: "POST", body: JSON.stringify(data) },
     )
     const slot = (json as { data?: TimetableSlot }).data ?? (json as TimetableSlot)
-    return TimetableSlotSchema.parse(slot)
+    return safeValidate(TimetableSlotSchema, slot, "POST /timetable")
   },
 
   update: async (id: number, data: TimetableSlotUpdate): Promise<TimetableSlot> => {
@@ -49,7 +49,7 @@ export const timetableApi = {
       { method: "PATCH", body: JSON.stringify(data) },
     )
     const slot = (json as { data?: TimetableSlot }).data ?? (json as TimetableSlot)
-    return TimetableSlotSchema.parse(slot)
+    return safeValidate(TimetableSlotSchema, slot, `PATCH /timetable/${id}`)
   },
 
   remove: async (id: number): Promise<void> => {

@@ -12,6 +12,15 @@ interface RequestOptions extends Omit<RequestInit, "headers"> {
   schema?: z.ZodType
 }
 
+export function safeValidate<T>(schema: z.ZodType<T>, data: unknown, context: string): T {
+  const result = schema.safeParse(data)
+  if (!result.success) {
+    console.error(`[API] Validation failed for ${context}:`, result.error.issues)
+    throw new Error(`Réponse inattendue du serveur pour ${context}`)
+  }
+  return result.data
+}
+
 async function authHeaders(): Promise<Record<string, string>> {
   const session = await getSession()
   const headers: Record<string, string> = { "Content-Type": "application/json" }
@@ -33,5 +42,5 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   if (res.status === 204) return undefined as T
   const data = await res.json()
-  return schema ? schema.parse(data) : data
+  return schema ? safeValidate<T>(schema, data, path) : data
 }
