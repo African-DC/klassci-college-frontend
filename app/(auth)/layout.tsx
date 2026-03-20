@@ -48,16 +48,16 @@ export default function AuthLayout({
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 text-white">
           {/* Logo + College */}
-          <div className="flex items-end gap-1">
+          <div className="flex items-baseline gap-2">
             <Image
               src="/images/logo_klassci.png"
               alt="KLASSCI"
               width={170}
               height={45}
-              className="brightness-0 invert"
+              className="brightness-0 invert translate-y-[2px]"
               priority
             />
-            <span className="mb-[3px] text-[13px] font-sans font-light tracking-[0.2em] uppercase text-white/50">
+            <span className="font-serif text-[22px] text-white/70">
               College
             </span>
           </div>
@@ -68,7 +68,7 @@ export default function AuthLayout({
               <h1 className="font-serif text-4xl leading-tight xl:text-[3.2rem] xl:leading-[1.15] text-white">
                 Votre plateforme
                 <br />
-                <span className="text-[#f5a623]/90">de gestion scolaire</span>
+                <span className="text-[#F58220]">de gestion scolaire</span>
               </h1>
               <p className="max-w-lg text-[15px] leading-relaxed text-white/65 font-light">
                 Une solution moderne et complete pour piloter votre etablissement
@@ -105,15 +105,16 @@ export default function AuthLayout({
       {/* Right panel — form */}
       <div className="flex w-full flex-col items-center justify-center bg-background px-6 py-12 lg:w-[45%]">
         {/* Mobile logo */}
-        <div className="mb-10 flex items-end gap-1 lg:hidden">
+        <div className="mb-10 flex items-baseline gap-1.5 lg:hidden">
           <Image
             src="/images/logo_klassci.png"
             alt="KLASSCI"
             width={140}
             height={37}
+            className="translate-y-[2px]"
             priority
           />
-          <span className="mb-[2px] text-[11px] font-light tracking-[0.2em] uppercase text-muted-foreground">
+          <span className="font-serif text-lg text-muted-foreground">
             College
           </span>
         </div>
