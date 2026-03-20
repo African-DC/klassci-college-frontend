@@ -23,8 +23,8 @@ export const TimetableSlotCreateSchema = z.object({
   teacher_id: z.number({ required_error: "L'enseignant est requis" }).positive(),
   subject_id: z.number({ required_error: "La matiere est requise" }).positive(),
   day: DaySchema,
-  start_time: z.string({ required_error: "L'heure de debut est requise" }).regex(/^\d{2}:\d{2}$/, "Format HH:MM"),
-  end_time: z.string({ required_error: "L'heure de fin est requise" }).regex(/^\d{2}:\d{2}$/, "Format HH:MM"),
+  start_time: z.string({ required_error: "L'heure de debut est requise" }).regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format HH:MM"),
+  end_time: z.string({ required_error: "L'heure de fin est requise" }).regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format HH:MM"),
   room: z.string().nullish(),
 })
 

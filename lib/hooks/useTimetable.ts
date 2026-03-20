@@ -63,13 +63,13 @@ export function useCreateSlot() {
       }
       return { queries }
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.queries) {
         for (const [key, data] of context.queries) {
           queryClient.setQueryData(key, data)
         }
       }
-      toast.error("Erreur", { description: _err.message })
+      toast.error("Erreur", { description: err.message })
     },
     onSuccess: () => {
       toast.success("Créneau créé avec succès")
@@ -99,13 +99,13 @@ export function useUpdateSlot(id: number) {
       }
       return { queries }
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.queries) {
         for (const [key, data] of context.queries) {
           queryClient.setQueryData(key, data)
         }
       }
-      toast.error("Erreur", { description: _err.message })
+      toast.error("Erreur", { description: err.message })
     },
     onSuccess: () => {
       toast.success("Créneau mis à jour")
@@ -135,13 +135,13 @@ export function useDeleteSlot() {
       }
       return { queries }
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.queries) {
         for (const [key, data] of context.queries) {
           queryClient.setQueryData(key, data)
         }
       }
-      toast.error("Erreur", { description: _err.message })
+      toast.error("Erreur", { description: err.message })
     },
     onSuccess: () => {
       toast.success("Créneau supprimé")
@@ -160,8 +160,8 @@ export function useGenerateTimetable() {
       queryClient.invalidateQueries({ queryKey: timetableKeys.all })
       toast.success("Génération de l'emploi du temps lancée")
     },
-    onError: (_err) => {
-      toast.error("Erreur", { description: _err.message })
+    onError: (err) => {
+      toast.error("Erreur", { description: err.message })
     },
   })
 }
