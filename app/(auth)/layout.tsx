@@ -48,7 +48,7 @@ export default function AuthLayout({
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 text-white">
           {/* Logo + College */}
-          <div className="flex flex-col items-start">
+          <div className="flex flex-col items-center w-fit">
             <Image
               src="/images/logo_klassci.png"
               alt="KLASSCI"
@@ -57,7 +57,7 @@ export default function AuthLayout({
               className="brightness-0 invert"
               priority
             />
-            <span className="font-serif text-[18px] -mt-3 ml-[2px] text-white/60">
+            <span className="font-serif text-[17px] -mt-4 text-white/60">
               College
             </span>
           </div>
@@ -105,7 +105,7 @@ export default function AuthLayout({
       {/* Right panel — form */}
       <div className="flex w-full flex-col items-center justify-center bg-background px-6 py-12 lg:w-[45%]">
         {/* Mobile logo */}
-        <div className="mb-10 flex flex-col items-start lg:hidden">
+        <div className="mb-10 flex flex-col items-center w-fit lg:hidden">
           <Image
             src="/images/logo_klassci.png"
             alt="KLASSCI"
@@ -113,7 +113,7 @@ export default function AuthLayout({
             height={40}
             priority
           />
-          <span className="font-serif text-[15px] -mt-2 ml-[2px] text-muted-foreground">
+          <span className="font-serif text-[14px] -mt-3 text-muted-foreground">
             College
           </span>
         </div>
