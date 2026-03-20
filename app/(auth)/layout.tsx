@@ -48,16 +48,16 @@ export default function AuthLayout({
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           {/* Header */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col">
             <Image
               src="/images/logo_klassci.png"
               alt="KLASSCI College"
-              width={160}
-              height={42}
+              width={180}
+              height={48}
               className="brightness-0 invert"
               priority
             />
-            <span className="text-xl font-bold tracking-wide text-white/90">College</span>
+            <span className="ml-1 -mt-1 text-[11px] font-medium tracking-[0.35em] uppercase text-white/60">College</span>
           </div>
 
           {/* Center — tagline */}
@@ -100,15 +100,15 @@ export default function AuthLayout({
       {/* Right panel — form */}
       <div className="flex w-full flex-col items-center justify-center bg-background px-6 py-12 lg:w-[45%]">
         {/* Mobile header */}
-        <div className="mb-8 flex items-center gap-2 lg:hidden">
+        <div className="mb-8 flex flex-col lg:hidden">
           <Image
             src="/images/logo_klassci.png"
             alt="KLASSCI College"
-            width={140}
-            height={36}
+            width={150}
+            height={40}
             priority
           />
-          <span className="text-lg font-bold tracking-wide text-foreground">College</span>
+          <span className="ml-1 -mt-1 text-[10px] font-medium tracking-[0.35em] uppercase text-muted-foreground">College</span>
         </div>
 
         <div className="w-full max-w-[420px]">
