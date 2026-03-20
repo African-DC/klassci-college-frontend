@@ -1,12 +1,13 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import {
-  timetableApi,
-  type TimetableSlot,
-  type TimetableSlotCreateBody,
-  type TimetableSlotUpdateBody,
-} from "@/lib/api/timetable"
+import { toast } from "sonner"
+import { timetableApi } from "@/lib/api/timetable"
+import type {
+  TimetableSlot,
+  TimetableSlotCreate,
+  TimetableSlotUpdate,
+} from "@/lib/contracts/timetable"
 
 export const timetableKeys = {
   all: ["timetable"] as const,
@@ -36,7 +37,7 @@ export function useTeacherTimetable(teacherId: number) {
 export function useCreateSlot() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: TimetableSlotCreateBody) => timetableApi.create(data),
+    mutationFn: (data: TimetableSlotCreate) => timetableApi.create(data),
     onMutate: async (newSlot) => {
       await queryClient.cancelQueries({ queryKey: timetableKeys.all })
       const queries = queryClient.getQueriesData<TimetableSlot[]>({
@@ -62,12 +63,16 @@ export function useCreateSlot() {
       }
       return { queries }
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.queries) {
         for (const [key, data] of context.queries) {
           queryClient.setQueryData(key, data)
         }
       }
+      toast.error("Erreur", { description: err.message })
+    },
+    onSuccess: () => {
+      toast.success("Créneau créé avec succès")
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: timetableKeys.all })
@@ -78,7 +83,7 @@ export function useCreateSlot() {
 export function useUpdateSlot(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: TimetableSlotUpdateBody) => timetableApi.update(id, data),
+    mutationFn: (data: TimetableSlotUpdate) => timetableApi.update(id, data),
     onMutate: async (updatedFields) => {
       await queryClient.cancelQueries({ queryKey: timetableKeys.all })
       const queries = queryClient.getQueriesData<TimetableSlot[]>({
@@ -94,12 +99,16 @@ export function useUpdateSlot(id: number) {
       }
       return { queries }
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.queries) {
         for (const [key, data] of context.queries) {
           queryClient.setQueryData(key, data)
         }
       }
+      toast.error("Erreur", { description: err.message })
+    },
+    onSuccess: () => {
+      toast.success("Créneau mis à jour")
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: timetableKeys.all })
@@ -126,12 +135,16 @@ export function useDeleteSlot() {
       }
       return { queries }
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.queries) {
         for (const [key, data] of context.queries) {
           queryClient.setQueryData(key, data)
         }
       }
+      toast.error("Erreur", { description: err.message })
+    },
+    onSuccess: () => {
+      toast.success("Créneau supprimé")
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: timetableKeys.all })
@@ -145,6 +158,10 @@ export function useGenerateTimetable() {
     mutationFn: (classId: number) => timetableApi.generate(classId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: timetableKeys.all })
+      toast.success("Génération de l'emploi du temps lancée")
+    },
+    onError: (err) => {
+      toast.error("Erreur", { description: err.message })
     },
   })
 }

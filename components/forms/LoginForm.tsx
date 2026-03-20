@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Mail, Lock, ArrowRight, AlertCircle } from "lucide-react"
-import { loginSchema, type LoginInput } from "@/lib/validators/auth"
+import { LoginRequestSchema, type LoginRequest } from "@/lib/contracts/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -25,30 +25,34 @@ export function LoginForm() {
   const callbackUrl = rawCallback.startsWith("/") && !rawCallback.startsWith("//") ? rawCallback : "/"
   const [error, setError] = useState<string | null>(null)
 
-  const form = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<LoginRequest>({
+    resolver: zodResolver(LoginRequestSchema),
     defaultValues: {
       email: "",
       password: "",
     },
   })
 
-  async function onSubmit(data: LoginInput) {
+  async function onSubmit(data: LoginRequest) {
     setError(null)
 
-    const result = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    })
+    try {
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      })
 
-    if (result?.error) {
-      setError("Email ou mot de passe incorrect")
-      return
+      if (result?.error) {
+        setError("Email ou mot de passe incorrect")
+        return
+      }
+
+      router.push(callbackUrl as never)
+      router.refresh()
+    } catch {
+      setError("Erreur de connexion au serveur")
     }
-
-    router.push(callbackUrl as never)
-    router.refresh()
   }
 
   return (

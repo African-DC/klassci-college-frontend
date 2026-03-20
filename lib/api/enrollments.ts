@@ -1,49 +1,17 @@
-import { apiFetch } from "./client"
+import { apiFetch, safeValidate } from "./client"
+import {
+  EnrollmentSchema,
+  type Enrollment,
+  type EnrollmentCreate,
+  type EnrollmentUpdate,
+  type EnrollmentListParams,
+} from "@/lib/contracts/enrollment"
+import { PaginatedResponseSchema, type PaginatedResponse } from "@/lib/contracts"
 
-export interface Enrollment {
-  id: number
-  student_id: number
-  student_name: string
-  class_id: number
-  class_name: string
-  academic_year_id: number
-  academic_year_label: string
-  assignment_status: "affecte" | "reaffecte" | "non_affecte"
-  is_scholarship: boolean
-  created_at: string
-  updated_at: string
-}
+const PaginatedEnrollments = PaginatedResponseSchema(EnrollmentSchema)
 
-export interface EnrollmentListParams {
-  page?: number
-  per_page?: number
-  class_id?: number
-  status?: string
-  academic_year_id?: number
-  search?: string
-}
-
-export interface PaginatedResponse<T> {
-  data: T[]
-  total: number
-  page: number
-  per_page: number
-  total_pages: number
-}
-
-export interface EnrollmentCreateBody {
-  student_id: number
-  class_id: number
-  academic_year_id: number
-  assignment_status: string
-  is_scholarship: boolean
-}
-
-export interface EnrollmentUpdateBody {
-  class_id?: number
-  assignment_status?: string
-  is_scholarship?: boolean
-}
+export type { Enrollment, EnrollmentCreate, EnrollmentUpdate, EnrollmentListParams }
+export type { PaginatedResponse }
 
 export const enrollmentsApi = {
   list: async (params: EnrollmentListParams = {}): Promise<PaginatedResponse<Enrollment>> => {
@@ -53,28 +21,31 @@ export const enrollmentsApi = {
         query.set(key, String(value))
       }
     })
-    return apiFetch(`/enrollments?${query.toString()}`)
+    return apiFetch(`/enrollments?${query.toString()}`, { schema: PaginatedEnrollments })
   },
 
   getById: async (id: number): Promise<Enrollment> => {
     const res = await apiFetch<{ data?: Enrollment }>(`/enrollments/${id}`)
-    return (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
+    const enrollment = (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
+    return safeValidate(EnrollmentSchema, enrollment, `/enrollments/${id}`)
   },
 
-  create: async (data: EnrollmentCreateBody): Promise<Enrollment> => {
+  create: async (data: EnrollmentCreate): Promise<Enrollment> => {
     const res = await apiFetch<{ data?: Enrollment }>("/enrollments", {
       method: "POST",
       body: JSON.stringify(data),
     })
-    return (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
+    const enrollment = (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
+    return safeValidate(EnrollmentSchema, enrollment, "POST /enrollments")
   },
 
-  update: async (id: number, data: EnrollmentUpdateBody): Promise<Enrollment> => {
+  update: async (id: number, data: EnrollmentUpdate): Promise<Enrollment> => {
     const res = await apiFetch<{ data?: Enrollment }>(`/enrollments/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     })
-    return (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
+    const enrollment = (res as { data?: Enrollment }).data ?? (res as unknown as Enrollment)
+    return safeValidate(EnrollmentSchema, enrollment, `PATCH /enrollments/${id}`)
   },
 
   remove: async (id: number): Promise<void> => {

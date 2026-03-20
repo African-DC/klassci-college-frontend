@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { useTeacherTimetable } from "@/lib/hooks/useTimetable"
-import type { TimetableSlot } from "@/lib/api/timetable"
+import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi"] as const

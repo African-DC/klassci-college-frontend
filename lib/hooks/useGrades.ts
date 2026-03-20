@@ -2,13 +2,13 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import {
-  gradesApi,
-  type Evaluation,
-  type Grade,
-  type EvaluationCreateBody,
-  type GradeBatchUpdateBody,
-} from "@/lib/api/grades"
+import { gradesApi } from "@/lib/api/grades"
+import type {
+  Evaluation,
+  Grade,
+  EvaluationCreate,
+  GradeBatchUpdate,
+} from "@/lib/contracts/grade"
 
 export const gradeKeys = {
   all: ["grades"] as const,
@@ -37,7 +37,7 @@ export function useGrades(evaluationId: number) {
 export function useCreateEvaluation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: EvaluationCreateBody) => gradesApi.createEvaluation(data),
+    mutationFn: (data: EvaluationCreate) => gradesApi.createEvaluation(data),
     onMutate: async (newEval) => {
       await queryClient.cancelQueries({ queryKey: gradeKeys.evaluations(newEval.class_id) })
       const prev = queryClient.getQueryData<Evaluation[]>(gradeKeys.evaluations(newEval.class_id))
@@ -80,7 +80,7 @@ export function useCreateEvaluation() {
 export function useUpdateGrades(evaluationId: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: GradeBatchUpdateBody) => gradesApi.updateGrades(evaluationId, data),
+    mutationFn: (data: GradeBatchUpdate) => gradesApi.updateGrades(evaluationId, data),
     onMutate: async (batch) => {
       await queryClient.cancelQueries({ queryKey: gradeKeys.grades(evaluationId) })
       const prev = queryClient.getQueryData<Grade[]>(gradeKeys.grades(evaluationId))

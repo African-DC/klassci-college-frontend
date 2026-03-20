@@ -1,43 +1,17 @@
-import { apiFetch } from "@/lib/api/client"
+import { z } from "zod"
+import { apiFetch, safeValidate } from "./client"
+import {
+  TimetableSlotSchema,
+  GenerateTaskResponseSchema,
+  type TimetableSlot,
+  type TimetableSlotCreate,
+  type TimetableSlotUpdate,
+  type GenerateTaskResponse,
+} from "@/lib/contracts/timetable"
 
-export interface TimetableSlot {
-  id: number
-  class_id: number
-  class_name: string
-  teacher_id: number
-  teacher_name: string
-  subject_id: number
-  subject_name: string
-  day: "lundi" | "mardi" | "mercredi" | "jeudi" | "vendredi"
-  start_time: string
-  end_time: string
-  room?: string
-}
+export type { TimetableSlot, TimetableSlotCreate, TimetableSlotUpdate, GenerateTaskResponse }
 
-export interface TimetableSlotCreateBody {
-  class_id: number
-  teacher_id: number
-  subject_id: number
-  day: string
-  start_time: string
-  end_time: string
-  room?: string
-}
-
-export interface TimetableSlotUpdateBody {
-  teacher_id?: number
-  subject_id?: number
-  day?: string
-  start_time?: string
-  end_time?: string
-  room?: string
-}
-
-export interface GenerateTaskResponse {
-  task_id: string
-  status: "pending" | "running" | "completed" | "failed"
-  message?: string
-}
+const TimetableSlotArraySchema = z.array(TimetableSlotSchema)
 
 export const timetableApi = {
   listByClass: async (classId: number, weekOffset?: number): Promise<TimetableSlot[]> => {
@@ -48,30 +22,34 @@ export const timetableApi = {
     const json = await apiFetch<{ data?: TimetableSlot[] } | TimetableSlot[]>(
       `/timetable?${params}`,
     )
-    return Array.isArray(json) ? json : json.data ?? []
+    const arr = Array.isArray(json) ? json : json.data ?? []
+    return safeValidate(TimetableSlotArraySchema, arr, `/timetable?class_id=${classId}`)
   },
 
   listByTeacher: async (teacherId: number): Promise<TimetableSlot[]> => {
     const json = await apiFetch<{ data?: TimetableSlot[] } | TimetableSlot[]>(
       `/timetable?teacher_id=${teacherId}`,
     )
-    return Array.isArray(json) ? json : json.data ?? []
+    const arr = Array.isArray(json) ? json : json.data ?? []
+    return safeValidate(TimetableSlotArraySchema, arr, `/timetable?teacher_id=${teacherId}`)
   },
 
-  create: async (data: TimetableSlotCreateBody): Promise<TimetableSlot> => {
+  create: async (data: TimetableSlotCreate): Promise<TimetableSlot> => {
     const json = await apiFetch<{ data?: TimetableSlot } | TimetableSlot>(
       `/timetable`,
       { method: "POST", body: JSON.stringify(data) },
     )
-    return (json as { data?: TimetableSlot }).data ?? (json as TimetableSlot)
+    const slot = (json as { data?: TimetableSlot }).data ?? (json as TimetableSlot)
+    return safeValidate(TimetableSlotSchema, slot, "POST /timetable")
   },
 
-  update: async (id: number, data: TimetableSlotUpdateBody): Promise<TimetableSlot> => {
+  update: async (id: number, data: TimetableSlotUpdate): Promise<TimetableSlot> => {
     const json = await apiFetch<{ data?: TimetableSlot } | TimetableSlot>(
       `/timetable/${id}`,
       { method: "PATCH", body: JSON.stringify(data) },
     )
-    return (json as { data?: TimetableSlot }).data ?? (json as TimetableSlot)
+    const slot = (json as { data?: TimetableSlot }).data ?? (json as TimetableSlot)
+    return safeValidate(TimetableSlotSchema, slot, `PATCH /timetable/${id}`)
   },
 
   remove: async (id: number): Promise<void> => {
@@ -79,13 +57,14 @@ export const timetableApi = {
   },
 
   generate: async (classId: number): Promise<GenerateTaskResponse> => {
-    return apiFetch<GenerateTaskResponse>(`/timetable/generate`, {
+    return apiFetch(`/timetable/generate`, {
       method: "POST",
       body: JSON.stringify({ class_id: classId }),
+      schema: GenerateTaskResponseSchema,
     })
   },
 
   taskStatus: async (taskId: string): Promise<GenerateTaskResponse> => {
-    return apiFetch<GenerateTaskResponse>(`/timetable/tasks/${taskId}`)
+    return apiFetch(`/timetable/tasks/${taskId}`, { schema: GenerateTaskResponseSchema })
   },
 }

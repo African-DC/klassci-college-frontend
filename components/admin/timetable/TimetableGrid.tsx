@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Plus, Pencil, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTimetable, useDeleteSlot } from "@/lib/hooks/useTimetable"
-import type { TimetableSlot } from "@/lib/api/timetable"
+import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import {

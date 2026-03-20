@@ -2,10 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  enrollmentCreateSchema,
-  type EnrollmentCreateInput,
-} from "@/lib/validators/enrollment"
+import { EnrollmentCreateSchema, type EnrollmentCreate } from "@/lib/contracts/enrollment"
 import { useCreateEnrollment } from "@/lib/hooks/useEnrollments"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,8 +27,8 @@ interface EnrollmentFormProps {
 }
 
 export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
-  const form = useForm<EnrollmentCreateInput>({
-    resolver: zodResolver(enrollmentCreateSchema),
+  const form = useForm<EnrollmentCreate>({
+    resolver: zodResolver(EnrollmentCreateSchema),
     defaultValues: {
       is_scholarship: false,
     },
@@ -39,7 +36,7 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
 
   const { mutate, isPending, error } = useCreateEnrollment()
 
-  function onSubmit(data: EnrollmentCreateInput) {
+  function onSubmit(data: EnrollmentCreate) {
     mutate(data, {
       onSuccess: () => {
         form.reset()
