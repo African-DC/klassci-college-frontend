@@ -42,6 +42,17 @@ lib/
 └── utils/               ← helpers purs
 ```
 
+## Design System — Couleurs (basées sur le logo KLASSCI)
+
+| Token        | HSL                 | Hex approx  | Usage                                      |
+|-------------|---------------------|-------------|---------------------------------------------|
+| `primary`   | `216 80% 30%`       | `#0F3F8C`   | Bleu foncé du logo — boutons, liens, nav    |
+| `accent`    | `28 91% 54%`        | `#F58220`   | Orange du logo — CTA secondaires, highlights |
+
+- **Toujours utiliser** `bg-primary`, `text-primary`, `bg-accent`, `text-accent` — jamais de bleu/orange hardcodé
+- Les couleurs sémantiques (emerald=succès, amber=warning, rose=erreur) restent autorisées pour les indicateurs de statut
+- Les palettes de différenciation (matières, catégories) peuvent utiliser des couleurs Tailwind variées
+
 ## Règles Absolues
 
 ### Composants
