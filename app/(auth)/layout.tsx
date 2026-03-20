@@ -1,3 +1,4 @@
+import Image from "next/image"
 import { GraduationCap, BookOpen, Users, Shield } from "lucide-react"
 
 const features = [
@@ -48,13 +49,14 @@ export default function AuthLayout({
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           {/* Header */}
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
-              <GraduationCap className="h-7 w-7" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold tracking-wide">KLASSCI</h2>
-              <p className="text-xs text-white/70 tracking-widest uppercase">College</p>
-            </div>
+            <Image
+              src="/images/logo_klassci.png"
+              alt="KLASSCI College"
+              width={180}
+              height={48}
+              className="brightness-0 invert"
+              priority
+            />
           </div>
 
           {/* Center — tagline */}
@@ -97,14 +99,14 @@ export default function AuthLayout({
       {/* Right panel — form */}
       <div className="flex w-full flex-col items-center justify-center bg-background px-6 py-12 lg:w-[45%]">
         {/* Mobile header */}
-        <div className="mb-8 flex items-center gap-3 lg:hidden">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <GraduationCap className="h-6 w-6" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground">KLASSCI</h2>
-            <p className="text-xs text-muted-foreground tracking-widest uppercase">College</p>
-          </div>
+        <div className="mb-8 lg:hidden">
+          <Image
+            src="/images/logo_klassci.png"
+            alt="KLASSCI College"
+            width={160}
+            height={42}
+            priority
+          />
         </div>
 
         <div className="w-full max-w-[420px]">
