@@ -1,7 +1,8 @@
 "use client"
 
 import { signOut, useSession } from "next-auth/react"
-import { Bell, Menu, LogOut, User, ChevronDown } from "lucide-react"
+import { useTheme } from "next-themes"
+import { Bell, Menu, LogOut, User, ChevronDown, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
@@ -20,6 +21,7 @@ interface NavbarProps {
 
 export function Navbar({ onMenuClick }: NavbarProps) {
   const { data: session } = useSession()
+  const { theme, setTheme } = useTheme()
   const initials = session?.user?.email
     ?.split("@")[0]
     .slice(0, 2)
@@ -42,6 +44,17 @@ export function Navbar({ onMenuClick }: NavbarProps) {
 
       {/* Right side actions */}
       <div className="flex items-center gap-2">
+        {/* Theme toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        >
+          <Sun className="h-5 w-5 text-muted-foreground rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-5 w-5 text-muted-foreground rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Changer le theme</span>
+        </Button>
+
         {/* Notifications */}
         {/* TODO: remplacer par un hook useNotificationCount() */}
         <Button variant="ghost" size="icon" className="relative">

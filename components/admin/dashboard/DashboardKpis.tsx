@@ -40,24 +40,28 @@ export function DashboardKpis() {
         value={data?.enrolled_students ?? 0}
         description="Inscriptions validees"
         icon={GraduationCap}
+        variant="blue"
       />
       <KpiCard
         title="Paiements en attente"
         value={data?.pending_payments ?? 0}
         description="A traiter"
         icon={Wallet}
+        variant="orange"
       />
       <KpiCard
         title="Cours du jour"
         value={data?.courses_today ?? 0}
         description="Programmes aujourd'hui"
         icon={CalendarDays}
+        variant="emerald"
       />
       <KpiCard
         title="Alertes"
         value={data?.alerts ?? 0}
         description="Evaluations sans notes"
         icon={AlertTriangle}
+        variant="rose"
       />
     </div>
   )

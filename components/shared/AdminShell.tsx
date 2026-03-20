@@ -15,7 +15,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto bg-muted/30 p-4 lg:p-6">
           {children}
         </main>
       </div>
