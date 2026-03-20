@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -97,14 +98,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex h-16 items-center justify-between px-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <GraduationCap className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-sm font-bold leading-none">KLASSCI</p>
-            <p className="text-[10px] tracking-widest text-muted-foreground uppercase">College</p>
-          </div>
+        <div className="flex flex-col items-center w-fit">
+          <Image
+            src="/images/logo_klassci.png"
+            alt="KLASSCI"
+            width={120}
+            height={32}
+          />
+          <span className="font-serif text-[12px] -mt-2 text-muted-foreground">
+            College
+          </span>
         </div>
         {/* Mobile close button */}
         {onClose && (
