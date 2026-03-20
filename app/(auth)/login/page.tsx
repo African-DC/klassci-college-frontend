@@ -12,18 +12,18 @@ export default async function LoginPage() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+      <div className="space-y-3">
+        <h1 className="font-serif text-3xl text-foreground">
           Bienvenue
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-[15px] text-muted-foreground font-light">
           Connectez-vous pour acceder a votre espace
         </p>
       </div>
 
       <LoginForm />
 
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="text-center text-[11px] text-muted-foreground/60 font-light">
         En vous connectant, vous acceptez les conditions d&apos;utilisation
         de la plateforme KLASSCI.
       </p>

@@ -1,9 +1,18 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { DM_Sans, DM_Serif_Display } from 'next/font/google';
 import { Providers } from '@/components/shared/Providers';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+});
+
+const dmSerif = DM_Serif_Display({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-serif',
+});
 
 export const metadata: Metadata = {
   title: 'KLASSCI Collège',
@@ -17,7 +26,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body className={inter.className}>
+      <body className={`${dmSans.variable} ${dmSerif.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
