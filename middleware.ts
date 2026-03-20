@@ -27,7 +27,7 @@ export default auth((req) => {
   const session = req.auth
   const isLoggedIn = !!session?.user
 
-  // Refresh token expired — force re-login (but don't loop)
+  // Refresh token expired — force re-login
   if (session?.error === "RefreshTokenError" && pathname !== "/login") {
     const url = req.nextUrl.clone()
     url.pathname = "/login"
@@ -38,15 +38,21 @@ export default auth((req) => {
   const portalFromPath = getPortalFromPath(pathname)
   const isProtectedRoute = portalFromPath !== null
 
-  // Not authenticated on protected route → redirect to login
+  // Not authenticated on protected route:
+  // In dev mode, let users browse freely (backend may be offline).
+  // In production, redirect to login.
   if (isProtectedRoute && !isLoggedIn) {
-    const url = req.nextUrl.clone()
-    url.pathname = "/login"
-    url.searchParams.set("callbackUrl", pathname)
-    return NextResponse.redirect(url)
+    if (process.env.NODE_ENV === "production") {
+      const url = req.nextUrl.clone()
+      url.pathname = "/login"
+      url.searchParams.set("callbackUrl", pathname)
+      return NextResponse.redirect(url)
+    }
+    // Dev mode — let through without auth
+    return NextResponse.next()
   }
 
-  // Authenticated on /login → redirect to their portal (avoid loop: only if role maps to a portal)
+  // Authenticated on /login → redirect to their portal
   if (pathname === "/login" && isLoggedIn) {
     const dest = getDefaultRedirect(session.user.role)
     if (dest !== "/login") {
