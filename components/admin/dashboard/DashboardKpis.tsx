@@ -5,36 +5,35 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import { KpiCard } from "./KpiCard"
-import { Skeleton } from "@/components/ui/skeleton"
 
-// TODO: fetch from GET /dashboard/stats
-// Ce composant affiche des placeholders en attendant l'endpoint backend.
+// TODO: fetch from GET /dashboard/stats when endpoint is available
+// Pour l'instant, affiche des compteurs a zero — remplacer par un useQuery
 
 export function DashboardKpis() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <KpiCard
         title="Eleves inscrits"
-        value={<Skeleton className="h-7 w-16" />}
+        value="0"
         description="Annee academique 2025-2026"
         icon={GraduationCap}
       />
       <KpiCard
         title="Paiements en attente"
-        value={<Skeleton className="h-7 w-12" />}
+        value="0"
         description="A traiter cette semaine"
         icon={Wallet}
       />
       <KpiCard
         title="Cours du jour"
-        value={<Skeleton className="h-7 w-12" />}
-        description="En attente de l'API"
+        value="0"
+        description="Aucun cours programme"
         icon={CalendarDays}
       />
       <KpiCard
         title="Alertes"
-        value={<Skeleton className="h-7 w-10" />}
-        description="Notes manquantes, absences"
+        value="0"
+        description="Aucune alerte"
         icon={AlertTriangle}
       />
     </div>
