@@ -59,17 +59,7 @@ EOF
 gh pr view --web
 ```
 
-### Étape 5 — Nettoyer le worktree (après merge uniquement)
-
-⚠️ **Ne supprimer le worktree QU'APRÈS que la PR soit mergée sur develop.**
-
-```bash
-# Depuis le repo principal (pas depuis le worktree)
-git worktree remove ../worktree-front-<issue>-<slug>
-git worktree prune
-```
-
-### Étape 6 — Confirmer à l'utilisateur
+### Étape 5 — Confirmer à l'utilisateur
 
 ```
 ✅ PR créée : <URL>
@@ -80,22 +70,42 @@ git worktree prune
 ⏳ En attente de review.
 ```
 
-### Étape 7 — Nettoyage (après merge uniquement)
+### Étape 6 — Nettoyage + fermeture d'issue (après merge uniquement)
 
-Une fois la PR mergée, proposer :
+⚠️ **Ne supprimer le worktree QU'APRÈS que la PR soit mergée sur develop.**
 
-> La PR est mergée. Veux-tu nettoyer le worktree ?
-> ```bash
-> # Depuis klassci-frontend/ (pas depuis le worktree)
-> git worktree remove ../worktree-front-<issue>-<slug>
-> git worktree prune
-> ```
+Une fois la PR mergée, exécuter dans cet ordre :
+
+**1. Nettoyer le worktree :**
+```bash
+# Depuis klassci-frontend/ (pas depuis le worktree)
+git worktree remove ../worktree-front-<issue>-<slug>
+git worktree prune
+```
+
+**2. Fermer l'issue liée manuellement :**
+
+> ⚠️ Les PRs mergées dans `develop` ne ferment PAS les issues automatiquement.
+> `Closes #N` ne déclenche la fermeture qu'au merge dans la branche par défaut (`main`).
+> Fermeture manuelle obligatoire après chaque merge dans `develop`.
+
+```bash
+gh issue close <issue-number> \
+  --repo African-DC/klassci-college-frontend \
+  --comment "Implémenté et mergé dans \`develop\` via PR #<pr-number>. Sera disponible en production au prochain merge develop → staging → main."
+```
+
+Confirmer à l'utilisateur :
+```
+✅ Worktree supprimé
+✅ Issue #<N> fermée
+```
 
 ### Règles importantes
 
 - **La PR va vers `develop`, jamais directement vers `main`**
 - Le titre du PR doit suivre : `type(scope): description`
-- `Closes #N` dans le body ferme l'issue automatiquement au merge
+- `Closes #N` est conservé dans le body PR (traçabilité) mais la fermeture manuelle est obligatoire après merge dans `develop`
 - Ne pas squash les commits (merge commit pour conserver l'historique)
 - Toujours nettoyer le worktree **depuis le repo principal**, jamais depuis l'intérieur du worktree
 
