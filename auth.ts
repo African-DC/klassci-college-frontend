@@ -26,7 +26,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: data.user.email,
             role: data.user.role,
             accessToken: data.access_token,
-            refreshToken: data.refresh_token,
           }
         } catch {
           return null
@@ -42,7 +41,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.email = user.email!
         token.role = user.role
         token.accessToken = user.accessToken
-        token.refreshToken = user.refreshToken
         return token
       }
 
@@ -51,17 +49,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token
       }
 
-      // Access token expired — try to refresh
-      try {
-        const refreshed = await authApi.refresh(token.refreshToken)
-        token.accessToken = refreshed.access_token
-        token.refreshToken = refreshed.refresh_token
-        token.error = undefined
-        return token
-      } catch {
-        token.error = "RefreshTokenError"
-        return token
-      }
+      // Access token expired — refresh is handled by httpOnly cookie on the backend
+      // The frontend cannot read the refresh token (httpOnly).
+      // For now, force re-login when access token expires.
+      token.error = "RefreshTokenError"
+      return token
     },
     async session({ session, token }) {
       session.user.id = token.id

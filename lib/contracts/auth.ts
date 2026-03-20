@@ -23,14 +23,12 @@ export const UserSchema = z.object({
 
 export const LoginResponseSchema = z.object({
   access_token: z.string(),
-  refresh_token: z.string(),
   token_type: z.string(),
   user: UserSchema,
 })
 
 export const RefreshResponseSchema = z.object({
   access_token: z.string(),
-  refresh_token: z.string(),
   token_type: z.string(),
 })
 
