@@ -28,7 +28,7 @@ export function DashboardKpis() {
     return (
       <DataError
         message={error?.message || "Impossible de charger les statistiques du dashboard"}
-        onRetry={() => refetch()}
+        onRetry={refetch}
       />
     )
   }
