@@ -1,5 +1,3 @@
-"use client"
-
 import {
   UserPlus,
   CreditCard,
@@ -28,20 +26,20 @@ const variantStyles: Record<ActivityItem["variant"], string> = {
   rose: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
 }
 
-// Donnees de demo — sera remplace par l'API /dashboard/activity
+// Données de démo — sera remplacé par l'API /dashboard/activity
 const activities: ActivityItem[] = [
   {
     id: 1,
     icon: UserPlus,
     label: "Nouvelle inscription",
-    detail: "Jean Mbala — 3eme B",
+    detail: "Jean Mbala — 3ème B",
     time: "Il y a 12 min",
     variant: "blue",
   },
   {
     id: 2,
     icon: CreditCard,
-    label: "Paiement recu",
+    label: "Paiement reçu",
     detail: "Marie Loko — 45 000 FC",
     time: "Il y a 28 min",
     variant: "orange",
@@ -50,15 +48,15 @@ const activities: ActivityItem[] = [
     id: 3,
     icon: ClipboardList,
     label: "Notes saisies",
-    detail: "Maths 4eme A — M. Kabongo",
+    detail: "Maths 4ème A — M. Kabongo",
     time: "Il y a 1h",
     variant: "emerald",
   },
   {
     id: 4,
     icon: CalendarDays,
-    label: "Emploi du temps modifie",
-    detail: "6eme C — Lundi matin",
+    label: "Emploi du temps modifié",
+    detail: "6ème C — Lundi matin",
     time: "Il y a 2h",
     variant: "violet",
   },
@@ -66,7 +64,7 @@ const activities: ActivityItem[] = [
     id: 5,
     icon: AlertTriangle,
     label: "Alerte absence",
-    detail: "3 absences non justifiees — 5eme A",
+    detail: "3 absences non justifiées — 5ème A",
     time: "Il y a 3h",
     variant: "rose",
   },
@@ -76,7 +74,7 @@ export function RecentActivity() {
   return (
     <Card className="border-0 shadow-sm ring-1 ring-border">
       <CardHeader>
-        <CardTitle className="text-base font-medium">Activite recente</CardTitle>
+        <CardTitle className="text-base font-medium">Activité récente</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

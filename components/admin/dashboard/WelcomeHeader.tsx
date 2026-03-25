@@ -33,10 +33,10 @@ export function WelcomeHeader() {
         </h1>
         <div className="flex items-center gap-2 text-sm text-primary-foreground/70">
           <CalendarDays className="h-4 w-4" />
-          <span className="capitalize">{today}</span>
+          <span className="capitalize" suppressHydrationWarning>{today}</span>
         </div>
         <p className="text-sm text-primary-foreground/60 max-w-lg">
-          Voici un apercu de votre etablissement. Consultez les indicateurs cles et les activites recentes.
+          Voici un aperçu de votre établissement. Consultez les indicateurs clés et les activités récentes.
         </p>
       </div>
     </div>
