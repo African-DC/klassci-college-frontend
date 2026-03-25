@@ -63,7 +63,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
               <FormItem>
                 <FormLabel>Nom *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: Kalala" className="h-11" {...field} />
+                  <Input placeholder="Ex : Kalala" className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -75,9 +75,9 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
             name="first_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Prenom *</FormLabel>
+                <FormLabel>Prénom *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: Patrick" className="h-11" {...field} />
+                  <Input placeholder="Ex : Patrick" className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -93,7 +93,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
               <FormItem>
                 <FormLabel>Matricule</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: KLS-2025-001" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : KLS-2025-001" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -109,12 +109,12 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Selectionner" />
+                      <SelectValue placeholder="Sélectionner" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="M">Masculin</SelectItem>
-                    <SelectItem value="F">Feminin</SelectItem>
+                    <SelectItem value="F">Féminin</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -143,9 +143,9 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
             name="parent_phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Telephone parent</FormLabel>
+                <FormLabel>Téléphone parent</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: +243 812 345 678" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : +243 812 345 678" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -159,7 +159,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
               <FormItem>
                 <FormLabel>Adresse</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: Av. Lumumba, Kinshasa" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : Av. Lumumba, Kinshasa" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -174,7 +174,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
         )}
 
         <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending ? "Enregistrement..." : "Enregistrer l'eleve"}
+          {isPending ? "Enregistrement..." : "Enregistrer l'élève"}
         </Button>
       </form>
     </Form>

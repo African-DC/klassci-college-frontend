@@ -55,7 +55,7 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
               <FormItem>
                 <FormLabel>Nom *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: Mbala" className="h-11" {...field} />
+                  <Input placeholder="Ex : Mbala" className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -67,9 +67,9 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
             name="first_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Prenom *</FormLabel>
+                <FormLabel>Prénom *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: Jean" className="h-11" {...field} />
+                  <Input placeholder="Ex : Jean" className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -85,7 +85,7 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="Ex: j.mbala@ecole.cd" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input type="email" placeholder="Ex : j.mbala@ecole.cd" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -97,9 +97,9 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Telephone</FormLabel>
+                <FormLabel>Téléphone</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: +243 812 345 678" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : +243 812 345 678" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -115,7 +115,7 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
               <FormItem>
                 <FormLabel>Poste</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: Secretaire" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : Secrétaire" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -127,9 +127,9 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
             name="department"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Departement</FormLabel>
+                <FormLabel>Département</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: Administration" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : Administration" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

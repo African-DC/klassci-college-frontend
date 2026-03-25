@@ -53,7 +53,7 @@ export function TeacherForm({ onSuccess }: TeacherFormProps) {
               <FormItem>
                 <FormLabel>Nom *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: Dupont" className="h-11" {...field} />
+                  <Input placeholder="Ex : Dupont" className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -65,9 +65,9 @@ export function TeacherForm({ onSuccess }: TeacherFormProps) {
             name="first_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Prenom *</FormLabel>
+                <FormLabel>Prénom *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: Marie" className="h-11" {...field} />
+                  <Input placeholder="Ex : Marie" className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -83,7 +83,7 @@ export function TeacherForm({ onSuccess }: TeacherFormProps) {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="Ex: m.dupont@ecole.cd" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input type="email" placeholder="Ex : m.dupont@ecole.cd" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -95,9 +95,9 @@ export function TeacherForm({ onSuccess }: TeacherFormProps) {
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Telephone</FormLabel>
+                <FormLabel>Téléphone</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: +243 812 345 678" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : +243 812 345 678" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -78,7 +78,7 @@ function EditForm({ staffId, onClose }: { staffId: number; onClose: () => void }
             name="first_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Prenom</FormLabel>
+                <FormLabel>Prénom</FormLabel>
                 <FormControl>
                   <Input className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
@@ -107,7 +107,7 @@ function EditForm({ staffId, onClose }: { staffId: number; onClose: () => void }
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Telephone</FormLabel>
+                <FormLabel>Téléphone</FormLabel>
                 <FormControl>
                   <Input className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
@@ -136,7 +136,7 @@ function EditForm({ staffId, onClose }: { staffId: number; onClose: () => void }
             name="department"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Departement</FormLabel>
+                <FormLabel>Département</FormLabel>
                 <FormControl>
                   <Input className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
@@ -153,7 +153,7 @@ function EditForm({ staffId, onClose }: { staffId: number; onClose: () => void }
         )}
 
         <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending ? "Enregistrement..." : "Mettre a jour"}
+          {isPending ? "Enregistrement..." : "Mettre à jour"}
         </Button>
       </form>
     </Form>

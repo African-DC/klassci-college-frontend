@@ -13,7 +13,7 @@ export function SubjectCreateModal({ open, onClose }: SubjectCreateModalProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nouvelle matiere</DialogTitle>
+          <DialogTitle>Nouvelle matière</DialogTitle>
         </DialogHeader>
         <SubjectForm onSuccess={onClose} />
       </DialogContent>

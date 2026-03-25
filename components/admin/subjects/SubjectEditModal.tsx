@@ -62,7 +62,7 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nom de la matiere</FormLabel>
+              <FormLabel>Nom de la matière</FormLabel>
               <FormControl>
                 <Input className="h-11" {...field} value={field.value ?? ""} />
               </FormControl>
@@ -125,7 +125,7 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Categorie</FormLabel>
+                <FormLabel>Catégorie</FormLabel>
                 <FormControl>
                   <Input className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
@@ -142,7 +142,7 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
         )}
 
         <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending ? "Enregistrement..." : "Mettre a jour"}
+          {isPending ? "Enregistrement..." : "Mettre à jour"}
         </Button>
       </form>
     </Form>
@@ -160,7 +160,7 @@ export function SubjectEditModal({ subjectId, open, onClose }: SubjectEditModalP
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Modifier la matiere</DialogTitle>
+          <DialogTitle>Modifier la matière</DialogTitle>
         </DialogHeader>
         {subjectId && <EditForm subjectId={subjectId} onClose={onClose} />}
       </DialogContent>

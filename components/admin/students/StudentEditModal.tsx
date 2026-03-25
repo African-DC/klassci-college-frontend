@@ -50,7 +50,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
           last_name: student.last_name,
           matricule: student.matricule ?? undefined,
           date_of_birth: student.date_of_birth ?? undefined,
-          gender: (student.gender as "M" | "F") ?? undefined,
+          gender: student.gender ?? undefined,
           class_id: student.class_id ?? undefined,
           parent_phone: student.parent_phone ?? undefined,
           address: student.address ?? undefined,
@@ -86,7 +86,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
             name="first_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Prenom</FormLabel>
+                <FormLabel>Prénom</FormLabel>
                 <FormControl>
                   <Input className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
@@ -119,12 +119,12 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Selectionner" />
+                      <SelectValue placeholder="Sélectionner" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="M">Masculin</SelectItem>
-                    <SelectItem value="F">Feminin</SelectItem>
+                    <SelectItem value="F">Féminin</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -153,7 +153,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
             name="parent_phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Telephone parent</FormLabel>
+                <FormLabel>Téléphone parent</FormLabel>
                 <FormControl>
                   <Input className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
@@ -183,7 +183,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
         )}
 
         <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending ? "Enregistrement..." : "Mettre a jour"}
+          {isPending ? "Enregistrement..." : "Mettre à jour"}
         </Button>
       </form>
     </Form>
@@ -201,7 +201,7 @@ export function StudentEditModal({ studentId, open, onClose }: StudentEditModalP
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Modifier l&apos;eleve</DialogTitle>
+          <DialogTitle>Modifier l&apos;élève</DialogTitle>
         </DialogHeader>
         {studentId && <EditForm studentId={studentId} onClose={onClose} />}
       </DialogContent>

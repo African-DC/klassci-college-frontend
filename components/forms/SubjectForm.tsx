@@ -50,9 +50,9 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nom de la matiere *</FormLabel>
+              <FormLabel>Nom de la matière *</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Mathematiques" className="h-11" {...field} />
+                <Input placeholder="Ex : Mathématiques" className="h-11" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -67,7 +67,7 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
               <FormItem>
                 <FormLabel>Code *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: MATH" className="h-11" {...field} />
+                  <Input placeholder="Ex : MATH" className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -103,7 +103,7 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
               <FormItem>
                 <FormLabel>Niveau</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: 6eme" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : 6ème" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -115,9 +115,9 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Categorie</FormLabel>
+                <FormLabel>Catégorie</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: Sciences" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : Sciences" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -132,7 +132,7 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
         )}
 
         <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending ? "Enregistrement..." : "Enregistrer la matiere"}
+          {isPending ? "Enregistrement..." : "Enregistrer la matière"}
         </Button>
       </form>
     </Form>

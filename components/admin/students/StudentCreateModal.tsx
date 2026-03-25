@@ -13,7 +13,7 @@ export function StudentCreateModal({ open, onClose }: StudentCreateModalProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nouvel eleve</DialogTitle>
+          <DialogTitle>Nouvel élève</DialogTitle>
         </DialogHeader>
         <StudentForm onSuccess={onClose} />
       </DialogContent>

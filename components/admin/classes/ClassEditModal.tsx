@@ -106,7 +106,7 @@ function EditForm({ classId, onClose }: { classId: number; onClose: () => void }
           name="capacity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Capacite</FormLabel>
+              <FormLabel>Capacité</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -128,7 +128,7 @@ function EditForm({ classId, onClose }: { classId: number; onClose: () => void }
         )}
 
         <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending ? "Enregistrement..." : "Mettre a jour"}
+          {isPending ? "Enregistrement..." : "Mettre à jour"}
         </Button>
       </form>
     </Form>

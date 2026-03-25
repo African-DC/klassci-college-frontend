@@ -1,45 +1,18 @@
 "use client"
 
-import { useState } from "react"
-import { ColumnDef, useReactTable, getCoreRowModel, flexRender } from "@tanstack/react-table"
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { useMemo } from "react"
+import type { ColumnDef } from "@tanstack/react-table"
 import { useTeachers, useDeleteTeacher } from "@/lib/hooks/useTeachers"
 import type { Teacher } from "@/lib/contracts/teacher"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { DataError } from "@/components/shared/DataError"
+import { CrudTable } from "@/components/shared/CrudTable"
 import { TeacherEditModal } from "./TeacherEditModal"
 
 export function TeachersTable() {
   const { data, isLoading, isError, error, refetch } = useTeachers()
   const deleteMutation = useDeleteTeacher()
-  const [editId, setEditId] = useState<number | null>(null)
-  const [deleteId, setDeleteId] = useState<number | null>(null)
 
-  const columns: ColumnDef<Teacher>[] = [
+  const columns: ColumnDef<Teacher>[] = useMemo(() => [
     {
       accessorKey: "last_name",
       header: "Nom",
@@ -58,14 +31,14 @@ export function TeachersTable() {
     },
     {
       accessorKey: "phone",
-      header: "Telephone",
+      header: "Téléphone",
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">{row.original.phone ?? "—"}</span>
       ),
     },
     {
       accessorKey: "subject_names",
-      header: "Matieres",
+      header: "Matières",
       cell: ({ row }) => {
         const subjects = row.original.subject_names
         if (!subjects || subjects.length === 0) return <span className="text-sm text-muted-foreground">—</span>
@@ -89,121 +62,24 @@ export function TeachersTable() {
         </Badge>
       ),
     },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setEditId(row.original.id)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Modifier
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => setDeleteId(row.original.id)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Supprimer
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
-  ]
-
-  const table = useReactTable({
-    data: data?.data ?? [],
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
-
-  if (isError) {
-    return <DataError message={error?.message ?? "Impossible de charger les enseignants"} onRetry={refetch} />
-  }
+  ], [])
 
   return (
-    <>
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading &&
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  {columns.map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton className="h-4 w-20" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            {!isLoading && data?.data.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
-                  Aucun enseignant trouve
-                </TableCell>
-              </TableRow>
-            )}
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <TeacherEditModal
-        teacherId={editId}
-        open={editId !== null}
-        onClose={() => setEditId(null)}
-      />
-
-      <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmer la suppression</DialogTitle>
-            <DialogDescription>
-              Cette action est irreversible. L&apos;enseignant sera definitivement supprime.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>
-              Annuler
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={deleteMutation.isPending}
-              onClick={() => {
-                if (deleteId) {
-                  deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })
-                }
-              }}
-            >
-              {deleteMutation.isPending ? "Suppression..." : "Supprimer"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+    <CrudTable<Teacher>
+      data={data}
+      columns={columns}
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      refetch={refetch}
+      deleteMutation={deleteMutation}
+      renderEditModal={({ itemId, open, onClose }) => (
+        <TeacherEditModal teacherId={itemId} open={open} onClose={onClose} />
+      )}
+      getItemLabel={(t) => `${t.last_name} ${t.first_name}`}
+      emptyMessage="Aucun enseignant trouvé"
+      errorMessage="Impossible de charger les enseignants"
+      deleteDescription="Cette action est irréversible. L'enseignant sera définitivement supprimé."
+    />
   )
 }

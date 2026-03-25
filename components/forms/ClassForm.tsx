@@ -53,7 +53,7 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
             <FormItem>
               <FormLabel>Nom de la classe *</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: 6eme A" className="h-11" {...field} />
+                <Input placeholder="Ex : 6ème A" className="h-11" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -68,7 +68,7 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
               <FormItem>
                 <FormLabel>Niveau *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: 6eme" className="h-11" {...field} />
+                  <Input placeholder="Ex : 6ème" className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -82,7 +82,7 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
               <FormItem>
                 <FormLabel>Section</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex: A" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : A" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -95,12 +95,12 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
           name="capacity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Capacite</FormLabel>
+              <FormLabel>Capacité</FormLabel>
               <FormControl>
                 <Input
                   type="number"
                   min={1}
-                  placeholder="Ex: 45"
+                  placeholder="Ex : 45"
                   className="h-11"
                   onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                   value={field.value ?? ""}

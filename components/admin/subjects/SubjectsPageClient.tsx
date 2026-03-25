@@ -13,12 +13,12 @@ export function SubjectsPageClient() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-2xl tracking-tight">Matieres</h1>
-          <p className="text-sm text-muted-foreground">Gestion des matieres enseignees</p>
+          <h1 className="font-serif text-2xl tracking-tight">Matières</h1>
+          <p className="text-sm text-muted-foreground">Gestion des matières enseignées</p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Nouvelle matiere
+          Nouvelle matière
         </Button>
       </div>
 

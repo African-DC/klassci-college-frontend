@@ -6,7 +6,7 @@ export const StudentSchema = z.object({
   last_name: z.string(),
   matricule: z.string().nullish(),
   date_of_birth: z.string().nullish(),
-  gender: z.string().nullish(),
+  gender: z.enum(["M", "F"]).nullish(),
   class_id: z.number().nullish(),
   class_name: z.string().nullish(),
   parent_phone: z.string().nullish(),
