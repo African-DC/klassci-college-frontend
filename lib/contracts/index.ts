@@ -2,6 +2,7 @@ export * from "./auth"
 export * from "./enrollment"
 export * from "./timetable"
 export * from "./grade"
+export * from "./council"
 
 // Shared pagination contract
 import { z } from "zod"
