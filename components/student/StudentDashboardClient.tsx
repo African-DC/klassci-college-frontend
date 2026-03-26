@@ -1,7 +1,7 @@
 "use client"
 
-import { CalendarDays, ClipboardList, Wallet, AlertCircle, Clock } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { CalendarDays, ClipboardList, Wallet, AlertCircle } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useStudentDashboard } from "@/lib/hooks/useStudentPortal"
 
