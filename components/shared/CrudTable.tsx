@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, type ReactNode } from "react"
+import { useMemo, useRef, useState, type ReactNode } from "react"
 import {
   type ColumnDef,
   useReactTable,
@@ -72,11 +72,15 @@ export function CrudTable<T extends { id: number }>({
   const [editId, setEditId] = useState<number | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
+  // Ref stable pour éviter l'invalidation du useMemo à chaque rendu
+  const getItemLabelRef = useRef(getItemLabel)
+  getItemLabelRef.current = getItemLabel
+
   const columns = useMemo(() => {
     const actionColumn: ColumnDef<T> = {
       id: "actions",
       cell: ({ row }) => {
-        const label = getItemLabel(row.original)
+        const label = getItemLabelRef.current(row.original)
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -103,7 +107,7 @@ export function CrudTable<T extends { id: number }>({
       },
     }
     return [...userColumns, actionColumn]
-  }, [userColumns, getItemLabel])
+  }, [userColumns])
 
   const table = useReactTable({
     data: data?.data ?? [],
@@ -148,7 +152,7 @@ export function CrudTable<T extends { id: number }>({
                 </TableCell>
               </TableRow>
             )}
-            {table.getRowModel().rows.map((row) => (
+            {!isLoading && table.getRowModel().rows.map((row) => (
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

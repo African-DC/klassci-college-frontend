@@ -14,7 +14,7 @@ export const SubjectSchema = z.object({
 export const SubjectCreateSchema = z.object({
   name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
   code: z.string({ required_error: "Le code est requis" }).min(1, "Le code est requis"),
-  coefficient: z.number({ required_error: "Le coefficient est requis" }).positive("Le coefficient doit etre positif"),
+  coefficient: z.number({ required_error: "Le coefficient est requis" }).positive("Le coefficient doit être positif"),
   level: z.string().optional(),
   category: z.string().optional(),
 })

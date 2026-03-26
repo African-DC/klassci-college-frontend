@@ -15,7 +15,6 @@ const {
   created: "Classe créée avec succès",
   updated: "Classe mise à jour",
   deleted: "Classe supprimée",
-  errorFallback: "Impossible de charger les classes",
 })
 
 export { classKeys }

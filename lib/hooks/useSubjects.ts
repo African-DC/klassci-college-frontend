@@ -15,7 +15,6 @@ const {
   created: "Matière créée avec succès",
   updated: "Matière mise à jour",
   deleted: "Matière supprimée",
-  errorFallback: "Impossible de charger les matières",
 })
 
 export { subjectKeys }

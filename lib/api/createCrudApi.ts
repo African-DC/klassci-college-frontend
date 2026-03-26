@@ -10,6 +10,14 @@ export interface CrudApi<T, TCreate, TUpdate> {
   remove: (id: number) => Promise<void>
 }
 
+// Extrait l'item de la réponse API, qu'elle soit { data: T } ou T directement
+function unwrapResponse<T>(res: unknown): T {
+  if (res !== null && typeof res === "object" && "data" in res && (res as Record<string, unknown>).data !== undefined) {
+    return (res as Record<string, unknown>).data as T
+  }
+  return res as T
+}
+
 export function createCrudApi<T, TCreate, TUpdate>(
   basePath: string,
   schema: z.ZodType<T>,
@@ -36,27 +44,24 @@ export function createCrudApi<T, TCreate, TUpdate>(
     },
 
     getById: async (id: number): Promise<T> => {
-      const res = await apiFetch<{ data?: T }>(`${basePath}/${id}`)
-      const item = (res as { data?: T }).data ?? (res as unknown as T)
-      return safeValidate(schema, item, `${basePath}/${id}`)
+      const res = await apiFetch<unknown>(`${basePath}/${id}`)
+      return safeValidate(schema, unwrapResponse<T>(res), `${basePath}/${id}`)
     },
 
     create: async (data: TCreate): Promise<T> => {
-      const res = await apiFetch<{ data?: T }>(basePath, {
+      const res = await apiFetch<unknown>(basePath, {
         method: "POST",
         body: JSON.stringify(data),
       })
-      const item = (res as { data?: T }).data ?? (res as unknown as T)
-      return safeValidate(schema, item, `POST ${basePath}`)
+      return safeValidate(schema, unwrapResponse<T>(res), `POST ${basePath}`)
     },
 
     update: async (id: number, data: TUpdate): Promise<T> => {
-      const res = await apiFetch<{ data?: T }>(`${basePath}/${id}`, {
+      const res = await apiFetch<unknown>(`${basePath}/${id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
       })
-      const item = (res as { data?: T }).data ?? (res as unknown as T)
-      return safeValidate(schema, item, `PATCH ${basePath}/${id}`)
+      return safeValidate(schema, unwrapResponse<T>(res), `PATCH ${basePath}/${id}`)
     },
 
     remove: async (id: number): Promise<void> => {

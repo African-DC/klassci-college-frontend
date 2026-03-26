@@ -15,7 +15,6 @@ const {
   created: "Personnel créé avec succès",
   updated: "Personnel mis à jour",
   deleted: "Personnel supprimé",
-  errorFallback: "Impossible de charger le personnel",
 })
 
 export { staffKeys }

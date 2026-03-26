@@ -11,7 +11,7 @@ interface ClassCreateModalProps {
 export function ClassCreateModal({ open, onClose }: ClassCreateModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Nouvelle classe</DialogTitle>
         </DialogHeader>

@@ -15,7 +15,6 @@ const {
   created: "Élève créé avec succès",
   updated: "Élève mis à jour",
   deleted: "Élève supprimé",
-  errorFallback: "Impossible de charger les élèves",
 })
 
 export { studentKeys }

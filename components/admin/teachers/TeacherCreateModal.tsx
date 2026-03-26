@@ -11,7 +11,7 @@ interface TeacherCreateModalProps {
 export function TeacherCreateModal({ open, onClose }: TeacherCreateModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Nouvel enseignant</DialogTitle>
         </DialogHeader>

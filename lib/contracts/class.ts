@@ -18,7 +18,7 @@ export const ClassCreateSchema = z.object({
   name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
   level: z.string({ required_error: "Le niveau est requis" }).min(1, "Le niveau est requis"),
   section: z.string().optional(),
-  capacity: z.number().positive("La capacite doit etre positive").optional(),
+  capacity: z.number().positive("La capacité doit être positive").optional(),
   academic_year_id: z.number().positive().optional(),
   teacher_id: z.number().positive().optional(),
 })

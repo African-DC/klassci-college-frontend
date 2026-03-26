@@ -11,7 +11,7 @@ interface SubjectCreateModalProps {
 export function SubjectCreateModal({ open, onClose }: SubjectCreateModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Nouvelle matière</DialogTitle>
         </DialogHeader>

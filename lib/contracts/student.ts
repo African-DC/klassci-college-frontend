@@ -16,7 +16,7 @@ export const StudentSchema = z.object({
 })
 
 export const StudentCreateSchema = z.object({
-  first_name: z.string({ required_error: "Le prenom est requis" }).min(1, "Le prenom est requis"),
+  first_name: z.string({ required_error: "Le prénom est requis" }).min(1, "Le prénom est requis"),
   last_name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
   matricule: z.string().optional(),
   date_of_birth: z.string().optional(),

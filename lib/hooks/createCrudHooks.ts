@@ -9,7 +9,6 @@ interface CrudLabels {
   created: string
   updated: string
   deleted: string
-  errorFallback: string
 }
 
 export function createCrudHooks<

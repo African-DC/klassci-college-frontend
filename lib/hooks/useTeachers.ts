@@ -15,7 +15,6 @@ const {
   created: "Enseignant créé avec succès",
   updated: "Enseignant mis à jour",
   deleted: "Enseignant supprimé",
-  errorFallback: "Impossible de charger les enseignants",
 })
 
 export { teacherKeys }
