@@ -38,11 +38,18 @@ export const councilApi = {
     return safeValidate(CouncilMinutesSchema, minutes, "POST /council-minutes/validate")
   },
 
-  // Télécharger le PDF du PV
+  // Télécharger le PDF du PV (fetch brut car apiFetch attend du JSON)
   downloadPdf: async (minutesId: number): Promise<Blob> => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL
     if (!baseUrl) throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    const res = await fetch(`${baseUrl}/council-minutes/${minutesId}/pdf`)
+    // Récupère le token de session pour l'authentification
+    const { getSession } = await import("next-auth/react")
+    const session = await getSession()
+    const res = await fetch(`${baseUrl}/council-minutes/${minutesId}/pdf`, {
+      headers: {
+        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
+      },
+    })
     if (!res.ok) throw new Error("Impossible de télécharger le procès-verbal")
     return res.blob()
   },

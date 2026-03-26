@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -42,10 +43,10 @@ export function CouncilValidateButton({ minutesId, disabled }: CouncilValidateBu
           <DialogHeader>
             <DialogTitle>Valider le procès-verbal</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Cette action est <strong>irréversible</strong>. Une fois validé, le procès-verbal
+          <DialogDescription>
+            Cette action est irréversible. Une fois validé, le procès-verbal
             ne pourra plus être modifié. Les décisions seront définitives.
-          </p>
+          </DialogDescription>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>
               Annuler

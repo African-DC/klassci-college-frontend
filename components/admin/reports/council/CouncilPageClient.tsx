@@ -13,7 +13,7 @@ import {
 import { CouncilDeliberationTable } from "./CouncilDeliberationTable"
 import { useCouncilMinutes } from "@/lib/hooks/useCouncil"
 
-// Données de démo — sera remplacé par l'API /classes
+// TODO: remplacer par useClasses() après merge de PR #42 (feature/36-admin-crud-pages)
 const DEMO_CLASSES = [
   { id: 1, name: "6ème A" },
   { id: 2, name: "6ème B" },

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { Save, Download } from "lucide-react"
+import { useState, useMemo, useCallback } from "react"
+import { Save, Download, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -19,9 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { toast } from "sonner"
 import { CouncilDecisionBadge } from "./CouncilDecisionBadge"
 import { CouncilValidateButton } from "./CouncilValidateButton"
 import { useUpdateDecisions } from "@/lib/hooks/useCouncil"
+import { councilApi } from "@/lib/api/council"
 import type { CouncilMinutes, CouncilDecision, CouncilDecisionUpdate } from "@/lib/contracts/council"
 
 // Calcul automatique de la décision basé sur la MGA (système ivoirien)
@@ -114,6 +116,26 @@ export function CouncilDeliberationTable({ minutes }: CouncilDeliberationTablePr
     }
     return counts
   }, [minutes.records, localDecisions])
+
+  const [isDownloading, setIsDownloading] = useState(false)
+
+  // Téléchargement authentifié du PDF via blob
+  const handleDownloadPdf = useCallback(async () => {
+    setIsDownloading(true)
+    try {
+      const blob = await councilApi.downloadPdf(minutes.id)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `pv-conseil-${minutes.id}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error("Impossible de télécharger le PDF")
+    } finally {
+      setIsDownloading(false)
+    }
+  }, [minutes.id])
 
   const hasChanges = localDecisions.size > 0
 
@@ -222,15 +244,13 @@ export function CouncilDeliberationTable({ minutes }: CouncilDeliberationTablePr
             disabled={isReadOnly || stats.pending > 0}
           />
         </div>
-        <Button variant="outline" asChild>
-          <a
-            href={`${process.env.NEXT_PUBLIC_API_URL}/council-minutes/${minutes.id}/pdf`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+        <Button variant="outline" onClick={handleDownloadPdf} disabled={isDownloading}>
+          {isDownloading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
             <Download className="mr-2 h-4 w-4" />
-            Exporter PDF
-          </a>
+          )}
+          Exporter PDF
         </Button>
       </div>
     </div>
