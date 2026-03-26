@@ -1,4 +1,5 @@
 export * from "./auth"
+export * from "./attendance"
 export * from "./enrollment"
 export * from "./timetable"
 export * from "./grade"
