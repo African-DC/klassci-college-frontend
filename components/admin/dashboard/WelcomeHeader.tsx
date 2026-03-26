@@ -18,7 +18,9 @@ export function WelcomeHeader() {
     return <WelcomeHeaderSkeleton />
   }
 
-  const firstName = session?.user?.email?.split("@")[0] ?? "Administrateur"
+  const rawName = session?.user?.email?.split("@")[0] ?? "Administrateur"
+  // Capitalise et prend la partie avant . ou _ (jean.mbala → Jean)
+  const firstName = rawName.split(/[._]/)[0].replace(/^\w/, (c) => c.toUpperCase())
 
   return (
     <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground shadow-sm sm:p-8">

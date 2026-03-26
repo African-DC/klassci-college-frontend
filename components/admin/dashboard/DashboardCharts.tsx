@@ -15,21 +15,21 @@ import {
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-// Donnees de demo — sera remplace par l'API /dashboard/charts
+// Données de démo — sera remplacé par l'API /dashboard/charts
 const enrollmentData = [
-  { level: "6eme", count: 87 },
-  { level: "5eme", count: 72 },
-  { level: "4eme", count: 65 },
-  { level: "3eme", count: 58 },
+  { level: "6ème", count: 87 },
+  { level: "5ème", count: 72 },
+  { level: "4ème", count: 65 },
+  { level: "3ème", count: 58 },
   { level: "2nde", count: 45 },
-  { level: "1ere", count: 38 },
+  { level: "1ère", count: 38 },
   { level: "Tle", count: 32 },
 ]
 
 const statusData = [
-  { name: "Validees", value: 342, color: "hsl(var(--primary))" },
+  { name: "Validées", value: 342, color: "hsl(var(--primary))" },
   { name: "En attente", value: 45, color: "hsl(var(--accent))" },
-  { name: "Rejetees", value: 10, color: "hsl(var(--destructive))" },
+  { name: "Rejetées", value: 10, color: "hsl(var(--destructive))" },
 ]
 
 export function DashboardCharts() {
@@ -64,7 +64,7 @@ export function DashboardCharts() {
             </ResponsiveContainer>
           ) : (
             <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
-              Aucune donnee d&apos;inscription pour le moment
+              Aucune donnée d&apos;inscription pour le moment
             </div>
           )}
         </CardContent>
@@ -112,7 +112,7 @@ export function DashboardCharts() {
             </ResponsiveContainer>
           ) : (
             <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
-              Aucune donnee disponible
+              Aucune donnée disponible
             </div>
           )}
         </CardContent>
