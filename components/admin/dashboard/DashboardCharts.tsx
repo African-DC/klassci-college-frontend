@@ -15,29 +15,30 @@ import {
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
+// Données de démo — sera remplacé par l'API /dashboard/charts
 const enrollmentData = [
-  { level: "6ème", count: 0 },
-  { level: "5ème", count: 0 },
-  { level: "4ème", count: 0 },
-  { level: "3ème", count: 0 },
-  { level: "2nde", count: 0 },
-  { level: "1ère", count: 0 },
-  { level: "Tle", count: 0 },
+  { level: "6ème", count: 87 },
+  { level: "5ème", count: 72 },
+  { level: "4ème", count: 65 },
+  { level: "3ème", count: 58 },
+  { level: "2nde", count: 45 },
+  { level: "1ère", count: 38 },
+  { level: "Tle", count: 32 },
 ]
 
 const statusData = [
-  { name: "Validées", value: 0, color: "hsl(var(--primary))" },
-  { name: "En attente", value: 0, color: "hsl(var(--accent))" },
-  { name: "Rejetées", value: 0, color: "hsl(var(--destructive))" },
+  { name: "Validées", value: 342, color: "hsl(var(--primary))" },
+  { name: "En attente", value: 45, color: "hsl(var(--accent))" },
+  { name: "Rejetées", value: 10, color: "hsl(var(--destructive))" },
 ]
 
 export function DashboardCharts() {
   const hasData = enrollmentData.some((d) => d.count > 0)
 
   return (
-    <div className="grid gap-4 lg:grid-cols-7">
+    <div className="grid gap-4">
       {/* Bar chart — enrollment by level */}
-      <Card className="lg:col-span-4 border-0 shadow-sm ring-1 ring-border">
+      <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardHeader>
           <CardTitle className="text-base font-medium">
             Inscriptions par niveau
@@ -63,14 +64,14 @@ export function DashboardCharts() {
             </ResponsiveContainer>
           ) : (
             <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
-              Aucune donnee d&apos;inscription pour le moment
+              Aucune donnée d&apos;inscription pour le moment
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Pie chart — enrollment status */}
-      <Card className="lg:col-span-3 border-0 shadow-sm ring-1 ring-border">
+      <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardHeader>
           <CardTitle className="text-base font-medium">
             Statut des inscriptions
@@ -111,7 +112,7 @@ export function DashboardCharts() {
             </ResponsiveContainer>
           ) : (
             <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
-              Aucune donnee disponible
+              Aucune donnée disponible
             </div>
           )}
         </CardContent>
