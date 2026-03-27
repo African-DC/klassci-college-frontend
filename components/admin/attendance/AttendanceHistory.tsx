@@ -22,6 +22,12 @@ import { AttendanceStatusBadge } from "./AttendanceStatusBadge"
 import { useAttendanceHistory } from "@/lib/hooks/useAttendance"
 import type { AttendanceStatus, AttendanceHistoryParams } from "@/lib/contracts/attendance"
 
+// Formater une date avec guard contre les valeurs invalides
+function formatDate(raw: string): string {
+  const d = new Date(raw)
+  return Number.isNaN(d.getTime()) ? "Date inconnue" : d.toLocaleDateString("fr-FR")
+}
+
 interface AttendanceHistoryProps {
   classId?: number
 }
@@ -106,7 +112,7 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
               {records.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell className="font-medium">{record.student_name}</TableCell>
-                  <TableCell>{new Date(record.date).toLocaleDateString("fr-FR")}</TableCell>
+                  <TableCell>{formatDate(record.date)}</TableCell>
                   <TableCell>
                     <AttendanceStatusBadge status={record.status} />
                   </TableCell>

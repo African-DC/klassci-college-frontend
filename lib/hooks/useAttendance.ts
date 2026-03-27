@@ -49,6 +49,7 @@ export function useAttendanceHistory(params: AttendanceHistoryParams = {}) {
   return useQuery({
     queryKey: attendanceKeys.history(params as Record<string, unknown>),
     queryFn: () => attendanceApi.getHistory(params as Record<string, unknown>),
+    enabled: Object.keys(params).length > 0,
     staleTime: 1000 * 60 * 5,
   })
 }

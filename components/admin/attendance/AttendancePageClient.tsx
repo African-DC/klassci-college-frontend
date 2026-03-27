@@ -34,7 +34,10 @@ function formatSlotLabel(slot: TimetableSlot): string {
 export function AttendancePageClient() {
   const [classId, setClassId] = useState<number | undefined>(undefined)
   const [slotId, setSlotId] = useState<number | undefined>(undefined)
-  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0])
+  const [date, setDate] = useState(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+  })
 
   // Créneaux de la classe sélectionnée
   const { data: slots } = useTimetable(classId ?? 0)
@@ -43,6 +46,7 @@ export function AttendancePageClient() {
   const dayOfWeek = useMemo(() => {
     if (!date) return ""
     const d = new Date(date)
+    if (Number.isNaN(d.getTime())) return ""
     const days = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"]
     return days[d.getDay()]
   }, [date])
