@@ -30,6 +30,14 @@ async function authHeaders(): Promise<Record<string, string>> {
   return headers
 }
 
+/** Fetch authentifié retournant un Blob (PDF, export, etc.) */
+export async function apiFetchBlob(path: string): Promise<Blob> {
+  const headers = await authHeaders()
+  const res = await fetch(`${getBaseUrl()}${path}`, { headers })
+  if (!res.ok) throw new Error(`Erreur ${res.status}`)
+  return res.blob()
+}
+
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { schema, ...fetchOptions } = options
   const headers = { ...(await authHeaders()), ...fetchOptions.headers }

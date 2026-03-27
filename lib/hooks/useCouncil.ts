@@ -13,16 +13,17 @@ export const councilKeys = {
 
 // Récupérer le PV d'une classe/trimestre
 export function useCouncilMinutes(classId: number | undefined, trimester: string | undefined) {
+  const enabled = !!classId && !!trimester
   return useQuery({
     queryKey: councilKeys.minutes(classId ?? 0, trimester ?? ""),
     queryFn: () => councilApi.getMinutes(classId!, trimester!),
-    enabled: !!classId && !!trimester,
+    enabled,
     staleTime: 1000 * 60 * 5,
   })
 }
 
-// Mettre à jour les décisions
-export function useUpdateDecisions() {
+// Mettre à jour les décisions — invalidation ciblée sur la classe/trimestre
+export function useUpdateDecisions(classId: number, trimester: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({
@@ -34,7 +35,7 @@ export function useUpdateDecisions() {
     }) => councilApi.updateDecisions(minutesId, decisions),
     onSuccess: () => {
       toast.success("Décisions enregistrées")
-      queryClient.invalidateQueries({ queryKey: councilKeys.all })
+      queryClient.invalidateQueries({ queryKey: councilKeys.minutes(classId, trimester) })
     },
     onError: (err) => {
       toast.error("Erreur", { description: err.message })
@@ -42,14 +43,14 @@ export function useUpdateDecisions() {
   })
 }
 
-// Valider le PV
-export function useValidateCouncil() {
+// Valider le PV — invalidation ciblée sur la classe/trimestre
+export function useValidateCouncil(classId: number, trimester: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (minutesId: number) => councilApi.validate(minutesId),
     onSuccess: () => {
       toast.success("Procès-verbal validé avec succès")
-      queryClient.invalidateQueries({ queryKey: councilKeys.all })
+      queryClient.invalidateQueries({ queryKey: councilKeys.minutes(classId, trimester) })
     },
     onError: (err) => {
       toast.error("Erreur", { description: err.message })

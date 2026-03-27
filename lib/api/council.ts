@@ -1,5 +1,4 @@
-import { getSession } from "next-auth/react"
-import { apiFetch, safeValidate } from "./client"
+import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
   CouncilMinutesSchema,
   type CouncilMinutes,
@@ -39,19 +38,8 @@ export const councilApi = {
     return safeValidate(CouncilMinutesSchema, minutes, "POST /council-minutes/validate")
   },
 
-  // Télécharger le PDF du PV (fetch brut car apiFetch attend du JSON)
+  // Télécharger le PDF du PV
   downloadPdf: async (minutesId: number): Promise<Blob> => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL
-    if (!baseUrl) throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    // Récupère le token de session pour l'authentification
-    const session = await getSession()
-    if (!session?.accessToken) throw new Error("Session expirée — reconnectez-vous")
-    const res = await fetch(`${baseUrl}/council-minutes/${minutesId}/pdf`, {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    })
-    if (!res.ok) throw new Error("Impossible de télécharger le procès-verbal")
-    return res.blob()
+    return apiFetchBlob(`/council-minutes/${minutesId}/pdf`)
   },
 }

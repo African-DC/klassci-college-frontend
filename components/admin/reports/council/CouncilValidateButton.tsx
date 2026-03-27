@@ -15,12 +15,14 @@ import { useValidateCouncil } from "@/lib/hooks/useCouncil"
 
 interface CouncilValidateButtonProps {
   minutesId: number | undefined
+  classId: number
+  trimester: string
   disabled?: boolean
 }
 
-export function CouncilValidateButton({ minutesId, disabled }: CouncilValidateButtonProps) {
+export function CouncilValidateButton({ minutesId, classId, trimester, disabled }: CouncilValidateButtonProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const { mutate, isPending } = useValidateCouncil()
+  const { mutate, isPending } = useValidateCouncil(classId, trimester)
 
   function handleValidate() {
     if (!minutesId) return

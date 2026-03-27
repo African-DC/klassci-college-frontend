@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import { Save, Download, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { toast } from "sonner"
+import { downloadBlob } from "@/lib/utils"
 import { CouncilDecisionBadge } from "./CouncilDecisionBadge"
 import { CouncilValidateButton } from "./CouncilValidateButton"
 import { useUpdateDecisions } from "@/lib/hooks/useCouncil"
@@ -37,16 +38,25 @@ function computeAutoDecision(average: number | null): CouncilDecision | null {
 
 interface CouncilDeliberationTableProps {
   minutes: CouncilMinutes
+  classId: number
+  trimester: string
+  onDirtyChange?: (dirty: boolean) => void
 }
 
-export function CouncilDeliberationTable({ minutes }: CouncilDeliberationTableProps) {
+export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyChange }: CouncilDeliberationTableProps) {
   const isReadOnly = minutes.status === "valide"
-  const { mutate: saveDecisions, isPending: isSaving } = useUpdateDecisions()
+  const { mutate: saveDecisions, isPending: isSaving } = useUpdateDecisions(classId, trimester)
 
   // État local des décisions modifiées
   const [localDecisions, setLocalDecisions] = useState<
     Map<number, { decision: CouncilDecision; reason: string | null }>
   >(new Map())
+
+  // Notifier le parent des changements non enregistrés
+  const isDirty = localDecisions.size > 0
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+  }, [isDirty, onDirtyChange])
 
   // Récupère la décision courante (locale si modifiée, sinon celle du serveur)
   function getCurrentDecision(studentId: number): CouncilDecision | null {
@@ -130,17 +140,12 @@ export function CouncilDeliberationTable({ minutes }: CouncilDeliberationTablePr
 
   const [isDownloading, setIsDownloading] = useState(false)
 
-  // Téléchargement authentifié du PDF via blob
+  // Téléchargement authentifié du PDF via apiFetchBlob
   const handleDownloadPdf = useCallback(async () => {
     setIsDownloading(true)
     try {
       const blob = await councilApi.downloadPdf(minutes.id)
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `pv-conseil-${minutes.id}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
+      downloadBlob(blob, `pv-conseil-${minutes.id}.pdf`)
     } catch {
       toast.error("Impossible de télécharger le PDF")
     } finally {
@@ -252,6 +257,8 @@ export function CouncilDeliberationTable({ minutes }: CouncilDeliberationTablePr
           )}
           <CouncilValidateButton
             minutesId={minutes.id}
+            classId={classId}
+            trimester={trimester}
             disabled={isReadOnly || stats.pending > 0}
           />
         </div>
