@@ -17,7 +17,7 @@ import { BulletinPreviewModal } from "./BulletinPreviewModal"
 import { BulletinListSkeleton } from "./BulletinListSkeleton"
 import { useBulletins, usePublishBulletins } from "@/lib/hooks/useBulletins"
 import { bulletinsApi } from "@/lib/api/bulletins"
-import { getMentionColor } from "@/lib/utils"
+import { getMentionColor, downloadBlob } from "@/lib/utils"
 import type { BulletinListParams, Bulletin } from "@/lib/contracts/bulletin"
 
 interface BulletinListProps {
@@ -35,12 +35,7 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
     setDownloadingId(bulletin.id)
     try {
       const blob = await bulletinsApi.downloadPdf(bulletin.id)
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `bulletin-${bulletin.student_name}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
+      downloadBlob(blob, `bulletin-${bulletin.student_name}.pdf`)
     } catch (err) {
       toast.error("Erreur lors du téléchargement", {
         description: err instanceof Error ? err.message : "Erreur inconnue",

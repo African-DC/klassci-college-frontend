@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Select,
   SelectContent,
@@ -25,9 +25,11 @@ export function ReportsPageClient() {
   const { data: academicYears, isLoading: yearsLoading } = useAcademicYears()
 
   // Pré-sélectionner la première année académique quand les données arrivent
-  if (!academicYearId && academicYears && academicYears.length > 0) {
-    setAcademicYearId(academicYears[0].id)
-  }
+  useEffect(() => {
+    if (!academicYearId && academicYears && academicYears.length > 0) {
+      setAcademicYearId(academicYears[0].id)
+    }
+  }, [academicYearId, academicYears])
 
   const params: BulletinListParams = {
     ...(classId && { class_id: classId }),
