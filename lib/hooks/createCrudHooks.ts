@@ -39,6 +39,7 @@ export function createCrudHooks<
       queryKey: keys.detail(id),
       queryFn: () => api.getById(id),
       enabled: !!id,
+      staleTime: 1000 * 60 * 5,
     })
   }
 
@@ -46,7 +47,30 @@ export function createCrudHooks<
     const queryClient = useQueryClient()
     return useMutation({
       mutationFn: (data: TCreate) => api.create(data),
-      onError: (err) => {
+      onMutate: async (newData) => {
+        await queryClient.cancelQueries({ queryKey: keys.all })
+        const queries = queryClient.getQueriesData<PaginatedResponse<T>>({
+          queryKey: keys.all,
+        })
+        const previous = new Map(queries)
+        // Ajout optimiste avec un id temporaire négatif
+        const optimisticItem = { ...newData, id: -Date.now() } as unknown as T
+        for (const [key, old] of queries) {
+          if (!old) continue
+          queryClient.setQueryData(key, {
+            ...old,
+            total: old.total + 1,
+            data: [...old.data, optimisticItem],
+          })
+        }
+        return { previous }
+      },
+      onError: (err, _vars, context) => {
+        if (context?.previous) {
+          for (const [key, data] of context.previous) {
+            queryClient.setQueryData(key, data)
+          }
+        }
         toast.error("Erreur", { description: err.message })
       },
       onSuccess: () => {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useSubjects, useDeleteSubject } from "@/lib/hooks/useSubjects"
 import type { Subject } from "@/lib/contracts/subject"
@@ -9,7 +9,8 @@ import { CrudTable } from "@/components/shared/CrudTable"
 import { SubjectEditModal } from "./SubjectEditModal"
 
 export function SubjectsTable() {
-  const { data, isLoading, isError, error, refetch } = useSubjects()
+  const [page, setPage] = useState(1)
+  const { data, isLoading, isError, error, refetch } = useSubjects({ page })
   const deleteMutation = useDeleteSubject()
 
   const columns: ColumnDef<Subject>[] = useMemo(() => [
@@ -66,6 +67,8 @@ export function SubjectsTable() {
       emptyMessage="Aucune matière trouvée"
       errorMessage="Impossible de charger les matières"
       deleteDescription="Cette action est irréversible. La matière sera définitivement supprimée."
+      page={page}
+      onPageChange={setPage}
     />
   )
 }

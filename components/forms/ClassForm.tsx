@@ -14,6 +14,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { useTeachers } from "@/lib/hooks/useTeachers"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 
 interface ClassFormProps {
   onSuccess: () => void
@@ -32,6 +41,8 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
     },
   })
 
+  const { data: teachersData } = useTeachers({ per_page: 200 })
+  const { data: academicYears } = useAcademicYears()
   const { mutate, isPending, error } = useCreateClass()
 
   function onSubmit(data: ClassCreate) {
@@ -106,6 +117,62 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
                   value={field.value ?? ""}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="teacher_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Titulaire</FormLabel>
+              <Select
+                onValueChange={(v) => field.onChange(Number(v))}
+                value={field.value?.toString() ?? ""}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Sélectionner un enseignant" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {teachersData?.data.map((t) => (
+                    <SelectItem key={t.id} value={t.id.toString()}>
+                      {t.last_name} {t.first_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="academic_year_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Année académique</FormLabel>
+              <Select
+                onValueChange={(v) => field.onChange(Number(v))}
+                value={field.value?.toString() ?? ""}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Sélectionner une année" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {academicYears?.map((ay) => (
+                    <SelectItem key={ay.id} value={ay.id.toString()}>
+                      {ay.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

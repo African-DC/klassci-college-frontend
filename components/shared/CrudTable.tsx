@@ -7,7 +7,7 @@ import {
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table"
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -52,6 +52,8 @@ interface CrudTableProps<T extends { id: number }> {
   errorMessage: string
   deleteTitle?: string
   deleteDescription?: string
+  page?: number
+  onPageChange?: (page: number) => void
 }
 
 export function CrudTable<T extends { id: number }>({
@@ -68,6 +70,8 @@ export function CrudTable<T extends { id: number }>({
   errorMessage,
   deleteTitle = "Confirmer la suppression",
   deleteDescription = "Cette action est irréversible. L'élément sera définitivement supprimé.",
+  page,
+  onPageChange,
 }: CrudTableProps<T>) {
   const [editId, setEditId] = useState<number | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -164,6 +168,35 @@ export function CrudTable<T extends { id: number }>({
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {data && data.total_pages > 1 && onPageChange && (
+        <div className="flex items-center justify-between pt-4">
+          <p className="text-sm text-muted-foreground">
+            Page {data.page} sur {data.total_pages} — {data.total} résultat{data.total > 1 ? "s" : ""}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(data.page - 1)}
+              disabled={data.page <= 1}
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              Précédent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(data.page + 1)}
+              disabled={data.page >= data.total_pages}
+            >
+              Suivant
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {renderEditModal({ itemId: editId, open: editId !== null, onClose: () => setEditId(null) })}
 

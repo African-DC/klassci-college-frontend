@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useTeachers, useDeleteTeacher } from "@/lib/hooks/useTeachers"
 import type { Teacher } from "@/lib/contracts/teacher"
@@ -9,7 +9,8 @@ import { CrudTable } from "@/components/shared/CrudTable"
 import { TeacherEditModal } from "./TeacherEditModal"
 
 export function TeachersTable() {
-  const { data, isLoading, isError, error, refetch } = useTeachers()
+  const [page, setPage] = useState(1)
+  const { data, isLoading, isError, error, refetch } = useTeachers({ page })
   const deleteMutation = useDeleteTeacher()
 
   const columns: ColumnDef<Teacher>[] = useMemo(() => [
@@ -80,6 +81,8 @@ export function TeachersTable() {
       emptyMessage="Aucun enseignant trouvé"
       errorMessage="Impossible de charger les enseignants"
       deleteDescription="Cette action est irréversible. L'enseignant sera définitivement supprimé."
+      page={page}
+      onPageChange={setPage}
     />
   )
 }

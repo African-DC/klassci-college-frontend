@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useStaffList, useDeleteStaff } from "@/lib/hooks/useStaff"
 import type { Staff } from "@/lib/contracts/staff"
@@ -9,7 +9,8 @@ import { CrudTable } from "@/components/shared/CrudTable"
 import { StaffEditModal } from "./StaffEditModal"
 
 export function StaffTable() {
-  const { data, isLoading, isError, error, refetch } = useStaffList()
+  const [page, setPage] = useState(1)
+  const { data, isLoading, isError, error, refetch } = useStaffList({ page })
   const deleteMutation = useDeleteStaff()
 
   const columns: ColumnDef<Staff>[] = useMemo(() => [
@@ -79,6 +80,8 @@ export function StaffTable() {
       emptyMessage="Aucun personnel trouvé"
       errorMessage="Impossible de charger le personnel"
       deleteDescription="Cette action est irréversible. Le membre du personnel sera définitivement supprimé."
+      page={page}
+      onPageChange={setPage}
     />
   )
 }

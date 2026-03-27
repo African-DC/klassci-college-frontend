@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useClasses } from "@/lib/hooks/useClasses"
 
 interface StudentFormProps {
   onSuccess: () => void
@@ -41,6 +42,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
     },
   })
 
+  const { data: classesData } = useClasses({ per_page: 200 })
   const { mutate, isPending, error } = useCreateStudent()
 
   function onSubmit(data: StudentCreate) {
@@ -132,6 +134,34 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
               <FormControl>
                 <Input type="date" className="h-11" {...field} value={field.value ?? ""} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="class_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Classe</FormLabel>
+              <Select
+                onValueChange={(v) => field.onChange(Number(v))}
+                value={field.value?.toString() ?? ""}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Sélectionner une classe" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {classesData?.data.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
