@@ -9,10 +9,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { useStudentBulletins } from "@/lib/hooks/useStudentPortal"
 import { studentPortalApi } from "@/lib/api/student-portal"
+import { DataError } from "@/components/shared/DataError"
 import type { StudentBulletin } from "@/lib/contracts/student-portal"
 
 export function StudentBulletinsClient() {
-  const { data: bulletins, isLoading } = useStudentBulletins()
+  const { data: bulletins, isLoading, isError, refetch } = useStudentBulletins()
 
   return (
     <div className="space-y-6">
@@ -23,6 +24,8 @@ export function StudentBulletinsClient() {
 
       {isLoading ? (
         <BulletinsSkeleton />
+      ) : isError ? (
+        <DataError message="Impossible de charger les bulletins." onRetry={() => refetch()} />
       ) : !bulletins || bulletins.length === 0 ? (
         <div className="py-12 text-center">
           <FileText className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
@@ -54,8 +57,9 @@ function BulletinCard({ bulletin }: { bulletin: StudentBulletin }) {
       a.download = `bulletin-${bulletin.trimester}-${bulletin.academic_year}.pdf`
       a.click()
       URL.revokeObjectURL(url)
-    } catch {
-      toast.error("Impossible de télécharger le bulletin")
+    } catch (err) {
+      console.error("[StudentBulletins] Download failed:", err)
+      toast.error(err instanceof Error ? err.message : "Impossible de télécharger le bulletin")
     } finally {
       setIsDownloading(false)
     }

@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useStudentFees } from "@/lib/hooks/useStudentPortal"
+import { DataError } from "@/components/shared/DataError"
 import type { StudentFeeItem } from "@/lib/contracts/student-portal"
 
 const STATUS_CONFIG: Record<StudentFeeItem["status"], { label: string; variant: "default" | "secondary" | "destructive"; icon: typeof CheckCircle }> = {
@@ -22,7 +23,7 @@ const STATUS_CONFIG: Record<StudentFeeItem["status"], { label: string; variant: 
 }
 
 export function StudentFeesClient() {
-  const { data, isLoading } = useStudentFees()
+  const { data, isLoading, isError, refetch } = useStudentFees()
 
   return (
     <div className="space-y-6">
@@ -33,6 +34,8 @@ export function StudentFeesClient() {
 
       {isLoading ? (
         <FeesSkeleton />
+      ) : isError ? (
+        <DataError message="Impossible de charger les frais scolaires." onRetry={() => refetch()} />
       ) : !data ? (
         <div className="py-12 text-center text-sm text-muted-foreground">
           Aucune information de frais disponible.
@@ -64,7 +67,7 @@ export function StudentFeesClient() {
                 <span className="text-xs text-muted-foreground">Progression des paiements</span>
                 <span className="text-xs font-medium">
                   {data.total_expected > 0
-                    ? `${((data.total_paid / data.total_expected) * 100).toFixed(0)}%`
+                    ? `${Math.min(100, (data.total_paid / data.total_expected) * 100).toFixed(0)}%`
                     : "0%"}
                 </span>
               </div>
@@ -72,7 +75,7 @@ export function StudentFeesClient() {
                 <div
                   className="h-full rounded-full bg-emerald-500 transition-all"
                   style={{
-                    width: `${data.total_expected > 0 ? (data.total_paid / data.total_expected) * 100 : 0}%`,
+                    width: `${data.total_expected > 0 ? Math.min(100, (data.total_paid / data.total_expected) * 100) : 0}%`,
                   }}
                 />
               </div>

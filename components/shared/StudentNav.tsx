@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
@@ -31,6 +31,17 @@ const moreNavItems = [
 export function StudentNav() {
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Fermeture du menu par Escape
+  useEffect(() => {
+    if (!moreOpen) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setMoreOpen(false)
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [moreOpen])
 
   // Le menu "Plus" est actif si on est sur une page secondaire
   const isMoreActive = moreNavItems.some(
@@ -48,13 +59,14 @@ export function StudentNav() {
             onClick={() => setMoreOpen(false)}
           />
           {/* Popup */}
-          <div className="fixed bottom-16 right-2 z-50 rounded-lg border bg-card p-2 shadow-lg min-w-[160px]">
+          <div ref={menuRef} role="menu" className="fixed bottom-16 right-2 z-50 rounded-lg border bg-card p-2 shadow-lg min-w-[160px]">
             {moreNavItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
               return (
                 <Link
                   key={item.href}
                   href={item.href as never}
+                  role="menuitem"
                   onClick={() => setMoreOpen(false)}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
@@ -67,6 +79,7 @@ export function StudentNav() {
               )
             })}
             <button
+              role="menuitem"
               onClick={() => {
                 setMoreOpen(false)
                 signOut({ callbackUrl: "/login" })
@@ -100,6 +113,8 @@ export function StudentNav() {
             )
           })}
           <button
+            aria-expanded={moreOpen}
+            aria-haspopup="true"
             onClick={() => setMoreOpen((prev) => !prev)}
             className={cn(
               "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",

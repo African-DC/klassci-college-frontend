@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useStudentGrades } from "@/lib/hooks/useStudentPortal"
+import { DataError } from "@/components/shared/DataError"
 import type { StudentSubjectGrades } from "@/lib/contracts/student-portal"
 
 const TYPE_LABELS: Record<string, string> = {
@@ -38,7 +39,7 @@ function averageColor(avg: number | null): string {
 
 export function StudentGradesClient() {
   const [trimester, setTrimester] = useState<string | undefined>(undefined)
-  const { data, isLoading } = useStudentGrades(trimester)
+  const { data, isLoading, isError, refetch } = useStudentGrades(trimester)
 
   return (
     <div className="space-y-6">
@@ -67,6 +68,8 @@ export function StudentGradesClient() {
 
       {isLoading ? (
         <GradesSkeleton />
+      ) : isError ? (
+        <DataError message="Impossible de charger les notes." onRetry={() => refetch()} />
       ) : !data ? (
         <div className="py-12 text-center text-sm text-muted-foreground">
           Aucune note disponible.

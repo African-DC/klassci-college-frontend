@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { getSession } from "next-auth/react"
 import { apiFetch, safeValidate } from "./client"
 import {
   StudentDashboardSchema,
@@ -64,11 +65,11 @@ export const studentPortalApi = {
   downloadBulletin: async (bulletinId: number): Promise<Blob> => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL
     if (!baseUrl) throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    const { getSession } = await import("next-auth/react")
     const session = await getSession()
+    if (!session?.accessToken) throw new Error("Session expirée — veuillez vous reconnecter")
     const res = await fetch(`${baseUrl}/student/bulletins/${bulletinId}/pdf`, {
       headers: {
-        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
+        Authorization: `Bearer ${session.accessToken}`,
       },
     })
     if (!res.ok) throw new Error("Impossible de télécharger le bulletin")

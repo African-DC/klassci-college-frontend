@@ -16,14 +16,14 @@ const DAY_LABELS: Record<string, string> = {
 
 // Couleurs par matière pour différencier visuellement
 const SUBJECT_COLORS = [
-  "bg-blue-50 border-blue-200 text-blue-800",
-  "bg-emerald-50 border-emerald-200 text-emerald-800",
-  "bg-amber-50 border-amber-200 text-amber-800",
-  "bg-purple-50 border-purple-200 text-purple-800",
-  "bg-rose-50 border-rose-200 text-rose-800",
-  "bg-cyan-50 border-cyan-200 text-cyan-800",
-  "bg-orange-50 border-orange-200 text-orange-800",
-  "bg-indigo-50 border-indigo-200 text-indigo-800",
+  "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200",
+  "bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200",
+  "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200",
+  "bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800 text-purple-800 dark:text-purple-200",
+  "bg-rose-50 dark:bg-rose-950 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200",
+  "bg-cyan-50 dark:bg-cyan-950 border-cyan-200 dark:border-cyan-800 text-cyan-800 dark:text-cyan-200",
+  "bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800 text-orange-800 dark:text-orange-200",
+  "bg-indigo-50 dark:bg-indigo-950 border-indigo-200 dark:border-indigo-800 text-indigo-800 dark:text-indigo-200",
 ]
 
 function getSubjectColor(subjectId: number): string {
