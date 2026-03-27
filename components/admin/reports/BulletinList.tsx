@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { Eye, Download, Send } from "lucide-react"
+import { useState, useMemo, useCallback } from "react"
+import { Eye, Download, Send, ChevronLeft, ChevronRight } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -15,32 +16,39 @@ import { BulletinStatusBadge } from "./BulletinStatusBadge"
 import { BulletinPreviewModal } from "./BulletinPreviewModal"
 import { BulletinListSkeleton } from "./BulletinListSkeleton"
 import { useBulletins, usePublishBulletins } from "@/lib/hooks/useBulletins"
+import { bulletinsApi } from "@/lib/api/bulletins"
+import { getMentionColor } from "@/lib/utils"
 import type { BulletinListParams, Bulletin } from "@/lib/contracts/bulletin"
-
-function getMentionColor(mention: string | null): string {
-  if (!mention) return ""
-  switch (mention) {
-    case "Très Bien":
-      return "text-emerald-600 dark:text-emerald-400"
-    case "Bien":
-      return "text-primary"
-    case "Assez Bien":
-      return "text-accent"
-    case "Passable":
-      return "text-amber-600 dark:text-amber-400"
-    default:
-      return ""
-  }
-}
 
 interface BulletinListProps {
   params: BulletinListParams
+  onPageChange?: (page: number) => void
 }
 
-export function BulletinList({ params }: BulletinListProps) {
+export function BulletinList({ params, onPageChange }: BulletinListProps) {
   const { data, isLoading, isError } = useBulletins(params)
   const { mutate: publish, isPending: isPublishing } = usePublishBulletins()
   const [previewId, setPreviewId] = useState<number | null>(null)
+  const [downloadingId, setDownloadingId] = useState<number | null>(null)
+
+  const handleDownloadPdf = useCallback(async (bulletin: Bulletin) => {
+    setDownloadingId(bulletin.id)
+    try {
+      const blob = await bulletinsApi.downloadPdf(bulletin.id)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `bulletin-${bulletin.student_name}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      toast.error("Erreur lors du téléchargement", {
+        description: err instanceof Error ? err.message : "Erreur inconnue",
+      })
+    } finally {
+      setDownloadingId(null)
+    }
+  }, [])
 
   const bulletins = useMemo(() => data?.data ?? [], [data])
   const hasDrafts = useMemo(
@@ -137,15 +145,14 @@ export function BulletinList({ params }: BulletinListProps) {
                       <Eye className="h-4 w-4" />
                       <span className="sr-only">Voir le bulletin de {bulletin.student_name}</span>
                     </Button>
-                    <Button size="icon" variant="ghost" asChild>
-                      <a
-                        href={`${process.env.NEXT_PUBLIC_API_URL}/bulletins/${bulletin.id}/pdf`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Download className="h-4 w-4" />
-                        <span className="sr-only">Télécharger le bulletin de {bulletin.student_name}</span>
-                      </a>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleDownloadPdf(bulletin)}
+                      disabled={downloadingId === bulletin.id}
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="sr-only">Télécharger le bulletin de {bulletin.student_name}</span>
                     </Button>
                   </div>
                 </TableCell>
@@ -155,8 +162,31 @@ export function BulletinList({ params }: BulletinListProps) {
         </Table>
       </div>
 
-      <div className="text-xs text-muted-foreground text-right">
-        {data?.total ?? 0} bulletin(s) — Page {data?.page ?? 1}/{data?.total_pages ?? 1}
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{data?.total ?? 0} bulletin(s)</span>
+        <div className="flex items-center gap-2">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            disabled={!data || data.page <= 1}
+            onClick={() => onPageChange?.(Math.max(1, (data?.page ?? 1) - 1))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="sr-only">Page précédente</span>
+          </Button>
+          <span>Page {data?.page ?? 1}/{data?.total_pages ?? 1}</span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            disabled={!data || data.page >= data.total_pages}
+            onClick={() => onPageChange?.((data?.page ?? 1) + 1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+            <span className="sr-only">Page suivante</span>
+          </Button>
+        </div>
       </div>
 
       <BulletinPreviewModal

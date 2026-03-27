@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { useGenerateBulletins } from "@/lib/hooks/useBulletins"
-import type { Trimester } from "@/lib/contracts/bulletin"
+import { BulletinGenerateSchema, type Trimester } from "@/lib/contracts/bulletin"
 
 interface BulletinGenerateButtonProps {
   classId: number | undefined
@@ -38,11 +38,13 @@ export function BulletinGenerateButton({
   const disabled = !classId || !trimester || !academicYearId
 
   function handleGenerate() {
-    if (!classId || !trimester || !academicYearId) return
-    mutate(
-      { class_id: classId, trimester, academic_year_id: academicYearId },
-      { onSuccess: () => setConfirmOpen(false) },
-    )
+    const result = BulletinGenerateSchema.safeParse({
+      class_id: classId,
+      trimester,
+      academic_year_id: academicYearId,
+    })
+    if (!result.success) return
+    mutate(result.data, { onSuccess: () => setConfirmOpen(false) })
   }
 
   return (

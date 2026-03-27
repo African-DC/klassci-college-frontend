@@ -6,10 +6,15 @@ export const BulletinStatusSchema = z.enum(["brouillon", "publie"])
 
 export const TrimesterSchema = z.enum(["1", "2", "3"])
 
+export const MentionSchema = z.enum(["Très Bien", "Bien", "Assez Bien", "Passable"])
+
+export const CouncilDecisionSchema = z.enum(["admis", "redouble", "exclu"])
+
 export const SubjectGradeSchema = z.object({
   subject_name: z.string(),
   coefficient: z.number(),
   average: z.number().nullable(),
+  coef_x_note: z.number().nullable().optional(),
   class_average: z.number().nullable(),
   teacher_name: z.string(),
   appreciation: z.string().nullable(),
@@ -28,8 +33,9 @@ export const BulletinSchema = z.object({
   average: z.number().nullable(),
   rank: z.number().nullable(),
   total_students: z.number(),
-  mention: z.string().nullable(),
+  mention: MentionSchema.nullable(),
   subject_grades: z.array(SubjectGradeSchema),
+  council_decision: CouncilDecisionSchema.nullable().optional(),
   class_council_appreciation: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -53,6 +59,8 @@ export const BulletinGenerateSchema = z.object({
 
 export type BulletinStatus = z.infer<typeof BulletinStatusSchema>
 export type Trimester = z.infer<typeof TrimesterSchema>
+export type Mention = z.infer<typeof MentionSchema>
+export type CouncilDecision = z.infer<typeof CouncilDecisionSchema>
 export type SubjectGrade = z.infer<typeof SubjectGradeSchema>
 export type Bulletin = z.infer<typeof BulletinSchema>
 export type BulletinListParams = z.infer<typeof BulletinListParamsSchema>

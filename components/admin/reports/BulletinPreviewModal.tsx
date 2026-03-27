@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BulletinStatusBadge } from "./BulletinStatusBadge"
 import { useBulletin } from "@/lib/hooks/useBulletins"
+import { getMentionColor } from "@/lib/utils"
 import {
   Table,
   TableBody,
@@ -14,29 +15,19 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
+const COUNCIL_DECISION_LABELS: Record<string, string> = {
+  admis: "Admis(e)",
+  redouble: "Redouble",
+  exclu: "Exclu(e)",
+}
+
 interface BulletinPreviewModalProps {
   bulletinId: number | null
   onClose: () => void
 }
 
-function getMentionColor(mention: string | null): string {
-  if (!mention) return "text-muted-foreground"
-  switch (mention) {
-    case "Très Bien":
-      return "text-emerald-600 dark:text-emerald-400"
-    case "Bien":
-      return "text-primary"
-    case "Assez Bien":
-      return "text-accent"
-    case "Passable":
-      return "text-amber-600 dark:text-amber-400"
-    default:
-      return "text-muted-foreground"
-  }
-}
-
 export function BulletinPreviewModal({ bulletinId, onClose }: BulletinPreviewModalProps) {
-  const { data: bulletin, isLoading } = useBulletin(bulletinId ?? 0)
+  const { data: bulletin, isLoading } = useBulletin(bulletinId)
 
   return (
     <Dialog open={bulletinId !== null} onOpenChange={onClose}>
@@ -98,29 +89,38 @@ export function BulletinPreviewModal({ bulletinId, onClose }: BulletinPreviewMod
                 <TableRow>
                   <TableHead>Matière</TableHead>
                   <TableHead className="text-center">Coeff.</TableHead>
-                  <TableHead className="text-center">Moyenne</TableHead>
+                  <TableHead className="text-center">Note/20</TableHead>
+                  <TableHead className="text-center">Coef × Note</TableHead>
                   <TableHead className="text-center">Moy. classe</TableHead>
                   <TableHead>Enseignant</TableHead>
                   <TableHead>Appréciation</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bulletin.subject_grades.map((sg) => (
-                  <TableRow key={sg.subject_name}>
-                    <TableCell className="font-medium">{sg.subject_name}</TableCell>
-                    <TableCell className="text-center">{sg.coefficient}</TableCell>
-                    <TableCell className="text-center font-semibold">
-                      {sg.average !== null ? sg.average.toFixed(2) : "—"}
-                    </TableCell>
-                    <TableCell className="text-center text-muted-foreground">
-                      {sg.class_average !== null ? sg.class_average.toFixed(2) : "—"}
-                    </TableCell>
-                    <TableCell className="text-sm">{sg.teacher_name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {sg.appreciation ?? "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {bulletin.subject_grades.map((sg) => {
+                  // Calcul du total coef × note (fourni par l'API ou calculé)
+                  const coefXNote = sg.coef_x_note
+                    ?? (sg.average !== null ? sg.coefficient * sg.average : null)
+                  return (
+                    <TableRow key={sg.subject_name}>
+                      <TableCell className="font-medium">{sg.subject_name}</TableCell>
+                      <TableCell className="text-center">{sg.coefficient}</TableCell>
+                      <TableCell className="text-center font-semibold">
+                        {sg.average !== null ? sg.average.toFixed(2) : "—"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {coefXNote !== null ? coefXNote.toFixed(2) : "—"}
+                      </TableCell>
+                      <TableCell className="text-center text-muted-foreground">
+                        {sg.class_average !== null ? sg.class_average.toFixed(2) : "—"}
+                      </TableCell>
+                      <TableCell className="text-sm">{sg.teacher_name}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {sg.appreciation ?? "—"}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
 
@@ -143,13 +143,21 @@ export function BulletinPreviewModal({ bulletinId, onClose }: BulletinPreviewMod
               </div>
             </div>
 
-            {/* Appréciation du conseil de classe */}
-            {bulletin.class_council_appreciation && (
-              <div className="rounded-lg border p-4 space-y-1">
-                <p className="text-sm font-medium">Appréciation du conseil de classe</p>
-                <p className="text-sm text-muted-foreground">
-                  {bulletin.class_council_appreciation}
-                </p>
+            {/* Conseil de classe : décision + appréciation */}
+            {(bulletin.council_decision || bulletin.class_council_appreciation) && (
+              <div className="rounded-lg border p-4 space-y-2">
+                <p className="text-sm font-medium">Conseil de classe</p>
+                {bulletin.council_decision && (
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">Décision :</span>{" "}
+                    <strong>{COUNCIL_DECISION_LABELS[bulletin.council_decision] ?? bulletin.council_decision}</strong>
+                  </p>
+                )}
+                {bulletin.class_council_appreciation && (
+                  <p className="text-sm text-muted-foreground">
+                    {bulletin.class_council_appreciation}
+                  </p>
+                )}
               </div>
             )}
           </div>

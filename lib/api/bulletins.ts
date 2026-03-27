@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { getSession } from "next-auth/react"
 import { apiFetch, safeValidate } from "./client"
 import {
   BulletinSchema,
@@ -51,7 +52,13 @@ export const bulletinsApi = {
   downloadPdf: async (id: number): Promise<Blob> => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL
     if (!baseUrl) throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    const res = await fetch(`${baseUrl}/bulletins/${id}/pdf`)
+    const session = await getSession()
+    if (!session?.accessToken) throw new Error("Non authentifié")
+    const res = await fetch(`${baseUrl}/bulletins/${id}/pdf`, {
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    })
     if (!res.ok) throw new Error("Impossible de télécharger le bulletin")
     return res.blob()
   },
