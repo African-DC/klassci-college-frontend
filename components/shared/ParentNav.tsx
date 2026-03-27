@@ -3,13 +3,12 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
-import { LayoutDashboard, Users, MessageSquare, LogOut } from "lucide-react"
+import { LayoutDashboard, Users, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { label: "Accueil", href: "/parent/dashboard", icon: LayoutDashboard },
   { label: "Enfants", href: "/parent/children", icon: Users },
-  { label: "Messages", href: "/parent/messages", icon: MessageSquare },
 ]
 
 export function ParentNav() {
