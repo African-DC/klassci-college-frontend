@@ -40,7 +40,7 @@ export function AttendancePageClient() {
   })
 
   // Créneaux de la classe sélectionnée
-  const { data: slots } = useTimetable(classId ?? 0)
+  const { data: slots } = useTimetable(classId!)
 
   // Filtrer les créneaux du jour sélectionné
   const dayOfWeek = useMemo(() => {
@@ -80,12 +80,12 @@ export function AttendancePageClient() {
       {/* Filtres principaux */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Classe</label>
+          <label htmlFor="filter-class" className="text-xs text-muted-foreground">Classe</label>
           <Select
             value={classId?.toString() ?? ""}
             onValueChange={(v) => handleClassChange(Number(v))}
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger id="filter-class" className="w-40">
               <SelectValue placeholder="Classe" />
             </SelectTrigger>
             <SelectContent>
@@ -99,8 +99,9 @@ export function AttendancePageClient() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Date</label>
+          <label htmlFor="filter-date" className="text-xs text-muted-foreground">Date</label>
           <Input
+            id="filter-date"
             type="date"
             value={date}
             onChange={(e) => handleDateChange(e.target.value)}
@@ -110,12 +111,12 @@ export function AttendancePageClient() {
 
         {classId && (
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Créneau</label>
+            <label htmlFor="filter-slot" className="text-xs text-muted-foreground">Créneau</label>
             <Select
               value={slotId?.toString() ?? ""}
               onValueChange={(v) => setSlotId(Number(v))}
             >
-              <SelectTrigger className="w-64">
+              <SelectTrigger id="filter-slot" className="w-64">
                 <SelectValue placeholder="Sélectionner un créneau" />
               </SelectTrigger>
               <SelectContent>

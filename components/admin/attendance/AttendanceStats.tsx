@@ -17,8 +17,8 @@ interface AttendanceStatsProps {
 }
 
 function rateColor(rate: number): string {
-  if (rate >= 90) return "text-emerald-600"
-  if (rate >= 75) return "text-amber-600"
+  if (rate >= 90) return "text-emerald-600 dark:text-emerald-400"
+  if (rate >= 75) return "text-amber-600 dark:text-amber-400"
   return "text-destructive"
 }
 
@@ -79,10 +79,10 @@ export function AttendanceStats({ classId }: AttendanceStatsProps) {
             <TableRow key={s.student_id}>
               <TableCell className="font-medium">{s.student_name}</TableCell>
               <TableCell className="text-center">{s.total_sessions}</TableCell>
-              <TableCell className="text-center text-emerald-600 font-medium">{s.present}</TableCell>
+              <TableCell className="text-center text-emerald-600 dark:text-emerald-400 font-medium">{s.present}</TableCell>
               <TableCell className="text-center text-destructive font-medium">{s.absent}</TableCell>
-              <TableCell className="text-center text-amber-600">{s.late}</TableCell>
-              <TableCell className="text-center text-blue-600">{s.excused}</TableCell>
+              <TableCell className="text-center text-amber-600 dark:text-amber-400">{s.late}</TableCell>
+              <TableCell className="text-center text-blue-600 dark:text-blue-400">{s.excused}</TableCell>
               <TableCell className="text-center">
                 <Badge variant={rateBadge(s.rate)} className={rateColor(s.rate)}>
                   {s.rate.toFixed(1)}%

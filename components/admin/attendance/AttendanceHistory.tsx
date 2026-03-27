@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import {
@@ -36,12 +38,14 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [statusFilter, setStatusFilter] = useState<AttendanceStatus | undefined>(undefined)
+  const [page, setPage] = useState(1)
 
   const params: AttendanceHistoryParams = {
     ...(classId && { class_id: classId }),
     ...(dateFrom && { date_from: dateFrom }),
     ...(dateTo && { date_to: dateTo }),
     ...(statusFilter && { status: statusFilter }),
+    page,
   }
 
   const { data, isLoading } = useAttendanceHistory(params)
@@ -52,26 +56,28 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
       {/* Filtres */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Date début</label>
+          <label htmlFor="history-date-from" className="text-xs text-muted-foreground">Date début</label>
           <Input
+            id="history-date-from"
             type="date"
             value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
+            onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
             className="w-40"
           />
         </div>
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Date fin</label>
+          <label htmlFor="history-date-to" className="text-xs text-muted-foreground">Date fin</label>
           <Input
+            id="history-date-to"
             type="date"
             value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
+            onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
             className="w-40"
           />
         </div>
         <Select
           value={statusFilter ?? "all"}
-          onValueChange={(v) => setStatusFilter(v === "all" ? undefined : (v as AttendanceStatus))}
+          onValueChange={(v) => { setStatusFilter(v === "all" ? undefined : (v as AttendanceStatus)); setPage(1) }}
         >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Statut" />
@@ -131,9 +137,31 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
         </div>
       )}
 
-      {data && (
-        <div className="text-xs text-muted-foreground text-right">
-          {data.total} enregistrement(s) — Page {data.page}/{data.total_pages}
+      {data && data.total_pages > 0 && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {data.total} enregistrement(s) — Page {data.page}/{data.total_pages}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              Précédent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= data.total_pages}
+            >
+              Suivant
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
     </div>

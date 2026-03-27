@@ -23,24 +23,30 @@ interface AttendanceGridProps {
 }
 
 const STATUS_BUTTONS: { status: AttendanceStatus; icon: typeof CheckCircle; label: string; className: string }[] = [
-  { status: "present", icon: CheckCircle, label: "P", className: "text-emerald-600 hover:bg-emerald-50" },
+  { status: "present", icon: CheckCircle, label: "P", className: "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30" },
   { status: "absent", icon: XCircle, label: "A", className: "text-destructive hover:bg-destructive/10" },
-  { status: "retard", icon: Clock, label: "R", className: "text-amber-600 hover:bg-amber-50" },
-  { status: "excuse", icon: ShieldCheck, label: "E", className: "text-blue-600 hover:bg-blue-50" },
+  { status: "retard", icon: Clock, label: "R", className: "text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30" },
+  { status: "excuse", icon: ShieldCheck, label: "E", className: "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30" },
 ]
 
 export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
   const { data: session, isLoading } = useAttendanceSession(classId, slotId, date)
-  const { mutate: saveBatch, isPending: isSaving } = useSaveAttendance()
+  const { mutate: saveBatch, isPending: isSaving } = useSaveAttendance(classId, slotId, date)
 
   // État local des modifications
   const [localStatuses, setLocalStatuses] = useState<Map<number, AttendanceStatus>>(new Map())
 
-  // Statut courant (local si modifié, sinon celui du serveur)
-  function getStatus(studentId: number): AttendanceStatus {
-    if (localStatuses.has(studentId)) return localStatuses.get(studentId)!
-    const record = session?.records.find((r) => r.student_id === studentId)
-    return record?.status ?? "present"
+  // Index O(1) pour les records serveur
+  const recordsByStudent = useMemo(() => {
+    if (!session) return new Map<number, AttendanceStatus>()
+    const map = new Map<number, AttendanceStatus>()
+    session.records.forEach((r) => { if (r.status) map.set(r.student_id, r.status) })
+    return map
+  }, [session])
+
+  // Statut courant (local si modifié, sinon celui du serveur, sinon non pointé)
+  function getStatus(studentId: number): AttendanceStatus | null {
+    return localStatuses.get(studentId) ?? recordsByStudent.get(studentId) ?? null
   }
 
   function handleStatusChange(studentId: number, status: AttendanceStatus) {
@@ -65,24 +71,28 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
     if (!session) return
     const records = session.records.map((r) => ({
       student_id: r.student_id,
-      status: getStatus(r.student_id),
+      // Au moment de l'enregistrement, les élèves non pointés sont considérés présents
+      status: getStatus(r.student_id) ?? "present",
     }))
     saveBatch(
-      { slotId, date, records },
+      { records },
       { onSuccess: () => setLocalStatuses(new Map()) },
     )
   }
 
-  // Compteurs en temps réel
+  // Compteurs en temps réel (logique inlinée pour éviter la closure sur getStatus)
   const counts = useMemo(() => {
-    if (!session) return { present: 0, absent: 0, retard: 0, excuse: 0 }
-    const c = { present: 0, absent: 0, retard: 0, excuse: 0 }
+    if (!session) return { present: 0, absent: 0, retard: 0, excuse: 0, non_pointe: 0 }
+    const c = { present: 0, absent: 0, retard: 0, excuse: 0, non_pointe: 0 }
     session.records.forEach((r) => {
-      const s = getStatus(r.student_id)
-      c[s]++
+      const status = localStatuses.get(r.student_id) ?? r.status ?? null
+      if (status) {
+        c[status]++
+      } else {
+        c.non_pointe++
+      }
     })
     return c
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, localStatuses])
 
   const hasChanges = localStatuses.size > 0
@@ -113,17 +123,20 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
           <strong>{session.subject_name}</strong> — {session.class_name} — {session.teacher_name}
         </div>
         <div className="flex items-center gap-3 text-xs">
-          <span className="text-emerald-600 font-medium">{counts.present} P</span>
+          <span className="text-emerald-600 dark:text-emerald-400 font-medium">{counts.present} P</span>
           <span className="text-destructive font-medium">{counts.absent} A</span>
-          <span className="text-amber-600 font-medium">{counts.retard} R</span>
-          <span className="text-blue-600 font-medium">{counts.excuse} E</span>
+          <span className="text-amber-600 dark:text-amber-400 font-medium">{counts.retard} R</span>
+          <span className="text-blue-600 dark:text-blue-400 font-medium">{counts.excuse} E</span>
+          {counts.non_pointe > 0 && (
+            <span className="text-muted-foreground font-medium">{counts.non_pointe} ?</span>
+          )}
         </div>
       </div>
 
       {/* Actions rapides */}
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" onClick={() => handleMarkAll("present")}>
-          <CheckCircle className="mr-1 h-3 w-3 text-emerald-600" />
+          <CheckCircle className="mr-1 h-3 w-3 text-emerald-600 dark:text-emerald-400" />
           Tous présents
         </Button>
         <Button size="sm" variant="outline" onClick={() => handleMarkAll("absent")}>

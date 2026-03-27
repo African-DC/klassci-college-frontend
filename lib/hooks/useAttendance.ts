@@ -9,6 +9,7 @@ export const attendanceKeys = {
   all: ["attendance"] as const,
   session: (classId: number, slotId: number, date: string) =>
     ["attendance", "session", classId, slotId, date] as const,
+  historyAll: ["attendance", "history"] as const,
   history: (params: Record<string, unknown>) =>
     ["attendance", "history", params] as const,
   stats: (classId: number) => ["attendance", "stats", classId] as const,
@@ -23,21 +24,17 @@ export function useAttendanceSession(classId?: number, slotId?: number, date?: s
   })
 }
 
-export function useSaveAttendance() {
+export function useSaveAttendance(classId: number, slotId: number, date: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({
-      slotId,
-      date,
-      records,
-    }: {
-      slotId: number
-      date: string
-      records: AttendanceBatchEntry[]
-    }) => attendanceApi.saveBatch(slotId, date, records),
+    mutationFn: ({ records }: { records: AttendanceBatchEntry[] }) =>
+      attendanceApi.saveBatch(slotId, date, records),
     onSuccess: () => {
       toast.success("Présences enregistrées")
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.all })
+      // Invalider la session sauvegardée, les stats de la classe, et l'historique
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.session(classId, slotId, date) })
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.stats(classId) })
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.historyAll })
     },
     onError: (err) => {
       toast.error("Erreur", { description: err.message })
