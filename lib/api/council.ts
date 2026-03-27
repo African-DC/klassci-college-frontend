@@ -1,3 +1,4 @@
+import { getSession } from "next-auth/react"
 import { apiFetch, safeValidate } from "./client"
 import {
   CouncilMinutesSchema,
@@ -43,11 +44,11 @@ export const councilApi = {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL
     if (!baseUrl) throw new Error("NEXT_PUBLIC_API_URL is not defined")
     // Récupère le token de session pour l'authentification
-    const { getSession } = await import("next-auth/react")
     const session = await getSession()
+    if (!session?.accessToken) throw new Error("Session expirée — reconnectez-vous")
     const res = await fetch(`${baseUrl}/council-minutes/${minutesId}/pdf`, {
       headers: {
-        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
+        Authorization: `Bearer ${session.accessToken}`,
       },
     })
     if (!res.ok) throw new Error("Impossible de télécharger le procès-verbal")

@@ -67,9 +67,13 @@ export function CouncilDeliberationTable({ minutes }: CouncilDeliberationTablePr
       const autoDecision = record ? computeAutoDecision(record.average) : null
       // Si la décision est identique à l'auto, pas besoin de raison
       const needsReason = decision !== autoDecision
+      // Lire la raison depuis prev (pas la closure externe) pour éviter une stale closure
+      const prevReason = prev.get(studentId)?.reason
+        ?? record?.override_reason
+        ?? ""
       next.set(studentId, {
         decision,
-        reason: needsReason ? (getCurrentReason(studentId) ?? "") : null,
+        reason: needsReason ? prevReason : null,
       })
       return next
     })
@@ -90,6 +94,13 @@ export function CouncilDeliberationTable({ minutes }: CouncilDeliberationTablePr
   function handleSave() {
     const decisions: CouncilDecisionUpdate[] = []
     for (const [studentId, { decision, reason }] of localDecisions) {
+      const record = minutes.records.find((r) => r.student_id === studentId)
+      const autoDecision = record ? computeAutoDecision(record.average) : null
+      // Motif obligatoire pour chaque dérogation (document officiel)
+      if (decision !== autoDecision && (!reason || reason.trim() === "")) {
+        toast.error("Motif requis pour chaque dérogation")
+        return
+      }
       decisions.push({
         student_id: studentId,
         final_decision: decision,

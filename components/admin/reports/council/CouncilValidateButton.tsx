@@ -42,11 +42,11 @@ export function CouncilValidateButton({ minutesId, disabled }: CouncilValidateBu
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Valider le procès-verbal</DialogTitle>
+            <DialogDescription>
+              Cette action est irréversible. Une fois validé, le procès-verbal
+              ne pourra plus être modifié. Les décisions seront définitives.
+            </DialogDescription>
           </DialogHeader>
-          <DialogDescription>
-            Cette action est irréversible. Une fois validé, le procès-verbal
-            ne pourra plus être modifié. Les décisions seront définitives.
-          </DialogDescription>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>
               Annuler
