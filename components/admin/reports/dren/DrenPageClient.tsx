@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Download, FileSpreadsheet, Users, UserCheck, TrendingUp, BarChart3 } from "lucide-react"
+import { useState, useCallback } from "react"
+import { Download, FileSpreadsheet, Loader2, Users, UserCheck, TrendingUp, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -12,10 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { toast } from "sonner"
 import { EnrollmentByLevelChart } from "./EnrollmentByLevelChart"
 import { SuccessRateChart } from "./SuccessRateChart"
 import { LevelStatsTable } from "./LevelStatsTable"
 import { useDrenStats } from "@/lib/hooks/useDrenStats"
+import { drenApi } from "@/lib/api/dren"
 
 // Données de démo — sera remplacé par l'API /academic-years
 const DEMO_ACADEMIC_YEARS = [
@@ -26,8 +28,28 @@ const DEMO_ACADEMIC_YEARS = [
 export function DrenPageClient() {
   const [academicYearId, setAcademicYearId] = useState<number>(DEMO_ACADEMIC_YEARS[0].id)
   const { data: stats, isLoading, isError } = useDrenStats(academicYearId)
+  const [downloading, setDownloading] = useState<"excel" | "pdf" | null>(null)
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL
+  // Téléchargement authentifié via blob
+  const handleDownload = useCallback(async (type: "excel" | "pdf") => {
+    setDownloading(type)
+    try {
+      const blob = type === "excel"
+        ? await drenApi.downloadExcel(academicYearId)
+        : await drenApi.downloadPdf(academicYearId)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `stats-dren-${academicYearId}.${type === "excel" ? "xlsx" : "pdf"}`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error(`[DREN] ${type} download failed:`, err)
+      toast.error(err instanceof Error ? err.message : `Impossible de télécharger le fichier ${type.toUpperCase()}`)
+    } finally {
+      setDownloading(null)
+    }
+  }, [academicYearId])
 
   return (
     <div className="space-y-6">
@@ -40,25 +62,13 @@ export function DrenPageClient() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <a
-              href={`${baseUrl}/reports/dren/excel?academic_year_id=${academicYearId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <FileSpreadsheet className="mr-2 h-4 w-4" />
-              Excel
-            </a>
+          <Button variant="outline" size="sm" onClick={() => handleDownload("excel")} disabled={downloading === "excel"}>
+            {downloading === "excel" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileSpreadsheet className="mr-2 h-4 w-4" />}
+            Excel
           </Button>
-          <Button variant="outline" size="sm" asChild>
-            <a
-              href={`${baseUrl}/reports/dren/pdf?academic_year_id=${academicYearId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              PDF
-            </a>
+          <Button variant="outline" size="sm" onClick={() => handleDownload("pdf")} disabled={downloading === "pdf"}>
+            {downloading === "pdf" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+            PDF
           </Button>
         </div>
       </div>
