@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { apiFetch, safeValidate } from "./client"
+import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
   PaymentSchema,
   FinancialSummarySchema,
@@ -69,12 +69,8 @@ export const paymentsApi = {
     return safeValidate(FinancialSummarySchema, summary, "GET /payments/summary")
   },
 
-  // Télécharger le reçu PDF
+  // Télécharger le reçu PDF (authentifié)
   downloadReceipt: async (id: number): Promise<Blob> => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL
-    if (!baseUrl) throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    const res = await fetch(`${baseUrl}/payments/${id}/receipt`)
-    if (!res.ok) throw new Error("Impossible de télécharger le reçu")
-    return res.blob()
+    return apiFetchBlob(`/payments/${id}/receipt`)
   },
 }

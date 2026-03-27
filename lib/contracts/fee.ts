@@ -45,3 +45,6 @@ export type FeeCategoryCreate = z.infer<typeof FeeCategoryCreateSchema>
 export type FeeCategoryUpdate = z.infer<typeof FeeCategoryUpdateSchema>
 export type FeeVariantCreate = z.infer<typeof FeeVariantCreateSchema>
 export type FeeVariantUpdate = z.infer<typeof FeeVariantUpdateSchema>
+
+/** Niveaux du système scolaire ivoirien (collège) */
+export const LEVELS = ["6ème", "5ème", "4ème", "3ème"] as const

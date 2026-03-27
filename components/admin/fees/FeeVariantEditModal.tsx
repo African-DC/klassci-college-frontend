@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -13,38 +14,47 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { useCreateFeeVariant, useFeeCategories } from "@/lib/hooks/useFees"
-import { FeeVariantCreateSchema, LEVELS, type FeeVariantCreate } from "@/lib/contracts/fee"
+import { useUpdateFeeVariant, useFeeCategories } from "@/lib/hooks/useFees"
+import { FeeVariantCreateSchema, LEVELS, type FeeVariant, type FeeVariantUpdate } from "@/lib/contracts/fee"
 
-interface FeeVariantCreateModalProps {
-  open: boolean
+interface FeeVariantEditModalProps {
+  variant: FeeVariant | null
   onClose: () => void
-  academicYearId: number
 }
 
-export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVariantCreateModalProps) {
-  const form = useForm<FeeVariantCreate>({
+export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalProps) {
+  const form = useForm<FeeVariantUpdate>({
     resolver: zodResolver(FeeVariantCreateSchema),
-    defaultValues: { academic_year_id: academicYearId },
   })
 
   const { data: categories } = useFeeCategories()
-  const { mutate, isPending } = useCreateFeeVariant()
+  const { mutate, isPending } = useUpdateFeeVariant()
 
-  function onSubmit(data: FeeVariantCreate) {
-    mutate(data, {
-      onSuccess: () => {
-        form.reset({ academic_year_id: academicYearId })
-        onClose()
-      },
-    })
+  // Pré-remplir le formulaire quand la variante change
+  useEffect(() => {
+    if (variant) {
+      form.reset({
+        category_id: variant.category_id,
+        level: variant.level,
+        amount: variant.amount,
+        academic_year_id: variant.academic_year_id,
+      })
+    }
+  }, [variant, form])
+
+  function onSubmit(data: FeeVariantUpdate) {
+    if (!variant) return
+    mutate(
+      { id: variant.id, data },
+      { onSuccess: () => onClose() },
+    )
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={!!variant} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="max-w-md" aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle>Nouvelle variante de frais</DialogTitle>
+          <DialogTitle>Modifier la variante</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -110,6 +120,7 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
                       type="number"
                       placeholder="Ex : 45000"
                       {...field}
+                      value={field.value ?? ""}
                       onChange={(e) => field.onChange(Number(e.target.value))}
                     />
                   </FormControl>
@@ -118,7 +129,7 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
               )}
             />
             <Button type="submit" disabled={isPending} className="w-full">
-              {isPending ? "Création..." : "Créer la variante"}
+              {isPending ? "Enregistrement..." : "Enregistrer"}
             </Button>
           </form>
         </Form>

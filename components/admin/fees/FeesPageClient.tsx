@@ -6,6 +6,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
   Table,
   TableBody,
   TableCell,
@@ -14,20 +24,37 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { FeeCategoryCreateModal } from "./FeeCategoryCreateModal"
+import { FeeCategoryEditModal } from "./FeeCategoryEditModal"
 import { FeeVariantCreateModal } from "./FeeVariantCreateModal"
+import { FeeVariantEditModal } from "./FeeVariantEditModal"
 import { useFeeCategories, useFeeVariants, useDeleteFeeCategory, useDeleteFeeVariant } from "@/lib/hooks/useFees"
-
-// Année académique par défaut — sera remplacé par l'API
-const DEFAULT_ACADEMIC_YEAR_ID = 1
+import { useAcademicYears } from "@/lib/hooks/useReferenceData"
+import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
 
 export function FeesPageClient() {
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [variantModalOpen, setVariantModalOpen] = useState(false)
+  const [editCategory, setEditCategory] = useState<FeeCategory | null>(null)
+  const [editVariant, setEditVariant] = useState<FeeVariant | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "category" | "variant"; id: number; name: string } | null>(null)
+
+  const { data: academicYears } = useAcademicYears()
+  const currentYearId = academicYears?.[0]?.id
 
   const { data: categories, isLoading: loadingCategories } = useFeeCategories()
-  const { data: variants, isLoading: loadingVariants } = useFeeVariants(DEFAULT_ACADEMIC_YEAR_ID)
+  const { data: variants, isLoading: loadingVariants } = useFeeVariants(currentYearId)
   const { mutate: deleteCategory } = useDeleteFeeCategory()
   const { mutate: deleteVariant } = useDeleteFeeVariant()
+
+  function handleConfirmDelete() {
+    if (!deleteTarget) return
+    if (deleteTarget.type === "category") {
+      deleteCategory(deleteTarget.id)
+    } else {
+      deleteVariant(deleteTarget.id)
+    }
+    setDeleteTarget(null)
+  }
 
   return (
     <div className="space-y-6">
@@ -72,14 +99,14 @@ export function FeesPageClient() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button size="icon" variant="ghost">
+                        <Button size="icon" variant="ghost" onClick={() => setEditCategory(cat)}>
                           <Pencil className="h-4 w-4" />
                           <span className="sr-only">Modifier {cat.name}</span>
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => deleteCategory(cat.id)}
+                          onClick={() => setDeleteTarget({ type: "category", id: cat.id, name: cat.name })}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                           <span className="sr-only">Supprimer {cat.name}</span>
@@ -134,14 +161,14 @@ export function FeesPageClient() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button size="icon" variant="ghost">
+                        <Button size="icon" variant="ghost" onClick={() => setEditVariant(v)}>
                           <Pencil className="h-4 w-4" />
                           <span className="sr-only">Modifier {v.category_name} {v.level}</span>
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => deleteVariant(v.id)}
+                          onClick={() => setDeleteTarget({ type: "variant", id: v.id, name: `${v.category_name} ${v.level}` })}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                           <span className="sr-only">Supprimer {v.category_name} {v.level}</span>
@@ -160,13 +187,41 @@ export function FeesPageClient() {
         </CardContent>
       </Card>
 
-      {/* Modals */}
+      {/* Modals de création */}
       <FeeCategoryCreateModal open={categoryModalOpen} onClose={() => setCategoryModalOpen(false)} />
       <FeeVariantCreateModal
         open={variantModalOpen}
         onClose={() => setVariantModalOpen(false)}
-        academicYearId={DEFAULT_ACADEMIC_YEAR_ID}
+        academicYearId={currentYearId ?? 1}
       />
+
+      {/* Modals d'édition */}
+      <FeeCategoryEditModal
+        category={editCategory}
+        onClose={() => setEditCategory(null)}
+      />
+      <FeeVariantEditModal
+        variant={editVariant}
+        onClose={() => setEditVariant(null)}
+      />
+
+      {/* Dialog de confirmation de suppression */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer &quot;{deleteTarget?.name}&quot; ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Les paiements liés pourraient être affectés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -63,7 +63,8 @@ export function useDeleteFeeCategory() {
 export function useFeeVariants(academicYearId?: number) {
   return useQuery({
     queryKey: feeKeys.variants(academicYearId),
-    queryFn: () => feesApi.listVariants(academicYearId),
+    queryFn: () => feesApi.listVariants(academicYearId!),
+    enabled: !!academicYearId,
     staleTime: 1000 * 60 * 10,
   })
 }

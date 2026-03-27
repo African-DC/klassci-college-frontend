@@ -1,11 +1,22 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp, AlertCircle, Banknote } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   Select,
   SelectContent,
@@ -23,6 +34,8 @@ import {
 } from "@/components/ui/table"
 import { PaymentCreateModal } from "./PaymentCreateModal"
 import { usePayments, useFinancialSummary, useValidatePayment, useCancelPayment } from "@/lib/hooks/usePayments"
+import { paymentsApi } from "@/lib/api/payments"
+import { downloadBlob } from "@/lib/utils"
 import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@/lib/contracts/payment"
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" }> = {
@@ -42,6 +55,8 @@ export function PaymentsPageClient() {
   const [createOpen, setCreateOpen] = useState(false)
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | undefined>(undefined)
   const [methodFilter, setMethodFilter] = useState<PaymentMethod | undefined>(undefined)
+  const [confirmAction, setConfirmAction] = useState<{ type: "validate" | "cancel"; payment: Payment } | null>(null)
+  const [downloadingId, setDownloadingId] = useState<number | null>(null)
 
   const params: PaymentListParams = {
     ...(statusFilter && { status: statusFilter }),
@@ -54,7 +69,30 @@ export function PaymentsPageClient() {
   const { mutate: cancelPayment } = useCancelPayment()
 
   const payments = useMemo(() => data?.data ?? [], [data])
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL
+
+  const handleDownloadReceipt = useCallback(async (payment: Payment) => {
+    setDownloadingId(payment.id)
+    try {
+      const blob = await paymentsApi.downloadReceipt(payment.id)
+      downloadBlob(blob, `recu-${payment.student_name}-${payment.id}.pdf`)
+    } catch (err) {
+      toast.error("Erreur lors du téléchargement", {
+        description: err instanceof Error ? err.message : "Erreur inconnue",
+      })
+    } finally {
+      setDownloadingId(null)
+    }
+  }, [])
+
+  function handleConfirmAction() {
+    if (!confirmAction) return
+    if (confirmAction.type === "validate") {
+      validatePayment(confirmAction.payment.id)
+    } else {
+      cancelPayment(confirmAction.payment.id)
+    }
+    setConfirmAction(null)
+  }
 
   return (
     <div className="space-y-6">
@@ -188,7 +226,7 @@ export function PaymentsPageClient() {
                             <Button
                               size="icon"
                               variant="ghost"
-                              onClick={() => validatePayment(payment.id)}
+                              onClick={() => setConfirmAction({ type: "validate", payment })}
                             >
                               <CheckCircle className="h-4 w-4 text-emerald-600" />
                               <span className="sr-only">Valider le paiement de {payment.student_name}</span>
@@ -196,22 +234,21 @@ export function PaymentsPageClient() {
                             <Button
                               size="icon"
                               variant="ghost"
-                              onClick={() => cancelPayment(payment.id)}
+                              onClick={() => setConfirmAction({ type: "cancel", payment })}
                             >
                               <XCircle className="h-4 w-4 text-destructive" />
                               <span className="sr-only">Annuler le paiement de {payment.student_name}</span>
                             </Button>
                           </>
                         )}
-                        <Button size="icon" variant="ghost" asChild>
-                          <a
-                            href={`${baseUrl}/payments/${payment.id}/receipt`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Download className="h-4 w-4" />
-                            <span className="sr-only">Télécharger le reçu de {payment.student_name}</span>
-                          </a>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleDownloadReceipt(payment)}
+                          disabled={downloadingId === payment.id}
+                        >
+                          <Download className="h-4 w-4" />
+                          <span className="sr-only">Télécharger le reçu de {payment.student_name}</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -230,6 +267,28 @@ export function PaymentsPageClient() {
       )}
 
       <PaymentCreateModal open={createOpen} onClose={() => setCreateOpen(false)} />
+
+      {/* Dialog de confirmation pour valider/annuler un paiement */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction?.type === "validate" ? "Valider ce paiement ?" : "Annuler ce paiement ?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.type === "validate"
+                ? `Vous allez valider le paiement de ${confirmAction.payment.amount.toLocaleString("fr-FR")} FC pour ${confirmAction.payment.student_name}. Cette action est irréversible.`
+                : `Vous allez annuler le paiement de ${confirmAction?.payment.amount.toLocaleString("fr-FR")} FC pour ${confirmAction?.payment.student_name}. Cette action est irréversible.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Retour</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmAction}>
+              {confirmAction?.type === "validate" ? "Valider" : "Annuler le paiement"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
