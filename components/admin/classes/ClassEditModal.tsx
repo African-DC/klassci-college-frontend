@@ -144,7 +144,7 @@ interface ClassEditModalProps {
 export function ClassEditModal({ classId, open, onClose }: ClassEditModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Modifier la classe</DialogTitle>
         </DialogHeader>

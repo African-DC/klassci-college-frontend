@@ -199,7 +199,7 @@ interface StudentEditModalProps {
 export function StudentEditModal({ studentId, open, onClose }: StudentEditModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Modifier l&apos;élève</DialogTitle>
         </DialogHeader>

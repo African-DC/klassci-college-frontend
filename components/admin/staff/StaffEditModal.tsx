@@ -169,7 +169,7 @@ interface StaffEditModalProps {
 export function StaffEditModal({ staffId, open, onClose }: StaffEditModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Modifier le personnel</DialogTitle>
         </DialogHeader>

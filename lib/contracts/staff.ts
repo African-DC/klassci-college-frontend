@@ -16,7 +16,7 @@ export const StaffSchema = z.object({
 export const StaffCreateSchema = z.object({
   first_name: z.string({ required_error: "Le prénom est requis" }).min(1, "Le prénom est requis"),
   last_name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
-  email: z.string().email("Email invalide").optional().or(z.literal("")),
+  email: z.string().email("Email invalide").optional().or(z.literal("")).transform(v => v === "" ? undefined : v),
   phone: z.string().optional(),
   role: z.string().optional(),
   department: z.string().optional(),

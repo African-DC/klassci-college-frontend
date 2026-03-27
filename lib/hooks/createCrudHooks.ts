@@ -46,31 +46,7 @@ export function createCrudHooks<
     const queryClient = useQueryClient()
     return useMutation({
       mutationFn: (data: TCreate) => api.create(data),
-      onMutate: async (newData) => {
-        await queryClient.cancelQueries({ queryKey: keys.all })
-        const queries = queryClient.getQueriesData<PaginatedResponse<T>>({
-          queryKey: keys.all,
-        })
-        const previous = new Map(queries)
-        for (const [key, old] of queries) {
-          if (!old) continue
-          queryClient.setQueryData(key, {
-            ...old,
-            total: old.total + 1,
-            data: [
-              { ...newData, id: -Date.now(), created_at: "", updated_at: "" } as unknown as T,
-              ...old.data,
-            ],
-          })
-        }
-        return { previous }
-      },
-      onError: (err, _vars, context) => {
-        if (context?.previous) {
-          for (const [key, data] of context.previous) {
-            queryClient.setQueryData(key, data)
-          }
-        }
+      onError: (err) => {
         toast.error("Erreur", { description: err.message })
       },
       onSuccess: () => {

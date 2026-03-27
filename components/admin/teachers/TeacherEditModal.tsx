@@ -138,7 +138,7 @@ interface TeacherEditModalProps {
 export function TeacherEditModal({ teacherId, open, onClose }: TeacherEditModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Modifier l&apos;enseignant</DialogTitle>
         </DialogHeader>

@@ -16,7 +16,7 @@ export const TeacherSchema = z.object({
 export const TeacherCreateSchema = z.object({
   first_name: z.string({ required_error: "Le prénom est requis" }).min(1, "Le prénom est requis"),
   last_name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
-  email: z.string().email("Email invalide").optional().or(z.literal("")),
+  email: z.string().email("Email invalide").optional().or(z.literal("")).transform(v => v === "" ? undefined : v),
   phone: z.string().optional(),
   subject_ids: z.array(z.number()).optional(),
   is_active: z.boolean().default(true),
