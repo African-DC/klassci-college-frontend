@@ -3,6 +3,8 @@ export * from "./attendance"
 export * from "./enrollment"
 export * from "./timetable"
 export * from "./grade"
+export * from "./council"
+export * from "./bulletin"
 export * from "./dren"
 
 // Shared pagination contract
