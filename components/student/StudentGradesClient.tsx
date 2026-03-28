@@ -32,7 +32,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 function averageColor(avg: number | null): string {
   if (avg === null) return "text-muted-foreground"
-  if (avg >= 14) return "text-emerald-600"
+  if (avg >= 14) return "text-emerald-600 dark:text-emerald-400"
   if (avg >= 10) return "text-primary"
   return "text-destructive"
 }
@@ -156,7 +156,7 @@ function SubjectCard({ subject }: { subject: StudentSubjectGrades }) {
                   </TableCell>
                   <TableCell className="text-right py-2">
                     {grade.value !== null ? (
-                      <span className={`text-sm font-semibold ${grade.value >= 10 ? "text-emerald-600" : "text-destructive"}`}>
+                      <span className={`text-sm font-semibold ${grade.value >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
                         {grade.value}/{grade.out_of}
                       </span>
                     ) : (

@@ -64,13 +64,13 @@ export function StudentDashboardClient() {
           icon={ClipboardList}
           label="Moyenne"
           value={data.general_average !== null ? `${data.general_average.toFixed(2)}/20` : "—"}
-          className={data.general_average !== null && data.general_average >= 10 ? "text-emerald-600" : "text-amber-600"}
+          className={data.general_average !== null && data.general_average >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600"}
         />
         <KpiCard
           icon={Wallet}
           label="Frais restants"
           value={`${data.fees_remaining.toLocaleString("fr-FR")} FC`}
-          className={data.fees_remaining === 0 ? "text-emerald-600" : "text-accent"}
+          className={data.fees_remaining === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-accent"}
         />
         <KpiCard
           icon={AlertCircle}

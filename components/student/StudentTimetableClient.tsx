@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { DataError } from "@/components/shared/DataError"
 import { useStudentTimetable } from "@/lib/hooks/useStudentPortal"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 
@@ -31,7 +32,7 @@ function getSubjectColor(subjectId: number): string {
 }
 
 export function StudentTimetableClient() {
-  const { data: slots, isLoading } = useStudentTimetable()
+  const { data: slots, isLoading, isError, refetch } = useStudentTimetable()
 
   // Grouper les créneaux par jour
   const slotsByDay = DAYS.reduce((acc, day) => {
@@ -48,7 +49,9 @@ export function StudentTimetableClient() {
         <p className="text-sm text-muted-foreground">Votre planning de la semaine</p>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <DataError message="Impossible de charger l'emploi du temps" onRetry={() => refetch()} />
+      ) : isLoading ? (
         <TimetableSkeleton />
       ) : !slots || slots.length === 0 ? (
         <div className="py-12 text-center text-sm text-muted-foreground">

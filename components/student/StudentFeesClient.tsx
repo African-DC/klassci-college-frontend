@@ -51,12 +51,12 @@ export function StudentFeesClient() {
             <SummaryCard
               label="Payé"
               value={`${data.total_paid.toLocaleString("fr-FR")} FC`}
-              className="text-emerald-600"
+              className="text-emerald-600 dark:text-emerald-400"
             />
             <SummaryCard
               label="Restant"
               value={`${data.total_remaining.toLocaleString("fr-FR")} FC`}
-              className={data.total_remaining === 0 ? "text-emerald-600" : "text-accent"}
+              className={data.total_remaining === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-accent"}
             />
           </div>
 
@@ -107,7 +107,7 @@ export function StudentFeesClient() {
                         <TableCell className="text-right text-sm">
                           {fee.total_amount.toLocaleString("fr-FR")} FC
                         </TableCell>
-                        <TableCell className="text-right text-sm text-emerald-600">
+                        <TableCell className="text-right text-sm text-emerald-600 dark:text-emerald-400">
                           {fee.paid_amount.toLocaleString("fr-FR")} FC
                         </TableCell>
                         <TableCell>

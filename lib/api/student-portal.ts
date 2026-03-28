@@ -1,6 +1,5 @@
 import { z } from "zod"
-import { getSession } from "next-auth/react"
-import { apiFetch, safeValidate } from "./client"
+import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
   StudentDashboardSchema,
   StudentGradesResponseSchema,
@@ -36,8 +35,8 @@ export const studentPortalApi = {
 
   // Notes par matière et trimestre
   getGrades: async (trimester?: string): Promise<StudentGradesResponse> => {
-    const params = trimester ? `?trimester=${trimester}` : ""
-    const res = await apiFetch<unknown>(`/student/grades${params}`)
+    const query = trimester ? `?${new URLSearchParams({ trimester })}` : ""
+    const res = await apiFetch<unknown>(`/student/grades${query}`)
     return safeValidate(StudentGradesResponseSchema, unwrapResponse(res), "GET /student/grades")
   },
 
@@ -61,18 +60,8 @@ export const studentPortalApi = {
     return safeValidate(StudentBulletinArraySchema, arr, "GET /student/bulletins")
   },
 
-  // Télécharger un bulletin en PDF
+  // Télécharger un bulletin en PDF (via apiFetchBlob centralisé)
   downloadBulletin: async (bulletinId: number): Promise<Blob> => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL
-    if (!baseUrl) throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    const session = await getSession()
-    if (!session?.accessToken) throw new Error("Session expirée — veuillez vous reconnecter")
-    const res = await fetch(`${baseUrl}/student/bulletins/${bulletinId}/pdf`, {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    })
-    if (!res.ok) throw new Error("Impossible de télécharger le bulletin")
-    return res.blob()
+    return apiFetchBlob(`/student/bulletins/${bulletinId}/pdf`)
   },
 }

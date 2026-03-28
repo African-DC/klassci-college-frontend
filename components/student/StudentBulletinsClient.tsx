@@ -79,7 +79,7 @@ function BulletinCard({ bulletin }: { bulletin: StudentBulletin }) {
             <p className="text-xs text-muted-foreground">{bulletin.academic_year}</p>
             <div className="flex items-center gap-2 mt-1">
               {bulletin.general_average !== null && (
-                <span className={`text-xs font-medium ${bulletin.general_average >= 10 ? "text-emerald-600" : "text-destructive"}`}>
+                <span className={`text-xs font-medium ${bulletin.general_average >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
                   Moy. {bulletin.general_average.toFixed(2)}/20
                 </span>
               )}
