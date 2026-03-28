@@ -10,7 +10,7 @@ export const AttendanceRecordSchema = z.object({
   student_name: z.string(),
   timetable_slot_id: z.number(),
   date: z.string(),
-  status: AttendanceStatusSchema,
+  status: AttendanceStatusSchema.nullable(),
   noted_at: z.string().nullish(),
 })
 

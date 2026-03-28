@@ -46,7 +46,8 @@ export function useAttendanceHistory(params: AttendanceHistoryParams = {}) {
   return useQuery({
     queryKey: attendanceKeys.history(params as Record<string, unknown>),
     queryFn: () => attendanceApi.getHistory(params as Record<string, unknown>),
-    enabled: Object.keys(params).length > 0,
+    // Exclure 'page' du check — ne pas fetcher tant qu'un vrai filtre n'est pas défini
+    enabled: Object.keys(params).filter((k) => k !== "page").length > 0,
     staleTime: 1000 * 60 * 5,
   })
 }
