@@ -16,7 +16,7 @@ interface EnrollmentCreateModalProps {
 export function EnrollmentCreateModal({ open, onClose }: EnrollmentCreateModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Nouvelle inscription</DialogTitle>
         </DialogHeader>
