@@ -17,6 +17,7 @@ export function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
+
 /** Couleur Tailwind pour la mention du bulletin (format ivoirien) */
 export function getMentionColor(mention: string | null): string {
   if (!mention) return "text-muted-foreground"
