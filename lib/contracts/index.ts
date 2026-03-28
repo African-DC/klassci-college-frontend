@@ -4,6 +4,7 @@ export * from "./timetable"
 export * from "./grade"
 export * from "./fee"
 export * from "./payment"
+export * from "./dren"
 
 // Shared pagination contract
 import { z } from "zod"
