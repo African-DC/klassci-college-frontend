@@ -3,6 +3,7 @@ export * from "./enrollment"
 export * from "./timetable"
 export * from "./grade"
 export * from "./bulletin"
+export * from "./dren"
 
 // Shared pagination contract
 import { z } from "zod"

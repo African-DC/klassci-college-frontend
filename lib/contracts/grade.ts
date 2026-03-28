@@ -33,8 +33,8 @@ export const EvaluationCreateSchema = z.object({
   title: z.string({ required_error: "Le titre est requis" }).min(1, "Le titre est requis"),
   type: EvaluationTypeSchema,
   date: z.string({ required_error: "La date est requise" }).min(1, "La date est requise"),
-  coefficient: z.number({ required_error: "Le coefficient est requis" }).positive("Le coefficient doit etre positif"),
-  subject_id: z.number({ required_error: "La matiere est requise" }).positive(),
+  coefficient: z.number({ required_error: "Le coefficient est requis" }).positive("Le coefficient doit être positif"),
+  subject_id: z.number({ required_error: "La matière est requise" }).positive(),
   class_id: z.number({ required_error: "La classe est requise" }).positive(),
 })
 
