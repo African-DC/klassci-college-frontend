@@ -73,7 +73,7 @@ export function ParentChildGradesClient({ childId }: ParentChildGradesClientProp
         value={trimester ?? "all"}
         onValueChange={(v) => setTrimester(v === "all" ? undefined : v)}
       >
-        <SelectTrigger className="w-44">
+        <SelectTrigger className="w-44" disabled={isLoading}>
           <SelectValue placeholder="Trimestre" />
         </SelectTrigger>
         <SelectContent>
@@ -137,9 +137,9 @@ function SubjectCard({ subject }: { subject: ParentChildSubjectGrades }) {
           <CardTitle className="text-sm font-medium">{subject.subject_name}</CardTitle>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Coef. {subject.coefficient}</span>
-            <Badge variant="secondary" className={averageColor(subject.average)}>
-              {subject.average !== null ? `${subject.average.toFixed(2)}` : "—"}
-            </Badge>
+            <span className={`text-sm font-semibold ${averageColor(subject.average)}`}>
+              {subject.average !== null ? subject.average.toFixed(2) : "—"}
+            </span>
           </div>
         </div>
       </CardHeader>

@@ -79,26 +79,27 @@ export function ParentChildFeesClient({ childId }: ParentChildFeesClientProps) {
           </div>
 
           {/* Barre de progression */}
-          <Card className="border-0 shadow-sm ring-1 ring-border">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground">Progression des paiements</span>
-                <span className="text-xs font-medium">
-                  {data.total_expected > 0
-                    ? `${Math.min(100, (data.total_paid / data.total_expected) * 100).toFixed(0)}%`
-                    : "0%"}
-                </span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-emerald-500 transition-all"
-                  style={{
-                    width: `${data.total_expected > 0 ? Math.min(100, (data.total_paid / data.total_expected) * 100) : 0}%`,
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          {(() => {
+            const paymentPercent = data.total_expected > 0
+              ? Math.min(100, (data.total_paid / data.total_expected) * 100)
+              : 0
+            return (
+              <Card className="border-0 shadow-sm ring-1 ring-border">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-muted-foreground">Progression des paiements</span>
+                    <span className="text-xs font-medium">{paymentPercent.toFixed(0)}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-all"
+                      style={{ width: `${paymentPercent}%` }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })()}
 
           {/* Détail par catégorie */}
           {data.fees.length === 0 ? (

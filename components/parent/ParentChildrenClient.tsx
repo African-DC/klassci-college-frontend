@@ -94,7 +94,7 @@ function ChildDetailCard({ child }: { child: ParentChild }) {
         {/* Actions */}
         <div className="flex gap-2">
           <Link
-            href={`/parent/children/${child.id}/grades` as never}
+            href={`/parent/children/${child.id}/grades` as string & Record<never, never>}
             className="flex flex-1 items-center justify-center gap-1 rounded-md bg-primary/5 px-3 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
           >
             <GraduationCap className="h-3.5 w-3.5" />
@@ -102,7 +102,7 @@ function ChildDetailCard({ child }: { child: ParentChild }) {
             <ChevronRight className="h-3 w-3" />
           </Link>
           <Link
-            href={`/parent/children/${child.id}/fees` as never}
+            href={`/parent/children/${child.id}/fees` as string & Record<never, never>}
             className="flex flex-1 items-center justify-center gap-1 rounded-md bg-primary/5 px-3 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
           >
             <Wallet className="h-3.5 w-3.5" />

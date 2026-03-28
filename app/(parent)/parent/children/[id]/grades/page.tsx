@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation"
 import { ParentChildGradesClient } from "@/components/parent/ParentChildGradesClient"
 
 export const metadata = { title: "Notes enfant | KLASSCI" }
@@ -8,5 +9,7 @@ export default async function ParentChildGradesPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  return <ParentChildGradesClient childId={Number(id)} />
+  const numId = Number(id)
+  if (!Number.isInteger(numId) || numId <= 0) notFound()
+  return <ParentChildGradesClient childId={numId} />
 }
