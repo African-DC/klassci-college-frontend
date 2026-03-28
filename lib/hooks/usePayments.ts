@@ -3,7 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { paymentsApi } from "@/lib/api/payments"
-import type { PaymentCreate, PaymentListParams } from "@/lib/contracts/payment"
+import type { Payment, PaymentCreate, PaymentListParams } from "@/lib/contracts/payment"
+import type { PaginatedResponse } from "@/lib/contracts"
 
 export const paymentKeys = {
   all: ["payments"] as const,
@@ -39,15 +40,51 @@ export function useCreatePayment() {
   })
 }
 
+/** Met à jour optimistiquement le statut d'un paiement dans le cache paginé */
+function optimisticStatusUpdate(
+  queryClient: ReturnType<typeof useQueryClient>,
+  paymentId: number,
+  newStatus: Payment["status"],
+) {
+  // Met à jour dans toutes les listes paginées en cache
+  queryClient.setQueriesData<PaginatedResponse<Payment>>(
+    { queryKey: paymentKeys.all },
+    (old) => {
+      if (!old) return old
+      return {
+        ...old,
+        data: old.data.map((p) =>
+          p.id === paymentId ? { ...p, status: newStatus } : p,
+        ),
+      }
+    },
+  )
+}
+
 export function useValidatePayment() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => paymentsApi.validate(id),
-    onSuccess: () => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: paymentKeys.all })
+      // Snapshot pour rollback
+      const snapshots = queryClient.getQueriesData<PaginatedResponse<Payment>>({
+        queryKey: paymentKeys.all,
+      })
+      optimisticStatusUpdate(queryClient, id, "valide")
+      return { snapshots }
+    },
+    onError: (err, _id, ctx) => {
+      // Restaure le cache
+      ctx?.snapshots?.forEach(([key, data]) => {
+        if (data) queryClient.setQueryData(key, data)
+      })
+      toast.error("Erreur", { description: err.message })
+    },
+    onSettled: () => {
       toast.success("Paiement validé")
       queryClient.invalidateQueries({ queryKey: paymentKeys.all })
     },
-    onError: (err) => toast.error("Erreur", { description: err.message }),
   })
 }
 
@@ -55,10 +92,23 @@ export function useCancelPayment() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => paymentsApi.cancel(id),
-    onSuccess: () => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: paymentKeys.all })
+      const snapshots = queryClient.getQueriesData<PaginatedResponse<Payment>>({
+        queryKey: paymentKeys.all,
+      })
+      optimisticStatusUpdate(queryClient, id, "annule")
+      return { snapshots }
+    },
+    onError: (err, _id, ctx) => {
+      ctx?.snapshots?.forEach(([key, data]) => {
+        if (data) queryClient.setQueryData(key, data)
+      })
+      toast.error("Erreur", { description: err.message })
+    },
+    onSettled: () => {
       toast.success("Paiement annulé")
       queryClient.invalidateQueries({ queryKey: paymentKeys.all })
     },
-    onError: (err) => toast.error("Erreur", { description: err.message }),
   })
 }

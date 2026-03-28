@@ -43,17 +43,17 @@ export function FeesPageClient() {
 
   const { data: categories, isLoading: loadingCategories } = useFeeCategories()
   const { data: variants, isLoading: loadingVariants } = useFeeVariants(currentYearId)
-  const { mutate: deleteCategory } = useDeleteFeeCategory()
-  const { mutate: deleteVariant } = useDeleteFeeVariant()
+  const { mutate: deleteCategory, isPending: deletingCategory } = useDeleteFeeCategory()
+  const { mutate: deleteVariant, isPending: deletingVariant } = useDeleteFeeVariant()
 
   function handleConfirmDelete() {
     if (!deleteTarget) return
+    const onSuccess = () => setDeleteTarget(null)
     if (deleteTarget.type === "category") {
-      deleteCategory(deleteTarget.id)
+      deleteCategory(deleteTarget.id, { onSuccess })
     } else {
-      deleteVariant(deleteTarget.id)
+      deleteVariant(deleteTarget.id, { onSuccess })
     }
-    setDeleteTarget(null)
   }
 
   return (
@@ -129,7 +129,7 @@ export function FeesPageClient() {
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base font-medium">Montants par niveau</CardTitle>
-          <Button size="sm" onClick={() => setVariantModalOpen(true)}>
+          <Button size="sm" onClick={() => setVariantModalOpen(true)} disabled={!currentYearId}>
             <Plus className="mr-2 h-4 w-4" />
             Nouvelle variante
           </Button>
@@ -192,7 +192,7 @@ export function FeesPageClient() {
       <FeeVariantCreateModal
         open={variantModalOpen}
         onClose={() => setVariantModalOpen(false)}
-        academicYearId={currentYearId ?? 1}
+        academicYearId={currentYearId!}
       />
 
       {/* Modals d'édition */}
@@ -216,8 +216,12 @@ export function FeesPageClient() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Supprimer
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deletingCategory || deletingVariant}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingCategory || deletingVariant ? "Suppression..." : "Supprimer"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

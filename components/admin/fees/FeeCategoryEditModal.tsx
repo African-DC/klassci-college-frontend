@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { useUpdateFeeCategory } from "@/lib/hooks/useFees"
-import { FeeCategoryCreateSchema, type FeeCategory, type FeeCategoryUpdate } from "@/lib/contracts/fee"
+import { FeeCategoryUpdateSchema, type FeeCategory, type FeeCategoryUpdate } from "@/lib/contracts/fee"
 
 interface FeeCategoryEditModalProps {
   category: FeeCategory | null
@@ -18,7 +18,7 @@ interface FeeCategoryEditModalProps {
 
 export function FeeCategoryEditModal({ category, onClose }: FeeCategoryEditModalProps) {
   const form = useForm<FeeCategoryUpdate>({
-    resolver: zodResolver(FeeCategoryCreateSchema),
+    resolver: zodResolver(FeeCategoryUpdateSchema),
     defaultValues: { name: "", description: null },
   })
 

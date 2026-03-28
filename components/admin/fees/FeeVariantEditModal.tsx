@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { useUpdateFeeVariant, useFeeCategories } from "@/lib/hooks/useFees"
-import { FeeVariantCreateSchema, LEVELS, type FeeVariant, type FeeVariantUpdate } from "@/lib/contracts/fee"
+import { FeeVariantUpdateSchema, LEVELS, type FeeVariant, type FeeVariantUpdate } from "@/lib/contracts/fee"
 
 interface FeeVariantEditModalProps {
   variant: FeeVariant | null
@@ -24,7 +24,7 @@ interface FeeVariantEditModalProps {
 
 export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalProps) {
   const form = useForm<FeeVariantUpdate>({
-    resolver: zodResolver(FeeVariantCreateSchema),
+    resolver: zodResolver(FeeVariantUpdateSchema),
   })
 
   const { data: categories } = useFeeCategories()

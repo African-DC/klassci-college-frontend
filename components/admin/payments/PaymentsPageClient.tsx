@@ -65,8 +65,8 @@ export function PaymentsPageClient() {
 
   const { data, isLoading } = usePayments(params)
   const { data: summary, isLoading: loadingSummary } = useFinancialSummary()
-  const { mutate: validatePayment } = useValidatePayment()
-  const { mutate: cancelPayment } = useCancelPayment()
+  const { mutate: validatePayment, isPending: validating } = useValidatePayment()
+  const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
 
   const payments = useMemo(() => data?.data ?? [], [data])
 
@@ -86,12 +86,12 @@ export function PaymentsPageClient() {
 
   function handleConfirmAction() {
     if (!confirmAction) return
+    const onSuccess = () => setConfirmAction(null)
     if (confirmAction.type === "validate") {
-      validatePayment(confirmAction.payment.id)
+      validatePayment(confirmAction.payment.id, { onSuccess })
     } else {
-      cancelPayment(confirmAction.payment.id)
+      cancelPayment(confirmAction.payment.id, { onSuccess })
     }
-    setConfirmAction(null)
   }
 
   return (
@@ -283,8 +283,10 @@ export function PaymentsPageClient() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Retour</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmAction}>
-              {confirmAction?.type === "validate" ? "Valider" : "Annuler le paiement"}
+            <AlertDialogAction onClick={handleConfirmAction} disabled={validating || cancelling}>
+              {validating || cancelling
+                ? "Traitement..."
+                : confirmAction?.type === "validate" ? "Valider" : "Annuler le paiement"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
