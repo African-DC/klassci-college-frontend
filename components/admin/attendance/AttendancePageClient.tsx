@@ -15,17 +15,8 @@ import { AttendanceGrid } from "./AttendanceGrid"
 import { AttendanceHistory } from "./AttendanceHistory"
 import { AttendanceStats } from "./AttendanceStats"
 import { useTimetable } from "@/lib/hooks/useTimetable"
+import { useClasses } from "@/lib/hooks/useClasses"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
-
-// TODO: remplacer par useClasses() après merge de PR #42 (feature/36-admin-crud-pages)
-const DEMO_CLASSES = [
-  { id: 1, name: "6ème A" },
-  { id: 2, name: "6ème B" },
-  { id: 3, name: "5ème A" },
-  { id: 4, name: "5ème B" },
-  { id: 5, name: "4ème A" },
-  { id: 6, name: "3ème A" },
-]
 
 function formatSlotLabel(slot: TimetableSlot): string {
   return `${slot.subject_name} — ${slot.day} ${slot.start_time}-${slot.end_time}`
@@ -38,6 +29,9 @@ export function AttendancePageClient() {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
   })
+
+  const { data: classesData } = useClasses()
+  const classes = classesData?.data ?? []
 
   // Créneaux de la classe sélectionnée
   const { data: slots } = useTimetable(classId!)
@@ -89,7 +83,7 @@ export function AttendancePageClient() {
               <SelectValue placeholder="Classe" />
             </SelectTrigger>
             <SelectContent>
-              {DEMO_CLASSES.map((c) => (
+              {classes.map((c) => (
                 <SelectItem key={c.id} value={c.id.toString()}>
                   {c.name}
                 </SelectItem>

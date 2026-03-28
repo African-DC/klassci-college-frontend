@@ -1,7 +1,6 @@
 "use client"
 
 import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
 import {
   Table,
   TableBody,
@@ -22,11 +21,6 @@ function rateColor(rate: number): string {
   return "text-destructive"
 }
 
-function rateBadge(rate: number): "default" | "secondary" | "destructive" {
-  if (rate >= 90) return "default"
-  if (rate >= 75) return "secondary"
-  return "destructive"
-}
 
 export function AttendanceStats({ classId }: AttendanceStatsProps) {
   const { data: stats, isLoading } = useAttendanceStats(classId)
@@ -84,9 +78,9 @@ export function AttendanceStats({ classId }: AttendanceStatsProps) {
               <TableCell className="text-center text-amber-600 dark:text-amber-400">{s.late}</TableCell>
               <TableCell className="text-center text-blue-600 dark:text-blue-400">{s.excused}</TableCell>
               <TableCell className="text-center">
-                <Badge variant={rateBadge(s.rate)} className={rateColor(s.rate)}>
+                <span className={`text-sm font-semibold ${rateColor(s.rate)}`}>
                   {s.rate.toFixed(1)}%
-                </Badge>
+                </span>
               </TableCell>
             </TableRow>
           ))}

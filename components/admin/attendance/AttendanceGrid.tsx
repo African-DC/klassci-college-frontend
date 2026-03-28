@@ -69,11 +69,14 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
 
   function handleSave() {
     if (!session) return
-    const records = session.records.map((r) => ({
-      student_id: r.student_id,
-      // Au moment de l'enregistrement, les élèves non pointés sont considérés présents
-      status: getStatus(r.student_id) ?? "present",
-    }))
+    // Ne soumettre que les élèves effectivement pointés (modifiés localement ou déjà pointés serveur)
+    const records = session.records
+      .filter((r) => localStatuses.has(r.student_id) || r.status !== null)
+      .map((r) => ({
+        student_id: r.student_id,
+        status: getStatus(r.student_id) ?? "present",
+      }))
+    if (records.length === 0) return
     saveBatch(
       { records },
       { onSuccess: () => setLocalStatuses(new Map()) },
@@ -95,7 +98,15 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
     return c
   }, [session, localStatuses])
 
-  const hasChanges = localStatuses.size > 0
+  // Vérifie si au moins une modification locale diffère de l'état serveur
+  const hasChanges = useMemo(() => {
+    if (localStatuses.size === 0) return false
+    for (const [studentId, status] of localStatuses) {
+      const serverStatus = recordsByStudent.get(studentId) ?? null
+      if (status !== serverStatus) return true
+    }
+    return false
+  }, [localStatuses, recordsByStudent])
 
   if (isLoading) {
     return (
@@ -188,6 +199,13 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Avertissement élèves non pointés */}
+      {counts.non_pointe > 0 && hasChanges && (
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          {counts.non_pointe} élève(s) non pointé(s) — ils ne seront pas inclus dans l&apos;enregistrement.
+        </p>
+      )}
 
       {/* Bouton enregistrer */}
       <div className="flex justify-end">
