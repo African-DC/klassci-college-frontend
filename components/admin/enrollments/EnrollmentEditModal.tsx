@@ -160,7 +160,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
 export function EnrollmentEditModal({ enrollmentId, open, onClose }: EnrollmentEditModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Modifier l&apos;inscription</DialogTitle>
         </DialogHeader>
