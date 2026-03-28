@@ -41,7 +41,7 @@ export const ParentChildSubjectGradesSchema = z.object({
 export const ParentChildGradesResponseSchema = z.object({
   child_name: z.string(),
   class_name: z.string(),
-  trimester: z.string(),
+  trimester: z.string().nullable(),
   general_average: z.number().nullable(),
   rank: z.number().nullable(),
   total_students: z.number(),

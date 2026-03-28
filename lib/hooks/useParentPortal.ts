@@ -20,12 +20,22 @@ export function useParentDashboard() {
   })
 }
 
+// Liste des enfants (réutilise le dashboard, sélectionne uniquement les enfants)
+export function useParentChildren() {
+  const query = useParentDashboard()
+  return {
+    ...query,
+    data: query.data?.children,
+  }
+}
+
 // Notes d'un enfant par trimestre
 export function useParentChildGrades(childId: number | undefined, trimester?: string) {
   return useQuery({
-    queryKey: parentKeys.childGrades(childId!, trimester),
-    queryFn: () => parentPortalApi.getChildGrades(childId!, trimester),
-    enabled: !!childId,
+    // enabled empêche l'exécution si childId est undefined
+    queryKey: parentKeys.childGrades(childId as number, trimester),
+    queryFn: () => parentPortalApi.getChildGrades(childId as number, trimester),
+    enabled: childId !== undefined && childId > 0,
     staleTime: 1000 * 60 * 5,
   })
 }
@@ -33,9 +43,9 @@ export function useParentChildGrades(childId: number | undefined, trimester?: st
 // Frais d'un enfant
 export function useParentChildFees(childId: number | undefined) {
   return useQuery({
-    queryKey: parentKeys.childFees(childId!),
-    queryFn: () => parentPortalApi.getChildFees(childId!),
-    enabled: !!childId,
+    queryKey: parentKeys.childFees(childId as number),
+    queryFn: () => parentPortalApi.getChildFees(childId as number),
+    enabled: childId !== undefined && childId > 0,
     staleTime: 1000 * 60 * 5,
   })
 }

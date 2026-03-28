@@ -25,7 +25,7 @@ export const parentPortalApi = {
 
   // Notes d'un enfant par trimestre
   getChildGrades: async (childId: number, trimester?: string): Promise<ParentChildGradesResponse> => {
-    const params = trimester ? `?trimester=${trimester}` : ""
+    const params = trimester ? `?${new URLSearchParams({ trimester })}` : ""
     const res = await apiFetch<unknown>(`/parent/children/${childId}/grades${params}`)
     return safeValidate(ParentChildGradesResponseSchema, unwrapResponse(res), `GET /parent/children/${childId}/grades`)
   },

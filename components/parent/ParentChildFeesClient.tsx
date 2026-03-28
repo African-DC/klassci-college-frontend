@@ -36,6 +36,7 @@ export function ParentChildFeesClient({ childId }: ParentChildFeesClientProps) {
       <div className="flex items-center gap-3">
         <Link
           href="/parent/children"
+          aria-label="Retour à la liste des enfants"
           className="flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />

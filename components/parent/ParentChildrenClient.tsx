@@ -6,11 +6,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
-import { useParentDashboard } from "@/lib/hooks/useParentPortal"
+import { useParentChildren } from "@/lib/hooks/useParentPortal"
 import type { ParentChild } from "@/lib/contracts/parent-portal"
 
+/** Seuil d'absences au-delà duquel on affiche un avertissement */
+const ABSENCES_WARNING_THRESHOLD = 5
+
 export function ParentChildrenClient() {
-  const { data, isLoading, isError, refetch } = useParentDashboard()
+  const { data: children, isLoading, isError, refetch } = useParentChildren()
 
   return (
     <div className="space-y-6">
@@ -23,14 +26,14 @@ export function ParentChildrenClient() {
         <ChildrenSkeleton />
       ) : isError ? (
         <DataError message="Impossible de charger la liste des enfants." onRetry={() => refetch()} />
-      ) : !data || data.children.length === 0 ? (
+      ) : !children || children.length === 0 ? (
         <div className="py-12 text-center">
           <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
           <p className="text-sm text-muted-foreground">Aucun enfant inscrit.</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {data.children.map((child) => (
+          {children.map((child) => (
             <ChildDetailCard key={child.id} child={child} />
           ))}
         </div>
@@ -62,7 +65,7 @@ function ChildDetailCard({ child }: { child: ParentChild }) {
           <div className="flex items-center gap-2">
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
             <div>
-              <p className={`text-sm font-bold ${child.general_average !== null && child.general_average >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+              <p className={`text-sm font-bold ${child.general_average === null ? "text-muted-foreground" : child.general_average >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
                 {child.general_average !== null ? `${child.general_average.toFixed(2)}/20` : "—"}
               </p>
               <p className="text-[10px] text-muted-foreground">Moyenne</p>
@@ -71,7 +74,7 @@ function ChildDetailCard({ child }: { child: ParentChild }) {
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
             <div>
-              <p className={`text-sm font-bold ${child.total_absences > 5 ? "text-accent" : ""}`}>
+              <p className={`text-sm font-bold ${child.total_absences > ABSENCES_WARNING_THRESHOLD ? "text-accent" : ""}`}>
                 {child.total_absences}
               </p>
               <p className="text-[10px] text-muted-foreground">Absences</p>

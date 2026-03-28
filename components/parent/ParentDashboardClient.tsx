@@ -8,16 +8,30 @@ import { DataError } from "@/components/shared/DataError"
 import { useParentDashboard } from "@/lib/hooks/useParentPortal"
 import type { ParentChild } from "@/lib/contracts/parent-portal"
 
+/** Seuil d'absences au-delà duquel on affiche un avertissement */
+const ABSENCES_WARNING_THRESHOLD = 5
+
 export function ParentDashboardClient() {
   const { data, isLoading, isError, refetch } = useParentDashboard()
 
   if (isLoading) return <DashboardSkeleton />
 
-  if (isError || !data) {
+  if (isError) {
     return (
       <div className="space-y-6">
         <DashboardHeader name={null} />
         <DataError message="Impossible de charger le tableau de bord." onRetry={() => refetch()} />
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <DashboardHeader name={null} />
+        <div className="py-12 text-center text-sm text-muted-foreground">
+          Aucune donnée disponible.
+        </div>
       </div>
     )
   }
@@ -83,14 +97,14 @@ function ChildCard({ child }: { child: ParentChild }) {
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-lg bg-muted/50 p-2 text-center">
             <GraduationCap className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
-            <p className={`text-sm font-bold ${child.general_average !== null && child.general_average >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+            <p className={`text-sm font-bold ${child.general_average === null ? "text-muted-foreground" : child.general_average >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
               {child.general_average !== null ? child.general_average.toFixed(2) : "—"}
             </p>
             <p className="text-[10px] text-muted-foreground">Moyenne</p>
           </div>
           <div className="rounded-lg bg-muted/50 p-2 text-center">
             <AlertCircle className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
-            <p className={`text-sm font-bold ${child.total_absences > 5 ? "text-accent" : ""}`}>
+            <p className={`text-sm font-bold ${child.total_absences > ABSENCES_WARNING_THRESHOLD ? "text-accent" : ""}`}>
               {child.total_absences}
             </p>
             <p className="text-[10px] text-muted-foreground">Absences</p>
