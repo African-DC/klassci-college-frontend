@@ -19,9 +19,9 @@ export const EnrollmentSchema = z.object({
 })
 
 export const EnrollmentCreateSchema = z.object({
-  student_id: z.number({ required_error: "L'eleve est requis" }).positive("L'eleve est requis"),
+  student_id: z.number({ required_error: "L'élève est requis" }).positive("L'élève est requis"),
   class_id: z.number({ required_error: "La classe est requise" }).positive("La classe est requise"),
-  academic_year_id: z.number({ required_error: "L'annee academique est requise" }).positive("L'annee academique est requise"),
+  academic_year_id: z.number({ required_error: "L'année académique est requise" }).positive("L'année académique est requise"),
   assignment_status: EnrollmentStatusSchema.default("affecte"),
   is_scholarship: z.boolean().default(false),
 })
