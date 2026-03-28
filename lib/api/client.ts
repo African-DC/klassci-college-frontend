@@ -53,11 +53,3 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   const data = await res.json()
   return schema ? safeValidate<T>(schema, data, path) : data
 }
-
-// Téléchargement authentifié de fichiers binaires (PDF, Excel, etc.)
-export async function apiFetchBlob(path: string): Promise<Blob> {
-  const headers = await authHeaders()
-  const res = await fetch(`${getBaseUrl()}${path}`, { headers })
-  if (!res.ok) throw new Error(`Erreur ${res.status}`)
-  return res.blob()
-}
