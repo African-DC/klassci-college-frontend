@@ -30,7 +30,7 @@ async function authHeaders(): Promise<Record<string, string>> {
   return headers
 }
 
-/** Fetch authentifié retournant un Blob (pour téléchargement PDF, reçu, etc.) */
+/** Fetch authentifié retournant un Blob (pour téléchargement PDF, Excel, etc.) */
 export async function apiFetchBlob(path: string): Promise<Blob> {
   const headers = await authHeaders()
   delete headers["Content-Type"]
