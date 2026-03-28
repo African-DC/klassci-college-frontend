@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { BulletinStatusBadge } from "./BulletinStatusBadge"
 import { useBulletin } from "@/lib/hooks/useBulletins"
 import { getMentionColor } from "@/lib/utils"
-import type { CouncilDecision } from "@/lib/contracts/bulletin"
+import type { BulletinDecision } from "@/lib/contracts/bulletin"
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-const COUNCIL_DECISION_LABELS: Record<CouncilDecision, string> = {
+const COUNCIL_DECISION_LABELS: Record<BulletinDecision, string> = {
   admis: "Admis(e)",
   redouble: "Redouble",
   exclu: "Exclu(e)",
