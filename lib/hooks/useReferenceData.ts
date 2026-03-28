@@ -1,13 +1,17 @@
 "use client"
 
+import { z } from "zod"
 import { useQuery } from "@tanstack/react-query"
-import { apiFetch } from "@/lib/api/client"
+import { apiFetch, safeValidate } from "@/lib/api/client"
 
-// Types simples pour les données de référence
-interface AcademicYear {
-  id: number
-  label: string
-}
+// Schema Zod pour les années académiques
+const AcademicYearSchema = z.object({
+  id: z.number(),
+  label: z.string(),
+})
+const AcademicYearArraySchema = z.array(AcademicYearSchema)
+
+export type AcademicYear = z.infer<typeof AcademicYearSchema>
 
 export const referenceKeys = {
   academicYears: ["academic-years"] as const,
@@ -18,7 +22,8 @@ export function useAcademicYears() {
     queryKey: referenceKeys.academicYears,
     queryFn: async () => {
       const json = await apiFetch<{ data?: AcademicYear[] } | AcademicYear[]>("/academic-years")
-      return Array.isArray(json) ? json : (json.data ?? [])
+      const arr = Array.isArray(json) ? json : (json.data ?? [])
+      return safeValidate(AcademicYearArraySchema, arr, "GET /academic-years")
     },
     staleTime: 1000 * 60 * 10,
   })

@@ -60,13 +60,20 @@ export function PaymentCreateModal({ open, onClose }: PaymentCreateModalProps) {
               name="student_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>ID élève *</FormLabel>
+                  <FormLabel>Matricule élève *</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Numéro de l'élève"
+                      placeholder="Entrer le numéro matricule"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      value={field.value || ""}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        // Ignore les valeurs non numériques
+                        if (val === "") { field.onChange(undefined); return }
+                        const num = Number(val)
+                        if (!Number.isNaN(num) && num > 0) field.onChange(num)
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

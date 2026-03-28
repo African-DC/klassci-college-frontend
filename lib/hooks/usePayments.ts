@@ -74,17 +74,14 @@ export function useValidatePayment() {
       optimisticStatusUpdate(queryClient, id, "valide")
       return { snapshots }
     },
+    onSuccess: () => toast.success("Paiement validé"),
     onError: (err, _id, ctx) => {
-      // Restaure le cache
       ctx?.snapshots?.forEach(([key, data]) => {
         if (data) queryClient.setQueryData(key, data)
       })
       toast.error("Erreur", { description: err.message })
     },
-    onSettled: () => {
-      toast.success("Paiement validé")
-      queryClient.invalidateQueries({ queryKey: paymentKeys.all })
-    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: paymentKeys.all }),
   })
 }
 
@@ -100,15 +97,13 @@ export function useCancelPayment() {
       optimisticStatusUpdate(queryClient, id, "annule")
       return { snapshots }
     },
+    onSuccess: () => toast.success("Paiement annulé"),
     onError: (err, _id, ctx) => {
       ctx?.snapshots?.forEach(([key, data]) => {
         if (data) queryClient.setQueryData(key, data)
       })
       toast.error("Erreur", { description: err.message })
     },
-    onSettled: () => {
-      toast.success("Paiement annulé")
-      queryClient.invalidateQueries({ queryKey: paymentKeys.all })
-    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: paymentKeys.all }),
   })
 }

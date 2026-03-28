@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { feesApi } from "@/lib/api/fees"
-import type { FeeCategory, FeeCategoryCreate, FeeCategoryUpdate, FeeVariantCreate, FeeVariantUpdate } from "@/lib/contracts/fee"
+import type { FeeCategory, FeeCategoryCreate, FeeCategoryUpdate, FeeVariant, FeeVariantCreate, FeeVariantUpdate } from "@/lib/contracts/fee"
 
 export const feeKeys = {
   all: ["fees"] as const,
@@ -27,7 +27,6 @@ export function useCreateFeeCategory() {
     mutationFn: (data: FeeCategoryCreate) => feesApi.createCategory(data),
     onSuccess: (created) => {
       toast.success("Catégorie créée")
-      // Ajoute la catégorie au cache
       queryClient.setQueryData<FeeCategory[]>(feeKeys.categories, (old) =>
         old ? [...old, created] : [created],
       )
@@ -50,14 +49,12 @@ export function useUpdateFeeCategory() {
       )
       return { previous }
     },
+    onSuccess: () => toast.success("Catégorie mise à jour"),
     onError: (err, _vars, ctx) => {
       if (ctx?.previous) queryClient.setQueryData(feeKeys.categories, ctx.previous)
       toast.error("Erreur", { description: err.message })
     },
-    onSettled: () => {
-      toast.success("Catégorie mise à jour")
-      queryClient.invalidateQueries({ queryKey: feeKeys.categories })
-    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: feeKeys.categories }),
   })
 }
 
@@ -73,14 +70,12 @@ export function useDeleteFeeCategory() {
       )
       return { previous }
     },
+    onSuccess: () => toast.success("Catégorie supprimée"),
     onError: (err, _id, ctx) => {
       if (ctx?.previous) queryClient.setQueryData(feeKeys.categories, ctx.previous)
       toast.error("Erreur", { description: err.message })
     },
-    onSettled: () => {
-      toast.success("Catégorie supprimée")
-      queryClient.invalidateQueries({ queryKey: feeKeys.categories })
-    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: feeKeys.categories }),
   })
 }
 
@@ -113,14 +108,19 @@ export function useUpdateFeeVariant() {
     mutationFn: ({ id, data }: { id: number; data: FeeVariantUpdate }) =>
       feesApi.updateVariant(id, data),
     onMutate: async () => {
-      // Annule les requêtes en cours sur toutes les variantes
       await queryClient.cancelQueries({ queryKey: feeKeys.all })
+      // Snapshot de toutes les listes de variantes pour rollback
+      const snapshots = queryClient.getQueriesData<FeeVariant[]>({ queryKey: ["fees", "variants"] })
+      return { snapshots }
     },
-    onError: (err) => toast.error("Erreur", { description: err.message }),
-    onSettled: () => {
-      toast.success("Variante mise à jour")
-      queryClient.invalidateQueries({ queryKey: feeKeys.all })
+    onSuccess: () => toast.success("Variante mise à jour"),
+    onError: (err, _vars, ctx) => {
+      ctx?.snapshots?.forEach(([key, data]) => {
+        if (data) queryClient.setQueryData(key, data)
+      })
+      toast.error("Erreur", { description: err.message })
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: feeKeys.all }),
   })
 }
 
@@ -130,12 +130,16 @@ export function useDeleteFeeVariant() {
     mutationFn: (id: number) => feesApi.deleteVariant(id),
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: feeKeys.all })
-      return {}
+      const snapshots = queryClient.getQueriesData<FeeVariant[]>({ queryKey: ["fees", "variants"] })
+      return { snapshots }
     },
-    onError: (err) => toast.error("Erreur", { description: err.message }),
-    onSettled: () => {
-      toast.success("Variante supprimée")
-      queryClient.invalidateQueries({ queryKey: feeKeys.all })
+    onSuccess: () => toast.success("Variante supprimée"),
+    onError: (err, _id, ctx) => {
+      ctx?.snapshots?.forEach(([key, data]) => {
+        if (data) queryClient.setQueryData(key, data)
+      })
+      toast.error("Erreur", { description: err.message })
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: feeKeys.all }),
   })
 }

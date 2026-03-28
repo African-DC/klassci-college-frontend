@@ -189,11 +189,13 @@ export function FeesPageClient() {
 
       {/* Modals de création */}
       <FeeCategoryCreateModal open={categoryModalOpen} onClose={() => setCategoryModalOpen(false)} />
-      <FeeVariantCreateModal
-        open={variantModalOpen}
-        onClose={() => setVariantModalOpen(false)}
-        academicYearId={currentYearId!}
-      />
+      {currentYearId && (
+        <FeeVariantCreateModal
+          open={variantModalOpen}
+          onClose={() => setVariantModalOpen(false)}
+          academicYearId={currentYearId}
+        />
+      )}
 
       {/* Modals d'édition */}
       <FeeCategoryEditModal

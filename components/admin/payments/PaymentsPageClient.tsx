@@ -5,8 +5,8 @@ import { Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp, AlertCircle, 
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { KpiCard } from "@/components/admin/dashboard/KpiCard"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -121,26 +121,27 @@ export function PaymentsPageClient() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <KpiCard
             icon={Banknote}
-            label="Attendu"
+            title="Attendu"
             value={`${summary.total_expected.toLocaleString("fr-FR")} FC`}
+            variant="blue"
           />
           <KpiCard
             icon={Wallet}
-            label="Collecté"
+            title="Collecté"
             value={`${summary.total_collected.toLocaleString("fr-FR")} FC`}
-            className="text-emerald-600"
+            variant="emerald"
           />
           <KpiCard
             icon={AlertCircle}
-            label="Restant"
+            title="Restant"
             value={`${summary.total_pending.toLocaleString("fr-FR")} FC`}
-            className="text-accent"
+            variant="orange"
           />
           <KpiCard
             icon={TrendingUp}
-            label="Taux de recouvrement"
+            title="Taux de recouvrement"
             value={`${summary.collection_rate.toFixed(1)}%`}
-            className={summary.collection_rate >= 70 ? "text-emerald-600" : "text-accent"}
+            variant={summary.collection_rate >= 70 ? "emerald" : "orange"}
           />
         </div>
       ) : null}
@@ -292,32 +293,5 @@ export function PaymentsPageClient() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
-}
-
-// Carte KPI
-function KpiCard({
-  icon: Icon,
-  label,
-  value,
-  className,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-  className?: string
-}) {
-  return (
-    <Card className="border-0 shadow-sm ring-1 ring-border">
-      <CardContent className="flex items-center gap-3 p-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Icon className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className={`text-lg font-bold ${className ?? ""}`}>{value}</p>
-        </div>
-      </CardContent>
-    </Card>
   )
 }
