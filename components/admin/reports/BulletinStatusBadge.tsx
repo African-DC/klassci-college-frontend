@@ -1,5 +1,3 @@
-"use client"
-
 import { Badge } from "@/components/ui/badge"
 import type { BulletinStatus } from "@/lib/contracts/bulletin"
 

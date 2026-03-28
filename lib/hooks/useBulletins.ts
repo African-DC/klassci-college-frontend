@@ -21,7 +21,7 @@ export function useBulletins(params: BulletinListParams = {}) {
 
 export function useBulletin(id: number | null) {
   return useQuery({
-    queryKey: bulletinKeys.detail(id ?? 0),
+    queryKey: bulletinKeys.detail(id!),
     queryFn: () => bulletinsApi.getById(id!),
     enabled: id !== null && id > 0,
   })
