@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import type { Route } from "next"
 import {
   Users,
   GraduationCap,
@@ -99,7 +100,7 @@ function ClassCard({ cls }: { cls: TeacherClass }) {
 
         {/* Action */}
         <Link
-          href={`/teacher/grades/${cls.id}`}
+          href={`/teacher/grades/${cls.id}` as Route}
           className="flex items-center justify-center gap-1 rounded-md border px-3 py-2 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
         >
           Gérer les notes <ChevronRight className="h-3 w-3" />
