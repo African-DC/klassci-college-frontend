@@ -121,13 +121,13 @@ function ChildCard({ child }: { child: ParentChild }) {
         {/* Liens rapides */}
         <div className="flex gap-2">
           <Link
-            href={`/parent/children/${child.id}/grades` as never}
+            href={`/parent/children/${child.id}/grades`}
             className="flex flex-1 items-center justify-center gap-1 rounded-md border px-3 py-2 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
           >
             Notes <ChevronRight className="h-3 w-3" />
           </Link>
           <Link
-            href={`/parent/children/${child.id}/fees` as never}
+            href={`/parent/children/${child.id}/fees`}
             className="flex flex-1 items-center justify-center gap-1 rounded-md border px-3 py-2 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
           >
             Frais <ChevronRight className="h-3 w-3" />
