@@ -11,7 +11,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { BulletinList } from "./BulletinList"
 import { BulletinGenerateButton } from "./BulletinGenerateButton"
-import { useClasses, useAcademicYears } from "@/lib/hooks/useReferenceData"
+import { useClasses } from "@/lib/hooks/useClasses"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import type { BulletinListParams, Trimester, BulletinStatus } from "@/lib/contracts/bulletin"
 
 export function ReportsPageClient() {
@@ -21,7 +22,8 @@ export function ReportsPageClient() {
   const [status, setStatus] = useState<BulletinStatus | undefined>(undefined)
   const [page, setPage] = useState(1)
 
-  const { data: classes, isLoading: classesLoading } = useClasses()
+  const { data: classesData, isLoading: classesLoading } = useClasses()
+  const classes = classesData?.data
   const { data: academicYears, isLoading: yearsLoading } = useAcademicYears()
 
   // Pré-sélectionner la première année académique quand les données arrivent
