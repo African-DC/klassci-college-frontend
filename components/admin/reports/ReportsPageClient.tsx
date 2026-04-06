@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   Select,
   SelectContent,
@@ -11,7 +11,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { BulletinList } from "./BulletinList"
 import { BulletinGenerateButton } from "./BulletinGenerateButton"
-import { useClasses, useAcademicYears } from "@/lib/hooks/useReferenceData"
+import { useClasses } from "@/lib/hooks/useClasses"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import type { BulletinListParams, Trimester, BulletinStatus } from "@/lib/contracts/bulletin"
 
 export function ReportsPageClient() {
@@ -21,20 +22,16 @@ export function ReportsPageClient() {
   const [status, setStatus] = useState<BulletinStatus | undefined>(undefined)
   const [page, setPage] = useState(1)
 
-  const { data: classes, isLoading: classesLoading } = useClasses()
+  const { data: classesData, isLoading: classesLoading } = useClasses()
+  const classes = classesData?.data
   const { data: academicYears, isLoading: yearsLoading } = useAcademicYears()
 
-  // Pré-sélectionner la première année académique quand les données arrivent
-  useEffect(() => {
-    if (!academicYearId && academicYears && academicYears.length > 0) {
-      setAcademicYearId(academicYears[0].id)
-    }
-  }, [academicYearId, academicYears])
+  const activeYearId = academicYearId ?? academicYears?.[0]?.id
 
   const params: BulletinListParams = {
     ...(classId && { class_id: classId }),
     ...(trimester && { trimester }),
-    ...(academicYearId && { academic_year_id: academicYearId }),
+    ...(activeYearId && { academic_year_id: activeYearId }),
     ...(status && { status }),
     page,
   }
@@ -57,7 +54,7 @@ export function ReportsPageClient() {
         <BulletinGenerateButton
           classId={classId}
           trimester={trimester}
-          academicYearId={academicYearId}
+          academicYearId={activeYearId}
         />
       </div>
 
@@ -67,7 +64,7 @@ export function ReportsPageClient() {
           <Skeleton className="h-10 w-40" />
         ) : (
           <Select
-            value={academicYearId?.toString() ?? ""}
+            value={activeYearId?.toString() ?? ""}
             onValueChange={(v) => { setAcademicYearId(Number(v)); setPage(1) }}
           >
             <SelectTrigger className="w-40">

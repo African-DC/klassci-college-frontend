@@ -21,18 +21,11 @@ import {
 } from "@/components/ui/dialog"
 import { CouncilDeliberationTable } from "./CouncilDeliberationTable"
 import { useCouncilMinutes } from "@/lib/hooks/useCouncil"
-
-// TODO (#36): remplacer par useClasses() après merge de PR #42 (feature/36-admin-crud-pages)
-const DEMO_CLASSES = [
-  { id: 1, name: "6ème A" },
-  { id: 2, name: "6ème B" },
-  { id: 3, name: "5ème A" },
-  { id: 4, name: "5ème B" },
-  { id: 5, name: "4ème A" },
-  { id: 6, name: "3ème A" },
-]
+import { useClasses } from "@/lib/hooks/useClasses"
 
 export function CouncilPageClient() {
+  const { data: classesData } = useClasses()
+  const classes = classesData?.data ?? []
   const [classId, setClassId] = useState<number | undefined>(undefined)
   const [trimester, setTrimester] = useState<string | undefined>(undefined)
 
@@ -98,7 +91,7 @@ export function CouncilPageClient() {
             <SelectValue placeholder="Classe" />
           </SelectTrigger>
           <SelectContent>
-            {DEMO_CLASSES.map((c) => (
+            {classes.map((c) => (
               <SelectItem key={c.id} value={c.id.toString()}>
                 {c.name}
               </SelectItem>

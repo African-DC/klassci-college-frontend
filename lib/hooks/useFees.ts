@@ -30,6 +30,8 @@ export function useCreateFeeCategory() {
       queryClient.setQueryData<FeeCategory[]>(feeKeys.categories, (old) =>
         old ? [...old, created] : [created],
       )
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: feeKeys.categories })
     },
     onError: (err) => toast.error("Erreur", { description: err.message }),
@@ -83,8 +85,8 @@ export function useDeleteFeeCategory() {
 
 export function useFeeVariants(academicYearId?: number) {
   return useQuery({
-    queryKey: feeKeys.variants(academicYearId),
-    queryFn: () => feesApi.listVariants(academicYearId!),
+    queryKey: academicYearId ? feeKeys.variants(academicYearId) : ["fees", "variants", "none"],
+    queryFn: () => feesApi.listVariants(academicYearId as number),
     enabled: !!academicYearId,
     staleTime: 1000 * 60 * 10,
   })
@@ -120,7 +122,7 @@ export function useUpdateFeeVariant() {
       })
       toast.error("Erreur", { description: err.message })
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: feeKeys.all }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["fees", "variants"] }),
   })
 }
 
@@ -140,6 +142,6 @@ export function useDeleteFeeVariant() {
       })
       toast.error("Erreur", { description: err.message })
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: feeKeys.all }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["fees", "variants"] }),
   })
 }
