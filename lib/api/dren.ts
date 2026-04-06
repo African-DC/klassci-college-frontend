@@ -1,5 +1,4 @@
-import { getSession } from "next-auth/react"
-import { apiFetch, safeValidate } from "./client"
+import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import { DrenStatsSchema, type DrenStats } from "@/lib/contracts/dren"
 
 export const drenApi = {
@@ -13,28 +12,10 @@ export const drenApi = {
   },
 
   // Télécharger l'export Excel (authentifié)
-  downloadExcel: async (academicYearId: number): Promise<Blob> => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL
-    if (!baseUrl) throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    const session = await getSession()
-    if (!session?.accessToken) throw new Error("Session expirée — reconnectez-vous")
-    const res = await fetch(`${baseUrl}/reports/dren/excel?academic_year_id=${academicYearId}`, {
-      headers: { Authorization: `Bearer ${session.accessToken}` },
-    })
-    if (!res.ok) throw new Error("Impossible de télécharger le fichier Excel")
-    return res.blob()
-  },
+  downloadExcel: (academicYearId: number): Promise<Blob> =>
+    apiFetchBlob(`/reports/dren/excel?academic_year_id=${academicYearId}`),
 
   // Télécharger l'export PDF (authentifié)
-  downloadPdf: async (academicYearId: number): Promise<Blob> => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL
-    if (!baseUrl) throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    const session = await getSession()
-    if (!session?.accessToken) throw new Error("Session expirée — reconnectez-vous")
-    const res = await fetch(`${baseUrl}/reports/dren/pdf?academic_year_id=${academicYearId}`, {
-      headers: { Authorization: `Bearer ${session.accessToken}` },
-    })
-    if (!res.ok) throw new Error("Impossible de télécharger le fichier PDF")
-    return res.blob()
-  },
+  downloadPdf: (academicYearId: number): Promise<Blob> =>
+    apiFetchBlob(`/reports/dren/pdf?academic_year_id=${academicYearId}`),
 }

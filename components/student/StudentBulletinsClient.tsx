@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
+import { downloadBlob } from "@/lib/utils"
 import { useStudentBulletins } from "@/lib/hooks/useStudentPortal"
 import { studentPortalApi } from "@/lib/api/student-portal"
 import { DataError } from "@/components/shared/DataError"
@@ -51,12 +52,7 @@ function BulletinCard({ bulletin }: { bulletin: StudentBulletin }) {
     setIsDownloading(true)
     try {
       const blob = await studentPortalApi.downloadBulletin(bulletin.id)
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `bulletin-${bulletin.trimester}-${bulletin.academic_year}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
+      downloadBlob(blob, `bulletin-${bulletin.trimester}-${bulletin.academic_year}.pdf`)
     } catch (err) {
       console.error("[StudentBulletins] Download failed:", err)
       toast.error(err instanceof Error ? err.message : "Impossible de télécharger le bulletin")
