@@ -13,43 +13,37 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
+import { downloadBlob } from "@/lib/utils"
 import { EnrollmentByLevelChart } from "./EnrollmentByLevelChart"
 import { SuccessRateChart } from "./SuccessRateChart"
 import { LevelStatsTable } from "./LevelStatsTable"
 import { useDrenStats } from "@/lib/hooks/useDrenStats"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { drenApi } from "@/lib/api/dren"
 
-// Données de démo — sera remplacé par l'API /academic-years
-const DEMO_ACADEMIC_YEARS = [
-  { id: 1, label: "2025-2026" },
-  { id: 2, label: "2024-2025" },
-]
-
 export function DrenPageClient() {
-  const [academicYearId, setAcademicYearId] = useState<number>(DEMO_ACADEMIC_YEARS[0].id)
-  const { data: stats, isLoading, isError } = useDrenStats(academicYearId)
+  const { data: academicYears } = useAcademicYears()
+  const [academicYearId, setAcademicYearId] = useState<number | undefined>(undefined)
+  const activeYearId = academicYearId ?? academicYears?.[0]?.id
+  const { data: stats, isLoading, isError } = useDrenStats(activeYearId)
   const [downloading, setDownloading] = useState<"excel" | "pdf" | null>(null)
 
   // Téléchargement authentifié via blob
   const handleDownload = useCallback(async (type: "excel" | "pdf") => {
+    if (!activeYearId) return
     setDownloading(type)
     try {
       const blob = type === "excel"
-        ? await drenApi.downloadExcel(academicYearId)
-        : await drenApi.downloadPdf(academicYearId)
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `stats-dren-${academicYearId}.${type === "excel" ? "xlsx" : "pdf"}`
-      a.click()
-      URL.revokeObjectURL(url)
+        ? await drenApi.downloadExcel(activeYearId)
+        : await drenApi.downloadPdf(activeYearId)
+      downloadBlob(blob, `stats-dren-${activeYearId}.${type === "excel" ? "xlsx" : "pdf"}`)
     } catch (err) {
       console.error(`[DREN] ${type} download failed:`, err)
       toast.error(err instanceof Error ? err.message : `Impossible de télécharger le fichier ${type.toUpperCase()}`)
     } finally {
       setDownloading(null)
     }
-  }, [academicYearId])
+  }, [activeYearId])
 
   return (
     <div className="space-y-6">
@@ -75,14 +69,14 @@ export function DrenPageClient() {
 
       {/* Filtre année */}
       <Select
-        value={academicYearId.toString()}
+        value={activeYearId?.toString() ?? ""}
         onValueChange={(v) => setAcademicYearId(Number(v))}
       >
         <SelectTrigger className="w-44">
           <SelectValue placeholder="Année académique" />
         </SelectTrigger>
         <SelectContent>
-          {DEMO_ACADEMIC_YEARS.map((y) => (
+          {(academicYears ?? []).map((y) => (
             <SelectItem key={y.id} value={y.id.toString()}>
               {y.label}
             </SelectItem>
