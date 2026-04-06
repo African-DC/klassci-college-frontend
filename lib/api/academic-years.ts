@@ -12,9 +12,9 @@ const ArraySchema = z.array(AcademicYearSchema)
 
 export const academicYearsApi = {
   list: async (): Promise<AcademicYear[]> => {
-    const data = await apiFetch<unknown>("/api/v1/academic-years")
+    const data = await apiFetch<unknown>("/academic-years")
     // L'API peut retourner un tableau ou un objet paginé
     const raw = Array.isArray(data) ? data : (data as { data: unknown[] }).data ?? data
-    return safeValidate(ArraySchema, raw, "/api/v1/academic-years")
+    return safeValidate(ArraySchema, raw, "/academic-years")
   },
 }
