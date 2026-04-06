@@ -1,4 +1,5 @@
 import { getSession } from "next-auth/react"
+import type { Session } from "next-auth"
 import type { z } from "zod"
 
 function getBaseUrl(): string {
@@ -21,8 +22,29 @@ export function safeValidate<T>(schema: z.ZodType<T>, data: unknown, context: st
   return result.data
 }
 
+// Cache getSession() to avoid redundant /api/auth/session round-trips
+// when multiple TanStack Query fetches fire in parallel on mount.
+const SESSION_CACHE_TTL = 10_000 // 10 seconds — short enough to catch token refresh
+let sessionCache: { session: Session | null; timestamp: number } | null = null
+let sessionPromise: Promise<Session | null> | null = null
+
+async function getCachedSession(): Promise<Session | null> {
+  if (sessionCache && Date.now() - sessionCache.timestamp < SESSION_CACHE_TTL) {
+    return sessionCache.session
+  }
+  // Deduplicate concurrent calls — all parallel fetches share one getSession() call
+  if (!sessionPromise) {
+    sessionPromise = getSession().then((session) => {
+      sessionCache = { session, timestamp: Date.now() }
+      sessionPromise = null
+      return session
+    })
+  }
+  return sessionPromise
+}
+
 async function authHeaders(): Promise<Record<string, string>> {
-  const session = await getSession()
+  const session = await getCachedSession()
   const headers: Record<string, string> = { "Content-Type": "application/json" }
   if (session?.accessToken) {
     headers["Authorization"] = `Bearer ${session.accessToken}`
