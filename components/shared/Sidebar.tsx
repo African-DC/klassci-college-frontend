@@ -82,7 +82,7 @@ const navigation: NavSection[] = [
     items: [
       { label: "Notifications", href: "/admin/notifications", icon: Bell },
       { label: "Roles & Permissions", href: "/admin/roles", icon: ShieldCheck },
-      { label: "Parametres", href: "/admin/settings", icon: Settings },
+      { label: "Parametres", href: "/admin/settings" as Route, icon: Settings },
     ],
   },
 ]
