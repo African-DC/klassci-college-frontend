@@ -11,9 +11,9 @@ export const drenKeys = {
 // Récupérer les statistiques DREN pour une année académique
 export function useDrenStats(academicYearId: number | undefined) {
   return useQuery({
-    queryKey: drenKeys.stats(academicYearId ?? 0),
-    queryFn: () => drenApi.getStats(academicYearId!),
+    queryKey: academicYearId ? drenKeys.stats(academicYearId) : ["dren", "stats", "none"],
+    queryFn: () => drenApi.getStats(academicYearId as number),
     enabled: !!academicYearId,
-    staleTime: 1000 * 60 * 10, // 10 minutes — données stables
+    staleTime: 1000 * 60 * 10,
   })
 }
