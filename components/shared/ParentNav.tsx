@@ -3,13 +3,13 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
-import { LayoutDashboard, Users, MessageSquare, LogOut } from "lucide-react"
+import { LayoutDashboard, Users, LogOut, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { Route } from "next"
 
-const navItems = [
+const navItems: { label: string; href: Route; icon: LucideIcon }[] = [
   { label: "Accueil", href: "/parent/dashboard", icon: LayoutDashboard },
   { label: "Enfants", href: "/parent/children", icon: Users },
-  { label: "Messages", href: "/parent/messages", icon: MessageSquare },
 ]
 
 export function ParentNav() {
@@ -23,7 +23,7 @@ export function ParentNav() {
           return (
             <Link
               key={item.href}
-              href={item.href as never}
+              href={item.href}
               className={cn(
                 "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
                 isActive
