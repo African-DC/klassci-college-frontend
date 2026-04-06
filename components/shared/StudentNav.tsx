@@ -27,7 +27,7 @@ const mainNavItems: { label: string; href: Route; icon: LucideIcon }[] = [
 
 const moreNavItems: { label: string; href: Route; icon: LucideIcon }[] = [
   { label: "Bulletins", href: "/student/bulletins", icon: FileText },
-  { label: "Présences", href: "/student/attendance", icon: UserCheck },
+  { label: "Présences", href: "/student/attendance" as Route, icon: UserCheck },
 ]
 
 export function StudentNav() {
