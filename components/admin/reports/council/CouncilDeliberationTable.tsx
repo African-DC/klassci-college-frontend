@@ -25,6 +25,7 @@ import { CouncilDecisionBadge } from "./CouncilDecisionBadge"
 import { CouncilValidateButton } from "./CouncilValidateButton"
 import { useUpdateDecisions } from "@/lib/hooks/useCouncil"
 import { councilApi } from "@/lib/api/council"
+import { CouncilStatusSchema } from "@/lib/contracts/council"
 import type { CouncilMinutes, CouncilDecision, CouncilDecisionUpdate } from "@/lib/contracts/council"
 
 // Calcul automatique de la décision basé sur la MGA (système ivoirien)
@@ -44,7 +45,7 @@ interface CouncilDeliberationTableProps {
 }
 
 export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyChange }: CouncilDeliberationTableProps) {
-  const isReadOnly = minutes.status === "valide"
+  const isReadOnly = minutes.status === CouncilStatusSchema.Values.valide
   const { mutate: saveDecisions, isPending: isSaving } = useUpdateDecisions(classId, trimester)
 
   // État local des décisions modifiées

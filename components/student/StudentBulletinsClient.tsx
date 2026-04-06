@@ -11,6 +11,7 @@ import { downloadBlob } from "@/lib/utils"
 import { useStudentBulletins } from "@/lib/hooks/useStudentPortal"
 import { studentPortalApi } from "@/lib/api/student-portal"
 import { DataError } from "@/components/shared/DataError"
+import { BulletinStatusSchema } from "@/lib/contracts/bulletin"
 import type { StudentBulletin } from "@/lib/contracts/student-portal"
 
 export function StudentBulletinsClient() {
@@ -61,7 +62,7 @@ function BulletinCard({ bulletin }: { bulletin: StudentBulletin }) {
     }
   }, [bulletin.id, bulletin.trimester, bulletin.academic_year])
 
-  const isPublished = bulletin.status === "publie"
+  const isPublished = bulletin.status === BulletinStatusSchema.Values.publie
 
   return (
     <Card className="border-0 shadow-sm ring-1 ring-border">

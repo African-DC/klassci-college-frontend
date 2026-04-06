@@ -18,6 +18,7 @@ import { BulletinListSkeleton } from "./BulletinListSkeleton"
 import { useBulletins, usePublishBulletins } from "@/lib/hooks/useBulletins"
 import { bulletinsApi } from "@/lib/api/bulletins"
 import { getMentionColor, downloadBlob } from "@/lib/utils"
+import { BulletinStatusSchema } from "@/lib/contracts/bulletin"
 import type { BulletinListParams, Bulletin } from "@/lib/contracts/bulletin"
 
 interface BulletinListProps {
@@ -47,7 +48,7 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
 
   const bulletins = useMemo(() => data?.data ?? [], [data])
   const hasDrafts = useMemo(
-    () => bulletins.some((b) => b.status === "brouillon"),
+    () => bulletins.some((b) => b.status === BulletinStatusSchema.Values.brouillon),
     [bulletins],
   )
 
