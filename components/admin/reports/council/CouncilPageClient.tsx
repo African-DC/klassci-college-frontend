@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { CouncilDeliberationTable } from "./CouncilDeliberationTable"
 import { useCouncilMinutes } from "@/lib/hooks/useCouncil"
+import { CouncilStatusSchema } from "@/lib/contracts/council"
 import { useClasses } from "@/lib/hooks/useClasses"
 
 export function CouncilPageClient() {
@@ -114,8 +115,8 @@ export function CouncilPageClient() {
         </Select>
 
         {minutes && (
-          <Badge variant={minutes.status === "valide" ? "default" : "secondary"}>
-            {minutes.status === "valide" ? "Validé" : "Brouillon"}
+          <Badge variant={minutes.status === CouncilStatusSchema.Values.valide ? "default" : "secondary"}>
+            {minutes.status === CouncilStatusSchema.Values.valide ? "Validé" : "Brouillon"}
           </Badge>
         )}
       </div>

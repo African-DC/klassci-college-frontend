@@ -36,6 +36,7 @@ import { PaymentCreateModal } from "./PaymentCreateModal"
 import { usePayments, useFinancialSummary, useValidatePayment, useCancelPayment } from "@/lib/hooks/usePayments"
 import { paymentsApi } from "@/lib/api/payments"
 import { downloadBlob } from "@/lib/utils"
+import { PaymentStatusSchema } from "@/lib/contracts/payment"
 import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@/lib/contracts/payment"
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" }> = {
@@ -222,7 +223,7 @@ export function PaymentsPageClient() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {payment.status === "en_attente" && (
+                        {payment.status === PaymentStatusSchema.Values.en_attente && (
                           <>
                             <Button
                               size="icon"
