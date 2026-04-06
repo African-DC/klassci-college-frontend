@@ -1,5 +1,6 @@
 "use client"
 
+import type { Route } from "next"
 import Link from "next/link"
 import {
   UserPlus,
@@ -61,7 +62,7 @@ export function QuickActions() {
           {actions.map((action) => (
             <Link
               key={action.href}
-              href={action.href as never}
+              href={action.href as Route}
               className="flex flex-col items-center gap-2 rounded-xl p-4 text-center transition-colors hover:bg-muted"
             >
               <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${action.color}`}>

@@ -1,6 +1,6 @@
 "use client"
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { CreateModal } from "@/components/shared/CreateModal"
 import { TeacherForm } from "@/components/forms/TeacherForm"
 
 interface TeacherCreateModalProps {
@@ -10,13 +10,8 @@ interface TeacherCreateModalProps {
 
 export function TeacherCreateModal({ open, onClose }: TeacherCreateModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg" aria-describedby={undefined}>
-        <DialogHeader>
-          <DialogTitle>Nouvel enseignant</DialogTitle>
-        </DialogHeader>
-        <TeacherForm onSuccess={onClose} />
-      </DialogContent>
-    </Dialog>
+    <CreateModal open={open} onClose={onClose} title="Nouvel enseignant">
+      <TeacherForm onSuccess={onClose} />
+    </CreateModal>
   )
 }

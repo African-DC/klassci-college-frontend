@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Plus, Pencil, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTimetable, useDeleteSlot } from "@/lib/hooks/useTimetable"
@@ -49,8 +49,14 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
   const [editSlot, setEditSlot] = useState<TimetableSlot | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
+  const slotMap = useMemo(() => {
+    const map = new Map<string, TimetableSlot>()
+    slots?.forEach((s) => map.set(`${s.day}:${s.start_time}`, s))
+    return map
+  }, [slots])
+
   function getSlot(day: string, hour: string): TimetableSlot | undefined {
-    return slots?.find((s) => s.day === day && s.start_time === hour)
+    return slotMap.get(`${day}:${hour}`)
   }
 
   if (isLoading) {

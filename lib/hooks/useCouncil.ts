@@ -15,8 +15,10 @@ export const councilKeys = {
 export function useCouncilMinutes(classId: number | undefined, trimester: string | undefined) {
   const enabled = !!classId && !!trimester
   return useQuery({
-    queryKey: councilKeys.minutes(classId ?? 0, trimester ?? ""),
-    queryFn: () => councilApi.getMinutes(classId!, trimester!),
+    queryKey: enabled
+      ? councilKeys.minutes(classId as number, trimester as string)
+      : ["council", "minutes", "none"],
+    queryFn: () => councilApi.getMinutes(classId as number, trimester as string),
     enabled,
     staleTime: 1000 * 60 * 5,
   })

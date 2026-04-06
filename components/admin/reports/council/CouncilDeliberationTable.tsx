@@ -58,22 +58,29 @@ export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyC
     onDirtyChange?.(isDirty)
   }, [isDirty, onDirtyChange])
 
+  // Index records by student_id for O(1) lookups instead of O(n) find per row
+  const recordsByStudent = useMemo(() => {
+    const map = new Map<number, (typeof minutes.records)[number]>()
+    minutes.records.forEach((r) => map.set(r.student_id, r))
+    return map
+  }, [minutes.records])
+
   // Récupère la décision courante (locale si modifiée, sinon celle du serveur)
   function getCurrentDecision(studentId: number): CouncilDecision | null {
     return localDecisions.get(studentId)?.decision ??
-      minutes.records.find((r) => r.student_id === studentId)?.final_decision ?? null
+      recordsByStudent.get(studentId)?.final_decision ?? null
   }
 
   function getCurrentReason(studentId: number): string | null {
     return localDecisions.get(studentId)?.reason ??
-      minutes.records.find((r) => r.student_id === studentId)?.override_reason ?? null
+      recordsByStudent.get(studentId)?.override_reason ?? null
   }
 
   // Modifier la décision d'un élève
   function handleDecisionChange(studentId: number, decision: CouncilDecision) {
     setLocalDecisions((prev) => {
       const next = new Map(prev)
-      const record = minutes.records.find((r) => r.student_id === studentId)
+      const record = recordsByStudent.get(studentId)
       const autoDecision = record ? computeAutoDecision(record.average) : null
       // Si la décision est identique à l'auto, pas besoin de raison
       const needsReason = decision !== autoDecision
@@ -104,7 +111,7 @@ export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyC
   function handleSave() {
     const decisions: CouncilDecisionUpdate[] = []
     for (const [studentId, { decision, reason }] of localDecisions) {
-      const record = minutes.records.find((r) => r.student_id === studentId)
+      const record = recordsByStudent.get(studentId)
       const autoDecision = record ? computeAutoDecision(record.average) : null
       // Motif obligatoire pour chaque dérogation (document officiel)
       if (decision !== autoDecision && (!reason || reason.trim() === "")) {

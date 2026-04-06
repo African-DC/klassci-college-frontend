@@ -28,7 +28,7 @@ import { FeeCategoryEditModal } from "./FeeCategoryEditModal"
 import { FeeVariantCreateModal } from "./FeeVariantCreateModal"
 import { FeeVariantEditModal } from "./FeeVariantEditModal"
 import { useFeeCategories, useFeeVariants, useDeleteFeeCategory, useDeleteFeeVariant } from "@/lib/hooks/useFees"
-import { useAcademicYears } from "@/lib/hooks/useReferenceData"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
 
 export function FeesPageClient() {

@@ -1,6 +1,6 @@
 "use client"
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { CreateModal } from "@/components/shared/CreateModal"
 import { StudentForm } from "@/components/forms/StudentForm"
 
 interface StudentCreateModalProps {
@@ -10,13 +10,8 @@ interface StudentCreateModalProps {
 
 export function StudentCreateModal({ open, onClose }: StudentCreateModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg" aria-describedby={undefined}>
-        <DialogHeader>
-          <DialogTitle>Nouvel élève</DialogTitle>
-        </DialogHeader>
-        <StudentForm onSuccess={onClose} />
-      </DialogContent>
-    </Dialog>
+    <CreateModal open={open} onClose={onClose} title="Nouvel élève">
+      <StudentForm onSuccess={onClose} />
+    </CreateModal>
   )
 }
