@@ -18,6 +18,8 @@ export default function TimetablePage() {
   const queryClient = useQueryClient()
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const pollFnRef = useRef<(() => Promise<void>) | null>(null)
+  const pollCountRef = useRef(0)
+  const MAX_POLL_ATTEMPTS = 100 // 100 × 3s = 5 minutes max
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -29,13 +31,21 @@ export default function TimetablePage() {
   }, [])
 
   function handleGenerate() {
-    if (!selectedClassId) return
+    if (!selectedClassId || pollingRef.current) return // guard double-click
     generateMutation.mutate(selectedClassId, {
       onSuccess: (data) => {
         toast.info("Generation lancee", { description: "Veuillez patienter..." })
+        pollCountRef.current = 0
 
         // Store the poll function in a ref so the interval always calls the latest version
         pollFnRef.current = async () => {
+          pollCountRef.current++
+          if (pollCountRef.current > MAX_POLL_ATTEMPTS) {
+            if (pollingRef.current) clearInterval(pollingRef.current)
+            pollingRef.current = null
+            toast.error("Timeout", { description: "La génération prend trop de temps. Réessayez plus tard." })
+            return
+          }
           try {
             const status = await timetableApi.taskStatus(data.task_id)
             if (status.status === "completed") {
