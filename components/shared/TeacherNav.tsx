@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils"
 const navItems: { label: string; href: Route; icon: LucideIcon }[] = [
   { label: "Accueil", href: "/teacher/dashboard", icon: LayoutDashboard },
   { label: "Mon EDT", href: "/teacher/timetable", icon: CalendarDays },
-  { label: "Notes", href: "/teacher/grades", icon: ClipboardList },
-  { label: "Appel", href: "/teacher/attendance", icon: UserCheck },
+  { label: "Notes", href: "/teacher/grades" as Route, icon: ClipboardList },
+  { label: "Appel", href: "/teacher/attendance" as Route, icon: UserCheck },
 ]
 
 export function TeacherNav() {
