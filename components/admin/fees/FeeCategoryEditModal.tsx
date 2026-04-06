@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -19,17 +18,10 @@ interface FeeCategoryEditModalProps {
 export function FeeCategoryEditModal({ category, onClose }: FeeCategoryEditModalProps) {
   const form = useForm<FeeCategoryUpdate>({
     resolver: zodResolver(FeeCategoryUpdateSchema),
-    defaultValues: { name: "", description: null },
+    values: category ? { name: category.name, description: category.description } : undefined,
   })
 
   const { mutate, isPending } = useUpdateFeeCategory()
-
-  // Pré-remplir le formulaire quand la catégorie change
-  useEffect(() => {
-    if (category) {
-      form.reset({ name: category.name, description: category.description })
-    }
-  }, [category, form])
 
   function onSubmit(data: FeeCategoryUpdate) {
     if (!category) return

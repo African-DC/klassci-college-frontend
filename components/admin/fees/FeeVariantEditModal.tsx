@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -25,22 +24,16 @@ interface FeeVariantEditModalProps {
 export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalProps) {
   const form = useForm<FeeVariantUpdate>({
     resolver: zodResolver(FeeVariantUpdateSchema),
+    values: variant ? {
+      category_id: variant.category_id,
+      level: variant.level,
+      amount: variant.amount,
+      academic_year_id: variant.academic_year_id,
+    } : undefined,
   })
 
   const { data: categories } = useFeeCategories()
   const { mutate, isPending } = useUpdateFeeVariant()
-
-  // Pré-remplir le formulaire quand la variante change
-  useEffect(() => {
-    if (variant) {
-      form.reset({
-        category_id: variant.category_id,
-        level: variant.level,
-        amount: variant.amount,
-        academic_year_id: variant.academic_year_id,
-      })
-    }
-  }, [variant, form])
 
   function onSubmit(data: FeeVariantUpdate) {
     if (!variant) return
