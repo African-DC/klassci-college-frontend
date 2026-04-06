@@ -2,7 +2,7 @@
 
 import { signOut, useSession } from "next-auth/react"
 import { useTheme } from "next-themes"
-import { Bell, Menu, LogOut, User, ChevronDown, Sun, Moon } from "lucide-react"
+import { Menu, LogOut, User, ChevronDown, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { NotificationBell } from "@/components/shared/NotificationBell"
 
 interface NavbarProps {
   onMenuClick: () => void
@@ -56,10 +57,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
         </Button>
 
         {/* Notifications */}
-        {/* TODO: remplacer par un hook useNotificationCount() */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5 text-muted-foreground" />
-        </Button>
+        <NotificationBell />
 
         <Separator orientation="vertical" className="h-8 mx-1" />
 
