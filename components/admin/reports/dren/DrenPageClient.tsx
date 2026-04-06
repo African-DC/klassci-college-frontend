@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
+import { downloadBlob } from "@/lib/utils"
 import { EnrollmentByLevelChart } from "./EnrollmentByLevelChart"
 import { SuccessRateChart } from "./SuccessRateChart"
 import { LevelStatsTable } from "./LevelStatsTable"
@@ -37,12 +38,7 @@ export function DrenPageClient() {
       const blob = type === "excel"
         ? await drenApi.downloadExcel(academicYearId)
         : await drenApi.downloadPdf(academicYearId)
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `stats-dren-${academicYearId}.${type === "excel" ? "xlsx" : "pdf"}`
-      a.click()
-      URL.revokeObjectURL(url)
+      downloadBlob(blob, `stats-dren-${academicYearId}.${type === "excel" ? "xlsx" : "pdf"}`)
     } catch (err) {
       console.error(`[DREN] ${type} download failed:`, err)
       toast.error(err instanceof Error ? err.message : `Impossible de télécharger le fichier ${type.toUpperCase()}`)
