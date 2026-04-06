@@ -1,6 +1,5 @@
 "use client"
 
-import type { Route } from "next"
 import { useState } from "react"
 import type { Route } from "next"
 import { useRouter, useSearchParams } from "next/navigation"
