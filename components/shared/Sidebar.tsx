@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button"
 
 interface NavItem {
   label: string
-  href: string
+  href: Route
   icon: React.ComponentType<{ className?: string }>
 }
 
@@ -82,7 +82,7 @@ const navigation: NavSection[] = [
     items: [
       { label: "Notifications", href: "/admin/notifications", icon: Bell },
       { label: "Roles & Permissions", href: "/admin/roles", icon: ShieldCheck },
-      { label: "Parametres", href: "/admin/settings", icon: Settings },
+      { label: "Parametres", href: "/admin/settings" as Route, icon: Settings },
     ],
   },
 ]
@@ -132,7 +132,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               return (
                 <Link
                   key={item.href}
-                  href={item.href as Route}
+                  href={item.href}
                   onClick={onClose}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
