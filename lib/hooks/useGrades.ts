@@ -101,7 +101,6 @@ export function useUpdateGrades(evaluationId: number) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: gradeKeys.grades(evaluationId) })
-      queryClient.invalidateQueries({ queryKey: gradeKeys.all })
     },
   })
 }
