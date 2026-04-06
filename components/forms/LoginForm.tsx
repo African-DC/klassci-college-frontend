@@ -1,5 +1,6 @@
 "use client"
 
+import type { Route } from "next"
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
@@ -49,7 +50,7 @@ export function LoginForm() {
         return
       }
 
-      router.push(callbackUrl as never)
+      router.push(callbackUrl as Route)
       router.refresh()
     } catch {
       setError("Erreur de connexion au serveur")
