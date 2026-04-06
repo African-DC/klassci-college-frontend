@@ -1,12 +1,13 @@
 "use client"
 
+import type { Route } from "next"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
-import { LayoutDashboard, CalendarDays, ClipboardList, UserCheck, LogOut } from "lucide-react"
+import { LayoutDashboard, CalendarDays, ClipboardList, UserCheck, LogOut, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const navItems = [
+const navItems: { label: string; href: Route; icon: LucideIcon }[] = [
   { label: "Accueil", href: "/teacher/dashboard", icon: LayoutDashboard },
   { label: "Mon EDT", href: "/teacher/timetable", icon: CalendarDays },
   { label: "Notes", href: "/teacher/grades", icon: ClipboardList },
@@ -24,7 +25,7 @@ export function TeacherNav() {
           return (
             <Link
               key={item.href}
-              href={item.href as never}
+              href={item.href}
               className={cn(
                 "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
                 isActive

@@ -1,3 +1,4 @@
+import type { Route } from "next"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { LoginForm } from "@/components/forms/LoginForm"
@@ -7,7 +8,7 @@ export default async function LoginPage() {
 
   if (session?.user && !session.error) {
     const portal = session.user.role ?? "admin"
-    redirect(`/${portal}/dashboard` as never)
+    redirect(`/${portal}/dashboard` as Route)
   }
 
   return (

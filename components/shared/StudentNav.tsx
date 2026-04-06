@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import type { Route } from "next"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
@@ -13,17 +14,18 @@ import {
   FileText,
   UserCheck,
   LogOut,
+  type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const mainNavItems = [
+const mainNavItems: { label: string; href: Route; icon: LucideIcon }[] = [
   { label: "Accueil", href: "/student/dashboard", icon: LayoutDashboard },
   { label: "EDT", href: "/student/timetable", icon: CalendarDays },
   { label: "Notes", href: "/student/grades", icon: ClipboardList },
   { label: "Frais", href: "/student/fees", icon: Wallet },
 ]
 
-const moreNavItems = [
+const moreNavItems: { label: string; href: Route; icon: LucideIcon }[] = [
   { label: "Bulletins", href: "/student/bulletins", icon: FileText },
   { label: "Présences", href: "/student/attendance", icon: UserCheck },
 ]
@@ -65,7 +67,7 @@ export function StudentNav() {
               return (
                 <Link
                   key={item.href}
-                  href={item.href as never}
+                  href={item.href}
                   role="menuitem"
                   onClick={() => setMoreOpen(false)}
                   className={cn(
@@ -101,7 +103,7 @@ export function StudentNav() {
             return (
               <Link
                 key={item.href}
-                href={item.href as never}
+                href={item.href}
                 className={cn(
                   "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
                   isActive ? "text-primary" : "text-muted-foreground",
