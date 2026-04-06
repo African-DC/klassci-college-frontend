@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   Select,
   SelectContent,
@@ -26,17 +26,12 @@ export function ReportsPageClient() {
   const classes = classesData?.data
   const { data: academicYears, isLoading: yearsLoading } = useAcademicYears()
 
-  // Pré-sélectionner la première année académique quand les données arrivent
-  useEffect(() => {
-    if (!academicYearId && academicYears && academicYears.length > 0) {
-      setAcademicYearId(academicYears[0].id)
-    }
-  }, [academicYearId, academicYears])
+  const activeYearId = academicYearId ?? academicYears?.[0]?.id
 
   const params: BulletinListParams = {
     ...(classId && { class_id: classId }),
     ...(trimester && { trimester }),
-    ...(academicYearId && { academic_year_id: academicYearId }),
+    ...(activeYearId && { academic_year_id: activeYearId }),
     ...(status && { status }),
     page,
   }
@@ -59,7 +54,7 @@ export function ReportsPageClient() {
         <BulletinGenerateButton
           classId={classId}
           trimester={trimester}
-          academicYearId={academicYearId}
+          academicYearId={activeYearId}
         />
       </div>
 
@@ -69,7 +64,7 @@ export function ReportsPageClient() {
           <Skeleton className="h-10 w-40" />
         ) : (
           <Select
-            value={academicYearId?.toString() ?? ""}
+            value={activeYearId?.toString() ?? ""}
             onValueChange={(v) => { setAcademicYearId(Number(v)); setPage(1) }}
           >
             <SelectTrigger className="w-40">
