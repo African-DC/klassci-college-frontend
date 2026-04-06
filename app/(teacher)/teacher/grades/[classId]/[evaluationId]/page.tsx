@@ -1,3 +1,4 @@
+import type { Route } from "next"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -14,7 +15,7 @@ export default async function GradeEntryPage({ params }: GradeEntryPageProps) {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild className="shrink-0">
-          <Link href={`/teacher/grades` as never}>
+          <Link href={`/teacher/grades` as Route}>
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>

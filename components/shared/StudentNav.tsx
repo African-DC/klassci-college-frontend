@@ -1,5 +1,6 @@
 "use client"
 
+import type { Route } from "next"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -65,7 +66,7 @@ export function StudentNav() {
               return (
                 <Link
                   key={item.href}
-                  href={item.href as never}
+                  href={item.href as Route}
                   role="menuitem"
                   onClick={() => setMoreOpen(false)}
                   className={cn(
@@ -101,7 +102,7 @@ export function StudentNav() {
             return (
               <Link
                 key={item.href}
-                href={item.href as never}
+                href={item.href as Route}
                 className={cn(
                   "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
                   isActive ? "text-primary" : "text-muted-foreground",
