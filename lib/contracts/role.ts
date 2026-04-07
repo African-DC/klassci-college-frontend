@@ -1,22 +1,14 @@
 import { z } from "zod"
 
-/** Module fonctionnel auquel appartient une permission */
-export const PermissionModuleSchema = z.enum([
-  "inscriptions",
-  "notes",
-  "paiements",
-  "presences",
-  "emploi_du_temps",
-  "utilisateurs",
-  "parametres",
-  "notifications",
-])
+// Miroir de app/schemas/role.py (backend)
+// Backend Permission: {id, slug, name, description}
+// Backend Role: {id, name, description}
 
 export const PermissionSchema = z.object({
   id: z.number(),
+  slug: z.string(),
   name: z.string(),
   description: z.string().nullish(),
-  module: PermissionModuleSchema,
 })
 
 export const RoleSchema = z.object({
@@ -44,7 +36,6 @@ export const RoleListParamsSchema = z.object({
 })
 
 export type Permission = z.infer<typeof PermissionSchema>
-export type PermissionModule = z.infer<typeof PermissionModuleSchema>
 export type Role = z.infer<typeof RoleSchema>
 export type RoleCreate = z.infer<typeof RoleCreateSchema>
 export type RoleUpdate = z.infer<typeof RoleUpdateSchema>
