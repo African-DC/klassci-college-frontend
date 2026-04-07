@@ -2,52 +2,49 @@ import { z } from "zod"
 
 // Miroir de app/schemas/payment.py (backend)
 
-export const PaymentMethodSchema = z.enum(["especes", "mobile_money", "virement", "cheque"])
+export const PaymentMethodSchema = z.enum(["cash", "mobile_money", "bank_transfer", "cheque"])
 
-export const PaymentStatusSchema = z.enum(["en_attente", "valide", "annule"])
+export const PaymentStatusSchema = z.enum(["pending", "completed", "failed", "refunded"])
 
 export const PaymentSchema = z.object({
   id: z.number(),
-  student_id: z.number(),
-  student_name: z.string(),
-  class_name: z.string(),
-  fee_category_id: z.number(),
-  fee_category_name: z.string(),
-  amount: z.number(),
+  enrollment_fee_id: z.number(),
+  amount: z.union([z.number(), z.string().transform(Number)]),
   method: PaymentMethodSchema,
   status: PaymentStatusSchema,
   reference: z.string().nullable(),
-  paid_at: z.string(),
+  received_by: z.number().nullable(),
+  notes: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 })
 
 export const PaymentCreateSchema = z.object({
-  student_id: z.number({ required_error: "L'élève est requis" }).positive(),
-  fee_category_id: z.number({ required_error: "La catégorie de frais est requise" }).positive(),
+  enrollment_fee_id: z.number({ required_error: "Le frais d'inscription est requis" }).positive(),
   amount: z.number({ required_error: "Le montant est requis" }).positive("Le montant doit être positif"),
   method: PaymentMethodSchema,
   reference: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
 })
 
 // Résumé financier pour le dashboard
 export const FinancialSummarySchema = z.object({
-  total_expected: z.number(),
-  total_collected: z.number(),
-  total_pending: z.number(),
-  collection_rate: z.number(),
+  total_expected: z.union([z.number(), z.string().transform(Number)]),
+  total_collected: z.union([z.number(), z.string().transform(Number)]),
+  total_pending: z.union([z.number(), z.string().transform(Number)]),
+  collection_rate: z.union([z.number(), z.string().transform(Number)]),
   by_category: z.array(
     z.object({
       category_name: z.string(),
-      expected: z.number(),
-      collected: z.number(),
-      rate: z.number(),
+      expected: z.union([z.number(), z.string().transform(Number)]),
+      collected: z.union([z.number(), z.string().transform(Number)]),
+      rate: z.union([z.number(), z.string().transform(Number)]),
     }),
   ),
   by_method: z.array(
     z.object({
       method: PaymentMethodSchema,
-      total: z.number(),
+      total: z.union([z.number(), z.string().transform(Number)]),
       count: z.number(),
     }),
   ),
@@ -57,10 +54,10 @@ export const PaymentListParamsSchema = z.object({
   class_id: z.number().optional(),
   status: PaymentStatusSchema.optional(),
   method: PaymentMethodSchema.optional(),
-  fee_category_id: z.number().optional(),
+  enrollment_fee_id: z.number().optional(),
   search: z.string().optional(),
   page: z.number().optional(),
-  per_page: z.number().optional(),
+  size: z.number().optional(),
 })
 
 export type PaymentMethod = z.infer<typeof PaymentMethodSchema>
