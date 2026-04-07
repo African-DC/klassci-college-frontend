@@ -1,15 +1,11 @@
 "use client"
 
 import { useSession } from "next-auth/react"
-import { CalendarDays, GraduationCap } from "lucide-react"
+import { CalendarDays } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 
 export function WelcomeHeader() {
   const { data: session, status } = useSession()
-  const { data: yearsData } = useAcademicYears()
-
-  const currentYear = yearsData?.items?.find((y) => y.is_current)
 
   const today = new Date().toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -40,12 +36,6 @@ export function WelcomeHeader() {
             <CalendarDays className="h-4 w-4" />
             <span className="capitalize" suppressHydrationWarning>{today}</span>
           </span>
-          {currentYear && (
-            <span className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-0.5 text-xs font-medium text-primary-foreground">
-              <GraduationCap className="h-3.5 w-3.5" />
-              Année {currentYear.name}
-            </span>
-          )}
         </div>
         <p className="text-sm text-primary-foreground/60 max-w-lg">
           Voici un aperçu de votre établissement. Consultez les indicateurs clés et les activités récentes.

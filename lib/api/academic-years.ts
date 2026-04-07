@@ -1,20 +1,17 @@
-import { z } from "zod"
-import { apiFetch, safeValidate } from "./client"
-
-export const AcademicYearSchema = z.object({
-  id: z.number(),
-  label: z.string(),
-})
-
-export type AcademicYear = z.infer<typeof AcademicYearSchema>
-
-const ArraySchema = z.array(AcademicYearSchema)
+import { AcademicYearSchema } from "@/lib/contracts/academic-year"
+import type { AcademicYear, AcademicYearCreate, AcademicYearUpdate } from "@/lib/contracts/academic-year"
+import { createCrudApi } from "./createCrudApi"
+import { apiFetch } from "./client"
 
 export const academicYearsApi = {
-  list: async (): Promise<AcademicYear[]> => {
-    const data = await apiFetch<unknown>("/academic-years")
-    // L'API peut retourner un tableau ou un objet paginé
-    const raw = Array.isArray(data) ? data : (data as { data: unknown[] }).data ?? data
-    return safeValidate(ArraySchema, raw, "/academic-years")
+  ...createCrudApi<AcademicYear, AcademicYearCreate, AcademicYearUpdate>(
+    "/admin/academic-years",
+    AcademicYearSchema,
+  ),
+
+  setAsCurrent: async (yearId: number): Promise<AcademicYear> => {
+    return apiFetch<AcademicYear>(`/admin/academic-years/${yearId}/set-current`, {
+      method: "PATCH",
+    })
   },
 }

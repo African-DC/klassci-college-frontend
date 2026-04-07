@@ -42,7 +42,8 @@ function EditFormSkeleton() {
 function EditForm({ classId, onClose }: { classId: number; onClose: () => void }) {
   const { data: classData, isLoading } = useClass(classId)
   const { mutate, isPending, error } = useUpdateClass(classId)
-  const { data: academicYears } = useAcademicYears()
+  const { data: academicYearsData } = useAcademicYears()
+  const academicYears = academicYearsData?.items
 
   const form = useForm<ClassUpdate>({
     resolver: zodResolver(ClassUpdateSchema),
@@ -140,7 +141,7 @@ function EditForm({ classId, onClose }: { classId: number; onClose: () => void }
                 <SelectContent>
                   {academicYears?.map((ay) => (
                     <SelectItem key={ay.id} value={ay.id.toString()}>
-                      {ay.label}
+                      {ay.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

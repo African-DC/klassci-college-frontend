@@ -22,7 +22,8 @@ import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { drenApi } from "@/lib/api/dren"
 
 export function DrenPageClient() {
-  const { data: academicYears } = useAcademicYears()
+  const { data: academicYearsData } = useAcademicYears()
+  const academicYears = academicYearsData?.items
   const [academicYearId, setAcademicYearId] = useState<number | undefined>(undefined)
   const activeYearId = academicYearId ?? academicYears?.[0]?.id
   const { data: stats, isLoading, isError } = useDrenStats(activeYearId)
@@ -78,7 +79,7 @@ export function DrenPageClient() {
         <SelectContent>
           {(academicYears ?? []).map((y) => (
             <SelectItem key={y.id} value={y.id.toString()}>
-              {y.label}
+              {y.name}
             </SelectItem>
           ))}
         </SelectContent>

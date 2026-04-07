@@ -39,8 +39,8 @@ export function FeesPageClient() {
   const [editVariant, setEditVariant] = useState<FeeVariant | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: "category" | "variant"; id: number; name: string } | null>(null)
 
-  const { data: academicYears } = useAcademicYears()
-  const currentYearId = academicYears?.[0]?.id
+  const { data: academicYearsData } = useAcademicYears()
+  const currentYearId = academicYearsData?.items?.[0]?.id
 
   const { data: categories, isLoading: loadingCategories } = useFeeCategories()
   const { data: variants, isLoading: loadingVariants } = useFeeVariants(currentYearId)

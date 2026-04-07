@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { NotificationBell } from "@/components/shared/NotificationBell"
+import { AcademicYearBadge } from "@/components/shared/AcademicYearBadge"
 
 interface NavbarProps {
   onMenuClick: () => void
@@ -45,6 +46,8 @@ export function Navbar({ onMenuClick }: NavbarProps) {
 
       {/* Right side actions */}
       <div className="flex items-center gap-2">
+        <AcademicYearBadge />
+
         {/* Theme toggle */}
         <Button
           variant="ghost"
