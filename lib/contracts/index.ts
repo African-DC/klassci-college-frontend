@@ -19,8 +19,15 @@ export const PaginatedResponseSchema = <T extends z.ZodType>(itemSchema: T) =>
     total: z.number(),
     page: z.number(),
     size: z.number(),
-  })
+  }).transform((val) => ({
+    ...val,
+    total_pages: val.size > 0 ? Math.ceil(val.total / val.size) : 1,
+  }))
 
-const _basePaginatedSchema = PaginatedResponseSchema(z.unknown())
-type _BasePaginated = z.infer<typeof _basePaginatedSchema>
-export type PaginatedResponse<T> = Omit<_BasePaginated, "items"> & { items: T[] }
+export type PaginatedResponse<T> = {
+  items: T[]
+  total: number
+  page: number
+  size: number
+  total_pages: number
+}
