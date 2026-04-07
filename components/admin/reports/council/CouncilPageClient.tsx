@@ -21,12 +21,12 @@ import {
 } from "@/components/ui/dialog"
 import { CouncilDeliberationTable } from "./CouncilDeliberationTable"
 import { useCouncilMinutes } from "@/lib/hooks/useCouncil"
-import { CouncilStatusSchema } from "@/lib/contracts/council"
+import type { CouncilMinutes } from "@/lib/contracts/council"
 import { useClasses } from "@/lib/hooks/useClasses"
 
 export function CouncilPageClient() {
   const { data: classesData } = useClasses()
-  const classes = classesData?.data ?? []
+  const classes = classesData?.items ?? []
   const [classId, setClassId] = useState<number | undefined>(undefined)
   const [trimester, setTrimester] = useState<string | undefined>(undefined)
 
@@ -115,8 +115,8 @@ export function CouncilPageClient() {
         </Select>
 
         {minutes && (
-          <Badge variant={minutes.status === CouncilStatusSchema.Values.valide ? "default" : "secondary"}>
-            {minutes.status === CouncilStatusSchema.Values.valide ? "Validé" : "Brouillon"}
+          <Badge variant={minutes.is_published ? "default" : "secondary"}>
+            {minutes.is_published ? "Validé" : "Brouillon"}
           </Badge>
         )}
       </div>

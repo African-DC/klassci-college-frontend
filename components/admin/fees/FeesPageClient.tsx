@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Plus, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,6 +29,7 @@ import { FeeVariantCreateModal } from "./FeeVariantCreateModal"
 import { FeeVariantEditModal } from "./FeeVariantEditModal"
 import { useFeeCategories, useFeeVariants, useDeleteFeeCategory, useDeleteFeeVariant } from "@/lib/hooks/useFees"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+import { useClasses } from "@/lib/hooks/useClasses"
 import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
 
 export function FeesPageClient() {
@@ -43,8 +44,22 @@ export function FeesPageClient() {
 
   const { data: categories, isLoading: loadingCategories } = useFeeCategories()
   const { data: variants, isLoading: loadingVariants } = useFeeVariants(currentYearId)
+  const { data: classesData } = useClasses()
+  const classes = classesData?.items ?? []
   const { mutate: deleteCategory, isPending: deletingCategory } = useDeleteFeeCategory()
   const { mutate: deleteVariant, isPending: deletingVariant } = useDeleteFeeVariant()
+
+  // Lookup maps for display names
+  const categoryNameMap = useMemo(() => {
+    const map = new Map<number, string>()
+    categories?.forEach((c) => map.set(c.id, c.name))
+    return map
+  }, [categories])
+  const classNameMap = useMemo(() => {
+    const map = new Map<number, string>()
+    classes.forEach((c) => map.set(c.id, c.name))
+    return map
+  }, [classes])
 
   function handleConfirmDelete() {
     if (!deleteTarget) return
@@ -145,38 +160,42 @@ export function FeesPageClient() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Catégorie</TableHead>
-                  <TableHead>Niveau</TableHead>
+                  <TableHead>Categorie</TableHead>
+                  <TableHead>Classe</TableHead>
                   <TableHead className="text-right">Montant (FC)</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {variants.map((v) => (
-                  <TableRow key={v.id}>
-                    <TableCell className="font-medium">{v.category_name}</TableCell>
-                    <TableCell>{v.level}</TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {v.amount.toLocaleString("fr-FR")} FC
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => setEditVariant(v)}>
-                          <Pencil className="h-4 w-4" />
-                          <span className="sr-only">Modifier {v.category_name} {v.level}</span>
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => setDeleteTarget({ type: "variant", id: v.id, name: `${v.category_name} ${v.level}` })}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                          <span className="sr-only">Supprimer {v.category_name} {v.level}</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {variants.map((v) => {
+                  const catName = categoryNameMap.get(v.fee_category_id) ?? `#${v.fee_category_id}`
+                  const clsName = classNameMap.get(v.class_id) ?? `#${v.class_id}`
+                  return (
+                    <TableRow key={v.id}>
+                      <TableCell className="font-medium">{catName}</TableCell>
+                      <TableCell>{clsName}</TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {v.amount.toLocaleString("fr-FR")} FC
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => setEditVariant(v)}>
+                            <Pencil className="h-4 w-4" />
+                            <span className="sr-only">Modifier {catName} {clsName}</span>
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setDeleteTarget({ type: "variant", id: v.id, name: `${catName} ${clsName}` })}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <span className="sr-only">Supprimer {catName} {clsName}</span>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           ) : (

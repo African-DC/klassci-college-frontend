@@ -11,10 +11,15 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { GenderDistribution } from "@/lib/contracts/dren"
+
+interface GenderDistributionRow {
+  level: string
+  male: number
+  female: number
+}
 
 interface EnrollmentByLevelChartProps {
-  data: GenderDistribution[]
+  data: GenderDistributionRow[]
 }
 
 export function EnrollmentByLevelChart({ data }: EnrollmentByLevelChartProps) {
@@ -39,7 +44,7 @@ export function EnrollmentByLevelChart({ data }: EnrollmentByLevelChartProps) {
             <Legend />
             <Bar
               dataKey="male"
-              name="Garçons"
+              name="Garcons"
               fill="hsl(216, 80%, 30%)"
               radius={[4, 4, 0, 0]}
             />

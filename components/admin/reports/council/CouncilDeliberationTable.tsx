@@ -25,7 +25,6 @@ import { CouncilDecisionBadge } from "./CouncilDecisionBadge"
 import { CouncilValidateButton } from "./CouncilValidateButton"
 import { useUpdateDecisions } from "@/lib/hooks/useCouncil"
 import { councilApi } from "@/lib/api/council"
-import { CouncilStatusSchema } from "@/lib/contracts/council"
 import type { CouncilMinutes, CouncilDecision, CouncilDecisionUpdate } from "@/lib/contracts/council"
 
 // Calcul automatique de la décision basé sur la MGA (système ivoirien)
@@ -45,7 +44,7 @@ interface CouncilDeliberationTableProps {
 }
 
 export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyChange }: CouncilDeliberationTableProps) {
-  const isReadOnly = minutes.status === CouncilStatusSchema.Values.valide
+  const isReadOnly = minutes.is_published
   const { mutate: saveDecisions, isPending: isSaving } = useUpdateDecisions(classId, trimester)
 
   // État local des décisions modifiées
@@ -61,10 +60,10 @@ export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyC
 
   // Index records by student_id for O(1) lookups instead of O(n) find per row
   const recordsByStudent = useMemo(() => {
-    const map = new Map<number, (typeof minutes.records)[number]>()
-    minutes.records.forEach((r) => map.set(r.student_id, r))
+    const map = new Map<number, (typeof minutes.decisions)[number]>()
+    minutes.decisions.forEach((r) => map.set(r.student_id, r))
     return map
-  }, [minutes.records])
+  }, [minutes.decisions])
 
   // Récupère la décision courante (locale si modifiée, sinon celle du serveur)
   function getCurrentDecision(studentId: number): CouncilDecision | null {
@@ -135,7 +134,7 @@ export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyC
   // Statistiques de synthèse
   const stats = useMemo(() => {
     const counts = { passage: 0, repechage: 0, redoublement: 0, exclusion: 0, pending: 0 }
-    for (const record of minutes.records) {
+    for (const record of minutes.decisions) {
       const decision = localDecisions.get(record.student_id)?.decision ?? record.final_decision
       if (decision) {
         counts[decision]++
@@ -144,7 +143,7 @@ export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyC
       }
     }
     return counts
-  }, [minutes.records, localDecisions])
+  }, [minutes.decisions, localDecisions])
 
   const [isDownloading, setIsDownloading] = useState(false)
 
@@ -189,7 +188,7 @@ export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyC
             </TableRow>
           </TableHeader>
           <TableBody>
-            {minutes.records.map((record, index) => {
+            {minutes.decisions.map((record, index) => {
               const autoDecision = computeAutoDecision(record.average)
               const finalDecision = getCurrentDecision(record.student_id)
               const reason = getCurrentReason(record.student_id)
@@ -206,7 +205,7 @@ export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyC
                     {record.average !== null ? record.average.toFixed(2) : "—"}
                   </TableCell>
                   <TableCell className="text-center">
-                    {record.rank ?? "—"}/{record.total_students}
+                    {record.rank ?? "—"}
                   </TableCell>
                   <TableCell>
                     <CouncilDecisionBadge decision={autoDecision} />
