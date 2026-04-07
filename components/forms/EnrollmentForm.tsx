@@ -14,6 +14,9 @@ import {
   ChevronDown,
   ChevronUp,
   Loader2,
+  Info,
+  Settings2,
+  ExternalLink,
 } from "lucide-react"
 import {
   NewEnrollmentSchema,
@@ -393,16 +396,40 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
               name="enrollment_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Matricule</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormLabel>Matricule *</FormLabel>
+                    <div className="group relative">
+                      <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-64 rounded-lg border bg-popover p-3 text-xs text-popover-foreground shadow-md z-50">
+                        <p className="font-medium mb-1">Configuration du matricule</p>
+                        <p className="text-muted-foreground">
+                          Le matricule peut etre genere automatiquement si un pattern est configure dans les parametres de l&apos;etablissement.
+                        </p>
+                        <a
+                          href="/admin/settings"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <Settings2 className="h-3 w-3" />
+                          Configurer le pattern
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                   <FormControl>
                     <Input
-                      placeholder="Numero de matricule (optionnel)"
+                      placeholder="Ex: KLASSCI-2026-0001"
                       className="h-10"
                       {...field}
                       value={field.value ?? ""}
                       onChange={(e) => field.onChange(e.target.value || null)}
                     />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Laissez vide pour une generation automatique (si le pattern est configure).
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
