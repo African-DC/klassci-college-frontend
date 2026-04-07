@@ -2,26 +2,29 @@ import { z } from "zod"
 
 // Miroir de app/schemas/attendance.py (backend)
 
-export const AttendanceStatusSchema = z.enum(["present", "absent", "retard", "excuse"])
+export const AttendanceStatusSchema = z.enum(["present", "absent", "late", "excused"])
 
 export const AttendanceRecordSchema = z.object({
   id: z.number(),
   student_id: z.number(),
-  student_name: z.string(),
-  timetable_slot_id: z.number(),
-  date: z.string(),
-  status: AttendanceStatusSchema.nullable(),
-  noted_at: z.string().nullish(),
+  status: AttendanceStatusSchema,
+  time_in: z.string().nullable(),
+  time_out: z.string().nullable(),
+  source: z.string(),
+  notes: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
 })
 
 export const AttendanceSessionSchema = z.object({
-  class_id: z.number(),
-  class_name: z.string(),
-  subject_name: z.string(),
-  teacher_name: z.string(),
+  id: z.number(),
+  entity_type: z.string(),
+  context_id: z.number(),
   date: z.string(),
-  slot_id: z.number(),
+  academic_year_id: z.number(),
   records: z.array(AttendanceRecordSchema),
+  created_at: z.string(),
+  updated_at: z.string(),
 })
 
 export const AttendanceStatsSchema = z.object({
@@ -53,7 +56,7 @@ export const AttendanceHistoryParamsSchema = z.object({
   date_to: z.string().optional(),
   status: AttendanceStatusSchema.optional(),
   page: z.number().optional(),
-  per_page: z.number().optional(),
+  size: z.number().optional(),
 })
 
 export type AttendanceStatus = z.infer<typeof AttendanceStatusSchema>
