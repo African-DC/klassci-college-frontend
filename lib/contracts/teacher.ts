@@ -26,7 +26,7 @@ export const TeacherUpdateSchema = TeacherCreateSchema.partial()
 
 export const TeacherListParamsSchema = z.object({
   page: z.number().optional(),
-  per_page: z.number().optional(),
+  size: z.number().optional(),
   search: z.string().optional(),
   is_active: z.boolean().optional(),
 })

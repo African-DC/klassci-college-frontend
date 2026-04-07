@@ -23,7 +23,7 @@ export const SubjectUpdateSchema = SubjectCreateSchema.partial()
 
 export const SubjectListParamsSchema = z.object({
   page: z.number().optional(),
-  per_page: z.number().optional(),
+  size: z.number().optional(),
   search: z.string().optional(),
   level: z.string().optional(),
 })

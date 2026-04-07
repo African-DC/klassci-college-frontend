@@ -27,7 +27,7 @@ export const ClassUpdateSchema = ClassCreateSchema.partial()
 
 export const ClassListParamsSchema = z.object({
   page: z.number().optional(),
-  per_page: z.number().optional(),
+  size: z.number().optional(),
   search: z.string().optional(),
   level: z.string().optional(),
 })

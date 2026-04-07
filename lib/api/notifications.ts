@@ -14,7 +14,7 @@ export interface NotificationListParams {
   type?: NotificationType
   is_read?: boolean
   page?: number
-  per_page?: number
+  size?: number
 }
 
 export const notificationsApi = {
@@ -24,7 +24,7 @@ export const notificationsApi = {
     if (params.type) query.set("type", params.type)
     if (params.is_read !== undefined) query.set("is_read", String(params.is_read))
     if (params.page) query.set("page", String(params.page))
-    if (params.per_page) query.set("per_page", String(params.per_page))
+    if (params.size) query.set("size", String(params.size))
 
     const qs = query.toString()
     const res = await apiFetch<unknown>(`/notifications${qs ? `?${qs}` : ""}`)

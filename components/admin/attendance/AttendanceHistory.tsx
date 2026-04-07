@@ -49,7 +49,7 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
   }
 
   const { data, isLoading } = useAttendanceHistory(params)
-  const records = data?.data ?? []
+  const records = data?.items ?? []
 
   return (
     <div className="space-y-4">
@@ -86,8 +86,8 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
             <SelectItem value="all">Tous les statuts</SelectItem>
             <SelectItem value="present">Présent</SelectItem>
             <SelectItem value="absent">Absent</SelectItem>
-            <SelectItem value="retard">Retard</SelectItem>
-            <SelectItem value="excuse">Excusé</SelectItem>
+            <SelectItem value="late">Retard</SelectItem>
+            <SelectItem value="excused">Excusé</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -117,18 +117,13 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
             <TableBody>
               {records.map((record) => (
                 <TableRow key={record.id}>
-                  <TableCell className="font-medium">{record.student_name}</TableCell>
-                  <TableCell>{formatDate(record.date)}</TableCell>
+                  <TableCell className="font-medium">#{record.student_id}</TableCell>
+                  <TableCell>{formatDate(record.created_at)}</TableCell>
                   <TableCell>
                     <AttendanceStatusBadge status={record.status} />
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {record.noted_at
-                      ? new Date(record.noted_at).toLocaleString("fr-FR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : "—"}
+                    {record.time_in ?? "—"}
                   </TableCell>
                 </TableRow>
               ))}
@@ -137,10 +132,12 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
         </div>
       )}
 
-      {data && data.total_pages > 0 && (
+      {data && data.size > 0 && Math.ceil(data.total / data.size) > 0 && (() => {
+        const totalPages = Math.ceil(data.total / data.size)
+        return (
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            {data.total} enregistrement(s) — Page {data.page}/{data.total_pages}
+            {data.total} enregistrement(s) — Page {data.page}/{totalPages}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -156,14 +153,15 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
               variant="outline"
               size="sm"
               onClick={() => setPage((p) => p + 1)}
-              disabled={page >= data.total_pages}
+              disabled={page >= totalPages}
             >
               Suivant
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }

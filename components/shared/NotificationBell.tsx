@@ -57,7 +57,7 @@ function timeAgo(dateStr: string): string {
 
 export function NotificationBell() {
   const { data: countData } = useNotificationCount()
-  const { data: recent } = useNotifications({ per_page: 5 })
+  const { data: recent } = useNotifications({ size: 5 })
   const markAsRead = useMarkAsRead()
   const markAllAsRead = useMarkAllAsRead()
 

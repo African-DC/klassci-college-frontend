@@ -60,7 +60,7 @@ export const attendanceApi = {
     )
     if (Array.isArray(json)) {
       const data = safeValidate(AttendanceRecordArraySchema, json, "GET /attendance")
-      return { data, total: data.length, page: 1, per_page: data.length, total_pages: 1 }
+      return { items: data, total: data.length, page: 1, size: data.length }
     }
     return safeValidate(PaginatedRecordsSchema, json, "GET /attendance")
   },

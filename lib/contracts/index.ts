@@ -15,13 +15,12 @@ import { z } from "zod"
 
 export const PaginatedResponseSchema = <T extends z.ZodType>(itemSchema: T) =>
   z.object({
-    data: z.array(itemSchema),
+    items: z.array(itemSchema),
     total: z.number(),
     page: z.number(),
-    per_page: z.number(),
-    total_pages: z.number(),
+    size: z.number(),
   })
 
 const _basePaginatedSchema = PaginatedResponseSchema(z.unknown())
 type _BasePaginated = z.infer<typeof _basePaginatedSchema>
-export type PaginatedResponse<T> = Omit<_BasePaginated, "data"> & { data: T[] }
+export type PaginatedResponse<T> = Omit<_BasePaginated, "items"> & { items: T[] }

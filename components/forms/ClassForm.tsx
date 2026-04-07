@@ -41,7 +41,7 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
     },
   })
 
-  const { data: teachersData } = useTeachers({ per_page: 200 })
+  const { data: teachersData } = useTeachers({ size: 200 })
   const { data: academicYears } = useAcademicYears()
   const { mutate, isPending, error } = useCreateClass()
 
@@ -138,7 +138,7 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {teachersData?.data.map((t) => (
+                  {teachersData?.items.map((t) => (
                     <SelectItem key={t.id} value={t.id.toString()}>
                       {t.last_name} {t.first_name}
                     </SelectItem>

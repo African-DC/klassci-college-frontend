@@ -30,7 +30,7 @@ export const StudentUpdateSchema = StudentCreateSchema.partial()
 
 export const StudentListParamsSchema = z.object({
   page: z.number().optional(),
-  per_page: z.number().optional(),
+  size: z.number().optional(),
   search: z.string().optional(),
   class_id: z.number().optional(),
   gender: z.string().optional(),

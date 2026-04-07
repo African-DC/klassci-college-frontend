@@ -26,7 +26,7 @@ export const paymentsApi = {
     )
     if (Array.isArray(json)) {
       const arr = safeValidate(PaymentArraySchema, json, "GET /payments")
-      return { data: arr, total: arr.length, page: 1, per_page: arr.length, total_pages: 1 }
+      return { items: arr, total: arr.length, page: 1, size: arr.length }
     }
     return safeValidate(PaginatedPaymentSchema, json, "GET /payments")
   },

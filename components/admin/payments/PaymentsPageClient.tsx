@@ -40,15 +40,16 @@ import { PaymentStatusSchema } from "@/lib/contracts/payment"
 import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@/lib/contracts/payment"
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" }> = {
-  en_attente: { label: "En attente", variant: "secondary" },
-  valide: { label: "Validé", variant: "default" },
-  annule: { label: "Annulé", variant: "destructive" },
+  pending: { label: "En attente", variant: "secondary" },
+  completed: { label: "Complété", variant: "default" },
+  failed: { label: "Échoué", variant: "destructive" },
+  refunded: { label: "Remboursé", variant: "destructive" },
 }
 
 const METHOD_LABELS: Record<PaymentMethod, string> = {
-  especes: "Espèces",
+  cash: "Espèces",
   mobile_money: "Mobile Money",
-  virement: "Virement",
+  bank_transfer: "Virement",
   cheque: "Chèque",
 }
 
@@ -69,13 +70,13 @@ export function PaymentsPageClient() {
   const { mutate: validatePayment, isPending: validating } = useValidatePayment()
   const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
 
-  const payments = useMemo(() => data?.data ?? [], [data])
+  const payments = useMemo(() => data?.items ?? [], [data])
 
   const handleDownloadReceipt = useCallback(async (payment: Payment) => {
     setDownloadingId(payment.id)
     try {
       const blob = await paymentsApi.downloadReceipt(payment.id)
-      downloadBlob(blob, `recu-${payment.student_name}-${payment.id}.pdf`)
+      downloadBlob(blob, `recu-${payment.id}.pdf`)
     } catch (err) {
       toast.error("Erreur lors du téléchargement", {
         description: err instanceof Error ? err.message : "Erreur inconnue",
@@ -158,9 +159,10 @@ export function PaymentsPageClient() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les statuts</SelectItem>
-            <SelectItem value="en_attente">En attente</SelectItem>
-            <SelectItem value="valide">Validé</SelectItem>
-            <SelectItem value="annule">Annulé</SelectItem>
+            <SelectItem value="pending">En attente</SelectItem>
+            <SelectItem value="completed">Complété</SelectItem>
+            <SelectItem value="failed">Échoué</SelectItem>
+            <SelectItem value="refunded">Remboursé</SelectItem>
           </SelectContent>
         </Select>
 
@@ -173,9 +175,9 @@ export function PaymentsPageClient() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toutes les méthodes</SelectItem>
-            <SelectItem value="especes">Espèces</SelectItem>
+            <SelectItem value="cash">Espèces</SelectItem>
             <SelectItem value="mobile_money">Mobile Money</SelectItem>
-            <SelectItem value="virement">Virement</SelectItem>
+            <SelectItem value="bank_transfer">Virement</SelectItem>
             <SelectItem value="cheque">Chèque</SelectItem>
           </SelectContent>
         </Select>
@@ -193,9 +195,7 @@ export function PaymentsPageClient() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Élève</TableHead>
-                <TableHead>Classe</TableHead>
-                <TableHead>Catégorie</TableHead>
+                <TableHead>Frais</TableHead>
                 <TableHead className="text-right">Montant</TableHead>
                 <TableHead>Méthode</TableHead>
                 <TableHead>Statut</TableHead>
@@ -208,22 +208,20 @@ export function PaymentsPageClient() {
                 const statusCfg = STATUS_CONFIG[payment.status]
                 return (
                   <TableRow key={payment.id}>
-                    <TableCell className="font-medium">{payment.student_name}</TableCell>
-                    <TableCell>{payment.class_name}</TableCell>
-                    <TableCell>{payment.fee_category_name}</TableCell>
+                    <TableCell className="font-medium">#{payment.enrollment_fee_id}</TableCell>
                     <TableCell className="text-right font-semibold">
-                      {payment.amount.toLocaleString("fr-FR")} FC
+                      {Number(payment.amount).toLocaleString("fr-FR")} FC
                     </TableCell>
                     <TableCell>{METHOD_LABELS[payment.method]}</TableCell>
                     <TableCell>
                       <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {new Date(payment.paid_at).toLocaleDateString("fr-FR")}
+                      {new Date(payment.created_at).toLocaleDateString("fr-FR")}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {payment.status === PaymentStatusSchema.Values.en_attente && (
+                        {payment.status === PaymentStatusSchema.Values.pending && (
                           <>
                             <Button
                               size="icon"
@@ -231,7 +229,7 @@ export function PaymentsPageClient() {
                               onClick={() => setConfirmAction({ type: "validate", payment })}
                             >
                               <CheckCircle className="h-4 w-4 text-emerald-600" />
-                              <span className="sr-only">Valider le paiement de {payment.student_name}</span>
+                              <span className="sr-only">Valider le paiement de {payment.id}</span>
                             </Button>
                             <Button
                               size="icon"
@@ -239,7 +237,7 @@ export function PaymentsPageClient() {
                               onClick={() => setConfirmAction({ type: "cancel", payment })}
                             >
                               <XCircle className="h-4 w-4 text-destructive" />
-                              <span className="sr-only">Annuler le paiement de {payment.student_name}</span>
+                              <span className="sr-only">Annuler le paiement de {payment.id}</span>
                             </Button>
                           </>
                         )}
@@ -250,7 +248,7 @@ export function PaymentsPageClient() {
                           disabled={downloadingId === payment.id}
                         >
                           <Download className="h-4 w-4" />
-                          <span className="sr-only">Télécharger le reçu de {payment.student_name}</span>
+                          <span className="sr-only">Télécharger le reçu de {payment.id}</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -264,7 +262,7 @@ export function PaymentsPageClient() {
 
       {data && (
         <div className="text-xs text-muted-foreground text-right">
-          {data.total} paiement(s) — Page {data.page}/{data.total_pages}
+          {data.total} paiement(s) — Page {data.page}/{data.size > 0 ? Math.ceil(data.total / data.size) : 1}
         </div>
       )}
 
@@ -279,8 +277,8 @@ export function PaymentsPageClient() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmAction?.type === "validate"
-                ? `Vous allez valider le paiement de ${confirmAction.payment.amount.toLocaleString("fr-FR")} FC pour ${confirmAction.payment.student_name}. Cette action est irréversible.`
-                : `Vous allez annuler le paiement de ${confirmAction?.payment.amount.toLocaleString("fr-FR")} FC pour ${confirmAction?.payment.student_name}. Cette action est irréversible.`}
+                ? `Vous allez valider le paiement de ${Number(confirmAction.payment.amount).toLocaleString("fr-FR")} FC. Cette action est irréversible.`
+                : `Vous allez annuler le paiement de ${Number(confirmAction?.payment.amount).toLocaleString("fr-FR")} FC. Cette action est irréversible.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

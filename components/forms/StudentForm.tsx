@@ -42,7 +42,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
     },
   })
 
-  const { data: classesData } = useClasses({ per_page: 200 })
+  const { data: classesData } = useClasses({ size: 200 })
   const { mutate, isPending, error } = useCreateStudent()
 
   function onSubmit(data: StudentCreate) {
@@ -155,7 +155,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {classesData?.data.map((c) => (
+                  {classesData?.items.map((c) => (
                     <SelectItem key={c.id} value={c.id.toString()}>
                       {c.name}
                     </SelectItem>
