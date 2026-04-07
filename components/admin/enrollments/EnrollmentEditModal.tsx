@@ -57,9 +57,8 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
     resolver: zodResolver(EnrollmentUpdateSchema),
     values: enrollment
       ? {
-          class_id: enrollment.class_id,
-          assignment_status: enrollment.assignment_status,
-          is_scholarship: enrollment.is_scholarship,
+          status: enrollment.status,
+          notes: enrollment.notes,
         }
       : undefined,
   })
@@ -77,30 +76,10 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <FormField
           control={form.control}
-          name="class_id"
+          name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Classe</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  className="h-11"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                  value={field.value ?? ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="assignment_status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Statut d&apos;affectation</FormLabel>
+              <FormLabel>Statut</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger className="h-11">
@@ -108,9 +87,11 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="affecte">Affecte</SelectItem>
-                  <SelectItem value="reaffecte">Reaffecte</SelectItem>
-                  <SelectItem value="non_affecte">Non affecte</SelectItem>
+                  <SelectItem value="prospect">Prospect</SelectItem>
+                  <SelectItem value="en_validation">En validation</SelectItem>
+                  <SelectItem value="valide">Validé</SelectItem>
+                  <SelectItem value="rejete">Rejeté</SelectItem>
+                  <SelectItem value="annule">Annulé</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -120,20 +101,19 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
 
         <FormField
           control={form.control}
-          name="is_scholarship"
+          name="notes"
           render={({ field }) => (
-            <FormItem className="flex items-center gap-3 space-y-0 rounded-lg border p-4">
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
               <FormControl>
-                <input
-                  type="checkbox"
-                  checked={field.value ?? false}
-                  onChange={field.onChange}
-                  className="h-4 w-4 rounded border-input accent-primary"
+                <Input
+                  className="h-11"
+                  placeholder="Notes optionnelles"
+                  {...field}
+                  value={field.value ?? ""}
                 />
               </FormControl>
-              <FormLabel className="font-normal cursor-pointer">
-                Eleve boursier
-              </FormLabel>
+              <FormMessage />
             </FormItem>
           )}
         />

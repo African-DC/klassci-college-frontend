@@ -9,9 +9,11 @@ import { CrudTable } from "@/components/shared/CrudTable"
 import { EnrollmentEditModal } from "./EnrollmentEditModal"
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  affecte: { label: "Affecté", variant: "default" },
-  reaffecte: { label: "Réaffecté", variant: "secondary" },
-  non_affecte: { label: "Non affecté", variant: "outline" },
+  prospect: { label: "Prospect", variant: "outline" },
+  en_validation: { label: "En validation", variant: "secondary" },
+  valide: { label: "Validé", variant: "default" },
+  rejete: { label: "Rejeté", variant: "destructive" },
+  annule: { label: "Annulé", variant: "destructive" },
 }
 
 interface EnrollmentsTableProps {
@@ -35,28 +37,29 @@ export function EnrollmentsTable({ filters = {} }: EnrollmentsTableProps) {
       size: 60,
     },
     {
-      accessorKey: "student_name",
+      accessorKey: "student_id",
       header: "Élève",
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.student_name}</span>
+        <span className="font-medium">#{row.original.student_id}</span>
       ),
     },
     {
-      accessorKey: "class_name",
+      accessorKey: "class_id",
       header: "Classe",
+      cell: ({ row }) => `#${row.original.class_id}`,
     },
     {
-      accessorKey: "academic_year_label",
+      accessorKey: "academic_year_name",
       header: "Année",
     },
     {
-      accessorKey: "assignment_status",
+      accessorKey: "status",
       header: "Statut",
       cell: ({ row }) => {
-        const status = statusConfig[row.original.assignment_status]
+        const status = statusConfig[row.original.status]
         return (
           <Badge variant={status?.variant ?? "outline"}>
-            {status?.label ?? row.original.assignment_status}
+            {status?.label ?? row.original.status}
           </Badge>
         )
       },
@@ -75,7 +78,7 @@ export function EnrollmentsTable({ filters = {} }: EnrollmentsTableProps) {
       renderEditModal={({ itemId, open, onClose }) => (
         <EnrollmentEditModal enrollmentId={itemId} open={open} onClose={onClose} />
       )}
-      getItemLabel={(e) => e.student_name}
+      getItemLabel={(e) => `#${e.id}`}
       emptyMessage="Aucune inscription trouvée"
       errorMessage="Impossible de charger les inscriptions"
       deleteTitle="Supprimer l'inscription"
