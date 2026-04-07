@@ -8,6 +8,7 @@ export * from "./payment"
 export * from "./council"
 export * from "./bulletin"
 export * from "./dren"
+export * from "./settings"
 
 // Shared pagination contract
 import { z } from "zod"

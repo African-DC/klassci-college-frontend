@@ -9,10 +9,11 @@ import {
   FileText,
   CreditCard,
   UserCheck,
+  type LucideIcon,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-const actions = [
+const actions: { label: string; href: Route; icon: LucideIcon; color: string }[] = [
   {
     label: "Nouvelle inscription",
     href: "/admin/enrollments",
@@ -62,7 +63,7 @@ export function QuickActions() {
           {actions.map((action) => (
             <Link
               key={action.href}
-              href={action.href as Route}
+              href={action.href}
               className="flex flex-col items-center gap-2 rounded-xl p-4 text-center transition-colors hover:bg-muted"
             >
               <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${action.color}`}>
