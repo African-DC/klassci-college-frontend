@@ -1,13 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { EnrollmentsTable } from "./EnrollmentsTable"
 import { EnrollmentCreateModal } from "./EnrollmentCreateModal"
 
 export function EnrollmentsPageClient() {
+  const searchParams = useSearchParams()
   const [createOpen, setCreateOpen] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get("action") === "create") {
+      setCreateOpen(true)
+    }
+  }, [searchParams])
 
   return (
     <div className="space-y-6">
