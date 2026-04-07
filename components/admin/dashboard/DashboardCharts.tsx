@@ -14,30 +14,51 @@ import {
   Legend,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-// Données de démo — sera remplacé par l'API /dashboard/charts
-const enrollmentData = [
-  { level: "6ème", count: 87 },
-  { level: "5ème", count: 72 },
-  { level: "4ème", count: 65 },
-  { level: "3ème", count: 58 },
-  { level: "2nde", count: 45 },
-  { level: "1ère", count: 38 },
-  { level: "Tle", count: 32 },
-]
-
-const statusData = [
-  { name: "Validées", value: 342, color: "hsl(var(--primary))" },
-  { name: "En attente", value: 45, color: "hsl(var(--accent))" },
-  { name: "Rejetées", value: 10, color: "hsl(var(--destructive))" },
-]
+import { Skeleton } from "@/components/ui/skeleton"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+import { useDrenStats } from "@/lib/hooks/useDrenStats"
 
 export function DashboardCharts() {
+  const { data: yearsData } = useAcademicYears()
+  const currentYear = yearsData?.items?.find((y) => y.is_current)
+
+  const { data: stats, isLoading } = useDrenStats(currentYear?.id)
+
+  const enrollmentData = stats?.levels?.map((l) => ({
+    level: l.level_name,
+    count: l.total_students,
+  })) ?? []
+
+  const totalStudents = stats?.total_students ?? 0
+  const maleCount = stats?.male_count ?? 0
+  const femaleCount = stats?.female_count ?? 0
+
+  const genderData = totalStudents > 0
+    ? [
+        { name: "Garçons", value: maleCount, color: "hsl(var(--primary))" },
+        { name: "Filles", value: femaleCount, color: "hsl(var(--accent))" },
+      ]
+    : []
+
   const hasData = enrollmentData.some((d) => d.count > 0)
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-4">
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardHeader><Skeleton className="h-5 w-48" /></CardHeader>
+          <CardContent><Skeleton className="h-[280px] w-full" /></CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardHeader><Skeleton className="h-5 w-48" /></CardHeader>
+          <CardContent><Skeleton className="h-[280px] w-full" /></CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="grid gap-4">
-      {/* Bar chart — enrollment by level */}
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardHeader>
           <CardTitle className="text-base font-medium">
@@ -70,19 +91,18 @@ export function DashboardCharts() {
         </CardContent>
       </Card>
 
-      {/* Pie chart — enrollment status */}
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardHeader>
           <CardTitle className="text-base font-medium">
-            Statut des inscriptions
+            Répartition garçons / filles
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {hasData ? (
+          {genderData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
-                  data={statusData}
+                  data={genderData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -90,7 +110,7 @@ export function DashboardCharts() {
                   paddingAngle={4}
                   dataKey="value"
                 >
-                  {statusData.map((entry) => (
+                  {genderData.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
