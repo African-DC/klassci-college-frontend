@@ -14,8 +14,16 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import { downloadBlob } from "@/lib/utils"
-import { EnrollmentByLevelChart } from "./EnrollmentByLevelChart"
-import { SuccessRateChart } from "./SuccessRateChart"
+import dynamic from "next/dynamic"
+
+const EnrollmentByLevelChart = dynamic(() => import("./EnrollmentByLevelChart").then(m => m.EnrollmentByLevelChart), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full" />,
+})
+const SuccessRateChart = dynamic(() => import("./SuccessRateChart").then(m => m.SuccessRateChart), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full" />,
+})
 import { LevelStatsTable } from "./LevelStatsTable"
 import { useDrenStats } from "@/lib/hooks/useDrenStats"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
