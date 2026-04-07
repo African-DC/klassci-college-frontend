@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { FileText } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -46,11 +47,16 @@ export function ReportsPageClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-2xl tracking-tight">Bulletins scolaires</h1>
-          <p className="text-sm text-muted-foreground">
-            Génération et consultation des bulletins par classe et trimestre
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <FileText className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="font-serif text-2xl tracking-tight">Bulletins scolaires</h1>
+            <p className="text-sm text-muted-foreground">
+              Génération et consultation des bulletins par classe et trimestre
+            </p>
+          </div>
         </div>
         <BulletinGenerateButton
           classId={classId}

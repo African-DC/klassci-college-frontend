@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
-import { Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp, AlertCircle, Banknote } from "lucide-react"
+import { Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp, AlertCircle, Banknote, CreditCard } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -99,11 +99,16 @@ export function PaymentsPageClient() {
     <div className="space-y-6">
       {/* En-tête */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-2xl tracking-tight">Paiements</h1>
-          <p className="text-sm text-muted-foreground">
-            Suivi des paiements et tableau de bord financier
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <CreditCard className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="font-serif text-2xl tracking-tight">Paiements</h1>
+            <p className="text-sm text-muted-foreground">
+              Suivi des paiements et tableau de bord financier
+            </p>
+          </div>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />

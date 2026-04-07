@@ -115,13 +115,18 @@ export function NotificationsPageClient() {
     <div className="space-y-6">
       {/* En-tête */}
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
-          <p className="text-sm text-muted-foreground">
-            {unreadCount > 0
-              ? `${unreadCount} notification${unreadCount > 1 ? "s" : ""} non lue${unreadCount > 1 ? "s" : ""}`
-              : "Toutes les notifications sont lues"}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Bell className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="font-serif text-2xl tracking-tight">Notifications</h1>
+            <p className="text-sm text-muted-foreground">
+              {unreadCount > 0
+                ? `${unreadCount} notification${unreadCount > 1 ? "s" : ""} non lue${unreadCount > 1 ? "s" : ""}`
+                : "Toutes les notifications sont lues"}
+            </p>
+          </div>
         </div>
         {unreadCount > 0 && (
           <Button

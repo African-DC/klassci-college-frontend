@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useRef, useState } from "react"
+import { Scale } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -75,11 +76,16 @@ export function CouncilPageClient() {
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div>
-        <h1 className="font-serif text-2xl tracking-tight">Conseil de classe</h1>
-        <p className="text-sm text-muted-foreground">
-          Procès-verbaux de délibération — décisions de passage par élève
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <Scale className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="font-serif text-2xl tracking-tight">Conseil de classe</h1>
+          <p className="text-sm text-muted-foreground">
+            Procès-verbaux de délibération — décisions de passage par élève
+          </p>
+        </div>
       </div>
 
       {/* Filtres */}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { ClipboardList, History, BarChart3, UserCheck } from "lucide-react"
+import { ClipboardList, ClipboardCheck, History, BarChart3, UserCheck } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -64,11 +64,16 @@ export function AttendancePageClient() {
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div>
-        <h1 className="font-serif text-2xl tracking-tight">Présences</h1>
-        <p className="text-sm text-muted-foreground">
-          Pointage des présences par session de cours, historique et statistiques
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <ClipboardCheck className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="font-serif text-2xl tracking-tight">Présences</h1>
+          <p className="text-sm text-muted-foreground">
+            Pointage des présences par session de cours, historique et statistiques
+          </p>
+        </div>
       </div>
 
       {/* Filtres principaux */}

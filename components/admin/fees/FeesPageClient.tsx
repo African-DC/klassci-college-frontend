@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Plus, Pencil, Trash2 } from "lucide-react"
+import { Plus, Pencil, Trash2, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -73,11 +73,16 @@ export function FeesPageClient() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-serif text-2xl tracking-tight">Frais scolaires</h1>
-        <p className="text-sm text-muted-foreground">
-          Configuration des catégories de frais et montants par niveau
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <Wallet className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="font-serif text-2xl tracking-tight">Frais scolaires</h1>
+          <p className="text-sm text-muted-foreground">
+            Configuration des catégories de frais et montants par niveau
+          </p>
+        </div>
       </div>
 
       {/* Catégories */}

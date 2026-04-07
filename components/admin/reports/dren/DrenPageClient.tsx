@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { Download, FileSpreadsheet, Loader2, Users, UserCheck, TrendingUp, BarChart3 } from "lucide-react"
+import { Download, FileSpreadsheet, Loader2, Users, UserCheck, TrendingUp, BarChart3, Building } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -50,11 +50,16 @@ export function DrenPageClient() {
     <div className="space-y-6">
       {/* En-tête */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-2xl tracking-tight">Statistiques DREN</h1>
-          <p className="text-sm text-muted-foreground">
-            Tableau de bord des indicateurs pour la Direction Régionale
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Building className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="font-serif text-2xl tracking-tight">Statistiques DREN</h1>
+            <p className="text-sm text-muted-foreground">
+              Tableau de bord des indicateurs pour la Direction Régionale
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => handleDownload("excel")} disabled={downloading === "excel"}>
