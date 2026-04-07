@@ -131,7 +131,7 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
       {/* En-tête de session */}
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <div className="text-muted-foreground">
-          <strong>{session.subject_name}</strong> — {session.class_name} — {session.teacher_name}
+          <strong>Session #{session.id}</strong> — {session.entity_type} #{session.context_id}
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="text-emerald-600 dark:text-emerald-400 font-medium">{counts.present} P</span>

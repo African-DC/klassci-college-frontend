@@ -26,7 +26,7 @@ export const EvaluationSchema = z.object({
 export const GradeSchema = z.object({
   student_id: z.number(),
   student_name: z.string(),
-  value: z.union([z.number(), z.string().transform(Number)]).nullable(),
+  value: z.coerce.number().nullable(),
   status: z.string(),
 })
 

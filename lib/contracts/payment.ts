@@ -9,7 +9,7 @@ export const PaymentStatusSchema = z.enum(["pending", "completed", "failed", "re
 export const PaymentSchema = z.object({
   id: z.number(),
   enrollment_fee_id: z.number(),
-  amount: z.union([z.number(), z.string().transform(Number)]),
+  amount: z.coerce.number(),
   method: PaymentMethodSchema,
   status: PaymentStatusSchema,
   reference: z.string().nullable(),
@@ -29,22 +29,22 @@ export const PaymentCreateSchema = z.object({
 
 // Résumé financier pour le dashboard
 export const FinancialSummarySchema = z.object({
-  total_expected: z.union([z.number(), z.string().transform(Number)]),
-  total_collected: z.union([z.number(), z.string().transform(Number)]),
-  total_pending: z.union([z.number(), z.string().transform(Number)]),
-  collection_rate: z.union([z.number(), z.string().transform(Number)]),
+  total_expected: z.coerce.number(),
+  total_collected: z.coerce.number(),
+  total_pending: z.coerce.number(),
+  collection_rate: z.coerce.number(),
   by_category: z.array(
     z.object({
       category_name: z.string(),
-      expected: z.union([z.number(), z.string().transform(Number)]),
-      collected: z.union([z.number(), z.string().transform(Number)]),
-      rate: z.union([z.number(), z.string().transform(Number)]),
+      expected: z.coerce.number(),
+      collected: z.coerce.number(),
+      rate: z.coerce.number(),
     }),
   ),
   by_method: z.array(
     z.object({
       method: PaymentMethodSchema,
-      total: z.union([z.number(), z.string().transform(Number)]),
+      total: z.coerce.number(),
       count: z.number(),
     }),
   ),

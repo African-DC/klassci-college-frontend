@@ -12,7 +12,7 @@ export const BulletinSchema = z.object({
   class_id: z.number(),
   academic_year_id: z.number(),
   trimester: z.number(),
-  average: z.union([z.number(), z.string().transform(Number)]).nullable(),
+  average: z.coerce.number().nullable(),
   rank: z.number().nullable(),
   mention: MentionSchema.nullable(),
   file_url: z.string().nullable(),
