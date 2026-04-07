@@ -40,10 +40,10 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
     values: subject
       ? {
           name: subject.name,
-          code: subject.code,
           coefficient: subject.coefficient,
-          level: subject.level ?? undefined,
-          category: subject.category ?? undefined,
+          hours_per_week: subject.hours_per_week,
+          level_id: subject.level_id ?? undefined,
+          series_id: subject.series_id ?? undefined,
         }
       : undefined,
   })
@@ -74,19 +74,6 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="code"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Code</FormLabel>
-                <FormControl>
-                  <Input className="h-11" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
             name="coefficient"
             render={({ field }) => (
               <FormItem>
@@ -104,30 +91,20 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
               </FormItem>
             )}
           />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="level"
+            name="hours_per_week"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Niveau</FormLabel>
+                <FormLabel>Heures / semaine</FormLabel>
                 <FormControl>
-                  <Input className="h-11" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Catégorie</FormLabel>
-                <FormControl>
-                  <Input className="h-11" {...field} value={field.value ?? ""} />
+                  <Input
+                    type="number"
+                    min={1}
+                    className="h-11"
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    value={field.value ?? ""}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

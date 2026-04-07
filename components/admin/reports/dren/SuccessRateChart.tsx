@@ -11,13 +11,17 @@ import {
   Cell,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { SuccessRateByLevel } from "@/lib/contracts/dren"
 
-interface SuccessRateChartProps {
-  data: SuccessRateByLevel[]
+interface SuccessRateRow {
+  level: string
+  rate: number
 }
 
-// Couleur selon le taux de réussite
+interface SuccessRateChartProps {
+  data: SuccessRateRow[]
+}
+
+// Couleur selon le taux de reussite
 function getRateColor(rate: number): string {
   if (rate >= 80) return "hsl(142, 71%, 45%)" // emerald
   if (rate >= 60) return "hsl(216, 80%, 30%)" // primary
@@ -29,7 +33,7 @@ export function SuccessRateChart({ data }: SuccessRateChartProps) {
   return (
     <Card className="border-0 shadow-sm ring-1 ring-border">
       <CardHeader>
-        <CardTitle className="text-base font-medium">Taux de réussite par niveau</CardTitle>
+        <CardTitle className="text-base font-medium">Taux de reussite par niveau</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -38,7 +42,7 @@ export function SuccessRateChart({ data }: SuccessRateChartProps) {
             <XAxis dataKey="level" className="text-xs" />
             <YAxis domain={[0, 100]} unit="%" className="text-xs" />
             <Tooltip
-              formatter={(value: number) => [`${value.toFixed(1)}%`, "Taux de réussite"]}
+              formatter={(value: number) => [`${value.toFixed(1)}%`, "Taux de reussite"]}
               contentStyle={{
                 borderRadius: "8px",
                 border: "1px solid hsl(var(--border))",

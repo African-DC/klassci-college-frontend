@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useClasses } from "@/lib/hooks/useClasses"
 
 interface StudentFormProps {
   onSuccess: () => void
@@ -33,16 +32,12 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
     defaultValues: {
       first_name: "",
       last_name: "",
-      matricule: "",
-      date_of_birth: "",
-      gender: undefined,
-      class_id: undefined,
-      parent_phone: "",
-      address: "",
+      enrollment_number: "",
+      birth_date: "",
+      genre: undefined,
     },
   })
 
-  const { data: classesData } = useClasses({ size: 200 })
   const { mutate, isPending, error } = useCreateStudent()
 
   function onSubmit(data: StudentCreate) {
@@ -90,12 +85,12 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="matricule"
+            name="enrollment_number"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Matricule</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex : KLS-2025-001" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : STU-2026-001" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -104,7 +99,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
 
           <FormField
             control={form.control}
-            name="gender"
+            name="genre"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Genre</FormLabel>
@@ -127,7 +122,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
 
         <FormField
           control={form.control}
-          name="date_of_birth"
+          name="birth_date"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Date de naissance</FormLabel>
@@ -138,64 +133,6 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
             </FormItem>
           )}
         />
-
-        <FormField
-          control={form.control}
-          name="class_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Classe</FormLabel>
-              <Select
-                onValueChange={(v) => field.onChange(Number(v))}
-                value={field.value?.toString() ?? ""}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Sélectionner une classe" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {classesData?.items.map((c) => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="parent_phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Téléphone parent</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex : +243 812 345 678" className="h-11" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Adresse</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex : Av. Lumumba, Kinshasa" className="h-11" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">

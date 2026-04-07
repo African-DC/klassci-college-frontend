@@ -35,10 +35,10 @@ export function useMarkAsRead() {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: notificationKeys.all })
       // Mise à jour optimiste du compteur
-      const prevCount = queryClient.getQueryData<{ unread_count: number }>(notificationKeys.count())
-      if (prevCount && prevCount.unread_count > 0) {
+      const prevCount = queryClient.getQueryData<{ count: number }>(notificationKeys.count())
+      if (prevCount && prevCount.count > 0) {
         queryClient.setQueryData(notificationKeys.count(), {
-          unread_count: prevCount.unread_count - 1,
+          count: prevCount.count - 1,
         })
       }
       // Mise à jour optimiste de la liste
@@ -49,7 +49,7 @@ export function useMarkAsRead() {
         if (data) {
           queryClient.setQueryData(
             key,
-            data.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
+            data.map((n) => (n.id === id ? { ...n, read: true } : n)),
           )
         }
       }
@@ -79,8 +79,8 @@ export function useMarkAllAsRead() {
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: notificationKeys.all })
       // Compteur à zéro
-      const prevCount = queryClient.getQueryData<{ unread_count: number }>(notificationKeys.count())
-      queryClient.setQueryData(notificationKeys.count(), { unread_count: 0 })
+      const prevCount = queryClient.getQueryData<{ count: number }>(notificationKeys.count())
+      queryClient.setQueryData(notificationKeys.count(), { count: 0 })
       // Toutes les notifications marquées comme lues
       const queries = queryClient.getQueriesData<Notification[]>({
         queryKey: ["notifications", "list"],
@@ -89,7 +89,7 @@ export function useMarkAllAsRead() {
         if (data) {
           queryClient.setQueryData(
             key,
-            data.map((n) => ({ ...n, is_read: true })),
+            data.map((n) => ({ ...n, read: true })),
           )
         }
       }

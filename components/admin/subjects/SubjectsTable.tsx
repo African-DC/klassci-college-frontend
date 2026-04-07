@@ -15,13 +15,6 @@ export function SubjectsTable() {
 
   const columns: ColumnDef<Subject>[] = useMemo(() => [
     {
-      accessorKey: "code",
-      header: "Code",
-      cell: ({ row }) => (
-        <span className="font-mono text-xs text-muted-foreground">{row.original.code}</span>
-      ),
-    },
-    {
       accessorKey: "name",
       header: "Nom",
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
@@ -36,17 +29,10 @@ export function SubjectsTable() {
       ),
     },
     {
-      accessorKey: "category",
-      header: "Catégorie",
+      accessorKey: "hours_per_week",
+      header: "Heures/sem.",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.category ?? "—"}</span>
-      ),
-    },
-    {
-      accessorKey: "level",
-      header: "Niveau",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.level ?? "Tous"}</span>
+        <span className="font-mono text-sm">{row.original.hours_per_week}</span>
       ),
     },
   ], [])

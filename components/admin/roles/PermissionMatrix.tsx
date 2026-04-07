@@ -2,18 +2,24 @@
 
 import { useMemo } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { Permission, PermissionModule } from "@/lib/contracts/role"
+import type { Permission } from "@/lib/contracts/role"
 import { cn } from "@/lib/utils"
 
-/** Labels lisibles pour chaque module */
-const MODULE_LABELS: Record<PermissionModule, string> = {
+/** Derive a grouping key from the permission slug (e.g. "inscriptions.create" -> "inscriptions") */
+function getGroupKey(slug: string): string {
+  const dotIndex = slug.indexOf(".")
+  return dotIndex > 0 ? slug.substring(0, dotIndex) : slug
+}
+
+/** Labels lisibles pour les groupes de permissions */
+const GROUP_LABELS: Record<string, string> = {
   inscriptions: "Inscriptions",
-  notes: "Notes & Évaluations",
+  notes: "Notes & Evaluations",
   paiements: "Paiements",
-  presences: "Présences",
+  presences: "Presences",
   emploi_du_temps: "Emploi du temps",
   utilisateurs: "Utilisateurs",
-  parametres: "Paramètres",
+  parametres: "Parametres",
   notifications: "Notifications",
 }
 
@@ -24,13 +30,14 @@ interface PermissionMatrixProps {
 }
 
 export function PermissionMatrix({ permissions, selectedIds, onChange }: PermissionMatrixProps) {
-  /** Groupe les permissions par module */
+  /** Groupe les permissions par prefixe du slug */
   const grouped = useMemo(() => {
-    const map = new Map<PermissionModule, Permission[]>()
+    const map = new Map<string, Permission[]>()
     for (const perm of permissions) {
-      const list = map.get(perm.module) ?? []
+      const group = getGroupKey(perm.slug)
+      const list = map.get(group) ?? []
       list.push(perm)
-      map.set(perm.module, list)
+      map.set(group, list)
     }
     return map
   }, [permissions])
@@ -46,15 +53,15 @@ export function PermissionMatrix({ permissions, selectedIds, onChange }: Permiss
     }
   }
 
-  function toggleModule(module: PermissionModule) {
-    const modulePermIds = grouped.get(module)?.map((p) => p.id) ?? []
-    const allSelected = modulePermIds.every((id) => selectedSet.has(id))
+  function toggleGroup(group: string) {
+    const groupPermIds = grouped.get(group)?.map((p) => p.id) ?? []
+    const allSelected = groupPermIds.every((id) => selectedSet.has(id))
 
     if (allSelected) {
-      const removeSet = new Set(modulePermIds)
+      const removeSet = new Set(groupPermIds)
       onChange(selectedIds.filter((id) => !removeSet.has(id)))
     } else {
-      const merged = new Set([...selectedIds, ...modulePermIds])
+      const merged = new Set([...selectedIds, ...groupPermIds])
       onChange(Array.from(merged))
     }
   }
@@ -69,28 +76,28 @@ export function PermissionMatrix({ permissions, selectedIds, onChange }: Permiss
 
   return (
     <div className="space-y-4 rounded-lg border p-4">
-      {Array.from(grouped.entries()).map(([module, perms]) => {
-        const modulePermIds = perms.map((p) => p.id)
-        const allChecked = modulePermIds.every((id) => selectedSet.has(id))
-        const someChecked = !allChecked && modulePermIds.some((id) => selectedSet.has(id))
+      {Array.from(grouped.entries()).map(([group, perms]) => {
+        const groupPermIds = perms.map((p) => p.id)
+        const allChecked = groupPermIds.every((id) => selectedSet.has(id))
+        const someChecked = !allChecked && groupPermIds.some((id) => selectedSet.has(id))
 
         return (
-          <div key={module} className="space-y-2">
-            {/* En-tête du module */}
+          <div key={group} className="space-y-2">
+            {/* En-tete du groupe */}
             <div className="flex items-center gap-2">
               <Checkbox
                 checked={allChecked ? true : someChecked ? "indeterminate" : false}
-                onCheckedChange={() => toggleModule(module)}
+                onCheckedChange={() => toggleGroup(group)}
               />
               <span className="text-sm font-semibold">
-                {MODULE_LABELS[module] ?? module}
+                {GROUP_LABELS[group] ?? group}
               </span>
               <span className="text-xs text-muted-foreground">
-                ({modulePermIds.filter((id) => selectedSet.has(id)).length}/{perms.length})
+                ({groupPermIds.filter((id) => selectedSet.has(id)).length}/{perms.length})
               </span>
             </div>
 
-            {/* Permissions du module */}
+            {/* Permissions du groupe */}
             <div className="ml-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
               {perms.map((perm) => {
                 const isChecked = selectedSet.has(perm.id)

@@ -3,11 +3,12 @@
 import { useState } from "react"
 import {
   Bell,
-  UserPlus,
+  CreditCard,
   ClipboardList,
-  Wallet,
+  FileText,
   AlertCircle,
   Settings,
+  UserCheck,
   Check,
   CheckCheck,
   Filter,
@@ -35,29 +36,35 @@ import { cn } from "@/lib/utils"
 
 /** Icône par type de notification */
 const TYPE_ICONS: Record<NotificationType, React.ComponentType<{ className?: string }>> = {
-  inscription: UserPlus,
-  note: ClipboardList,
-  paiement: Wallet,
-  absence: AlertCircle,
-  systeme: Settings,
+  payment_due: CreditCard,
+  payment_received: CreditCard,
+  grade_available: ClipboardList,
+  bulletin_published: FileText,
+  absence_recorded: AlertCircle,
+  enrollment_status: UserCheck,
+  system: Settings,
 }
 
 /** Couleur de fond par type */
 const TYPE_COLORS: Record<NotificationType, string> = {
-  inscription: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  note: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  paiement: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  absence: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-  systeme: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+  payment_due: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  payment_received: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  grade_available: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  bulletin_published: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
+  absence_recorded: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+  enrollment_status: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+  system: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
 }
 
 /** Labels pour les types */
 const TYPE_LABELS: Record<NotificationType, string> = {
-  inscription: "Inscription",
-  note: "Note",
-  paiement: "Paiement",
-  absence: "Absence",
-  systeme: "Système",
+  payment_due: "Paiement dû",
+  payment_received: "Paiement reçu",
+  grade_available: "Note disponible",
+  bulletin_published: "Bulletin publié",
+  absence_recorded: "Absence enregistrée",
+  enrollment_status: "Inscription",
+  system: "Système",
 }
 
 /** Formater une date relative */
@@ -78,11 +85,13 @@ function timeAgo(dateStr: string): string {
 }
 
 const NOTIFICATION_TYPES: NotificationType[] = [
-  "inscription",
-  "note",
-  "paiement",
-  "absence",
-  "systeme",
+  "payment_due",
+  "payment_received",
+  "grade_available",
+  "bulletin_published",
+  "absence_recorded",
+  "enrollment_status",
+  "system",
 ]
 
 export function NotificationsPageClient() {
@@ -91,8 +100,8 @@ export function NotificationsPageClient() {
 
   const params = {
     ...(typeFilter !== "all" && { type: typeFilter }),
-    ...(readFilter === "unread" && { is_read: false }),
-    ...(readFilter === "read" && { is_read: true }),
+    ...(readFilter === "unread" && { read: false }),
+    ...(readFilter === "read" && { read: true }),
   }
 
   const { data: notifications, isLoading, isError, refetch } = useNotifications(params)
@@ -100,7 +109,7 @@ export function NotificationsPageClient() {
   const markAsRead = useMarkAsRead()
   const markAllAsRead = useMarkAllAsRead()
 
-  const unreadCount = countData?.unread_count ?? 0
+  const unreadCount = countData?.count ?? 0
 
   return (
     <div className="space-y-6">
@@ -203,7 +212,7 @@ function NotificationRow({
     <Card
       className={cn(
         "border-0 shadow-sm ring-1 ring-border transition-colors",
-        !notification.is_read && "ring-primary/30 bg-primary/[0.02]",
+        !notification.read && "ring-primary/30 bg-primary/[0.02]",
       )}
     >
       <CardContent className="flex items-start gap-4 p-4">
@@ -218,20 +227,20 @@ function NotificationRow({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className={cn("text-sm", !notification.is_read && "font-semibold")}>
+            <p className={cn("text-sm", !notification.read && "font-semibold")}>
               {notification.title}
             </p>
             <Badge variant="secondary" className="text-[10px]">
               {TYPE_LABELS[notification.type]}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground mt-0.5">{notification.message}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{notification.body}</p>
           <p className="text-xs text-muted-foreground/70 mt-1">
             {timeAgo(notification.created_at)}
           </p>
         </div>
 
-        {!notification.is_read && (
+        {!notification.read && (
           <Button
             variant="ghost"
             size="sm"

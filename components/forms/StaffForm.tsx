@@ -9,13 +9,11 @@ import { Input } from "@/components/ui/input"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Switch } from "@/components/ui/switch"
 
 interface StaffFormProps {
   onSuccess: () => void
@@ -27,11 +25,8 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
     defaultValues: {
       first_name: "",
       last_name: "",
-      email: "",
+      position: "",
       phone: "",
-      role: "",
-      department: "",
-      is_active: true,
     },
   })
 
@@ -82,12 +77,12 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="email"
+            name="position"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Poste</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="Ex : j.mbala@ecole.cd" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : Comptable" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -108,54 +103,6 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
             )}
           />
         </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Poste</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex : Secrétaire" className="h-11" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="department"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Département</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex : Administration" className="h-11" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="is_active"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <FormLabel>Actif</FormLabel>
-                <FormDescription className="text-xs">
-                  Un personnel inactif n&apos;apparaît plus dans les listes de sélection
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">

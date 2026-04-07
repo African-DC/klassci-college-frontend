@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { useCreateFeeVariant, useFeeCategories } from "@/lib/hooks/useFees"
-import { FeeVariantCreateSchema, LEVELS, type FeeVariantCreate } from "@/lib/contracts/fee"
+import { FeeVariantCreateSchema, type FeeVariantCreate } from "@/lib/contracts/fee"
+import { useClasses } from "@/lib/hooks/useClasses"
 
 interface FeeVariantCreateModalProps {
   open: boolean
@@ -29,6 +30,8 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
   })
 
   const { data: categories } = useFeeCategories()
+  const { data: classesData } = useClasses()
+  const classes = classesData?.items ?? []
   const { mutate, isPending } = useCreateFeeVariant()
 
   function onSubmit(data: FeeVariantCreate) {
@@ -50,17 +53,17 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="category_id"
+              name="fee_category_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Catégorie *</FormLabel>
+                  <FormLabel>Categorie *</FormLabel>
                   <Select
                     value={field.value?.toString() ?? ""}
                     onValueChange={(v) => field.onChange(Number(v))}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une catégorie" />
+                        <SelectValue placeholder="Selectionner une categorie" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -77,20 +80,23 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
             />
             <FormField
               control={form.control}
-              name="level"
+              name="class_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Niveau *</FormLabel>
-                  <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                  <FormLabel>Classe *</FormLabel>
+                  <Select
+                    value={field.value?.toString() ?? ""}
+                    onValueChange={(v) => field.onChange(Number(v))}
+                  >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un niveau" />
+                        <SelectValue placeholder="Selectionner une classe" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {LEVELS.map((level) => (
-                        <SelectItem key={level} value={level}>
-                          {level}
+                      {classes.map((cls) => (
+                        <SelectItem key={cls.id} value={cls.id.toString()}>
+                          {cls.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -118,7 +124,7 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
               )}
             />
             <Button type="submit" disabled={isPending} className="w-full">
-              {isPending ? "Création..." : "Créer la variante"}
+              {isPending ? "Creation..." : "Creer la variante"}
             </Button>
           </form>
         </Form>

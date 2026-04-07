@@ -31,7 +31,7 @@ export function SchoolInfoSection({ settings }: SchoolInfoSectionProps) {
       address: settings.address ?? "",
       phone: settings.phone ?? "",
       email: settings.email ?? "",
-      active_academic_year: settings.active_academic_year ?? "",
+      ministry_code: settings.ministry_code ?? "",
     },
   })
 
@@ -71,12 +71,12 @@ export function SchoolInfoSection({ settings }: SchoolInfoSectionProps) {
               />
               <FormField
                 control={form.control}
-                name="active_academic_year"
+                name="ministry_code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Année académique active</FormLabel>
+                    <FormLabel>Code ministere</FormLabel>
                     <FormControl>
-                      <Input placeholder="2025-2026" {...field} />
+                      <Input placeholder="Ex: CI-DREN-001" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

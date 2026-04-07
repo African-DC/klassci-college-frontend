@@ -3,11 +3,12 @@
 import Link from "next/link"
 import {
   Bell,
-  UserPlus,
+  CreditCard,
   ClipboardList,
-  Wallet,
+  FileText,
   AlertCircle,
   Settings,
+  UserCheck,
   Check,
   CheckCheck,
 } from "lucide-react"
@@ -26,20 +27,24 @@ import { cn } from "@/lib/utils"
 
 /** Icône par type de notification */
 const TYPE_ICONS: Record<NotificationType, React.ComponentType<{ className?: string }>> = {
-  inscription: UserPlus,
-  note: ClipboardList,
-  paiement: Wallet,
-  absence: AlertCircle,
-  systeme: Settings,
+  payment_due: CreditCard,
+  payment_received: CreditCard,
+  grade_available: ClipboardList,
+  bulletin_published: FileText,
+  absence_recorded: AlertCircle,
+  enrollment_status: UserCheck,
+  system: Settings,
 }
 
 /** Couleur de fond par type */
 const TYPE_COLORS: Record<NotificationType, string> = {
-  inscription: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  note: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  paiement: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  absence: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-  systeme: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+  payment_due: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  payment_received: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  grade_available: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  bulletin_published: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
+  absence_recorded: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+  enrollment_status: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+  system: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
 }
 
 /** Formater une date relative simple */
@@ -61,7 +66,7 @@ export function NotificationBell() {
   const markAsRead = useMarkAsRead()
   const markAllAsRead = useMarkAllAsRead()
 
-  const unreadCount = countData?.unread_count ?? 0
+  const unreadCount = countData?.count ?? 0
 
   return (
     <DropdownMenu>
@@ -137,7 +142,7 @@ function NotificationItem({
     <div
       className={cn(
         "flex items-start gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors",
-        !notification.is_read && "bg-primary/5",
+        !notification.read && "bg-primary/5",
       )}
     >
       <div
@@ -149,17 +154,17 @@ function NotificationItem({
         <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className={cn("text-xs leading-snug", !notification.is_read && "font-semibold")}>
+        <p className={cn("text-xs leading-snug", !notification.read && "font-semibold")}>
           {notification.title}
         </p>
         <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
-          {notification.message}
+          {notification.body}
         </p>
         <p className="text-[10px] text-muted-foreground/70 mt-0.5">
           {timeAgo(notification.created_at)}
         </p>
       </div>
-      {!notification.is_read && (
+      {!notification.read && (
         <Button
           variant="ghost"
           size="icon"

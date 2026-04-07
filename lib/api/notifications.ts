@@ -3,6 +3,7 @@ import { apiFetch, safeValidate } from "./client"
 import {
   NotificationSchema,
   NotificationCountSchema,
+  MarkAllReadSchema,
   type Notification,
   type NotificationCount,
   type NotificationType,
@@ -12,7 +13,7 @@ const NotificationArraySchema = z.array(NotificationSchema)
 
 export interface NotificationListParams {
   type?: NotificationType
-  is_read?: boolean
+  read?: boolean
   page?: number
   size?: number
 }
@@ -22,7 +23,7 @@ export const notificationsApi = {
   list: async (params: NotificationListParams = {}): Promise<Notification[]> => {
     const query = new URLSearchParams()
     if (params.type) query.set("type", params.type)
-    if (params.is_read !== undefined) query.set("is_read", String(params.is_read))
+    if (params.read !== undefined) query.set("read", String(params.read))
     if (params.page) query.set("page", String(params.page))
     if (params.size) query.set("size", String(params.size))
 
@@ -30,8 +31,8 @@ export const notificationsApi = {
     const res = await apiFetch<unknown>(`/notifications${qs ? `?${qs}` : ""}`)
     const arr = Array.isArray(res)
       ? res
-      : (res as Record<string, unknown>).data !== undefined
-        ? (res as Record<string, unknown>).data
+      : (res as Record<string, unknown>).items !== undefined
+        ? (res as Record<string, unknown>).items
         : res
     return safeValidate(NotificationArraySchema, arr, "GET /notifications")
   },
@@ -48,7 +49,8 @@ export const notificationsApi = {
   },
 
   // Marquer toutes les notifications comme lues
-  markAllAsRead: async (): Promise<void> => {
-    await apiFetch<void>("/notifications/read-all", { method: "PATCH" })
+  markAllAsRead: async (): Promise<{ updated: number }> => {
+    const res = await apiFetch<unknown>("/notifications/read-all", { method: "POST" })
+    return safeValidate(MarkAllReadSchema, res, "POST /notifications/read-all")
   },
 }

@@ -2,7 +2,7 @@ import { z } from "zod"
 
 // Miroir de app/schemas/fee.py (backend)
 
-// Catégorie de frais (ex: Scolarité, Inscription, COGES, Cantine)
+// Categorie de frais (ex: Scolarite, Inscription, COGES, Cantine)
 export const FeeCategorySchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -11,17 +11,15 @@ export const FeeCategorySchema = z.object({
   updated_at: z.string(),
 })
 
-// Variante de frais — montant par catégorie et par niveau
+// Variante de frais — montant par categorie et par classe
+// Backend FeeVariant: id, fee_category_id, class_id, academic_year_id, amount, description
 export const FeeVariantSchema = z.object({
   id: z.number(),
-  category_id: z.number(),
-  category_name: z.string(),
-  level: z.string(),
-  amount: z.number(),
+  fee_category_id: z.number(),
+  class_id: z.number(),
   academic_year_id: z.number(),
-  academic_year_label: z.string(),
-  created_at: z.string(),
-  updated_at: z.string(),
+  amount: z.coerce.number(),
+  description: z.string().nullable(),
 })
 
 export const FeeCategoryCreateSchema = z.object({
@@ -30,10 +28,11 @@ export const FeeCategoryCreateSchema = z.object({
 })
 
 export const FeeVariantCreateSchema = z.object({
-  category_id: z.number({ required_error: "La catégorie est requise" }).positive(),
-  level: z.string({ required_error: "Le niveau est requis" }).min(1, "Le niveau est requis"),
+  fee_category_id: z.number({ required_error: "La catégorie est requise" }).positive(),
+  class_id: z.number({ required_error: "La classe est requise" }).positive(),
   amount: z.number({ required_error: "Le montant est requis" }).positive("Le montant doit être positif"),
   academic_year_id: z.number({ required_error: "L'année académique est requise" }).positive(),
+  description: z.string().nullable().optional(),
 })
 
 export const FeeCategoryUpdateSchema = FeeCategoryCreateSchema.partial()
@@ -46,5 +45,5 @@ export type FeeCategoryUpdate = z.infer<typeof FeeCategoryUpdateSchema>
 export type FeeVariantCreate = z.infer<typeof FeeVariantCreateSchema>
 export type FeeVariantUpdate = z.infer<typeof FeeVariantUpdateSchema>
 
-/** Niveaux du système scolaire ivoirien (collège) */
-export const LEVELS = ["6ème", "5ème", "4ème", "3ème"] as const
+/** Niveaux du systeme scolaire ivoirien (college) */
+export const LEVELS = ["6eme", "5eme", "4eme", "3eme"] as const

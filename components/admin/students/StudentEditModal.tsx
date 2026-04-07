@@ -23,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useClasses } from "@/lib/hooks/useClasses"
 
 function EditFormSkeleton() {
   return (
@@ -42,7 +41,6 @@ function EditFormSkeleton() {
 function EditForm({ studentId, onClose }: { studentId: number; onClose: () => void }) {
   const { data: student, isLoading } = useStudent(studentId)
   const { mutate, isPending, error } = useUpdateStudent(studentId)
-  const { data: classesData } = useClasses({ size: 200 })
 
   const form = useForm<StudentUpdate>({
     resolver: zodResolver(StudentUpdateSchema),
@@ -50,12 +48,9 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
       ? {
           first_name: student.first_name,
           last_name: student.last_name,
-          matricule: student.matricule ?? undefined,
-          date_of_birth: student.date_of_birth ?? undefined,
-          gender: student.gender ?? undefined,
-          class_id: student.class_id ?? undefined,
-          parent_phone: student.parent_phone ?? undefined,
-          address: student.address ?? undefined,
+          enrollment_number: student.enrollment_number ?? undefined,
+          birth_date: student.birth_date ?? undefined,
+          genre: student.genre ?? undefined,
         }
       : undefined,
   })
@@ -101,7 +96,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="matricule"
+            name="enrollment_number"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Matricule</FormLabel>
@@ -114,7 +109,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
           />
           <FormField
             control={form.control}
-            name="gender"
+            name="genre"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Genre</FormLabel>
@@ -137,7 +132,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
 
         <FormField
           control={form.control}
-          name="date_of_birth"
+          name="birth_date"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Date de naissance</FormLabel>
@@ -148,63 +143,6 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
             </FormItem>
           )}
         />
-
-        <FormField
-          control={form.control}
-          name="class_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Classe</FormLabel>
-              <Select
-                onValueChange={(v) => field.onChange(Number(v))}
-                value={field.value?.toString() ?? ""}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Sélectionner une classe" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {classesData?.items.map((c) => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="parent_phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Téléphone parent</FormLabel>
-                <FormControl>
-                  <Input className="h-11" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Adresse</FormLabel>
-                <FormControl>
-                  <Input className="h-11" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">

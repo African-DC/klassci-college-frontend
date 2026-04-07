@@ -15,10 +15,10 @@ export function StudentsTable() {
 
   const columns: ColumnDef<Student>[] = useMemo(() => [
     {
-      accessorKey: "matricule",
+      accessorKey: "enrollment_number",
       header: "Matricule",
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-muted-foreground">{row.original.matricule ?? "—"}</span>
+        <span className="font-mono text-xs text-muted-foreground">{row.original.enrollment_number ?? "—"}</span>
       ),
     },
     {
@@ -31,26 +31,12 @@ export function StudentsTable() {
       ),
     },
     {
-      accessorKey: "gender",
+      accessorKey: "genre",
       header: "Genre",
       cell: ({ row }) => (
         <Badge variant="outline" className="text-xs">
-          {row.original.gender === "M" ? "Masculin" : row.original.gender === "F" ? "Féminin" : "—"}
+          {row.original.genre === "M" ? "Masculin" : row.original.genre === "F" ? "Féminin" : "—"}
         </Badge>
-      ),
-    },
-    {
-      accessorKey: "class_name",
-      header: "Classe",
-      cell: ({ row }) => (
-        <Badge variant="secondary">{row.original.class_name ?? "—"}</Badge>
-      ),
-    },
-    {
-      accessorKey: "parent_phone",
-      header: "Tél. parent",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.parent_phone ?? "—"}</span>
       ),
     },
   ], [])

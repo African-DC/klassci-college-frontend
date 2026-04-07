@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useTeachers } from "@/lib/hooks/useTeachers"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 
 interface ClassFormProps {
@@ -33,15 +32,14 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
     resolver: zodResolver(ClassCreateSchema),
     defaultValues: {
       name: "",
-      level: "",
-      section: "",
-      capacity: undefined,
+      level_id: undefined,
+      series_id: undefined,
+      max_students: undefined,
       academic_year_id: undefined,
-      teacher_id: undefined,
+      room_id: undefined,
     },
   })
 
-  const { data: teachersData } = useTeachers({ size: 200 })
   const { data: academicYears } = useAcademicYears()
   const { mutate, isPending, error } = useCreateClass()
 
@@ -74,12 +72,19 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="level"
+            name="level_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Niveau *</FormLabel>
+                <FormLabel>Niveau (ID) *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex : 6ème" className="h-11" {...field} />
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="Ex : 1"
+                    className="h-11"
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    value={field.value ?? ""}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -88,67 +93,25 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
 
           <FormField
             control={form.control}
-            name="section"
+            name="max_students"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Section</FormLabel>
+                <FormLabel>Capacité max</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex : A" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="Ex : 45"
+                    className="h-11"
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    value={field.value ?? ""}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="capacity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Capacité</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min={1}
-                  placeholder="Ex : 45"
-                  className="h-11"
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                  value={field.value ?? ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="teacher_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Titulaire</FormLabel>
-              <Select
-                onValueChange={(v) => field.onChange(Number(v))}
-                value={field.value?.toString() ?? ""}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Sélectionner un enseignant" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {teachersData?.items.map((t) => (
-                    <SelectItem key={t.id} value={t.id.toString()}>
-                      {t.last_name} {t.first_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <FormField
           control={form.control}

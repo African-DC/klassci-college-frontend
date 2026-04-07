@@ -1,44 +1,47 @@
 import { z } from "zod"
 
 // Miroir de app/schemas/dren.py (backend)
-// Statistiques agrégées pour la Direction Régionale de l'Éducation Nationale
+// Statistiques agregees pour la Direction Regionale de l'Education Nationale
 
-export const LevelStatsSchema = z.object({
-  level: z.string(),
+export const ClassStatsSchema = z.object({
+  class_id: z.number(),
+  class_name: z.string(),
   total_students: z.number(),
   male_count: z.number(),
   female_count: z.number(),
-  success_count: z.number(),
-  fail_count: z.number(),
-  success_rate: z.number(),
-  average: z.number().nullable(),
 })
 
-export const GenderDistributionSchema = z.object({
-  level: z.string(),
-  male: z.number(),
-  female: z.number(),
+export const LevelStatsSchema = z.object({
+  level_id: z.number(),
+  level_name: z.string(),
+  total_students: z.number(),
+  male_count: z.number(),
+  female_count: z.number(),
+  classes: z.array(ClassStatsSchema),
 })
 
-export const SuccessRateByLevelSchema = z.object({
-  level: z.string(),
-  rate: z.number(),
+export const SubjectStatsSchema = z.object({
+  subject_id: z.number(),
+  subject_name: z.string(),
+  overall_average: z.coerce.number(),
+  teacher_count: z.number(),
 })
 
 export const DrenStatsSchema = z.object({
   academic_year_id: z.number(),
-  academic_year_label: z.string(),
+  academic_year_name: z.string(),
   total_students: z.number(),
-  total_male: z.number(),
-  total_female: z.number(),
-  overall_success_rate: z.number(),
-  overall_average: z.number().nullable(),
+  male_count: z.number(),
+  female_count: z.number(),
+  success_rate: z.number(),
+  failure_rate: z.number(),
+  redoublement_rate: z.number(),
+  exclusion_rate: z.number(),
   levels: z.array(LevelStatsSchema),
-  gender_distribution: z.array(GenderDistributionSchema),
-  success_rates: z.array(SuccessRateByLevelSchema),
+  subjects: z.array(SubjectStatsSchema),
 })
 
+export type ClassStats = z.infer<typeof ClassStatsSchema>
 export type LevelStats = z.infer<typeof LevelStatsSchema>
-export type GenderDistribution = z.infer<typeof GenderDistributionSchema>
-export type SuccessRateByLevel = z.infer<typeof SuccessRateByLevelSchema>
+export type SubjectStats = z.infer<typeof SubjectStatsSchema>
 export type DrenStats = z.infer<typeof DrenStatsSchema>
