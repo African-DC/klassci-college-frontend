@@ -2,11 +2,11 @@ import { z } from "zod"
 
 // Miroir de app/schemas/council.py (backend)
 
-// Décisions du conseil de classe — seuils ivoiriens
-// ≥ 10    → passage
-// 9.5–9.99 → repêchage
-// 8.5–9.49 → redoublement
-// < 8.5   → exclusion
+// Decisions du conseil de classe — seuils ivoiriens
+// >= 10    -> passage
+// 9.5–9.99 -> repechage
+// 8.5–9.49 -> redoublement
+// < 8.5   -> exclusion
 export const CouncilDecisionSchema = z.enum([
   "passage",
   "repechage",
@@ -14,15 +14,13 @@ export const CouncilDecisionSchema = z.enum([
   "exclusion",
 ])
 
-export const CouncilStatusSchema = z.enum(["brouillon", "valide"])
-
-export const CouncilRecordSchema = z.object({
+export const CouncilDecisionRecordSchema = z.object({
   id: z.number(),
   student_id: z.number(),
   student_name: z.string(),
-  average: z.number().nullable(),
+  average: z.coerce.number().nullable(),
   rank: z.number().nullable(),
-  total_students: z.number(),
+  absence_count: z.number().default(0),
   auto_decision: CouncilDecisionSchema.nullable(),
   final_decision: CouncilDecisionSchema.nullable(),
   override_reason: z.string().nullable(),
@@ -32,14 +30,15 @@ export const CouncilMinutesSchema = z.object({
   id: z.number(),
   class_id: z.number(),
   class_name: z.string(),
-  trimester: z.enum(["1", "2", "3"]),
+  trimester: z.coerce.number(),
   academic_year_id: z.number(),
-  academic_year_label: z.string(),
-  status: CouncilStatusSchema,
-  records: z.array(CouncilRecordSchema),
-  council_date: z.string().nullable(),
-  president_name: z.string().nullable(),
-  secretary_name: z.string().nullable(),
+  is_published: z.boolean(),
+  decisions: z.array(CouncilDecisionRecordSchema),
+  main_teacher_name: z.string().nullable(),
+  director_name: z.string().nullable(),
+  dren_name: z.string().nullable(),
+  notes: z.string().nullable(),
+  generated_at: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 })
@@ -51,7 +50,6 @@ export const CouncilDecisionUpdateSchema = z.object({
 })
 
 export type CouncilDecision = z.infer<typeof CouncilDecisionSchema>
-export type CouncilStatus = z.infer<typeof CouncilStatusSchema>
-export type CouncilRecord = z.infer<typeof CouncilRecordSchema>
+export type CouncilDecisionRecord = z.infer<typeof CouncilDecisionRecordSchema>
 export type CouncilMinutes = z.infer<typeof CouncilMinutesSchema>
 export type CouncilDecisionUpdate = z.infer<typeof CouncilDecisionUpdateSchema>

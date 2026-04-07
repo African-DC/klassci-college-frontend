@@ -9,10 +9,10 @@ export const councilApi = {
   // Récupérer le PV d'une classe pour un trimestre donné
   getMinutes: async (classId: number, trimester: string): Promise<CouncilMinutes> => {
     const json = await apiFetch<{ data?: CouncilMinutes } | CouncilMinutes>(
-      `/council-minutes?class_id=${classId}&trimester=${trimester}`,
+      `/reports/council-minutes?class_id=${classId}&trimester=${trimester}`,
     )
     const minutes = (json as { data?: CouncilMinutes }).data ?? (json as CouncilMinutes)
-    return safeValidate(CouncilMinutesSchema, minutes, "GET /council-minutes")
+    return safeValidate(CouncilMinutesSchema, minutes, "GET /reports/council-minutes")
   },
 
   // Mettre à jour les décisions de délibération
@@ -21,25 +21,25 @@ export const councilApi = {
     decisions: CouncilDecisionUpdate[],
   ): Promise<CouncilMinutes> => {
     const json = await apiFetch<{ data?: CouncilMinutes } | CouncilMinutes>(
-      `/council-minutes/${minutesId}/decisions`,
+      `/reports/council-minutes/${minutesId}/decisions`,
       { method: "PUT", body: JSON.stringify({ decisions }) },
     )
     const minutes = (json as { data?: CouncilMinutes }).data ?? (json as CouncilMinutes)
-    return safeValidate(CouncilMinutesSchema, minutes, "PUT /council-minutes/decisions")
+    return safeValidate(CouncilMinutesSchema, minutes, "PUT /reports/council-minutes/decisions")
   },
 
   // Valider définitivement le PV
   validate: async (minutesId: number): Promise<CouncilMinutes> => {
     const json = await apiFetch<{ data?: CouncilMinutes } | CouncilMinutes>(
-      `/council-minutes/${minutesId}/validate`,
+      `/reports/council-minutes/${minutesId}/validate`,
       { method: "POST" },
     )
     const minutes = (json as { data?: CouncilMinutes }).data ?? (json as CouncilMinutes)
-    return safeValidate(CouncilMinutesSchema, minutes, "POST /council-minutes/validate")
+    return safeValidate(CouncilMinutesSchema, minutes, "POST /reports/council-minutes/validate")
   },
 
   // Télécharger le PDF du PV
   downloadPdf: async (minutesId: number): Promise<Blob> => {
-    return apiFetchBlob(`/council-minutes/${minutesId}/pdf`)
+    return apiFetchBlob(`/reports/council-minutes/${minutesId}/pdf`)
   },
 }
