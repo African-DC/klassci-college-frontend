@@ -31,6 +31,7 @@ import { useCreateWithStudent, useReEnroll, useFeeVariants } from "@/lib/hooks/u
 import { useStudents } from "@/lib/hooks/useStudents"
 import { useClasses } from "@/lib/hooks/useClasses"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
@@ -398,12 +399,16 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                 <FormItem>
                   <div className="flex items-center gap-2">
                     <FormLabel>Matricule *</FormLabel>
-                    <div className="group relative">
-                      <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-64 rounded-lg border bg-popover p-3 text-xs text-popover-foreground shadow-md z-50">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button type="button" className="rounded-full p-0.5 hover:bg-muted transition-colors">
+                          <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 text-xs" side="top" align="start">
                         <p className="font-medium mb-1">Configuration du matricule</p>
                         <p className="text-muted-foreground">
-                          Le matricule peut etre genere automatiquement si un pattern est configure dans les parametres de l&apos;etablissement.
+                          Le matricule peut etre genere automatiquement si un pattern est configure dans les parametres.
                         </p>
                         <a
                           href="/admin/settings"
@@ -415,8 +420,8 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                           Configurer le pattern
                           <ExternalLink className="h-3 w-3" />
                         </a>
-                      </div>
-                    </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <FormControl>
                     <Input
