@@ -171,7 +171,7 @@ export function GradeEntryGrid({ evaluationId }: GradeEntryGridProps) {
                   {index + 1}.
                 </span>
                 <span className="text-sm font-medium truncate">
-                  {grade.student_name}
+                  {grade.student_name ?? `#${grade.student_id}`}
                 </span>
               </div>
               <div className="flex items-center gap-2 shrink-0">

@@ -24,10 +24,10 @@ import { DataError } from "@/components/shared/DataError"
 import type { StudentSubjectGrades } from "@/lib/contracts/student-portal"
 
 const TYPE_LABELS: Record<string, string> = {
+  controle: "Contrôle",
   devoir: "Devoir",
-  interro: "Interro",
   examen: "Examen",
-  composition: "Compo",
+  oral: "Oral",
 }
 
 function averageColor(avg: number | null): string {

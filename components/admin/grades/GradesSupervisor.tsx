@@ -18,10 +18,10 @@ import {
 } from "@/components/ui/table"
 
 const TYPE_LABELS: Record<string, string> = {
+  controle: "Contrôle",
   devoir: "Devoir",
-  interro: "Interrogation",
   examen: "Examen",
-  composition: "Composition",
+  oral: "Oral",
 }
 
 function isOverdue(evaluation: Evaluation): boolean {

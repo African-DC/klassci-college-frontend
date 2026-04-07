@@ -2,7 +2,7 @@ import { z } from "zod"
 
 // Miroir de app/schemas/grade.py (backend)
 
-export const EvaluationTypeSchema = z.enum(["devoir", "interro", "examen", "composition"])
+export const EvaluationTypeSchema = z.enum(["controle", "devoir", "examen", "oral"])
 
 export const EvaluationSchema = z.object({
   id: z.number(),
@@ -16,17 +16,18 @@ export const EvaluationSchema = z.object({
   class_name: z.string(),
   teacher_id: z.number(),
   teacher_name: z.string(),
+  academic_year_id: z.number(),
+  trimester: z.number(),
   total_students: z.number(),
   graded_students: z.number(),
   created_at: z.string(),
 })
 
 export const GradeSchema = z.object({
-  id: z.number(),
-  evaluation_id: z.number(),
   student_id: z.number(),
   student_name: z.string(),
-  value: z.number().nullable(),
+  value: z.union([z.number(), z.string().transform(Number)]).nullable(),
+  status: z.string(),
 })
 
 export const EvaluationCreateSchema = z.object({

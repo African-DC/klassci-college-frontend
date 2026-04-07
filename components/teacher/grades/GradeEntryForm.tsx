@@ -23,10 +23,10 @@ import {
 } from "@/components/ui/form"
 
 const EVALUATION_TYPES = [
+  { value: "controle", label: "Contrôle" },
   { value: "devoir", label: "Devoir" },
-  { value: "interro", label: "Interrogation" },
   { value: "examen", label: "Examen" },
-  { value: "composition", label: "Composition" },
+  { value: "oral", label: "Oral" },
 ] as const
 
 interface GradeEntryFormProps {
