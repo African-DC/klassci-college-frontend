@@ -71,7 +71,7 @@ export function useValidatePayment() {
       const snapshots = queryClient.getQueriesData<PaginatedResponse<Payment>>({
         queryKey: paymentKeys.all,
       })
-      optimisticStatusUpdate(queryClient, id, "completed")
+      optimisticStatusUpdate(queryClient, id, "valide")
       return { snapshots }
     },
     onSuccess: () => toast.success("Paiement validé"),
@@ -94,7 +94,7 @@ export function useCancelPayment() {
       const snapshots = queryClient.getQueriesData<PaginatedResponse<Payment>>({
         queryKey: paymentKeys.all,
       })
-      optimisticStatusUpdate(queryClient, id, "refunded")
+      optimisticStatusUpdate(queryClient, id, "annule")
       return { snapshots }
     },
     onSuccess: () => toast.success("Paiement annulé"),

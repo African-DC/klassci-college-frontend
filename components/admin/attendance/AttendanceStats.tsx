@@ -43,7 +43,7 @@ export function AttendanceStats({ classId }: AttendanceStatsProps) {
     )
   }
 
-  if (!stats || stats.length === 0) {
+  if (!stats || stats.students.length === 0) {
     return (
       <div className="py-12 text-center text-sm text-muted-foreground">
         Aucune statistique disponible pour cette classe.
@@ -52,7 +52,7 @@ export function AttendanceStats({ classId }: AttendanceStatsProps) {
   }
 
   // Tri par taux de présence (plus faible en premier pour alerter)
-  const sorted = [...stats].sort((a, b) => a.rate - b.rate)
+  const sorted = [...stats.students].sort((a, b) => a.attendance_rate - b.attendance_rate)
 
   return (
     <div className="rounded-lg border">
@@ -71,15 +71,15 @@ export function AttendanceStats({ classId }: AttendanceStatsProps) {
         <TableBody>
           {sorted.map((s) => (
             <TableRow key={s.student_id}>
-              <TableCell className="font-medium">{s.student_name}</TableCell>
-              <TableCell className="text-center">{s.total_sessions}</TableCell>
-              <TableCell className="text-center text-emerald-600 dark:text-emerald-400 font-medium">{s.present}</TableCell>
-              <TableCell className="text-center text-destructive font-medium">{s.absent}</TableCell>
-              <TableCell className="text-center text-amber-600 dark:text-amber-400">{s.late}</TableCell>
-              <TableCell className="text-center text-blue-600 dark:text-blue-400">{s.excused}</TableCell>
+              <TableCell className="font-medium">{s.first_name} {s.last_name}</TableCell>
+              <TableCell className="text-center">{stats.total_sessions}</TableCell>
+              <TableCell className="text-center text-emerald-600 dark:text-emerald-400 font-medium">{s.present_count}</TableCell>
+              <TableCell className="text-center text-destructive font-medium">{s.absent_count}</TableCell>
+              <TableCell className="text-center text-amber-600 dark:text-amber-400">{s.late_count}</TableCell>
+              <TableCell className="text-center text-blue-600 dark:text-blue-400">{s.excused_count}</TableCell>
               <TableCell className="text-center">
-                <span className={`text-sm font-semibold ${rateColor(s.rate)}`}>
-                  {s.rate.toFixed(1)}%
+                <span className={`text-sm font-semibold ${rateColor(s.attendance_rate)}`}>
+                  {s.attendance_rate.toFixed(1)}%
                 </span>
               </TableCell>
             </TableRow>

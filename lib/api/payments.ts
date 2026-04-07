@@ -28,7 +28,7 @@ export const paymentsApi = {
       const arr = safeValidate(PaymentArraySchema, json, "GET /payments")
       return { items: arr, total: arr.length, page: 1, size: arr.length, total_pages: 1 }
     }
-    return safeValidate(PaginatedPaymentSchema, json, "GET /payments")
+    return safeValidate(PaginatedPaymentSchema, json, "GET /payments") as PaginatedResponse<Payment>
   },
 
   // Créer un paiement

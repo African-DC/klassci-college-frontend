@@ -40,7 +40,7 @@ export function createCrudApi<T, TCreate, TUpdate>(
         const data = safeValidate(ArraySchema, json, basePath)
         return { items: data, total: data.length, page: 1, size: data.length, total_pages: 1 }
       }
-      return safeValidate(PaginatedSchema, json, basePath)
+      return safeValidate(PaginatedSchema, json, basePath) as PaginatedResponse<T>
     },
 
     getById: async (id: number): Promise<T> => {

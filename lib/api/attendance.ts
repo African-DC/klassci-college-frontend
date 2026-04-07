@@ -117,6 +117,57 @@ export const attendanceApi = {
     return safeValidate(StudentAttendanceResponseSchema, json, `GET /attendance/student/${studentId}`)
   },
 
+  // Récupérer une session par classe, créneau et date
+  getSession: async (
+    classId: number,
+    slotId: number,
+    date: string,
+  ): Promise<SessionResponse> => {
+    const query = new URLSearchParams({ class_id: String(classId), slot_id: String(slotId), date })
+    const json = await apiFetch<SessionResponse>(
+      `/attendance/sessions?${query}`,
+    )
+    return safeValidate(SessionResponseSchema, json, "GET /attendance/sessions")
+  },
+
+  // Historique de présence (paginé, filtrable)
+  getHistory: async (
+    params: Record<string, string | number | undefined>,
+  ): Promise<StudentAttendanceResponse> => {
+    const query = new URLSearchParams()
+    for (const [key, val] of Object.entries(params)) {
+      if (val !== undefined && val !== "") query.set(key, String(val))
+    }
+    const qs = query.toString()
+    const json = await apiFetch<StudentAttendanceResponse>(
+      `/attendance/history${qs ? `?${qs}` : ""}`,
+    )
+    return safeValidate(StudentAttendanceResponseSchema, json, "GET /attendance/history")
+  },
+
+  // Enregistrer un batch de présences (crée ou met à jour)
+  saveBatch: async (
+    classId: number,
+    slotId: number,
+    date: string,
+    records: SessionCreateRecord[],
+  ): Promise<SessionResponse> => {
+    const json = await apiFetch<SessionResponse>(
+      `/attendance/sessions`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          entity_type: "class",
+          context_id: classId,
+          slot_id: slotId,
+          date,
+          records,
+        }),
+      },
+    )
+    return safeValidate(SessionResponseSchema, json, "POST /attendance/sessions (batch)")
+  },
+
   // Statistiques de présence pour une classe
   getClassStats: async (classId: number): Promise<ClassAttendanceStats> => {
     const json = await apiFetch<ClassAttendanceStats>(

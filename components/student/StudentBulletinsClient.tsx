@@ -61,7 +61,7 @@ function BulletinCard({ bulletin }: { bulletin: StudentBulletin }) {
     }
   }, [bulletin.id, bulletin.trimester, bulletin.academic_year])
 
-  const isPublished = bulletin.is_published === true
+  const isPublished = bulletin.status === "publie"
 
   return (
     <Card className="border-0 shadow-sm ring-1 ring-border">

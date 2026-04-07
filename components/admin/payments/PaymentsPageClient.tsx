@@ -40,17 +40,16 @@ import { PaymentStatusSchema } from "@/lib/contracts/payment"
 import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@/lib/contracts/payment"
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" }> = {
-  pending: { label: "En attente", variant: "secondary" },
-  completed: { label: "Complété", variant: "default" },
-  failed: { label: "Échoué", variant: "destructive" },
-  refunded: { label: "Remboursé", variant: "destructive" },
+  en_attente: { label: "En attente", variant: "secondary" },
+  valide: { label: "Validé", variant: "default" },
+  annule: { label: "Annulé", variant: "destructive" },
 }
 
 const METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: "Espèces",
   mobile_money: "Mobile Money",
   bank_transfer: "Virement",
-  cheque: "Chèque",
+  check: "Chèque",
 }
 
 export function PaymentsPageClient() {
@@ -208,7 +207,7 @@ export function PaymentsPageClient() {
                 const statusCfg = STATUS_CONFIG[payment.status]
                 return (
                   <TableRow key={payment.id}>
-                    <TableCell className="font-medium">#{payment.enrollment_fee_id}</TableCell>
+                    <TableCell className="font-medium">#{payment.id}</TableCell>
                     <TableCell className="text-right font-semibold">
                       {Number(payment.amount).toLocaleString("fr-FR")} FC
                     </TableCell>
@@ -221,7 +220,7 @@ export function PaymentsPageClient() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {payment.status === PaymentStatusSchema.Values.pending && (
+                        {payment.status === PaymentStatusSchema.Values.en_attente && (
                           <>
                             <Button
                               size="icon"

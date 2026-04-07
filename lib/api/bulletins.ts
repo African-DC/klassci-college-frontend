@@ -25,7 +25,7 @@ export const bulletinsApi = {
       const arr = safeValidate(BulletinArraySchema, json, "GET /bulletins")
       return { items: arr, total: arr.length, page: 1, size: arr.length, total_pages: 1 }
     }
-    return safeValidate(PaginatedBulletinSchema, json, "GET /bulletins")
+    return safeValidate(PaginatedBulletinSchema, json, "GET /bulletins") as PaginatedResponse<Bulletin>
   },
 
   getById: async (id: number): Promise<Bulletin> => {

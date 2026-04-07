@@ -12,7 +12,7 @@ export const councilApi = {
       `/reports/council-minutes?class_id=${classId}&trimester=${trimester}`,
     )
     const minutes = (json as { data?: CouncilMinutes }).data ?? (json as CouncilMinutes)
-    return safeValidate(CouncilMinutesSchema, minutes, "GET /reports/council-minutes")
+    return safeValidate(CouncilMinutesSchema, minutes, "GET /reports/council-minutes") as CouncilMinutes
   },
 
   // Mettre à jour les décisions de délibération
@@ -25,7 +25,7 @@ export const councilApi = {
       { method: "PUT", body: JSON.stringify({ decisions }) },
     )
     const minutes = (json as { data?: CouncilMinutes }).data ?? (json as CouncilMinutes)
-    return safeValidate(CouncilMinutesSchema, minutes, "PUT /reports/council-minutes/decisions")
+    return safeValidate(CouncilMinutesSchema, minutes, "PUT /reports/council-minutes/decisions") as CouncilMinutes
   },
 
   // Valider définitivement le PV
@@ -35,7 +35,7 @@ export const councilApi = {
       { method: "POST" },
     )
     const minutes = (json as { data?: CouncilMinutes }).data ?? (json as CouncilMinutes)
-    return safeValidate(CouncilMinutesSchema, minutes, "POST /reports/council-minutes/validate")
+    return safeValidate(CouncilMinutesSchema, minutes, "POST /reports/council-minutes/validate") as CouncilMinutes
   },
 
   // Télécharger le PDF du PV

@@ -51,6 +51,7 @@ export function useCreateSlot() {
         teacher_name: "",
         subject_id: newSlot.subject_id,
         subject_name: "",
+        academic_year_id: newSlot.academic_year_id,
         day: newSlot.day as TimetableSlot["day"],
         start_time: newSlot.start_time,
         end_time: newSlot.end_time,
