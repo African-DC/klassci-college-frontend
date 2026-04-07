@@ -38,7 +38,7 @@ export function createCrudApi<T, TCreate, TUpdate>(
       )
       if (Array.isArray(json)) {
         const data = safeValidate(ArraySchema, json, basePath)
-        return { data, total: data.length, page: 1, per_page: data.length, total_pages: 1 }
+        return { items: data, total: data.length, page: 1, size: data.length, total_pages: 1 }
       }
       return safeValidate(PaginatedSchema, json, basePath)
     },

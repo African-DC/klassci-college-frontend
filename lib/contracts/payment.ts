@@ -2,7 +2,7 @@ import { z } from "zod"
 
 // Miroir de app/schemas/payment.py (backend)
 
-export const PaymentMethodSchema = z.enum(["especes", "mobile_money", "virement", "cheque"])
+export const PaymentMethodSchema = z.enum(["cash", "mobile_money", "bank_transfer", "check"])
 
 export const PaymentStatusSchema = z.enum(["en_attente", "valide", "annule"])
 
@@ -23,11 +23,11 @@ export const PaymentSchema = z.object({
 })
 
 export const PaymentCreateSchema = z.object({
-  student_id: z.number({ required_error: "L'élève est requis" }).positive(),
-  fee_category_id: z.number({ required_error: "La catégorie de frais est requise" }).positive(),
-  amount: z.number({ required_error: "Le montant est requis" }).positive("Le montant doit être positif"),
+  enrollment_fee_id: z.number({ required_error: "Le frais d'inscription est requis" }).positive(),
+  amount: z.string({ required_error: "Le montant est requis" }),
   method: PaymentMethodSchema,
   reference: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
 })
 
 // Résumé financier pour le dashboard
@@ -60,7 +60,7 @@ export const PaymentListParamsSchema = z.object({
   fee_category_id: z.number().optional(),
   search: z.string().optional(),
   page: z.number().optional(),
-  per_page: z.number().optional(),
+  size: z.number().optional(),
 })
 
 export type PaymentMethod = z.infer<typeof PaymentMethodSchema>

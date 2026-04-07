@@ -6,13 +6,7 @@ import { EnrollmentCreateSchema, type EnrollmentCreate } from "@/lib/contracts/e
 import { useCreateEnrollment } from "@/lib/hooks/useEnrollments"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Form,
   FormControl,
@@ -29,9 +23,6 @@ interface EnrollmentFormProps {
 export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
   const form = useForm<EnrollmentCreate>({
     resolver: zodResolver(EnrollmentCreateSchema),
-    defaultValues: {
-      is_scholarship: false,
-    },
   })
 
   const { mutate, isPending, error } = useCreateEnrollment()
@@ -113,22 +104,20 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
 
         <FormField
           control={form.control}
-          name="assignment_status"
+          name="fee_variant_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Statut d&apos;affectation *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Selectionner un statut" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="affecte">Affecte</SelectItem>
-                  <SelectItem value="reaffecte">Reaffecte</SelectItem>
-                  <SelectItem value="non_affecte">Non affecte</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormLabel>Variante de frais</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="ID variante de frais (optionnel)"
+                  className="h-11"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                  value={field.value ?? ""}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -136,20 +125,19 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
 
         <FormField
           control={form.control}
-          name="is_scholarship"
+          name="notes"
           render={({ field }) => (
-            <FormItem className="flex items-center gap-3 space-y-0 rounded-lg border p-4">
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
               <FormControl>
-                <input
-                  type="checkbox"
-                  checked={field.value}
-                  onChange={field.onChange}
-                  className="h-4 w-4 rounded border-input accent-primary"
+                <Textarea
+                  placeholder="Notes optionnelles"
+                  className="resize-none"
+                  {...field}
+                  value={field.value ?? ""}
                 />
               </FormControl>
-              <FormLabel className="font-normal cursor-pointer">
-                Eleve boursier
-              </FormLabel>
+              <FormMessage />
             </FormItem>
           )}
         />

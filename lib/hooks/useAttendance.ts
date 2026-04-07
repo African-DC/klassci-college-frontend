@@ -3,38 +3,25 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { attendanceApi } from "@/lib/api/attendance"
-import type { AttendanceBatchEntry, AttendanceHistoryParams } from "@/lib/contracts/attendance"
+import type { SessionCreatePayload, SessionUpdatePayload } from "@/lib/api/attendance"
 
 export const attendanceKeys = {
   all: ["attendance"] as const,
-  session: (classId: number, slotId: number, date: string) =>
-    ["attendance", "session", classId, slotId, date] as const,
-  historyAll: ["attendance", "history"] as const,
-  history: (params: Record<string, unknown>) =>
-    ["attendance", "history", params] as const,
-  stats: (classId: number) => ["attendance", "stats", classId] as const,
+  sessions: ["attendance", "sessions"] as const,
+  studentHistory: (studentId: number) =>
+    ["attendance", "student", studentId] as const,
+  classStats: (classId: number) => ["attendance", "class", classId, "stats"] as const,
 }
 
-export function useAttendanceSession(classId?: number, slotId?: number, date?: string) {
-  return useQuery({
-    queryKey: attendanceKeys.session(classId!, slotId!, date!),
-    queryFn: () => attendanceApi.getSession(classId!, slotId!, date!),
-    enabled: !!classId && !!slotId && !!date,
-    staleTime: 1000 * 60 * 2,
-  })
-}
-
-export function useSaveAttendance(classId: number, slotId: number, date: string) {
+export function useCreateSession() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ records }: { records: AttendanceBatchEntry[] }) =>
-      attendanceApi.saveBatch(slotId, date, records),
-    onSuccess: () => {
+    mutationFn: (data: SessionCreatePayload) =>
+      attendanceApi.createSession(data),
+    onSuccess: (_result, variables) => {
       toast.success("Présences enregistrées")
-      // Invalider la session sauvegardée, les stats de la classe, et l'historique
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.session(classId, slotId, date) })
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.stats(classId) })
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.historyAll })
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.sessions })
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.classStats(variables.context_id) })
     },
     onError: (err) => {
       toast.error("Erreur", { description: err.message })
@@ -42,21 +29,42 @@ export function useSaveAttendance(classId: number, slotId: number, date: string)
   })
 }
 
-export function useAttendanceHistory(params: AttendanceHistoryParams = {}) {
+export function useUpdateSession(sessionId: number, classId?: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: SessionUpdatePayload) =>
+      attendanceApi.updateSession(sessionId, data),
+    onSuccess: () => {
+      toast.success("Présences mises à jour")
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.sessions })
+      if (classId) {
+        queryClient.invalidateQueries({ queryKey: attendanceKeys.classStats(classId) })
+      }
+    },
+    onError: (err) => {
+      toast.error("Erreur", { description: err.message })
+    },
+  })
+}
+
+export function useStudentAttendance(studentId?: number, params: { page?: number; size?: number } = {}) {
   return useQuery({
-    queryKey: attendanceKeys.history(params as Record<string, unknown>),
-    queryFn: () => attendanceApi.getHistory(params as Record<string, unknown>),
-    // Exclure 'page' du check — ne pas fetcher tant qu'un vrai filtre n'est pas défini
-    enabled: Object.keys(params).filter((k) => k !== "page").length > 0,
+    queryKey: [...attendanceKeys.studentHistory(studentId!), params],
+    queryFn: () => attendanceApi.getStudentHistory(studentId!, params),
+    enabled: !!studentId,
     staleTime: 1000 * 60 * 5,
   })
 }
 
-export function useAttendanceStats(classId?: number) {
+export function useClassAttendanceStats(classId?: number) {
   return useQuery({
-    queryKey: attendanceKeys.stats(classId!),
-    queryFn: () => attendanceApi.getStats(classId!),
+    queryKey: attendanceKeys.classStats(classId!),
+    queryFn: () => attendanceApi.getClassStats(classId!),
     enabled: !!classId,
     staleTime: 1000 * 60 * 5,
   })
 }
+
+// Backward-compatible aliases — components still import these names
+/** @deprecated Use useClassAttendanceStats instead */
+export const useAttendanceStats = useClassAttendanceStats

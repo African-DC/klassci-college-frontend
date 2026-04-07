@@ -25,8 +25,8 @@ interface AttendanceGridProps {
 const STATUS_BUTTONS: { status: AttendanceStatus; icon: typeof CheckCircle; label: string; className: string }[] = [
   { status: "present", icon: CheckCircle, label: "P", className: "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30" },
   { status: "absent", icon: XCircle, label: "A", className: "text-destructive hover:bg-destructive/10" },
-  { status: "retard", icon: Clock, label: "R", className: "text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30" },
-  { status: "excuse", icon: ShieldCheck, label: "E", className: "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30" },
+  { status: "late", icon: Clock, label: "R", className: "text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30" },
+  { status: "excused", icon: ShieldCheck, label: "E", className: "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30" },
 ]
 
 export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
@@ -85,8 +85,8 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
 
   // Compteurs en temps réel (logique inlinée pour éviter la closure sur getStatus)
   const counts = useMemo(() => {
-    if (!session) return { present: 0, absent: 0, retard: 0, excuse: 0, non_pointe: 0 }
-    const c = { present: 0, absent: 0, retard: 0, excuse: 0, non_pointe: 0 }
+    if (!session) return { present: 0, absent: 0, late: 0, excused: 0, non_pointe: 0 }
+    const c = { present: 0, absent: 0, late: 0, excused: 0, non_pointe: 0 }
     session.records.forEach((r) => {
       const status = localStatuses.get(r.student_id) ?? r.status ?? null
       if (status) {
@@ -131,13 +131,13 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
       {/* En-tête de session */}
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <div className="text-muted-foreground">
-          <strong>{session.subject_name}</strong> — {session.class_name} — {session.teacher_name}
+          <strong>Session #{session.id}</strong> — {session.entity_type} #{session.context_id}
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="text-emerald-600 dark:text-emerald-400 font-medium">{counts.present} P</span>
           <span className="text-destructive font-medium">{counts.absent} A</span>
-          <span className="text-amber-600 dark:text-amber-400 font-medium">{counts.retard} R</span>
-          <span className="text-blue-600 dark:text-blue-400 font-medium">{counts.excuse} E</span>
+          <span className="text-amber-600 dark:text-amber-400 font-medium">{counts.late} R</span>
+          <span className="text-blue-600 dark:text-blue-400 font-medium">{counts.excused} E</span>
           {counts.non_pointe > 0 && (
             <span className="text-muted-foreground font-medium">{counts.non_pointe} ?</span>
           )}
@@ -173,7 +173,7 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
               return (
                 <TableRow key={record.id}>
                   <TableCell className="text-muted-foreground">{index + 1}</TableCell>
-                  <TableCell className="font-medium">{record.student_name}</TableCell>
+                  <TableCell className="font-medium">{record.student_id}</TableCell>
                   <TableCell className="text-center">
                     <AttendanceStatusBadge status={currentStatus} />
                   </TableCell>
@@ -186,7 +186,7 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
                           variant={currentStatus === status ? "default" : "ghost"}
                           className={`h-8 w-8 ${currentStatus !== status ? className : ""}`}
                           onClick={() => handleStatusChange(record.student_id, status)}
-                          aria-label={`${label} pour ${record.student_name}`}
+                          aria-label={`${label} pour ${record.student_id}`}
                         >
                           <Icon className="h-4 w-4" />
                         </Button>

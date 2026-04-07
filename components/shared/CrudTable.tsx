@@ -114,7 +114,7 @@ export function CrudTable<T extends { id: number }>({
   }, [userColumns])
 
   const table = useReactTable({
-    data: data?.data ?? [],
+    data: data?.items ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
   })
@@ -149,7 +149,7 @@ export function CrudTable<T extends { id: number }>({
                   ))}
                 </TableRow>
               ))}
-            {!isLoading && data?.data.length === 0 && (
+            {!isLoading && data?.items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
                   {emptyMessage}
@@ -170,33 +170,36 @@ export function CrudTable<T extends { id: number }>({
       </div>
 
       {/* Pagination */}
-      {data && data.total_pages > 1 && onPageChange && (
-        <div className="flex items-center justify-between pt-4">
-          <p className="text-sm text-muted-foreground">
-            Page {data.page} sur {data.total_pages} — {data.total} résultat{data.total > 1 ? "s" : ""}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(data.page - 1)}
-              disabled={data.page <= 1}
-            >
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Précédent
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(data.page + 1)}
-              disabled={data.page >= data.total_pages}
-            >
-              Suivant
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
+      {data && data.size > 0 && Math.ceil(data.total / data.size) > 1 && onPageChange && (() => {
+        const totalPages = Math.ceil(data.total / data.size)
+        return (
+          <div className="flex items-center justify-between pt-4">
+            <p className="text-sm text-muted-foreground">
+              Page {data.page} sur {totalPages} — {data.total} résultat{data.total > 1 ? "s" : ""}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(data.page - 1)}
+                disabled={data.page <= 1}
+              >
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                Précédent
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(data.page + 1)}
+                disabled={data.page >= totalPages}
+              >
+                Suivant
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {renderEditModal({ itemId: editId, open: editId !== null, onClose: () => setEditId(null) })}
 

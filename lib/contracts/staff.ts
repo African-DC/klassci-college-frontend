@@ -27,7 +27,7 @@ export const StaffUpdateSchema = StaffCreateSchema.partial()
 
 export const StaffListParamsSchema = z.object({
   page: z.number().optional(),
-  per_page: z.number().optional(),
+  size: z.number().optional(),
   search: z.string().optional(),
   role: z.string().optional(),
 })

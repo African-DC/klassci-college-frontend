@@ -26,10 +26,10 @@ import { useParentChildGrades } from "@/lib/hooks/useParentPortal"
 import type { ParentChildSubjectGrades } from "@/lib/contracts/parent-portal"
 
 const TYPE_LABELS: Record<string, string> = {
+  controle: "Contrôle",
   devoir: "Devoir",
-  interro: "Interro",
   examen: "Examen",
-  composition: "Compo",
+  oral: "Oral",
 }
 
 function averageColor(avg: number | null): string {

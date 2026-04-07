@@ -26,7 +26,7 @@ export const paymentsApi = {
     )
     if (Array.isArray(json)) {
       const arr = safeValidate(PaymentArraySchema, json, "GET /payments")
-      return { data: arr, total: arr.length, page: 1, per_page: arr.length, total_pages: 1 }
+      return { items: arr, total: arr.length, page: 1, size: arr.length, total_pages: 1 }
     }
     return safeValidate(PaginatedPaymentSchema, json, "GET /payments")
   },
@@ -39,6 +39,19 @@ export const paymentsApi = {
     })
     const payment = (json as { data?: Payment }).data ?? (json as Payment)
     return safeValidate(PaymentSchema, payment, "POST /payments")
+  },
+
+  // Récupérer un paiement par ID
+  getById: async (id: number): Promise<Payment> => {
+    const json = await apiFetch<Payment>(`/payments/${id}`)
+    return safeValidate(PaymentSchema, json, `GET /payments/${id}`)
+  },
+
+  // Paiements d'un élève par enrollment_id
+  getStudentPayments: async (enrollmentId: number): Promise<Payment[]> => {
+    const json = await apiFetch<Payment[]>(`/payments/student/${enrollmentId}`)
+    const arr = Array.isArray(json) ? json : []
+    return safeValidate(PaymentArraySchema, arr, `GET /payments/student/${enrollmentId}`)
   },
 
   // Valider un paiement

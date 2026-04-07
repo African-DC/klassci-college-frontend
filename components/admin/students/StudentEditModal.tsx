@@ -42,7 +42,7 @@ function EditFormSkeleton() {
 function EditForm({ studentId, onClose }: { studentId: number; onClose: () => void }) {
   const { data: student, isLoading } = useStudent(studentId)
   const { mutate, isPending, error } = useUpdateStudent(studentId)
-  const { data: classesData } = useClasses({ per_page: 200 })
+  const { data: classesData } = useClasses({ size: 200 })
 
   const form = useForm<StudentUpdate>({
     resolver: zodResolver(StudentUpdateSchema),
@@ -165,7 +165,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {classesData?.data.map((c) => (
+                  {classesData?.items.map((c) => (
                     <SelectItem key={c.id} value={c.id.toString()}>
                       {c.name}
                     </SelectItem>

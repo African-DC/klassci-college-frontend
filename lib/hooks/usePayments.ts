@@ -53,7 +53,7 @@ function optimisticStatusUpdate(
       if (!old) return old
       return {
         ...old,
-        data: old.data.map((p) =>
+        items: old.items.map((p) =>
           p.id === paymentId ? { ...p, status: newStatus } : p,
         ),
       }
@@ -71,7 +71,7 @@ export function useValidatePayment() {
       const snapshots = queryClient.getQueriesData<PaginatedResponse<Payment>>({
         queryKey: paymentKeys.all,
       })
-      optimisticStatusUpdate(queryClient, id, "valide")
+      optimisticStatusUpdate(queryClient, id, "completed")
       return { snapshots }
     },
     onSuccess: () => toast.success("Paiement validé"),
@@ -94,7 +94,7 @@ export function useCancelPayment() {
       const snapshots = queryClient.getQueriesData<PaginatedResponse<Payment>>({
         queryKey: paymentKeys.all,
       })
-      optimisticStatusUpdate(queryClient, id, "annule")
+      optimisticStatusUpdate(queryClient, id, "refunded")
       return { snapshots }
     },
     onSuccess: () => toast.success("Paiement annulé"),

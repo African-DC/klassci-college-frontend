@@ -22,14 +22,16 @@ export function downloadBlob(blob: Blob, filename: string) {
 export function getMentionColor(mention: string | null): string {
   if (!mention) return "text-muted-foreground"
   switch (mention) {
-    case "Très Bien":
+    case "TB":
       return "text-emerald-600 dark:text-emerald-400"
-    case "Bien":
+    case "B":
       return "text-primary"
-    case "Assez Bien":
+    case "AB":
       return "text-accent"
-    case "Passable":
+    case "P":
       return "text-amber-600 dark:text-amber-400"
+    case "M":
+      return "text-destructive"
     default:
       return "text-muted-foreground"
   }

@@ -60,7 +60,7 @@ export function createCrudHooks<
           queryClient.setQueryData(key, {
             ...old,
             total: old.total + 1,
-            data: [...old.data, optimisticItem],
+            items: [...old.items, optimisticItem],
           })
         }
         return { previous }
@@ -101,7 +101,7 @@ export function createCrudHooks<
           if (!old) continue
           queryClient.setQueryData(key, {
             ...old,
-            data: old.data.map((s) => (s.id === id ? { ...s, ...newData } : s)),
+            items: old.items.map((s) => (s.id === id ? { ...s, ...newData } : s)),
           })
         }
         return { previousDetail, previousList }
@@ -142,7 +142,7 @@ export function createCrudHooks<
           queryClient.setQueryData(key, {
             ...old,
             total: old.total - 1,
-            data: old.data.filter((s) => s.id !== deletedId),
+            items: old.items.filter((s) => s.id !== deletedId),
           })
         }
         return { previous }

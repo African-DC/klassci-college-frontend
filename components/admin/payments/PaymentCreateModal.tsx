@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { useCreatePayment } from "@/lib/hooks/usePayments"
-import { useFeeCategories } from "@/lib/hooks/useFees"
 import { PaymentCreateSchema, type PaymentCreate } from "@/lib/contracts/payment"
 
 interface PaymentCreateModalProps {
@@ -23,25 +22,24 @@ interface PaymentCreateModalProps {
 }
 
 const METHOD_LABELS: Record<string, string> = {
-  especes: "Espèces",
+  cash: "Espèces",
   mobile_money: "Mobile Money",
-  virement: "Virement bancaire",
+  bank_transfer: "Virement bancaire",
   cheque: "Chèque",
 }
 
 export function PaymentCreateModal({ open, onClose }: PaymentCreateModalProps) {
   const form = useForm<PaymentCreate>({
     resolver: zodResolver(PaymentCreateSchema),
-    defaultValues: { method: "especes", reference: null },
+    defaultValues: { method: "cash", reference: null },
   })
 
-  const { data: categories } = useFeeCategories()
   const { mutate, isPending } = useCreatePayment()
 
   function onSubmit(data: PaymentCreate) {
     mutate(data, {
       onSuccess: () => {
-        form.reset({ method: "especes", reference: null })
+        form.reset({ method: "cash", reference: null })
         onClose()
       },
     })
@@ -57,52 +55,24 @@ export function PaymentCreateModal({ open, onClose }: PaymentCreateModalProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="student_id"
+              name="enrollment_fee_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Matricule élève *</FormLabel>
+                  <FormLabel>Frais d&apos;inscription *</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Entrer le numéro matricule"
+                      placeholder="ID du frais d'inscription"
                       {...field}
                       value={field.value || ""}
                       onChange={(e) => {
                         const val = e.target.value
-                        // Ignore les valeurs non numériques
                         if (val === "") { field.onChange(undefined); return }
                         const num = Number(val)
                         if (!Number.isNaN(num) && num > 0) field.onChange(num)
                       }}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="fee_category_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Catégorie de frais *</FormLabel>
-                  <Select
-                    value={field.value?.toString() ?? ""}
-                    onValueChange={(v) => field.onChange(Number(v))}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories?.map((c) => (
-                        <SelectItem key={c.id} value={c.id.toString()}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

@@ -13,17 +13,17 @@ import { BulletinList } from "./BulletinList"
 import { BulletinGenerateButton } from "./BulletinGenerateButton"
 import { useClasses } from "@/lib/hooks/useClasses"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
-import type { BulletinListParams, Trimester, BulletinStatus } from "@/lib/contracts/bulletin"
+import type { BulletinListParams } from "@/lib/contracts/bulletin"
 
 export function ReportsPageClient() {
   const [classId, setClassId] = useState<number | undefined>(undefined)
-  const [trimester, setTrimester] = useState<Trimester | undefined>(undefined)
+  const [trimester, setTrimester] = useState<number | undefined>(undefined)
   const [academicYearId, setAcademicYearId] = useState<number | undefined>(undefined)
-  const [status, setStatus] = useState<BulletinStatus | undefined>(undefined)
+  const [isPublished, setIsPublished] = useState<boolean | undefined>(undefined)
   const [page, setPage] = useState(1)
 
   const { data: classesData, isLoading: classesLoading } = useClasses()
-  const classes = classesData?.data
+  const classes = classesData?.items
   const { data: academicYears, isLoading: yearsLoading } = useAcademicYears()
 
   const activeYearId = academicYearId ?? academicYears?.[0]?.id
@@ -32,7 +32,7 @@ export function ReportsPageClient() {
     ...(classId && { class_id: classId }),
     ...(trimester && { trimester }),
     ...(activeYearId && { academic_year_id: activeYearId }),
-    ...(status && { status }),
+    ...(isPublished !== undefined && { is_published: isPublished }),
     page,
   }
 
@@ -101,8 +101,8 @@ export function ReportsPageClient() {
         )}
 
         <Select
-          value={trimester ?? ""}
-          onValueChange={(v) => { setTrimester(v as Trimester); setPage(1) }}
+          value={trimester?.toString() ?? ""}
+          onValueChange={(v) => { setTrimester(Number(v)); setPage(1) }}
         >
           <SelectTrigger className="w-44">
             <SelectValue placeholder="Trimestre" />
@@ -115,16 +115,16 @@ export function ReportsPageClient() {
         </Select>
 
         <Select
-          value={status ?? "all"}
-          onValueChange={(v) => { setStatus(v === "all" ? undefined : (v as BulletinStatus)); setPage(1) }}
+          value={isPublished === undefined ? "all" : isPublished ? "published" : "draft"}
+          onValueChange={(v) => { setIsPublished(v === "all" ? undefined : v === "published"); setPage(1) }}
         >
           <SelectTrigger className="w-36">
             <SelectValue placeholder="Statut" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="brouillon">Brouillon</SelectItem>
-            <SelectItem value="publie">Publié</SelectItem>
+            <SelectItem value="draft">Brouillon</SelectItem>
+            <SelectItem value="published">Publié</SelectItem>
           </SelectContent>
         </Select>
       </div>

@@ -18,7 +18,6 @@ import { BulletinListSkeleton } from "./BulletinListSkeleton"
 import { useBulletins, usePublishBulletins } from "@/lib/hooks/useBulletins"
 import { bulletinsApi } from "@/lib/api/bulletins"
 import { getMentionColor, downloadBlob } from "@/lib/utils"
-import { BulletinStatusSchema } from "@/lib/contracts/bulletin"
 import type { BulletinListParams, Bulletin } from "@/lib/contracts/bulletin"
 
 interface BulletinListProps {
@@ -36,7 +35,7 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
     setDownloadingId(bulletin.id)
     try {
       const blob = await bulletinsApi.downloadPdf(bulletin.id)
-      downloadBlob(blob, `bulletin-${bulletin.student_name}.pdf`)
+      downloadBlob(blob, `bulletin-${bulletin.id}.pdf`)
     } catch (err) {
       toast.error("Erreur lors du téléchargement", {
         description: err instanceof Error ? err.message : "Erreur inconnue",
@@ -46,9 +45,9 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
     }
   }, [])
 
-  const bulletins = useMemo(() => data?.data ?? [], [data])
+  const bulletins = useMemo(() => data?.items ?? [], [data])
   const hasDrafts = useMemo(
-    () => bulletins.some((b) => b.status === BulletinStatusSchema.Values.brouillon),
+    () => bulletins.some((b) => !b.is_published),
     [bulletins],
   )
 
@@ -77,7 +76,7 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
 
   function handlePublish() {
     if (!params.class_id || !params.trimester) return
-    publish({ classId: params.class_id, trimester: params.trimester })
+    publish({ classId: params.class_id, trimester: String(params.trimester) })
   }
 
   return (
@@ -115,13 +114,13 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
           <TableBody>
             {bulletins.map((bulletin: Bulletin) => (
               <TableRow key={bulletin.id}>
-                <TableCell className="font-medium">{bulletin.student_name}</TableCell>
-                <TableCell>{bulletin.class_name}</TableCell>
+                <TableCell className="font-medium">#{bulletin.student_id}</TableCell>
+                <TableCell>#{bulletin.class_id}</TableCell>
                 <TableCell className="text-center font-semibold">
-                  {bulletin.average !== null ? bulletin.average.toFixed(2) : "—"}
+                  {bulletin.average !== null ? Number(bulletin.average).toFixed(2) : "—"}
                 </TableCell>
                 <TableCell className="text-center">
-                  {bulletin.rank ?? "—"}/{bulletin.total_students}
+                  {bulletin.rank ?? "—"}
                 </TableCell>
                 <TableCell>
                   <span className={`font-medium ${getMentionColor(bulletin.mention)}`}>
@@ -129,7 +128,7 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <BulletinStatusBadge status={bulletin.status} />
+                  <BulletinStatusBadge isPublished={bulletin.is_published} />
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
@@ -139,7 +138,7 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
                       onClick={() => setPreviewId(bulletin.id)}
                     >
                       <Eye className="h-4 w-4" />
-                      <span className="sr-only">Voir le bulletin de {bulletin.student_name}</span>
+                      <span className="sr-only">Voir le bulletin #{bulletin.id}</span>
                     </Button>
                     <Button
                       size="icon"
@@ -148,7 +147,7 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
                       disabled={downloadingId === bulletin.id}
                     >
                       <Download className="h-4 w-4" />
-                      <span className="sr-only">Télécharger le bulletin de {bulletin.student_name}</span>
+                      <span className="sr-only">Télécharger le bulletin #{bulletin.id}</span>
                     </Button>
                   </div>
                 </TableCell>
@@ -171,12 +170,12 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
             <ChevronLeft className="h-4 w-4" />
             <span className="sr-only">Page précédente</span>
           </Button>
-          <span>Page {data?.page ?? 1}/{data?.total_pages ?? 1}</span>
+          <span>Page {data?.page ?? 1}/{data && data.size > 0 ? Math.ceil(data.total / data.size) : 1}</span>
           <Button
             size="icon"
             variant="ghost"
             className="h-7 w-7"
-            disabled={!data || data.page >= data.total_pages}
+            disabled={!data || data.size <= 0 || data.page >= Math.ceil(data.total / data.size)}
             onClick={() => onPageChange?.((data?.page ?? 1) + 1)}
           >
             <ChevronRight className="h-4 w-4" />

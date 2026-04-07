@@ -39,7 +39,7 @@ export const RoleUpdateSchema = RoleCreateSchema.partial()
 
 export const RoleListParamsSchema = z.object({
   page: z.number().optional(),
-  per_page: z.number().optional(),
+  size: z.number().optional(),
   search: z.string().optional(),
 })
 

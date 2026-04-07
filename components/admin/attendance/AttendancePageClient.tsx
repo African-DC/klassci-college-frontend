@@ -31,7 +31,7 @@ export function AttendancePageClient() {
   })
 
   const { data: classesData } = useClasses()
-  const classes = classesData?.data ?? []
+  const classes = classesData?.items ?? []
 
   // Créneaux de la classe sélectionnée
   const { data: slots } = useTimetable(classId!)

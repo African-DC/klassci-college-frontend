@@ -43,7 +43,7 @@ function EditFormSkeleton() {
 function EditForm({ classId, onClose }: { classId: number; onClose: () => void }) {
   const { data: classData, isLoading } = useClass(classId)
   const { mutate, isPending, error } = useUpdateClass(classId)
-  const { data: teachersData } = useTeachers({ per_page: 200 })
+  const { data: teachersData } = useTeachers({ size: 200 })
   const { data: academicYears } = useAcademicYears()
 
   const form = useForm<ClassUpdate>({
@@ -148,7 +148,7 @@ function EditForm({ classId, onClose }: { classId: number; onClose: () => void }
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {teachersData?.data.map((t) => (
+                  {teachersData?.items.map((t) => (
                     <SelectItem key={t.id} value={t.id.toString()}>
                       {t.last_name} {t.first_name}
                     </SelectItem>

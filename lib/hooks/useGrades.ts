@@ -53,6 +53,8 @@ export function useCreateEvaluation() {
         class_name: "",
         teacher_id: 0,
         teacher_name: "",
+        academic_year_id: 0,
+        trimester: 0,
         total_students: 0,
         graded_students: 0,
         created_at: new Date().toISOString(),
