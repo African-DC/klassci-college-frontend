@@ -15,6 +15,7 @@ import {
   Wallet,
   CreditCard,
   CalendarDays,
+  CalendarRange,
   ClipboardList,
   UserCheck,
   FileText,
@@ -57,6 +58,7 @@ const navigation: NavSection[] = [
   {
     title: "Academique",
     items: [
+      { label: "Annees scolaires", href: "/admin/academic-years" as Route, icon: CalendarRange },
       { label: "Classes", href: "/admin/classes", icon: School },
       { label: "Matieres", href: "/admin/subjects", icon: BookOpen },
     ],

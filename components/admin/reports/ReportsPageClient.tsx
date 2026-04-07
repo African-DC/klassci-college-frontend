@@ -24,7 +24,8 @@ export function ReportsPageClient() {
 
   const { data: classesData, isLoading: classesLoading } = useClasses()
   const classes = classesData?.items
-  const { data: academicYears, isLoading: yearsLoading } = useAcademicYears()
+  const { data: academicYearsData, isLoading: yearsLoading } = useAcademicYears()
+  const academicYears = academicYearsData?.items
 
   const activeYearId = academicYearId ?? academicYears?.[0]?.id
 
@@ -73,7 +74,7 @@ export function ReportsPageClient() {
             <SelectContent>
               {academicYears?.map((y) => (
                 <SelectItem key={y.id} value={y.id.toString()}>
-                  {y.label}
+                  {y.name}
                 </SelectItem>
               ))}
             </SelectContent>

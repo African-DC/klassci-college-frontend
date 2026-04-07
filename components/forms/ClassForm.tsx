@@ -40,7 +40,8 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
     },
   })
 
-  const { data: academicYears } = useAcademicYears()
+  const { data: academicYearsData } = useAcademicYears()
+  const academicYears = academicYearsData?.items
   const { mutate, isPending, error } = useCreateClass()
 
   function onSubmit(data: ClassCreate) {
@@ -131,7 +132,7 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
                 <SelectContent>
                   {academicYears?.map((ay) => (
                     <SelectItem key={ay.id} value={ay.id.toString()}>
-                      {ay.label}
+                      {ay.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
