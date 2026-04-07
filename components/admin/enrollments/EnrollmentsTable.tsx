@@ -39,14 +39,19 @@ export function EnrollmentsTable({ filters = {} }: EnrollmentsTableProps) {
     {
       accessorKey: "student_id",
       header: "Élève",
-      cell: ({ row }) => (
-        <span className="font-medium">#{row.original.student_id}</span>
-      ),
+      cell: ({ row }) => {
+        const first = row.original.student_first_name
+        const last = row.original.student_last_name
+        if (first || last) {
+          return <span className="font-medium">{first} {last}</span>
+        }
+        return <span className="font-medium text-muted-foreground">#{row.original.student_id}</span>
+      },
     },
     {
       accessorKey: "class_id",
       header: "Classe",
-      cell: ({ row }) => `#${row.original.class_id}`,
+      cell: ({ row }) => row.original.class_name ?? `#${row.original.class_id}`,
     },
     {
       accessorKey: "academic_year_name",

@@ -16,6 +16,9 @@ export const EnrollmentSchema = z.object({
   created_by: z.number().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
+  student_first_name: z.string().nullable().optional(),
+  student_last_name: z.string().nullable().optional(),
+  class_name: z.string().nullable().optional(),
 })
 
 export const EnrollmentCreateSchema = z.object({
