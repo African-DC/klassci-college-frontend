@@ -24,11 +24,11 @@ export const gradesApi = {
   },
 
   getGrades: async (evaluationId: number): Promise<Grade[]> => {
-    const json = await apiFetch<{ data?: Grade[] } | Grade[]>(
-      `/evaluations/${evaluationId}/grades`,
+    const json = await apiFetch<Grade[]>(
+      `/grades?evaluation_id=${evaluationId}`,
     )
-    const arr = Array.isArray(json) ? json : json.data ?? []
-    return safeValidate(GradeArraySchema, arr, `/evaluations/${evaluationId}/grades`)
+    const arr = Array.isArray(json) ? json : []
+    return safeValidate(GradeArraySchema, arr, `/grades?evaluation_id=${evaluationId}`)
   },
 
   createEvaluation: async (data: EvaluationCreate): Promise<Evaluation> => {
@@ -41,11 +41,11 @@ export const gradesApi = {
   },
 
   updateGrades: async (evaluationId: number, data: GradeBatchUpdate): Promise<Grade[]> => {
-    const json = await apiFetch<{ data?: Grade[] } | Grade[]>(
-      `/evaluations/${evaluationId}/grades`,
-      { method: "PUT", body: JSON.stringify(data) },
+    const json = await apiFetch<Grade[]>(
+      `/grades/${evaluationId}`,
+      { method: "PATCH", body: JSON.stringify(data) },
     )
-    const arr = Array.isArray(json) ? json : json.data ?? []
-    return safeValidate(GradeArraySchema, arr, `PUT /evaluations/${evaluationId}/grades`)
+    const arr = Array.isArray(json) ? json : []
+    return safeValidate(GradeArraySchema, arr, `PATCH /grades/${evaluationId}`)
   },
 }
