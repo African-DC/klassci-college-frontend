@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 const actions: { label: string; href: Route; icon: LucideIcon; color: string }[] = [
   {
     label: "Nouvelle inscription",
-    href: "/admin/enrollments",
+    href: "/admin/enrollments?action=create" as Route,
     icon: UserPlus,
     color: "text-primary bg-primary/10",
   },
