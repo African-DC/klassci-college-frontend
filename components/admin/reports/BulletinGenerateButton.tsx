@@ -11,19 +11,19 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { useGenerateBulletins } from "@/lib/hooks/useBulletins"
-import { BulletinGenerateSchema, type Trimester } from "@/lib/contracts/bulletin"
+import { BulletinGenerateSchema } from "@/lib/contracts/bulletin"
 
 interface BulletinGenerateButtonProps {
   classId: number | undefined
-  trimester: Trimester | undefined
+  trimester: number | undefined
   academicYearId: number | undefined
   className?: string
 }
 
-const trimesterLabels: Record<string, string> = {
-  "1": "1er trimestre",
-  "2": "2ème trimestre",
-  "3": "3ème trimestre",
+const trimesterLabels: Record<number, string> = {
+  1: "1er trimestre",
+  2: "2ème trimestre",
+  3: "3ème trimestre",
 }
 
 export function BulletinGenerateButton({
@@ -65,7 +65,7 @@ export function BulletinGenerateButton({
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             Cette action va générer les bulletins pour le{" "}
-            <strong>{trimester ? trimesterLabels[trimester] : ""}</strong>.
+            <strong>{trimester ? trimesterLabels[trimester] ?? `trimestre ${trimester}` : ""}</strong>.
             Les bulletins existants en brouillon seront recalculés.
           </p>
           <DialogFooter>
