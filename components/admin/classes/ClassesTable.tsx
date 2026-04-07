@@ -4,7 +4,6 @@ import { useMemo, useState } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useClasses, useDeleteClass } from "@/lib/hooks/useClasses"
 import type { Class } from "@/lib/contracts/class"
-import { Badge } from "@/components/ui/badge"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { ClassEditModal } from "./ClassEditModal"
 
@@ -20,33 +19,17 @@ export function ClassesTable() {
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
     },
     {
-      accessorKey: "level",
+      accessorKey: "level_id",
       header: "Niveau",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="font-mono">
-          {row.original.level}
-        </Badge>
+        <span className="font-mono text-sm">{row.original.level_id}</span>
       ),
     },
     {
-      accessorKey: "section",
-      header: "Section",
+      accessorKey: "max_students",
+      header: "Capacité max",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.section ?? "—"}</span>
-      ),
-    },
-    {
-      accessorKey: "capacity",
-      header: "Capacité",
-      cell: ({ row }) => (
-        <span className="font-mono text-sm">{row.original.capacity ?? "—"}</span>
-      ),
-    },
-    {
-      accessorKey: "teacher_name",
-      header: "Titulaire",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.teacher_name ?? "—"}</span>
+        <span className="font-mono text-sm">{row.original.max_students ?? "—"}</span>
       ),
     },
   ], [])

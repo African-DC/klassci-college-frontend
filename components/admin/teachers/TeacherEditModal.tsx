@@ -11,13 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Switch } from "@/components/ui/switch"
 
 function EditFormSkeleton() {
   return (
@@ -43,9 +41,8 @@ function EditForm({ teacherId, onClose }: { teacherId: number; onClose: () => vo
       ? {
           first_name: teacher.first_name,
           last_name: teacher.last_name,
-          email: teacher.email ?? undefined,
+          speciality: teacher.speciality ?? undefined,
           phone: teacher.phone ?? undefined,
-          is_active: teacher.is_active,
         }
       : undefined,
   })
@@ -91,12 +88,12 @@ function EditForm({ teacherId, onClose }: { teacherId: number; onClose: () => vo
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="email"
+            name="speciality"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Spécialité</FormLabel>
                 <FormControl>
-                  <Input type="email" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : Mathématiques" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -116,24 +113,6 @@ function EditForm({ teacherId, onClose }: { teacherId: number; onClose: () => vo
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="is_active"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <FormLabel>Actif</FormLabel>
-                <FormDescription className="text-xs">
-                  Un enseignant inactif n&apos;apparaît plus dans les listes de sélection
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">

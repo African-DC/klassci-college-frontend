@@ -11,18 +11,16 @@ import { Skeleton } from "@/components/ui/skeleton"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Switch } from "@/components/ui/switch"
 
 function EditFormSkeleton() {
   return (
     <div className="space-y-5">
-      {Array.from({ length: 5 }).map((_, i) => (
+      {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="space-y-2">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-11 w-full" />
@@ -43,11 +41,8 @@ function EditForm({ staffId, onClose }: { staffId: number; onClose: () => void }
       ? {
           first_name: staff.first_name,
           last_name: staff.last_name,
-          email: staff.email ?? undefined,
+          position: staff.position ?? undefined,
           phone: staff.phone ?? undefined,
-          role: staff.role ?? undefined,
-          department: staff.department ?? undefined,
-          is_active: staff.is_active,
         }
       : undefined,
   })
@@ -93,12 +88,12 @@ function EditForm({ staffId, onClose }: { staffId: number; onClose: () => void }
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="email"
+            name="position"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Poste</FormLabel>
                 <FormControl>
-                  <Input type="email" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -118,53 +113,6 @@ function EditForm({ staffId, onClose }: { staffId: number; onClose: () => void }
             )}
           />
         </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Poste</FormLabel>
-                <FormControl>
-                  <Input className="h-11" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="department"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Département</FormLabel>
-                <FormControl>
-                  <Input className="h-11" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="is_active"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <FormLabel>Actif</FormLabel>
-                <FormDescription className="text-xs">
-                  Un personnel inactif n&apos;apparaît plus dans les listes de sélection
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">

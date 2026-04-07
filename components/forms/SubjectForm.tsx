@@ -24,10 +24,8 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
     resolver: zodResolver(SubjectCreateSchema),
     defaultValues: {
       name: "",
-      code: "",
       coefficient: 1,
-      level: "",
-      category: "",
+      hours_per_week: 1,
     },
   })
 
@@ -62,20 +60,6 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="code"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Code *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex : MATH" className="h-11" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="coefficient"
             render={({ field }) => (
               <FormItem>
@@ -93,31 +77,21 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
               </FormItem>
             )}
           />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="level"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Niveau</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex : 6ème" className="h-11" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
           <FormField
             control={form.control}
-            name="category"
+            name="hours_per_week"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Catégorie</FormLabel>
+                <FormLabel>Heures / semaine *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex : Sciences" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input
+                    type="number"
+                    min={1}
+                    className="h-11"
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    value={field.value ?? ""}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
