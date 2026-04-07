@@ -1,7 +1,9 @@
 import { z } from "zod"
 
 // Miroir de app/schemas/settings.py (backend)
+// Backend SchoolSettings: school_name, address, phone, email, logo_url, ministry_code
 
+// UI-only: trimesters config (not yet in backend)
 export const TrimesterConfigSchema = z.object({
   label: z.string(),
   start_date: z.string(),
@@ -9,19 +11,22 @@ export const TrimesterConfigSchema = z.object({
 })
 
 export const SchoolSettingsSchema = z.object({
-  id: z.number(),
+  id: z.number().optional(),
+  // --- Fields from backend ---
   school_name: z.string(),
   address: z.string().nullable(),
   phone: z.string().nullable(),
   email: z.string().nullable(),
   logo_url: z.string().nullable(),
-  active_academic_year: z.string().nullable(),
-  trimesters: z.array(TrimesterConfigSchema),
-  notify_by_email: z.boolean(),
-  notify_by_sms: z.boolean(),
-  notify_grades: z.boolean(),
-  notify_absences: z.boolean(),
-  notify_payments: z.boolean(),
+  ministry_code: z.string().nullable().optional(),
+  // --- UI-only fields (not yet in backend, optional with defaults) ---
+  active_academic_year: z.string().nullable().optional().default(null),
+  trimesters: z.array(TrimesterConfigSchema).optional().default([]),
+  notify_by_email: z.boolean().optional().default(false),
+  notify_by_sms: z.boolean().optional().default(false),
+  notify_grades: z.boolean().optional().default(false),
+  notify_absences: z.boolean().optional().default(false),
+  notify_payments: z.boolean().optional().default(false),
 })
 
 export const SchoolInfoUpdateSchema = z.object({
@@ -29,7 +34,7 @@ export const SchoolInfoUpdateSchema = z.object({
   address: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email("Email invalide").optional().or(z.literal("")),
-  active_academic_year: z.string().optional(),
+  ministry_code: z.string().optional(),
 })
 
 export const TrimesterUpdateSchema = z.object({
