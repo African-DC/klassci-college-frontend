@@ -3,6 +3,6 @@ import type { Subject, SubjectCreate, SubjectUpdate } from "@/lib/contracts/subj
 import { createCrudApi } from "./createCrudApi"
 
 export const subjectsApi = createCrudApi<Subject, SubjectCreate, SubjectUpdate>(
-  "/subjects",
+  "/admin/subjects",
   SubjectSchema,
 )

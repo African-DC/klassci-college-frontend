@@ -3,6 +3,6 @@ import type { Teacher, TeacherCreate, TeacherUpdate } from "@/lib/contracts/teac
 import { createCrudApi } from "./createCrudApi"
 
 export const teachersApi = createCrudApi<Teacher, TeacherCreate, TeacherUpdate>(
-  "/teachers",
+  "/admin/teachers",
   TeacherSchema,
 )

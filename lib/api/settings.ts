@@ -31,7 +31,7 @@ export const settingsApi = {
 
   // Mettre à jour les informations de l'école
   updateSchoolInfo: async (data: SchoolInfoUpdate): Promise<SchoolSettings> => {
-    const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/settings/school-info", {
+    const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/admin/settings/school-info", {
       method: "PUT",
       body: JSON.stringify(data),
     })
@@ -40,7 +40,7 @@ export const settingsApi = {
 
   // Mettre à jour la configuration des trimestres
   updateTrimesters: async (data: TrimesterUpdate): Promise<SchoolSettings> => {
-    const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/settings/trimesters", {
+    const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/admin/settings/trimesters", {
       method: "PUT",
       body: JSON.stringify(data),
     })
@@ -49,7 +49,7 @@ export const settingsApi = {
 
   // Mettre à jour les paramètres de notification
   updateNotifications: async (data: NotificationUpdate): Promise<SchoolSettings> => {
-    const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/settings/notifications", {
+    const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/admin/settings/notifications", {
       method: "PUT",
       body: JSON.stringify(data),
     })
