@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { useCreateFeeCategory } from "@/lib/hooks/useFees"
@@ -18,7 +19,7 @@ interface FeeCategoryCreateModalProps {
 export function FeeCategoryCreateModal({ open, onClose }: FeeCategoryCreateModalProps) {
   const form = useForm<FeeCategoryCreate>({
     resolver: zodResolver(FeeCategoryCreateSchema),
-    defaultValues: { name: "", description: null },
+    defaultValues: { name: "", description: null, is_mandatory: true },
   })
 
   const { mutate, isPending } = useCreateFeeCategory()
@@ -67,6 +68,24 @@ export function FeeCategoryCreateModal({ open, onClose }: FeeCategoryCreateModal
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="is_mandatory"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Frais obligatoire</FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Les frais obligatoires sont auto-assignés à l&apos;inscription (montants par niveau/série).
+                      Les optionnels ont des options nommées (ex: menu cantine, arrêt transport).
+                    </p>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
                 </FormItem>
               )}
             />

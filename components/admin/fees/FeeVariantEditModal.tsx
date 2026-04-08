@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useUpdateFeeVariant, useFeeCategories } from "@/lib/hooks/useFees"
 import { FeeVariantUpdateSchema, type FeeVariant, type FeeVariantUpdate } from "@/lib/contracts/fee"
-import { useClasses } from "@/lib/hooks/useClasses"
+import { useLevels } from "@/lib/hooks/useLevels"
 
 interface FeeVariantEditModalProps {
   variant: FeeVariant | null
@@ -27,15 +27,17 @@ export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalPro
     resolver: zodResolver(FeeVariantUpdateSchema),
     values: variant ? {
       fee_category_id: variant.fee_category_id,
-      class_id: variant.class_id,
+      level_id: variant.level_id,
+      series_id: variant.series_id,
       amount: variant.amount,
       academic_year_id: variant.academic_year_id,
     } : undefined,
   })
 
   const { data: categories } = useFeeCategories()
-  const { data: classesData } = useClasses()
-  const classes = classesData?.items ?? []
+  const mandatoryCategories = categories?.filter((c) => c.is_mandatory) ?? []
+  const { data: levelsData } = useLevels()
+  const levels = levelsData?.items ?? []
   const { mutate, isPending } = useUpdateFeeVariant()
 
   function onSubmit(data: FeeVariantUpdate) {
@@ -59,18 +61,18 @@ export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalPro
               name="fee_category_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Categorie *</FormLabel>
+                  <FormLabel>Catégorie *</FormLabel>
                   <Select
                     value={field.value?.toString() ?? ""}
                     onValueChange={(v) => field.onChange(Number(v))}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selectionner une categorie" />
+                        <SelectValue placeholder="Sélectionner une catégorie" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories?.map((c) => (
+                      {mandatoryCategories.map((c) => (
                         <SelectItem key={c.id} value={c.id.toString()}>
                           {c.name}
                         </SelectItem>
@@ -83,23 +85,23 @@ export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalPro
             />
             <FormField
               control={form.control}
-              name="class_id"
+              name="level_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Classe *</FormLabel>
+                  <FormLabel>Niveau *</FormLabel>
                   <Select
                     value={field.value?.toString() ?? ""}
                     onValueChange={(v) => field.onChange(Number(v))}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selectionner une classe" />
+                        <SelectValue placeholder="Sélectionner un niveau" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {classes.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.id.toString()}>
-                          {cls.name}
+                      {levels.map((lvl) => (
+                        <SelectItem key={lvl.id} value={lvl.id.toString()}>
+                          {lvl.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

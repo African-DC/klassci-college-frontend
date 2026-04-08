@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useCreateFeeVariant, useFeeCategories } from "@/lib/hooks/useFees"
 import { FeeVariantCreateSchema, type FeeVariantCreate } from "@/lib/contracts/fee"
-import { useClasses } from "@/lib/hooks/useClasses"
+import { useLevels } from "@/lib/hooks/useLevels"
 
 interface FeeVariantCreateModalProps {
   open: boolean
@@ -30,8 +30,9 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
   })
 
   const { data: categories } = useFeeCategories()
-  const { data: classesData } = useClasses()
-  const classes = classesData?.items ?? []
+  const mandatoryCategories = categories?.filter((c) => c.is_mandatory) ?? []
+  const { data: levelsData } = useLevels()
+  const levels = levelsData?.items ?? []
   const { mutate, isPending } = useCreateFeeVariant()
 
   function onSubmit(data: FeeVariantCreate) {
@@ -56,18 +57,18 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
               name="fee_category_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Categorie *</FormLabel>
+                  <FormLabel>Catégorie (obligatoire) *</FormLabel>
                   <Select
                     value={field.value?.toString() ?? ""}
                     onValueChange={(v) => field.onChange(Number(v))}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selectionner une categorie" />
+                        <SelectValue placeholder="Sélectionner une catégorie" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories?.map((c) => (
+                      {mandatoryCategories.map((c) => (
                         <SelectItem key={c.id} value={c.id.toString()}>
                           {c.name}
                         </SelectItem>
@@ -80,23 +81,23 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
             />
             <FormField
               control={form.control}
-              name="class_id"
+              name="level_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Classe *</FormLabel>
+                  <FormLabel>Niveau *</FormLabel>
                   <Select
                     value={field.value?.toString() ?? ""}
                     onValueChange={(v) => field.onChange(Number(v))}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selectionner une classe" />
+                        <SelectValue placeholder="Sélectionner un niveau" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {classes.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.id.toString()}>
-                          {cls.name}
+                      {levels.map((lvl) => (
+                        <SelectItem key={lvl.id} value={lvl.id.toString()}>
+                          {lvl.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -124,7 +125,7 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
               )}
             />
             <Button type="submit" disabled={isPending} className="w-full">
-              {isPending ? "Creation..." : "Creer la variante"}
+              {isPending ? "Création..." : "Créer la variante"}
             </Button>
           </form>
         </Form>
