@@ -18,8 +18,8 @@ export const feesApi = {
   // --- Catégories de frais ---
 
   listCategories: async (): Promise<FeeCategory[]> => {
-    const json = await apiFetch<{ data?: FeeCategory[] } | FeeCategory[]>("/admin/fee-categories")
-    const arr = Array.isArray(json) ? json : (json as { data?: FeeCategory[] }).data ?? []
+    const json = await apiFetch<{ items?: FeeCategory[]; data?: FeeCategory[] } | FeeCategory[]>("/admin/fee-categories")
+    const arr = Array.isArray(json) ? json : (json as { items?: FeeCategory[]; data?: FeeCategory[] }).items ?? (json as { data?: FeeCategory[] }).data ?? []
     return safeValidate(FeeCategoryArraySchema, arr, "GET /admin/fee-categories")
   },
 
@@ -49,8 +49,8 @@ export const feesApi = {
 
   listVariants: async (academicYearId?: number): Promise<FeeVariant[]> => {
     const query = academicYearId ? `?academic_year_id=${academicYearId}` : ""
-    const json = await apiFetch<{ data?: FeeVariant[] } | FeeVariant[]>(`/admin/fee-variants${query}`)
-    const arr = Array.isArray(json) ? json : (json as { data?: FeeVariant[] }).data ?? []
+    const json = await apiFetch<{ items?: FeeVariant[]; data?: FeeVariant[] } | FeeVariant[]>(`/admin/fee-variants${query}`)
+    const arr = Array.isArray(json) ? json : (json as { items?: FeeVariant[]; data?: FeeVariant[] }).items ?? (json as { data?: FeeVariant[] }).data ?? []
     return safeValidate(FeeVariantArraySchema, arr, "GET /admin/fee-variants")
   },
 
