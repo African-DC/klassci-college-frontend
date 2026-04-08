@@ -144,7 +144,7 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
 
             {/* Multi-select niveaux */}
             <div className="space-y-2">
-              <FormLabel>Niveaux *</FormLabel>
+              <p className="text-sm font-medium">Niveaux *</p>
               <div className="rounded-lg border p-3 space-y-2 max-h-48 overflow-y-auto">
                 <label className="flex items-center gap-2 pb-2 border-b cursor-pointer">
                   <Checkbox
