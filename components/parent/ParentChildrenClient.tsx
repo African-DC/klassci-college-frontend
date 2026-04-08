@@ -84,7 +84,7 @@ function ChildDetailCard({ child }: { child: ParentChild }) {
             <Wallet className="h-4 w-4 text-muted-foreground" />
             <div>
               <p className={`text-sm font-bold ${child.fees_remaining > 0 ? "text-accent" : "text-emerald-600 dark:text-emerald-400"}`}>
-                {child.fees_remaining.toLocaleString("fr-FR")} FC
+                {child.fees_remaining.toLocaleString("fr-FR")} FCFA
               </p>
               <p className="text-[10px] text-muted-foreground">Restant</p>
             </div>

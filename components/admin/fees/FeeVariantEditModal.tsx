@@ -115,7 +115,7 @@ export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalPro
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Montant (FC) *</FormLabel>
+                  <FormLabel>Montant (FCFA) *</FormLabel>
                   <FormControl>
                     <Input
                       type="number"

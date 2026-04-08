@@ -174,7 +174,7 @@ export function FeesPageClient() {
                 <TableRow>
                   <TableHead>Categorie</TableHead>
                   <TableHead>Niveau</TableHead>
-                  <TableHead className="text-right">Montant (FC)</TableHead>
+                  <TableHead className="text-right">Montant (FCFA)</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -187,7 +187,7 @@ export function FeesPageClient() {
                       <TableCell className="font-medium">{catName}</TableCell>
                       <TableCell>{lvlName}{v.series_id ? ` (série)` : ""}</TableCell>
                       <TableCell className="text-right font-semibold">
-                        {v.amount.toLocaleString("fr-FR")} FC
+                        {v.amount.toLocaleString("fr-FR")} FCFA
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">

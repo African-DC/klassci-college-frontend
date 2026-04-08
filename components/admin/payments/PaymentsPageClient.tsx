@@ -128,19 +128,19 @@ export function PaymentsPageClient() {
           <KpiCard
             icon={Banknote}
             title="Attendu"
-            value={`${summary.total_expected.toLocaleString("fr-FR")} FC`}
+            value={`${summary.total_expected.toLocaleString("fr-FR")} FCFA`}
             variant="blue"
           />
           <KpiCard
             icon={Wallet}
             title="Collecté"
-            value={`${summary.total_collected.toLocaleString("fr-FR")} FC`}
+            value={`${summary.total_collected.toLocaleString("fr-FR")} FCFA`}
             variant="emerald"
           />
           <KpiCard
             icon={AlertCircle}
             title="Restant"
-            value={`${summary.total_pending.toLocaleString("fr-FR")} FC`}
+            value={`${summary.total_pending.toLocaleString("fr-FR")} FCFA`}
             variant="orange"
           />
           <KpiCard
@@ -214,7 +214,7 @@ export function PaymentsPageClient() {
                   <TableRow key={payment.id}>
                     <TableCell className="font-medium">#{payment.id}</TableCell>
                     <TableCell className="text-right font-semibold">
-                      {Number(payment.amount).toLocaleString("fr-FR")} FC
+                      {Number(payment.amount).toLocaleString("fr-FR")} FCFA
                     </TableCell>
                     <TableCell>{METHOD_LABELS[payment.method]}</TableCell>
                     <TableCell>
@@ -281,8 +281,8 @@ export function PaymentsPageClient() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmAction?.type === "validate"
-                ? `Vous allez valider le paiement de ${Number(confirmAction.payment.amount).toLocaleString("fr-FR")} FC. Cette action est irréversible.`
-                : `Vous allez annuler le paiement de ${Number(confirmAction?.payment.amount).toLocaleString("fr-FR")} FC. Cette action est irréversible.`}
+                ? `Vous allez valider le paiement de ${Number(confirmAction.payment.amount).toLocaleString("fr-FR")} FCFA. Cette action est irréversible.`
+                : `Vous allez annuler le paiement de ${Number(confirmAction?.payment.amount).toLocaleString("fr-FR")} FCFA. Cette action est irréversible.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -69,7 +69,7 @@ export function StudentDashboardClient() {
         <KpiCard
           icon={Wallet}
           label="Frais restants"
-          value={`${data.fees_remaining.toLocaleString("fr-FR")} FC`}
+          value={`${data.fees_remaining.toLocaleString("fr-FR")} FCFA`}
           className={data.fees_remaining === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-accent"}
         />
         <KpiCard

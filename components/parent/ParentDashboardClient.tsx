@@ -114,7 +114,7 @@ function ChildCard({ child }: { child: ParentChild }) {
             <p className={`text-sm font-bold ${child.fees_remaining > 0 ? "text-accent" : "text-emerald-600 dark:text-emerald-400"}`}>
               {child.fees_remaining.toLocaleString("fr-FR")}
             </p>
-            <p className="text-[10px] text-muted-foreground">Reste (FC)</p>
+            <p className="text-[10px] text-muted-foreground">Reste (FCFA)</p>
           </div>
         </div>
 

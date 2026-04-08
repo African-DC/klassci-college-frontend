@@ -46,16 +46,16 @@ export function StudentFeesClient() {
           <div className="grid grid-cols-3 gap-3">
             <SummaryCard
               label="Total"
-              value={`${data.total_expected.toLocaleString("fr-FR")} FC`}
+              value={`${data.total_expected.toLocaleString("fr-FR")} FCFA`}
             />
             <SummaryCard
               label="Payé"
-              value={`${data.total_paid.toLocaleString("fr-FR")} FC`}
+              value={`${data.total_paid.toLocaleString("fr-FR")} FCFA`}
               className="text-emerald-600 dark:text-emerald-400"
             />
             <SummaryCard
               label="Restant"
-              value={`${data.total_remaining.toLocaleString("fr-FR")} FC`}
+              value={`${data.total_remaining.toLocaleString("fr-FR")} FCFA`}
               className={data.total_remaining === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-accent"}
             />
           </div>
@@ -105,10 +105,10 @@ export function StudentFeesClient() {
                       <TableRow key={fee.id}>
                         <TableCell className="font-medium text-sm">{fee.category_name}</TableCell>
                         <TableCell className="text-right text-sm">
-                          {fee.total_amount.toLocaleString("fr-FR")} FC
+                          {fee.total_amount.toLocaleString("fr-FR")} FCFA
                         </TableCell>
                         <TableCell className="text-right text-sm text-emerald-600 dark:text-emerald-400">
-                          {fee.paid_amount.toLocaleString("fr-FR")} FC
+                          {fee.paid_amount.toLocaleString("fr-FR")} FCFA
                         </TableCell>
                         <TableCell>
                           <Badge variant={config.variant} className="text-[10px]">
