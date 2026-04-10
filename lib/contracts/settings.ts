@@ -19,6 +19,8 @@ export const SchoolSettingsSchema = z.object({
   email: z.string().nullable(),
   logo_url: z.string().nullable(),
   ministry_code: z.string().nullable().optional(),
+  enrollment_number_pattern: z.string().nullable().optional(),
+  enrollment_number_counter: z.number().optional().default(0),
   // --- UI-only fields (not yet in backend, optional with defaults) ---
   active_academic_year: z.string().nullable().optional().default(null),
   trimesters: z.array(TrimesterConfigSchema).optional().default([]),

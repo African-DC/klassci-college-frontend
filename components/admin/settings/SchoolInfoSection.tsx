@@ -135,6 +135,22 @@ export function SchoolInfoSection({ settings }: SchoolInfoSectionProps) {
             </div>
           </form>
         </Form>
+
+        {/* Pattern matricule (read-only display) */}
+        <div className="mt-6 rounded-lg border p-4">
+          <p className="text-sm font-medium">Pattern matricule</p>
+          <p className="mt-1 font-mono text-sm text-muted-foreground">
+            {settings.enrollment_number_pattern || "Non configuré"}
+          </p>
+          {settings.enrollment_number_pattern && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Compteur actuel : {settings.enrollment_number_counter ?? 0}
+            </p>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Tokens disponibles : {"{YEAR}"}, {"{YEAR_SHORT}"}, {"{YEAR_RANGE}"}, {"{SEQ:04}"}, {"{SCHOOL}"}, {"{LEVEL}"}, {"{CLASS}"}
+          </p>
+        </div>
       </CardContent>
     </Card>
   )

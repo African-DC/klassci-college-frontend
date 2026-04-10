@@ -8,6 +8,8 @@ const DEFAULT_SETTINGS: SchoolSettings = {
   email: null,
   logo_url: null,
   ministry_code: null,
+  enrollment_number_pattern: null,
+  enrollment_number_counter: 0,
   active_academic_year: null,
   trimesters: [],
   notify_by_email: false,
@@ -20,13 +22,8 @@ const DEFAULT_SETTINGS: SchoolSettings = {
 export const settingsApi = {
   // Récupérer les paramètres de l'école
   get: async (): Promise<SchoolSettings> => {
-    try {
-      const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/admin/settings")
-      return (json as { data?: SchoolSettings }).data ?? (json as SchoolSettings)
-    } catch {
-      // Backend may not have a GET /settings endpoint yet — return defaults
-      return DEFAULT_SETTINGS
-    }
+    const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/admin/settings")
+    return (json as { data?: SchoolSettings }).data ?? (json as SchoolSettings)
   },
 
   // Mettre à jour les informations de l'école
