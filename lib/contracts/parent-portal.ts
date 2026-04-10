@@ -69,6 +69,24 @@ export const ParentChildFeesResponseSchema = z.object({
   fees: z.array(ParentChildFeeItemSchema),
 })
 
+// Bulletins d'un enfant
+export const ParentChildBulletinSchema = z.object({
+  id: z.number(),
+  trimester: z.number(),
+  average: z.number().nullable(),
+  rank: z.number().nullable(),
+  mention: z.string().nullable(),
+  class_name: z.string(),
+  academic_year_name: z.string(),
+  is_published: z.boolean(),
+  generated_at: z.string().nullable(),
+})
+
+export const ParentChildBulletinsResponseSchema = z.object({
+  student_id: z.number(),
+  bulletins: z.array(ParentChildBulletinSchema),
+})
+
 // Types inférés
 export type ParentChild = z.infer<typeof ParentChildSchema>
 export type ParentDashboard = z.infer<typeof ParentDashboardSchema>
@@ -77,3 +95,5 @@ export type ParentChildSubjectGrades = z.infer<typeof ParentChildSubjectGradesSc
 export type ParentChildGradesResponse = z.infer<typeof ParentChildGradesResponseSchema>
 export type ParentChildFeeItem = z.infer<typeof ParentChildFeeItemSchema>
 export type ParentChildFeesResponse = z.infer<typeof ParentChildFeesResponseSchema>
+export type ParentChildBulletin = z.infer<typeof ParentChildBulletinSchema>
+export type ParentChildBulletinsResponse = z.infer<typeof ParentChildBulletinsResponseSchema>

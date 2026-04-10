@@ -9,6 +9,7 @@ export const parentKeys = {
   childGrades: (childId: number, trimester?: string) =>
     ["parent", "child-grades", childId, trimester] as const,
   childFees: (childId: number) => ["parent", "child-fees", childId] as const,
+  childBulletins: (childId: number) => ["parent", "child-bulletins", childId] as const,
 }
 
 // Dashboard parent — résumé de tous les enfants
@@ -45,6 +46,15 @@ export function useParentChildFees(childId: number | undefined) {
   return useQuery({
     queryKey: parentKeys.childFees(childId as number),
     queryFn: () => parentPortalApi.getChildFees(childId as number),
+    enabled: childId !== undefined && childId > 0,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useParentChildBulletins(childId: number | undefined) {
+  return useQuery({
+    queryKey: parentKeys.childBulletins(childId as number),
+    queryFn: () => parentPortalApi.getChildBulletins(childId as number),
     enabled: childId !== undefined && childId > 0,
     staleTime: 1000 * 60 * 5,
   })

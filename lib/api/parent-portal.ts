@@ -3,9 +3,11 @@ import {
   ParentDashboardSchema,
   ParentChildGradesResponseSchema,
   ParentChildFeesResponseSchema,
+  ParentChildBulletinsResponseSchema,
   type ParentDashboard,
   type ParentChildGradesResponse,
   type ParentChildFeesResponse,
+  type ParentChildBulletinsResponse,
 } from "@/lib/contracts/parent-portal"
 
 // Extrait l'item de la réponse API, qu'elle soit { data: T } ou T directement
@@ -34,5 +36,11 @@ export const parentPortalApi = {
   getChildFees: async (childId: number): Promise<ParentChildFeesResponse> => {
     const res = await apiFetch<unknown>(`/parent/children/${childId}/fees`)
     return safeValidate(ParentChildFeesResponseSchema, unwrapResponse(res), `GET /parent/children/${childId}/fees`)
+  },
+
+  // Bulletins d'un enfant
+  getChildBulletins: async (childId: number): Promise<ParentChildBulletinsResponse> => {
+    const res = await apiFetch<unknown>(`/parent/children/${childId}/bulletins`)
+    return safeValidate(ParentChildBulletinsResponseSchema, unwrapResponse(res), `GET /parent/children/${childId}/bulletins`)
   },
 }
