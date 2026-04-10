@@ -3,12 +3,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { feesApi } from "@/lib/api/fees"
-import type { FeeCategory, FeeCategoryCreate, FeeCategoryUpdate, FeeVariant, FeeVariantCreate, FeeVariantUpdate } from "@/lib/contracts/fee"
+import type { FeeCategory, FeeCategoryCreate, FeeCategoryUpdate, FeeVariant, FeeVariantCreate, FeeVariantUpdate, OptionalFeeOption, OptionalFeeOptionCreate, OptionalFeeOptionUpdate } from "@/lib/contracts/fee"
 
 export const feeKeys = {
   all: ["fees"] as const,
   categories: ["fees", "categories"] as const,
   variants: (academicYearId?: number) => ["fees", "variants", academicYearId] as const,
+  options: (categoryId: number) => ["fees", "options", categoryId] as const,
 }
 
 // --- Catégories ---
@@ -143,5 +144,52 @@ export function useDeleteFeeVariant() {
       toast.error("Erreur", { description: err.message })
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["fees", "variants"] }),
+  })
+}
+
+// --- Options de frais optionnels ---
+
+export function useFeeOptions(categoryId: number) {
+  return useQuery({
+    queryKey: feeKeys.options(categoryId),
+    queryFn: () => feesApi.listOptions(categoryId),
+    staleTime: 1000 * 60 * 5,
+    enabled: categoryId > 0,
+  })
+}
+
+export function useCreateFeeOption() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: OptionalFeeOptionCreate) => feesApi.createOption(data),
+    onSuccess: (_created, variables) => {
+      toast.success("Option créée")
+      queryClient.invalidateQueries({ queryKey: feeKeys.options(variables.fee_category_id) })
+    },
+    onError: (err) => toast.error("Erreur", { description: err.message }),
+  })
+}
+
+export function useUpdateFeeOption() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data, categoryId }: { id: number; data: OptionalFeeOptionUpdate; categoryId: number }) => feesApi.updateOption(id, data),
+    onSuccess: (_data, variables) => {
+      toast.success("Option modifiée")
+      queryClient.invalidateQueries({ queryKey: feeKeys.options(variables.categoryId) })
+    },
+    onError: (err) => toast.error("Erreur", { description: err.message }),
+  })
+}
+
+export function useDeleteFeeOption() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, categoryId }: { id: number; categoryId: number }) => feesApi.deleteOption(id),
+    onSuccess: (_data, variables) => {
+      toast.success("Option supprimée")
+      queryClient.invalidateQueries({ queryKey: feeKeys.options(variables.categoryId) })
+    },
+    onError: (err) => toast.error("Erreur", { description: err.message }),
   })
 }

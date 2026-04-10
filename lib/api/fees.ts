@@ -3,16 +3,21 @@ import { apiFetch, safeValidate } from "./client"
 import {
   FeeCategorySchema,
   FeeVariantSchema,
+  OptionalFeeOptionSchema,
   type FeeCategory,
   type FeeVariant,
+  type OptionalFeeOption,
   type FeeCategoryCreate,
   type FeeCategoryUpdate,
   type FeeVariantCreate,
   type FeeVariantUpdate,
+  type OptionalFeeOptionCreate,
+  type OptionalFeeOptionUpdate,
 } from "@/lib/contracts/fee"
 
 const FeeCategoryArraySchema = z.array(FeeCategorySchema)
 const FeeVariantArraySchema = z.array(FeeVariantSchema)
+const OptionalFeeOptionArraySchema = z.array(OptionalFeeOptionSchema)
 
 export const feesApi = {
   // --- Catégories de frais ---
@@ -74,5 +79,37 @@ export const feesApi = {
 
   deleteVariant: async (id: number): Promise<void> => {
     await apiFetch(`/admin/fee-variants/${id}`, { method: "DELETE" })
+  },
+
+  // --- Options de frais optionnels ---
+
+  listOptions: async (categoryId: number, academicYearId?: number): Promise<OptionalFeeOption[]> => {
+    const params = new URLSearchParams({ category_id: String(categoryId) })
+    if (academicYearId) params.set("academic_year_id", String(academicYearId))
+    const json = await apiFetch<{ items?: OptionalFeeOption[] } | OptionalFeeOption[]>(`/admin/fee-options?${params}`)
+    const arr = Array.isArray(json) ? json : (json as { items?: OptionalFeeOption[] }).items ?? []
+    return safeValidate(OptionalFeeOptionArraySchema, arr, "GET /admin/fee-options")
+  },
+
+  createOption: async (data: OptionalFeeOptionCreate): Promise<OptionalFeeOption> => {
+    const json = await apiFetch<{ data?: OptionalFeeOption } | OptionalFeeOption>("/admin/fee-options", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+    const option = (json as { data?: OptionalFeeOption }).data ?? (json as OptionalFeeOption)
+    return safeValidate(OptionalFeeOptionSchema, option, "POST /admin/fee-options")
+  },
+
+  updateOption: async (id: number, data: OptionalFeeOptionUpdate): Promise<OptionalFeeOption> => {
+    const json = await apiFetch<{ data?: OptionalFeeOption } | OptionalFeeOption>(`/admin/fee-options/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    })
+    const option = (json as { data?: OptionalFeeOption }).data ?? (json as OptionalFeeOption)
+    return safeValidate(OptionalFeeOptionSchema, option, `PATCH /admin/fee-options/${id}`)
+  },
+
+  deleteOption: async (id: number): Promise<void> => {
+    await apiFetch(`/admin/fee-options/${id}`, { method: "DELETE" })
   },
 }

@@ -28,6 +28,7 @@ import { FeeCategoryCreateModal } from "./FeeCategoryCreateModal"
 import { FeeCategoryEditModal } from "./FeeCategoryEditModal"
 import { FeeVariantCreateModal } from "./FeeVariantCreateModal"
 import { FeeVariantEditModal } from "./FeeVariantEditModal"
+import { FeeOptionsDialog } from "./FeeOptionsDialog"
 import { useFeeCategories, useFeeVariants, useDeleteFeeCategory, useDeleteFeeVariant } from "@/lib/hooks/useFees"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { useLevels } from "@/lib/hooks/useLevels"
@@ -39,6 +40,7 @@ export function FeesPageClient() {
   const [editCategory, setEditCategory] = useState<FeeCategory | null>(null)
   const [editVariant, setEditVariant] = useState<FeeVariant | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: "category" | "variant"; id: number; name: string } | null>(null)
+  const [optionsCategory, setOptionsCategory] = useState<FeeCategory | null>(null)
 
   const { data: academicYearsData } = useAcademicYears()
   const currentYearId = academicYearsData?.items?.[0]?.id
@@ -126,6 +128,11 @@ export function FeesPageClient() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        {!cat.is_mandatory && (
+                          <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setOptionsCategory(cat)}>
+                            Options
+                          </Button>
+                        )}
                         <Button size="icon" variant="ghost" onClick={() => setEditCategory(cat)}>
                           <Pencil className="h-4 w-4" />
                           <span className="sr-only">Modifier {cat.name}</span>
@@ -236,6 +243,13 @@ export function FeesPageClient() {
       <FeeVariantEditModal
         variant={editVariant}
         onClose={() => setEditVariant(null)}
+      />
+
+      {/* Dialog options pour catégories optionnelles */}
+      <FeeOptionsDialog
+        category={optionsCategory}
+        academicYearId={currentYearId}
+        onClose={() => setOptionsCategory(null)}
       />
 
       {/* Dialog de confirmation de suppression */}
