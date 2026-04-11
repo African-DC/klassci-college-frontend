@@ -20,7 +20,12 @@ export const TeacherCreateSchema = z.object({
   phone: z.string().optional(),
 })
 
-export const TeacherUpdateSchema = TeacherCreateSchema.partial()
+export const TeacherUpdateSchema = z.object({
+  first_name: z.string().min(1).optional(),
+  last_name: z.string().min(1).optional(),
+  speciality: z.string().optional(),
+  phone: z.string().optional(),
+})
 
 export const TeacherListParamsSchema = z.object({
   page: z.number().optional(),

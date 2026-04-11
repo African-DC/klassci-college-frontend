@@ -23,7 +23,13 @@ export const StudentCreateSchema = z.object({
   enrollment_number: z.string().optional(),
 })
 
-export const StudentUpdateSchema = StudentCreateSchema.partial()
+export const StudentUpdateSchema = z.object({
+  first_name: z.string().min(1).optional(),
+  last_name: z.string().min(1).optional(),
+  birth_date: z.string().optional(),
+  genre: z.enum(["M", "F"]).optional(),
+  enrollment_number: z.string().optional(),
+})
 
 export const StudentListParamsSchema = z.object({
   page: z.number().optional(),

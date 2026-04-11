@@ -212,7 +212,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         </TabsContent>
 
         <TabsContent value="paiements">
-          <PaymentsTab />
+          <PaymentsTab studentId={studentId} />
         </TabsContent>
 
         <TabsContent value="presences">
@@ -387,49 +387,77 @@ function EnrollmentTab({ studentId }: { studentId: number }) {
     return <EmptyState icon={GraduationCap} message="Aucune inscription enregistrée." />
   }
 
+  const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+    prospect: { label: "Prospect", variant: "outline" },
+    en_validation: { label: "En validation", variant: "secondary" },
+    valide: { label: "Validé", variant: "default" },
+    rejete: { label: "Rejeté", variant: "destructive" },
+    annule: { label: "Annulé", variant: "destructive" },
+  }
+
   return (
     <div className="space-y-3">
-      {enrollments.map((enrollment) => (
-        <Card key={enrollment.id} className="border-0 shadow-sm ring-1 ring-border">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-medium">
-                  {(enrollment as Record<string, unknown>).class_name
-                    ? String((enrollment as Record<string, unknown>).class_name)
-                    : `Classe #${(enrollment as Record<string, unknown>).class_id ?? "?"}`}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {(enrollment as Record<string, unknown>).academic_year_name
-                    ? String((enrollment as Record<string, unknown>).academic_year_name)
-                    : `Année #${(enrollment as Record<string, unknown>).academic_year_id ?? "?"}`}
-                </p>
-              </div>
-              <Badge
-                variant={
-                  (enrollment as Record<string, unknown>).status === "active" ? "default" :
-                  (enrollment as Record<string, unknown>).status === "completed" ? "secondary" :
-                  "outline"
-                }
-                className="text-[10px]"
-              >
-                {(enrollment as Record<string, unknown>).status === "active"
-                  ? "Actif"
-                  : (enrollment as Record<string, unknown>).status === "completed"
-                    ? "Terminé"
-                    : String((enrollment as Record<string, unknown>).status ?? "Inconnu")}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+      {enrollments.map((enrollment) => {
+        const e = enrollment as Record<string, unknown>
+        const status = String(e.status ?? "")
+        const sc = statusConfig[status] ?? { label: status, variant: "outline" as const }
+        return (
+          <Link key={enrollment.id} href={`/admin/enrollments/${enrollment.id}`}>
+            <Card className="border-0 shadow-sm ring-1 ring-border cursor-pointer hover:bg-muted/50 transition-colors">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">
+                      {e.class_name ? String(e.class_name) : `Classe #${e.class_id ?? "?"}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {e.academic_year_name ? String(e.academic_year_name) : `Année #${e.academic_year_id ?? "?"}`}
+                    </p>
+                  </div>
+                  <Badge variant={sc.variant} className="text-[10px]">{sc.label}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        )
+      })}
     </div>
   )
 }
 
-// ---------- Payments tab (placeholder — needs enrollment-scoped data) ----------
-function PaymentsTab() {
-  return <EmptyState icon={Wallet} message="Les données de paiement seront disponibles prochainement." />
+// ---------- Payments tab ----------
+function PaymentsTab({ studentId }: { studentId: number }) {
+  const { data: enrollmentsData, isLoading } = useEnrollments({ student_id: studentId })
+  const enrollments = enrollmentsData?.items ?? []
+
+  if (isLoading) return <TabSkeleton />
+  if (enrollments.length === 0) return <EmptyState icon={Wallet} message="Aucune inscription, donc aucun paiement." />
+
+  // Show enrollment fees summary per enrollment
+  return (
+    <div className="space-y-4">
+      {enrollments.map((enrollment) => {
+        const e = enrollment as Record<string, unknown>
+        return (
+          <Card key={enrollment.id} className="border-0 shadow-sm ring-1 ring-border">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium">
+                  {e.class_name ? String(e.class_name) : "Classe"} — {e.academic_year_name ? String(e.academic_year_name) : "Année"}
+                </p>
+                <Badge variant="outline" className="text-[10px]">
+                  {String(e.status ?? "—")}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Les détails de paiement sont consultables depuis la page des paiements.
+              </p>
+            </CardContent>
+          </Card>
+        )
+      })}
+    </div>
+  )
 }
 
 // ---------- Attendance tab ----------
