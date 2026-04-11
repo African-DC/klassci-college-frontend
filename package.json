@@ -52,7 +52,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9.16.0",
     "eslint-config-next": "15.5.12",
-    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/eslint-plugin": "^8.58.1",
     "@typescript-eslint/parser": "^8.18.2",
     "vitest": "^2.1.8",
     "@vitest/coverage-v8": "^2.1.8",
