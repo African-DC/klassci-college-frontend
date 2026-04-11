@@ -1,4 +1,4 @@
-import { apiFetch, safeValidate } from "./client"
+import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
   ParentDashboardSchema,
   ParentChildGradesResponseSchema,
@@ -42,5 +42,10 @@ export const parentPortalApi = {
   getChildBulletins: async (childId: number): Promise<ParentChildBulletinsResponse> => {
     const res = await apiFetch<unknown>(`/parent/children/${childId}/bulletins`)
     return safeValidate(ParentChildBulletinsResponseSchema, unwrapResponse(res), `GET /parent/children/${childId}/bulletins`)
+  },
+
+  // Télécharger un bulletin en PDF
+  downloadChildBulletinPdf: async (bulletinId: number): Promise<Blob> => {
+    return apiFetchBlob(`/reports/bulletins/${bulletinId}/pdf`)
   },
 }

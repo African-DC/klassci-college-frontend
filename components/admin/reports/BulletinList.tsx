@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
-import { Eye, Download, Send, ChevronLeft, ChevronRight } from "lucide-react"
+import { Eye, Download, DownloadCloud, Send, ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -30,6 +30,7 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
   const { mutate: publish, isPending: isPublishing } = usePublishBulletins()
   const [previewId, setPreviewId] = useState<number | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false)
 
   const handleDownloadPdf = useCallback(async (bulletin: Bulletin) => {
     setDownloadingId(bulletin.id)
@@ -50,6 +51,26 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
     () => bulletins.some((b) => !b.is_published),
     [bulletins],
   )
+
+  const handleDownloadAll = useCallback(async () => {
+    if (bulletins.length === 0) return
+    setIsDownloadingAll(true)
+    let downloaded = 0
+    try {
+      for (const bulletin of bulletins) {
+        const blob = await bulletinsApi.downloadPdf(bulletin.id)
+        downloadBlob(blob, `bulletin-${bulletin.id}.pdf`)
+        downloaded++
+      }
+      toast.success(`${downloaded} bulletin(s) téléchargé(s)`)
+    } catch (err) {
+      toast.error("Erreur lors du téléchargement", {
+        description: err instanceof Error ? err.message : "Erreur inconnue",
+      })
+    } finally {
+      setIsDownloadingAll(false)
+    }
+  }, [bulletins])
 
   if (isLoading) return <BulletinListSkeleton />
 
@@ -97,6 +118,27 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
           </Button>
         </div>
       )}
+
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDownloadAll}
+          disabled={isDownloadingAll || bulletins.length === 0}
+        >
+          {isDownloadingAll ? (
+            <>
+              <Download className="mr-2 h-3 w-3 animate-spin" />
+              Téléchargement...
+            </>
+          ) : (
+            <>
+              <DownloadCloud className="mr-2 h-3 w-3" />
+              Télécharger tout
+            </>
+          )}
+        </Button>
+      </div>
 
       <div className="rounded-lg border">
         <Table>

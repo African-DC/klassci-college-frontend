@@ -1,12 +1,17 @@
 "use client"
 
-import { ArrowLeft, FileText, Award } from "lucide-react"
+import { useState, useCallback } from "react"
+import { ArrowLeft, FileText, Award, Download, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { useParentChildBulletins } from "@/lib/hooks/useParentPortal"
+import { parentPortalApi } from "@/lib/api/parent-portal"
+import { downloadBlob } from "@/lib/utils"
 
 interface ParentChildBulletinsClientProps {
   childId: number
@@ -14,6 +19,21 @@ interface ParentChildBulletinsClientProps {
 
 export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClientProps) {
   const { data, isLoading, error, refetch } = useParentChildBulletins(childId)
+  const [downloadingId, setDownloadingId] = useState<number | null>(null)
+
+  const handleDownload = useCallback(async (bulletinId: number) => {
+    setDownloadingId(bulletinId)
+    try {
+      const blob = await parentPortalApi.downloadChildBulletinPdf(bulletinId)
+      downloadBlob(blob, `bulletin-${bulletinId}.pdf`)
+    } catch (err) {
+      toast.error("Erreur lors du téléchargement", {
+        description: err instanceof Error ? err.message : "Erreur inconnue",
+      })
+    } finally {
+      setDownloadingId(null)
+    }
+  }, [])
 
   if (error) {
     return <DataError message="Impossible de charger les bulletins." onRetry={refetch} />
@@ -80,6 +100,22 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
                     <Award className="h-4 w-4 text-amber-500" />
                     <span className="text-sm font-medium">{bulletin.mention}</span>
                   </div>
+                )}
+                {bulletin.is_published && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => handleDownload(bulletin.id)}
+                    disabled={downloadingId === bulletin.id}
+                  >
+                    {downloadingId === bulletin.id ? (
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    ) : (
+                      <Download className="mr-1 h-3 w-3" />
+                    )}
+                    Télécharger PDF
+                  </Button>
                 )}
               </CardContent>
             </Card>
