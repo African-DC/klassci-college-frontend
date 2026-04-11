@@ -31,11 +31,11 @@ export function TeacherProfileTab({ teacher, fullData }: TeacherProfileTabProps)
       })
     : null
 
-  // Extract user account info from /full response
-  const userAccount = fullData?.user as Record<string, unknown> | undefined
-  const email = (userAccount?.email as string) ?? null
-  const isActive = userAccount?.is_active as boolean | undefined
-  const lastLogin = userAccount?.last_login as string | undefined
+  // Extract user account info from /full response (flat fields from BE)
+  const hasUserData = fullData && "user_email" in fullData
+  const email = (fullData?.user_email as string) ?? null
+  const isActive = fullData?.user_is_active as boolean | undefined
+  const lastLogin = fullData?.user_last_login as string | undefined
 
   const lastLoginFormatted = lastLogin
     ? new Date(lastLogin).toLocaleDateString("fr-FR", {
@@ -67,7 +67,7 @@ export function TeacherProfileTab({ teacher, fullData }: TeacherProfileTabProps)
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardContent className="p-6">
           <h3 className="text-sm font-medium text-muted-foreground mb-4">Compte utilisateur</h3>
-          {userAccount ? (
+          {hasUserData ? (
             <div className="grid gap-5 sm:grid-cols-3">
               <InfoField label="Email" value={email} icon={Mail} />
               <div className="space-y-1">
