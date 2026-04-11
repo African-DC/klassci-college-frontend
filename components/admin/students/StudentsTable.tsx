@@ -7,6 +7,7 @@ import type { Student } from "@/lib/contracts/student"
 import { Badge } from "@/components/ui/badge"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { StudentEditModal } from "./StudentEditModal"
+import { StudentViewModal } from "./StudentViewModal"
 
 export function StudentsTable() {
   const [page, setPage] = useState(1)
@@ -50,6 +51,9 @@ export function StudentsTable() {
       error={error}
       refetch={refetch}
       deleteMutation={deleteMutation}
+      renderViewModal={({ itemId, open, onClose }) => (
+        <StudentViewModal studentId={itemId} open={open} onClose={onClose} />
+      )}
       renderEditModal={({ itemId, open, onClose }) => (
         <StudentEditModal studentId={itemId} open={open} onClose={onClose} />
       )}

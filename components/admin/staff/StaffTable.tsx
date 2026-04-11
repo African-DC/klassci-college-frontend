@@ -6,6 +6,7 @@ import { useStaffList, useDeleteStaff } from "@/lib/hooks/useStaff"
 import type { Staff } from "@/lib/contracts/staff"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { StaffEditModal } from "./StaffEditModal"
+import { StaffViewModal } from "./StaffViewModal"
 
 export function StaffTable() {
   const [page, setPage] = useState(1)
@@ -47,6 +48,9 @@ export function StaffTable() {
       error={error}
       refetch={refetch}
       deleteMutation={deleteMutation}
+      renderViewModal={({ itemId, open, onClose }) => (
+        <StaffViewModal staffId={itemId} open={open} onClose={onClose} />
+      )}
       renderEditModal={({ itemId, open, onClose }) => (
         <StaffEditModal staffId={itemId} open={open} onClose={onClose} />
       )}

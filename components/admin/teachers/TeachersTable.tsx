@@ -6,6 +6,7 @@ import { useTeachers, useDeleteTeacher } from "@/lib/hooks/useTeachers"
 import type { Teacher } from "@/lib/contracts/teacher"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { TeacherEditModal } from "./TeacherEditModal"
+import { TeacherViewModal } from "./TeacherViewModal"
 
 export function TeachersTable() {
   const [page, setPage] = useState(1)
@@ -47,6 +48,9 @@ export function TeachersTable() {
       error={error}
       refetch={refetch}
       deleteMutation={deleteMutation}
+      renderViewModal={({ itemId, open, onClose }) => (
+        <TeacherViewModal teacherId={itemId} open={open} onClose={onClose} />
+      )}
       renderEditModal={({ itemId, open, onClose }) => (
         <TeacherEditModal teacherId={itemId} open={open} onClose={onClose} />
       )}

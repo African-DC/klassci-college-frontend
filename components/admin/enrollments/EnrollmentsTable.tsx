@@ -7,6 +7,7 @@ import type { Enrollment, EnrollmentListParams } from "@/lib/contracts/enrollmen
 import { Badge } from "@/components/ui/badge"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { EnrollmentEditModal } from "./EnrollmentEditModal"
+import { EnrollmentViewModal } from "./EnrollmentViewModal"
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   prospect: { label: "Prospect", variant: "outline" },
@@ -80,6 +81,9 @@ export function EnrollmentsTable({ filters = {} }: EnrollmentsTableProps) {
       error={error}
       refetch={refetch}
       deleteMutation={deleteMutation}
+      renderViewModal={({ itemId, open, onClose }) => (
+        <EnrollmentViewModal enrollmentId={itemId} open={open} onClose={onClose} />
+      )}
       renderEditModal={({ itemId, open, onClose }) => (
         <EnrollmentEditModal enrollmentId={itemId} open={open} onClose={onClose} />
       )}

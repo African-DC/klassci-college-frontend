@@ -7,7 +7,7 @@ import {
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table"
-import { ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -18,12 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+// Dropdown imports removed — inline action buttons are more discoverable
 import {
   Dialog,
   DialogContent,
@@ -47,6 +42,7 @@ interface CrudTableProps<T extends { id: number }> {
     isPending: boolean
   }
   renderEditModal: (props: { itemId: number | null; open: boolean; onClose: () => void }) => ReactNode
+  renderViewModal?: (props: { itemId: number | null; open: boolean; onClose: () => void }) => ReactNode
   getItemLabel: (item: T) => string
   emptyMessage: string
   errorMessage: string
@@ -65,6 +61,7 @@ export function CrudTable<T extends { id: number }>({
   refetch,
   deleteMutation,
   renderEditModal,
+  renderViewModal,
   getItemLabel,
   emptyMessage,
   errorMessage,
@@ -73,6 +70,7 @@ export function CrudTable<T extends { id: number }>({
   page,
   onPageChange,
 }: CrudTableProps<T>) {
+  const [viewId, setViewId] = useState<number | null>(null)
   const [editId, setEditId] = useState<number | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
@@ -83,30 +81,26 @@ export function CrudTable<T extends { id: number }>({
   const columns = useMemo(() => {
     const actionColumn: ColumnDef<T> = {
       id: "actions",
+      header: () => <span className="sr-only">Actions</span>,
       cell: ({ row }) => {
         const label = getItemLabelRef.current(row.original)
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Actions pour ${label}`}>
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Actions pour {label}</span>
+          <div className="flex items-center justify-end gap-1">
+            {renderViewModal && (
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewId(row.original.id)}>
+                <Eye className="h-4 w-4" />
+                <span className="sr-only">Voir {label}</span>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setEditId(row.original.id)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Modifier
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => setDeleteId(row.original.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Supprimer
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditId(row.original.id)}>
+              <Pencil className="h-4 w-4" />
+              <span className="sr-only">Modifier {label}</span>
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteId(row.original.id)}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+              <span className="sr-only">Supprimer {label}</span>
+            </Button>
+          </div>
         )
       },
     }
@@ -201,6 +195,7 @@ export function CrudTable<T extends { id: number }>({
         )
       })()}
 
+      {renderViewModal?.({ itemId: viewId, open: viewId !== null, onClose: () => setViewId(null) })}
       {renderEditModal({ itemId: editId, open: editId !== null, onClose: () => setEditId(null) })}
 
       <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
