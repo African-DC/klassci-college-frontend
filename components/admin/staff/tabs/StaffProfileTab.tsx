@@ -1,11 +1,13 @@
 "use client"
 
-import { User, Briefcase, Phone, CalendarDays, Info } from "lucide-react"
+import { User, Briefcase, Phone, CalendarDays, Mail, ShieldCheck } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { Staff } from "@/lib/contracts/staff"
 
 interface StaffProfileTabProps {
   staff: Staff
+  fullData?: Record<string, unknown>
 }
 
 function InfoField({
@@ -28,7 +30,7 @@ function InfoField({
   )
 }
 
-export function StaffProfileTab({ staff }: StaffProfileTabProps) {
+export function StaffProfileTab({ staff, fullData }: StaffProfileTabProps) {
   const createdAt = staff.created_at
     ? new Date(staff.created_at).toLocaleDateString("fr-FR", {
         day: "numeric",
@@ -36,6 +38,22 @@ export function StaffProfileTab({ staff }: StaffProfileTabProps) {
         year: "numeric",
       })
     : null
+
+  // Extract user account info from /full response
+  const userAccount = fullData?.user as Record<string, unknown> | undefined
+  const email = (userAccount?.email as string) ?? null
+  const isActive = userAccount?.is_active as boolean | undefined
+  const lastLogin = userAccount?.last_login as string | undefined
+
+  const lastLoginFormatted = lastLogin
+    ? new Date(lastLogin).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "Jamais"
 
   return (
     <div className="space-y-4">
@@ -61,10 +79,25 @@ export function StaffProfileTab({ staff }: StaffProfileTabProps) {
           <h3 className="text-sm font-medium text-muted-foreground mb-4">
             Compte utilisateur
           </h3>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Info className="h-4 w-4 shrink-0" />
-            <p>Les informations du compte seront disponibles prochainement.</p>
-          </div>
+          {userAccount ? (
+            <div className="grid gap-5 sm:grid-cols-3">
+              <InfoField label="Email" value={email} icon={Mail} />
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-xs font-medium text-muted-foreground">Statut</p>
+                </div>
+                <Badge variant={isActive ? "default" : "secondary"}>
+                  {isActive ? "Actif" : "Inactif"}
+                </Badge>
+              </div>
+              <InfoField label="Dernière connexion" value={lastLoginFormatted} icon={CalendarDays} />
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Chargement des informations du compte...
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

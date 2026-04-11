@@ -36,13 +36,14 @@ import { PaymentCreateModal } from "./PaymentCreateModal"
 import { usePayments, useFinancialSummary, useValidatePayment, useCancelPayment } from "@/lib/hooks/usePayments"
 import { paymentsApi } from "@/lib/api/payments"
 import { downloadBlob } from "@/lib/utils"
-import { PaymentStatusSchema } from "@/lib/contracts/payment"
 import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@/lib/contracts/payment"
 
-const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" }> = {
-  en_attente: { label: "En attente", variant: "secondary" },
-  valide: { label: "Validé", variant: "default" },
-  annule: { label: "Annulé", variant: "destructive" },
+const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  pending: { label: "En attente", variant: "secondary" },
+  completed: { label: "Validé", variant: "default" },
+  failed: { label: "Échoué", variant: "destructive" },
+  refunded: { label: "Remboursé", variant: "outline" },
+  cancelled: { label: "Annulé", variant: "destructive" },
 }
 
 const METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -164,9 +165,10 @@ export function PaymentsPageClient() {
           <SelectContent>
             <SelectItem value="all">Tous les statuts</SelectItem>
             <SelectItem value="pending">En attente</SelectItem>
-            <SelectItem value="completed">Complété</SelectItem>
+            <SelectItem value="completed">Validé</SelectItem>
             <SelectItem value="failed">Échoué</SelectItem>
             <SelectItem value="refunded">Remboursé</SelectItem>
+            <SelectItem value="cancelled">Annulé</SelectItem>
           </SelectContent>
         </Select>
 
@@ -182,7 +184,7 @@ export function PaymentsPageClient() {
             <SelectItem value="cash">Espèces</SelectItem>
             <SelectItem value="mobile_money">Mobile Money</SelectItem>
             <SelectItem value="bank_transfer">Virement</SelectItem>
-            <SelectItem value="cheque">Chèque</SelectItem>
+            <SelectItem value="check">Chèque</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -225,7 +227,7 @@ export function PaymentsPageClient() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {payment.status === PaymentStatusSchema.Values.en_attente && (
+                        {payment.status === "pending" && (
                           <>
                             <Button
                               size="icon"

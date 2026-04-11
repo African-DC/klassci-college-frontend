@@ -30,7 +30,7 @@ import { DataError } from "@/components/shared/DataError"
 import { TeacherEditModal } from "./TeacherEditModal"
 import { TeacherProfileTab } from "./tabs/TeacherProfileTab"
 import { TeacherClassesTab } from "./tabs/TeacherClassesTab"
-import { useTeacher, useDeleteTeacher } from "@/lib/hooks/useTeachers"
+import { useTeacher, useTeacherFull, useDeleteTeacher } from "@/lib/hooks/useTeachers"
 
 interface TeacherDetailClientProps {
   teacherId: number
@@ -43,6 +43,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   const { data: teacher, isLoading, isError, refetch } = useTeacher(teacherId)
+  const { data: fullData } = useTeacherFull(teacherId)
   const { mutate: deleteTeacher, isPending: deleting } = useDeleteTeacher()
 
   const handleDelete = () => {
@@ -67,7 +68,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
         <div className="flex items-start gap-4">
           <Link
             href="/admin/teachers"
-            aria-label="Retour \u00e0 la liste des enseignants"
+            aria-label="Retour à la liste des enseignants"
             className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -121,11 +122,11 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
         </TabsList>
 
         <TabsContent value="profil">
-          <TeacherProfileTab teacher={teacher} />
+          <TeacherProfileTab teacher={teacher} fullData={fullData} />
         </TabsContent>
 
         <TabsContent value="classes">
-          <TeacherClassesTab teacherId={teacherId} />
+          <TeacherClassesTab teacherId={teacherId} fullData={fullData} />
         </TabsContent>
       </Tabs>
 

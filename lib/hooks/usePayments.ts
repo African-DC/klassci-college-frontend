@@ -71,7 +71,7 @@ export function useValidatePayment() {
       const snapshots = queryClient.getQueriesData<PaginatedResponse<Payment>>({
         queryKey: paymentKeys.all,
       })
-      optimisticStatusUpdate(queryClient, id, "valide")
+      optimisticStatusUpdate(queryClient, id, "completed")
       return { snapshots }
     },
     onSuccess: () => toast.success("Paiement validé"),
@@ -81,7 +81,10 @@ export function useValidatePayment() {
       })
       toast.error("Erreur", { description: err.message })
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: paymentKeys.all }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: paymentKeys.all })
+      queryClient.invalidateQueries({ queryKey: paymentKeys.summary() })
+    },
   })
 }
 
@@ -94,7 +97,7 @@ export function useCancelPayment() {
       const snapshots = queryClient.getQueriesData<PaginatedResponse<Payment>>({
         queryKey: paymentKeys.all,
       })
-      optimisticStatusUpdate(queryClient, id, "annule")
+      optimisticStatusUpdate(queryClient, id, "cancelled")
       return { snapshots }
     },
     onSuccess: () => toast.success("Paiement annulé"),
@@ -104,6 +107,9 @@ export function useCancelPayment() {
       })
       toast.error("Erreur", { description: err.message })
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: paymentKeys.all }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: paymentKeys.all })
+      queryClient.invalidateQueries({ queryKey: paymentKeys.summary() })
+    },
   })
 }

@@ -21,7 +21,7 @@ import {
 import { DataError } from "@/components/shared/DataError"
 import { StaffEditModal } from "./StaffEditModal"
 import { StaffProfileTab } from "./tabs/StaffProfileTab"
-import { useStaffMember, useDeleteStaff } from "@/lib/hooks/useStaff"
+import { useStaffMember, useStaffFull, useDeleteStaff } from "@/lib/hooks/useStaff"
 
 // ---------- Main component ----------
 interface StaffDetailClientProps {
@@ -35,6 +35,7 @@ export function StaffDetailClient({ staffId }: StaffDetailClientProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   const { data: staff, isLoading, isError, refetch } = useStaffMember(staffId)
+  const { data: fullData } = useStaffFull(staffId)
   const { mutate: deleteStaff, isPending: deleting } = useDeleteStaff()
 
   const handleDelete = () => {
@@ -112,7 +113,7 @@ export function StaffDetailClient({ staffId }: StaffDetailClientProps) {
         </TabsList>
 
         <TabsContent value="profil">
-          <StaffProfileTab staff={staff} />
+          <StaffProfileTab staff={staff} fullData={fullData} />
         </TabsContent>
       </Tabs>
 

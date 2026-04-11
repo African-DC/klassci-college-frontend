@@ -4,23 +4,19 @@ import { z } from "zod"
 
 export const PaymentMethodSchema = z.enum(["cash", "mobile_money", "bank_transfer", "check"])
 
-export const PaymentStatusSchema = z.enum(["en_attente", "valide", "annule"])
+export const PaymentStatusSchema = z.enum(["pending", "completed", "failed", "refunded", "cancelled"])
 
 export const PaymentSchema = z.object({
   id: z.number(),
-  student_id: z.number(),
-  student_name: z.string(),
-  class_name: z.string(),
-  fee_category_id: z.number(),
-  fee_category_name: z.string(),
+  enrollment_fee_id: z.number(),
   amount: z.number(),
   method: PaymentMethodSchema,
   status: PaymentStatusSchema,
   reference: z.string().nullable(),
-  paid_at: z.string(),
+  notes: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
-})
+}).passthrough()
 
 export const PaymentCreateSchema = z.object({
   enrollment_fee_id: z.number({ required_error: "Le frais d'inscription est requis" }).positive(),

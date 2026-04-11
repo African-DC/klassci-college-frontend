@@ -1,5 +1,6 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
 import { teachersApi } from "@/lib/api/teachers"
 import type { Teacher, TeacherCreate, TeacherUpdate } from "@/lib/contracts/teacher"
 import { createCrudHooks } from "./createCrudHooks"
@@ -23,3 +24,12 @@ export const useTeacher = useDetail
 export const useCreateTeacher = useCreate
 export const useUpdateTeacher = useUpdate
 export const useDeleteTeacher = useDelete
+
+export function useTeacherFull(teacherId: number) {
+  return useQuery({
+    queryKey: ["teachers", teacherId, "full"] as const,
+    queryFn: () => teachersApi.getFull(teacherId),
+    enabled: !!teacherId,
+    staleTime: 1000 * 60 * 5,
+  })
+}

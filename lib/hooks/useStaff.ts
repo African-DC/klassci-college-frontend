@@ -1,5 +1,6 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
 import { staffApi } from "@/lib/api/staff"
 import type { Staff, StaffCreate, StaffUpdate } from "@/lib/contracts/staff"
 import { createCrudHooks } from "./createCrudHooks"
@@ -23,3 +24,12 @@ export const useStaffMember = useDetail
 export const useCreateStaff = useCreate
 export const useUpdateStaff = useUpdate
 export const useDeleteStaff = useDelete
+
+export function useStaffFull(staffId: number) {
+  return useQuery({
+    queryKey: ["staff", staffId, "full"] as const,
+    queryFn: () => staffApi.getFull(staffId),
+    enabled: !!staffId,
+    staleTime: 1000 * 60 * 5,
+  })
+}
