@@ -32,6 +32,8 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
     defaultValues: {
       first_name: "",
       last_name: "",
+      email: "",
+      password: "",
       enrollment_number: "",
       birth_date: "",
       genre: undefined,
@@ -75,6 +77,36 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
                 <FormLabel>Prénom *</FormLabel>
                 <FormControl>
                   <Input placeholder="Ex : Patrick" className="h-11" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email *</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="eleve@ecole.ci" className="h-11" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mot de passe *</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="8 caractères min." className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -14,6 +14,8 @@ export const TeacherSchema = z.object({
 export const TeacherCreateSchema = z.object({
   first_name: z.string({ required_error: "Le prénom est requis" }).min(1, "Le prénom est requis"),
   last_name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
+  email: z.string({ required_error: "L'email est requis" }).email("Email invalide"),
+  password: z.string({ required_error: "Le mot de passe est requis" }).min(8, "8 caractères minimum"),
   speciality: z.string().optional(),
   phone: z.string().optional(),
 })

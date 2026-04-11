@@ -25,6 +25,8 @@ export function TeacherForm({ onSuccess }: TeacherFormProps) {
     defaultValues: {
       first_name: "",
       last_name: "",
+      email: "",
+      password: "",
       speciality: "",
       phone: "",
     },
@@ -67,6 +69,36 @@ export function TeacherForm({ onSuccess }: TeacherFormProps) {
                 <FormLabel>Prénom *</FormLabel>
                 <FormControl>
                   <Input placeholder="Ex : Marie" className="h-11" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email *</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="prof@ecole.ci" className="h-11" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mot de passe *</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="8 caractères min." className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
