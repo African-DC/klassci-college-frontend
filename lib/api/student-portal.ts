@@ -5,10 +5,12 @@ import {
   StudentGradesResponseSchema,
   StudentFeesResponseSchema,
   StudentBulletinSchema,
+  StudentAttendanceResponseSchema,
   type StudentDashboard,
   type StudentGradesResponse,
   type StudentFeesResponse,
   type StudentBulletin,
+  type StudentAttendanceResponse,
 } from "@/lib/contracts/student-portal"
 import {
   TimetableSlotSchema,
@@ -63,5 +65,15 @@ export const studentPortalApi = {
   // Télécharger un bulletin en PDF (via apiFetchBlob centralisé)
   downloadBulletin: async (bulletinId: number): Promise<Blob> => {
     return apiFetchBlob(`/student/bulletins/${bulletinId}/pdf`)
+  },
+
+  // Historique de présence
+  getAttendance: async (params?: { status?: string; page?: number }): Promise<StudentAttendanceResponse> => {
+    const query = new URLSearchParams()
+    if (params?.status) query.set("status", params.status)
+    if (params?.page) query.set("page", String(params.page))
+    const qs = query.toString()
+    const res = await apiFetch<unknown>(`/student/attendance${qs ? `?${qs}` : ""}`)
+    return safeValidate(StudentAttendanceResponseSchema, unwrapResponse(res), "GET /student/attendance")
   },
 }

@@ -3,8 +3,10 @@ import { apiFetch, safeValidate } from "./client"
 import {
   TeacherDashboardSchema,
   TeacherClassSchema,
+  TeacherClassAttendanceStatsSchema,
   type TeacherDashboard,
   type TeacherClass,
+  type TeacherClassAttendanceStats,
 } from "@/lib/contracts/teacher-portal"
 
 const TeacherClassArraySchema = z.array(TeacherClassSchema)
@@ -29,5 +31,11 @@ export const teacherPortalApi = {
     const res = await apiFetch<unknown>("/teacher/classes")
     const arr = Array.isArray(res) ? res : unwrapResponse<TeacherClass[]>(res)
     return safeValidate(TeacherClassArraySchema, arr, "GET /teacher/classes")
+  },
+
+  // Stats de présence pour une classe
+  getClassAttendance: async (classId: number): Promise<TeacherClassAttendanceStats> => {
+    const res = await apiFetch<unknown>(`/teacher/classes/${classId}/attendance`)
+    return safeValidate(TeacherClassAttendanceStatsSchema, unwrapResponse(res), `GET /teacher/classes/${classId}/attendance`)
   },
 }

@@ -44,7 +44,28 @@ export const TeacherDashboardSchema = z.object({
   upcoming_evaluations: z.array(TeacherUpcomingEvalSchema),
 })
 
+// Stats de présence par classe
+export const TeacherStudentAttendanceSummarySchema = z.object({
+  student_id: z.number(),
+  first_name: z.string(),
+  last_name: z.string(),
+  present_count: z.number(),
+  absent_count: z.number(),
+  late_count: z.number(),
+  excused_count: z.number(),
+  attendance_rate: z.number(),
+})
+
+export const TeacherClassAttendanceStatsSchema = z.object({
+  class_id: z.number(),
+  total_sessions: z.number(),
+  attendance_rate: z.number(),
+  students: z.array(TeacherStudentAttendanceSummarySchema),
+})
+
 export type TeacherNextCourse = z.infer<typeof TeacherNextCourseSchema>
 export type TeacherClass = z.infer<typeof TeacherClassSchema>
 export type TeacherUpcomingEval = z.infer<typeof TeacherUpcomingEvalSchema>
 export type TeacherDashboard = z.infer<typeof TeacherDashboardSchema>
+export type TeacherStudentAttendanceSummary = z.infer<typeof TeacherStudentAttendanceSummarySchema>
+export type TeacherClassAttendanceStats = z.infer<typeof TeacherClassAttendanceStatsSchema>

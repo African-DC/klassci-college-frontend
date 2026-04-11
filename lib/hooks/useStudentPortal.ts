@@ -10,6 +10,7 @@ export const studentPortalKeys = {
   timetable: () => ["student-portal", "timetable"] as const,
   fees: () => ["student-portal", "fees"] as const,
   bulletins: () => ["student-portal", "bulletins"] as const,
+  attendance: (params?: unknown) => ["student-portal", "attendance", params] as const,
 }
 
 export function useStudentDashboard() {
@@ -49,5 +50,13 @@ export function useStudentBulletins() {
     queryKey: studentPortalKeys.bulletins(),
     queryFn: () => studentPortalApi.getBulletins(),
     staleTime: 1000 * 60 * 10,
+  })
+}
+
+export function useStudentAttendance(params?: { status?: string; page?: number }) {
+  return useQuery({
+    queryKey: studentPortalKeys.attendance(params),
+    queryFn: () => studentPortalApi.getAttendance(params),
+    staleTime: 1000 * 60 * 5,
   })
 }

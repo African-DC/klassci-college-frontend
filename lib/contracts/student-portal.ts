@@ -86,3 +86,26 @@ export type StudentGradesResponse = z.infer<typeof StudentGradesResponseSchema>
 export type StudentFeeItem = z.infer<typeof StudentFeeItemSchema>
 export type StudentFeesResponse = z.infer<typeof StudentFeesResponseSchema>
 export type StudentBulletin = z.infer<typeof StudentBulletinSchema>
+
+// Historique de présence
+export const StudentAttendanceRecordSchema = z.object({
+  id: z.number(),
+  student_id: z.number(),
+  status: z.string(),
+  time_in: z.string().nullable(),
+  time_out: z.string().nullable(),
+  source: z.string(),
+  notes: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+})
+
+export const StudentAttendanceResponseSchema = z.object({
+  items: z.array(StudentAttendanceRecordSchema),
+  total: z.number(),
+  page: z.number(),
+  size: z.number(),
+})
+
+export type StudentAttendanceRecord = z.infer<typeof StudentAttendanceRecordSchema>
+export type StudentAttendanceResponse = z.infer<typeof StudentAttendanceResponseSchema>
