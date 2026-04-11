@@ -45,6 +45,7 @@ import { DocumentsTab } from "./tabs/DocumentsTab"
 import { useStudent, useDeleteStudent, studentKeys } from "@/lib/hooks/useStudents"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
 import { studentsApi } from "@/lib/api/students"
+import { getUploadUrl } from "@/lib/utils"
 
 // ---------- Main component ----------
 interface StudentDetailClientProps {
@@ -110,7 +111,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
           <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
             <Avatar className="h-20 w-20 text-2xl">
               {(student as Record<string, unknown>).photo_url ? (
-                <AvatarImage src={String((student as Record<string, unknown>).photo_url)} alt={fullName} />
+                <AvatarImage src={getUploadUrl(String((student as Record<string, unknown>).photo_url)) ?? ""} alt={fullName} />
               ) : null}
               <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
                 {initials}

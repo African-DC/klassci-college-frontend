@@ -8,6 +8,7 @@ import type { Student } from "@/lib/contracts/student"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { CrudTable } from "@/components/shared/CrudTable"
+import { getUploadUrl } from "@/lib/utils"
 import { StudentEditModal } from "./StudentEditModal"
 
 export function StudentsTable() {
@@ -33,7 +34,7 @@ export function StudentsTable() {
         return (
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8">
-              {s.photo_url && <AvatarImage src={s.photo_url} alt={`${s.first_name} ${s.last_name}`} />}
+              {s.photo_url && <AvatarImage src={getUploadUrl(s.photo_url) ?? ""} alt={`${s.first_name} ${s.last_name}`} />}
               <AvatarFallback className="text-xs">{initials}</AvatarFallback>
             </Avatar>
             <span className="font-medium">{s.last_name} {s.first_name}</span>

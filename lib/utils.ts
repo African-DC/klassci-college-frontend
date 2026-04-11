@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** Construit l'URL absolue d'un fichier servi par le backend (photos, uploads, etc.) */
+export function getUploadUrl(path: string | null | undefined): string | undefined {
+  if (!path) return undefined
+  if (path.startsWith("http")) return path
+  const base = process.env.NEXT_PUBLIC_API_URL ?? ""
+  return `${base}${path}`
+}
+
 /** Déclenche le téléchargement d'un Blob côté navigateur */
 export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)

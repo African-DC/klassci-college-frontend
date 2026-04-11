@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { getUploadUrl } from "@/lib/utils"
 
 interface StudentDetailHeaderProps {
   student: {
@@ -102,7 +103,7 @@ export function StudentDetailHeader({
           >
             <Avatar className="h-20 w-20 text-2xl">
               {student.photo_url ? (
-                <AvatarImage src={student.photo_url} alt={fullName} />
+                <AvatarImage src={getUploadUrl(student.photo_url) ?? ""} alt={fullName} />
               ) : null}
               <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
                 {initials}
