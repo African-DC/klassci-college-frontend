@@ -23,6 +23,14 @@ export const gradesApi = {
     return safeValidate(EvaluationArraySchema, arr, `/evaluations?class_id=${classId}`)
   },
 
+  listByTeacher: async (teacherId: number): Promise<Evaluation[]> => {
+    const json = await apiFetch<{ data?: Evaluation[] } | Evaluation[]>(
+      `/evaluations?teacher_id=${teacherId}`,
+    )
+    const arr = Array.isArray(json) ? json : json.data ?? []
+    return safeValidate(EvaluationArraySchema, arr, `/evaluations?teacher_id=${teacherId}`)
+  },
+
   getGrades: async (evaluationId: number): Promise<Grade[]> => {
     const json = await apiFetch<Grade[]>(
       `/grades?evaluation_id=${evaluationId}`,

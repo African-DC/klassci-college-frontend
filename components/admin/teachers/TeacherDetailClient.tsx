@@ -10,6 +10,8 @@ import {
   User,
   GraduationCap,
   Phone,
+  FileText,
+  CalendarDays,
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -30,6 +32,8 @@ import { DataError } from "@/components/shared/DataError"
 import { TeacherEditModal } from "./TeacherEditModal"
 import { TeacherProfileTab } from "./tabs/TeacherProfileTab"
 import { TeacherClassesTab } from "./tabs/TeacherClassesTab"
+import { TeacherEvaluationsTab } from "./tabs/TeacherEvaluationsTab"
+import { TeacherTimetableTab } from "./tabs/TeacherTimetableTab"
 import { useTeacher, useTeacherFull, useDeleteTeacher } from "@/lib/hooks/useTeachers"
 
 interface TeacherDetailClientProps {
@@ -119,6 +123,14 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
             <GraduationCap className="mr-1.5 h-3.5 w-3.5" />
             Classes
           </TabsTrigger>
+          <TabsTrigger value="evaluations">
+            <FileText className="mr-1.5 h-3.5 w-3.5" />
+            Évaluations
+          </TabsTrigger>
+          <TabsTrigger value="emploi-du-temps">
+            <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
+            Emploi du temps
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profil">
@@ -127,6 +139,14 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
 
         <TabsContent value="classes">
           <TeacherClassesTab teacherId={teacherId} fullData={fullData} />
+        </TabsContent>
+
+        <TabsContent value="evaluations">
+          <TeacherEvaluationsTab teacherId={teacherId} />
+        </TabsContent>
+
+        <TabsContent value="emploi-du-temps">
+          <TeacherTimetableTab teacherId={teacherId} />
         </TabsContent>
       </Tabs>
 

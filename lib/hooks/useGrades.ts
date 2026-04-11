@@ -13,6 +13,7 @@ import type {
 export const gradeKeys = {
   all: ["grades"] as const,
   evaluations: (classId: number) => ["grades", "evaluations", classId] as const,
+  teacherEvaluations: (teacherId: number) => ["grades", "teacher-evaluations", teacherId] as const,
   grades: (evaluationId: number) => ["grades", "entries", evaluationId] as const,
 }
 
@@ -21,6 +22,15 @@ export function useEvaluations(classId: number) {
     queryKey: gradeKeys.evaluations(classId),
     queryFn: () => gradesApi.listEvaluations(classId),
     enabled: !!classId,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useTeacherEvaluations(teacherId: number) {
+  return useQuery({
+    queryKey: gradeKeys.teacherEvaluations(teacherId),
+    queryFn: () => gradesApi.listByTeacher(teacherId),
+    enabled: !!teacherId,
     staleTime: 1000 * 60 * 5,
   })
 }
