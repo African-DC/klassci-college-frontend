@@ -8,14 +8,14 @@ import {
   Pencil,
   Trash2,
   User,
-  CalendarDays,
+  GraduationCap,
   Phone,
-  BookOpen,
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
 import { TeacherEditModal } from "./TeacherEditModal"
+import { TeacherProfileTab } from "./tabs/TeacherProfileTab"
+import { TeacherClassesTab } from "./tabs/TeacherClassesTab"
 import { useTeacher, useDeleteTeacher } from "@/lib/hooks/useTeachers"
 
 interface TeacherDetailClientProps {
@@ -58,14 +60,6 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
   const initials = `${teacher.first_name?.[0] ?? ""}${teacher.last_name?.[0] ?? ""}`.toUpperCase()
   const fullName = `${teacher.last_name} ${teacher.first_name}`
 
-  const fields = [
-    { label: "Nom", value: teacher.last_name, icon: User },
-    { label: "Pr\u00e9nom", value: teacher.first_name, icon: User },
-    { label: "Sp\u00e9cialit\u00e9", value: teacher.speciality, icon: BookOpen },
-    { label: "T\u00e9l\u00e9phone", value: teacher.phone, icon: Phone },
-    { label: "Cr\u00e9\u00e9 le", value: teacher.created_at ? new Date(teacher.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null, icon: CalendarDays },
-  ]
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -87,8 +81,16 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
 
           <div className="min-w-0">
             <h1 className="font-serif text-2xl tracking-tight">{fullName}</h1>
-            {teacher.speciality && (
-              <p className="mt-1 text-sm text-muted-foreground">{teacher.speciality}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {teacher.speciality ?? "Enseignant"}
+            </p>
+            {teacher.phone && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="text-[10px]">
+                  <Phone className="mr-1 h-3 w-3" />
+                  {teacher.phone}
+                </Badge>
+              </div>
             )}
           </div>
         </div>
@@ -105,19 +107,27 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
         </div>
       </div>
 
-      {/* Info card */}
-      <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="p-6">
-          <div className="grid gap-5 sm:grid-cols-2">
-            {fields.map((f) => (
-              <div key={f.label} className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">{f.label}</p>
-                <p className="text-sm font-medium">{f.value ?? "Non renseign\u00e9"}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabs */}
+      <Tabs defaultValue="profil" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="profil">
+            <User className="mr-1.5 h-3.5 w-3.5" />
+            Profil
+          </TabsTrigger>
+          <TabsTrigger value="classes">
+            <GraduationCap className="mr-1.5 h-3.5 w-3.5" />
+            Classes
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profil">
+          <TeacherProfileTab teacher={teacher} />
+        </TabsContent>
+
+        <TabsContent value="classes">
+          <TeacherClassesTab teacherId={teacherId} />
+        </TabsContent>
+      </Tabs>
 
       {/* Edit modal */}
       <TeacherEditModal teacherId={teacherId} open={editOpen} onClose={() => setEditOpen(false)} />
@@ -128,7 +138,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cet enseignant ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irr\u00e9versible. L&apos;enseignant {fullName} sera d\u00e9finitivement supprim\u00e9.
+              Cette action est irréversible. L&apos;enseignant {fullName} sera définitivement supprimé.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -155,6 +165,7 @@ function DetailSkeleton() {
           <Skeleton className="h-4 w-32" />
         </div>
       </div>
+      <Skeleton className="h-10 w-64 rounded-lg" />
       <Skeleton className="h-48 rounded-lg" />
     </div>
   )

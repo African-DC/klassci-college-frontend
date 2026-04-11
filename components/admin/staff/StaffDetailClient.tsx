@@ -3,11 +3,11 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Pencil, Trash2, User, CalendarDays, Phone, Briefcase } from "lucide-react"
+import { ArrowLeft, Pencil, Trash2, User } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
 import { StaffEditModal } from "./StaffEditModal"
+import { StaffProfileTab } from "./tabs/StaffProfileTab"
 import { useStaffMember, useDeleteStaff } from "@/lib/hooks/useStaff"
 
 // ---------- Main component ----------
@@ -45,19 +46,18 @@ export function StaffDetailClient({ staffId }: StaffDetailClientProps) {
   }
 
   if (isLoading) return <DetailSkeleton />
-  if (isError) return <DataError message="Impossible de charger la fiche du personnel." onRetry={() => refetch()} />
+  if (isError)
+    return (
+      <DataError
+        message="Impossible de charger la fiche du personnel."
+        onRetry={() => refetch()}
+      />
+    )
   if (!staff) return <DataError message="Personnel introuvable." />
 
-  const initials = `${staff.first_name?.[0] ?? ""}${staff.last_name?.[0] ?? ""}`.toUpperCase()
+  const initials =
+    `${staff.first_name?.[0] ?? ""}${staff.last_name?.[0] ?? ""}`.toUpperCase()
   const fullName = `${staff.last_name} ${staff.first_name}`
-
-  const fields = [
-    { label: "Nom", value: staff.last_name, icon: User },
-    { label: "Prénom", value: staff.first_name, icon: User },
-    { label: "Poste", value: staff.position, icon: Briefcase },
-    { label: "Téléphone", value: staff.phone, icon: Phone },
-    { label: "Créé le", value: staff.created_at ? new Date(staff.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null, icon: CalendarDays },
-  ]
 
   return (
     <div className="space-y-6">
@@ -80,9 +80,9 @@ export function StaffDetailClient({ staffId }: StaffDetailClientProps) {
 
           <div className="min-w-0">
             <h1 className="font-serif text-2xl tracking-tight">{fullName}</h1>
-            {staff.position && (
-              <p className="mt-1 text-sm text-muted-foreground">{staff.position}</p>
-            )}
+            <p className="mt-1 text-sm text-muted-foreground">
+              {staff.position ?? "Personnel"}
+            </p>
           </div>
         </div>
 
@@ -91,42 +91,57 @@ export function StaffDetailClient({ staffId }: StaffDetailClientProps) {
             <Pencil className="mr-1.5 h-3.5 w-3.5" />
             Modifier
           </Button>
-          <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setDeleteOpen(true)}
+          >
             <Trash2 className="mr-1.5 h-3.5 w-3.5" />
             Supprimer
           </Button>
         </div>
       </div>
 
-      {/* Info card */}
-      <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="p-6">
-          <div className="grid gap-5 sm:grid-cols-2">
-            {fields.map((f) => (
-              <div key={f.label} className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">{f.label}</p>
-                <p className="text-sm font-medium">{f.value ?? "Non renseigné"}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabs */}
+      <Tabs defaultValue="profil" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="profil">
+            <User className="mr-1.5 h-3.5 w-3.5" />
+            Profil
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profil">
+          <StaffProfileTab staff={staff} />
+        </TabsContent>
+      </Tabs>
 
       {/* Edit modal */}
-      <StaffEditModal staffId={staffId} open={editOpen} onClose={() => setEditOpen(false)} />
+      <StaffEditModal
+        staffId={staffId}
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+      />
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce membre du personnel ?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Supprimer ce membre du personnel ?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. {fullName} sera définitivement supprimé.
+              Cette action est irréversible. {fullName} sera définitivement
+              supprimé.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               {deleting ? "Suppression..." : "Supprimer"}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -148,6 +163,7 @@ function DetailSkeleton() {
           <Skeleton className="h-4 w-32" />
         </div>
       </div>
+      <Skeleton className="h-10 w-40 rounded-lg" />
       <Skeleton className="h-48 rounded-lg" />
     </div>
   )
