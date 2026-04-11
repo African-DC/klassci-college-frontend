@@ -31,13 +31,26 @@ export function StudentsTable() {
       cell: ({ row }) => {
         const s = row.original
         const initials = `${s.first_name?.[0] ?? ""}${s.last_name?.[0] ?? ""}`.toUpperCase()
+        const photoSrc = getUploadUrl(s.photo_url)
         return (
           <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
-              {s.photo_url && <AvatarImage src={getUploadUrl(s.photo_url) ?? ""} alt={`${s.first_name} ${s.last_name}`} />}
-              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-            </Avatar>
-            <span className="font-medium">{s.last_name} {s.first_name}</span>
+            {photoSrc ? (
+              <img
+                src={photoSrc}
+                alt={`${s.first_name} ${s.last_name}`}
+                className="h-10 w-10 shrink-0 rounded-lg object-cover border border-border"
+              />
+            ) : (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 border border-border">
+                <span className="text-xs font-semibold text-primary">{initials}</span>
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="font-medium truncate">{s.last_name} {s.first_name}</p>
+              {s.enrollment_number && (
+                <p className="text-[10px] font-mono text-muted-foreground">{s.enrollment_number}</p>
+              )}
+            </div>
           </div>
         )
       },

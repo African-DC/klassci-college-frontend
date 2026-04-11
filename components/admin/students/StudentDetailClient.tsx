@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
@@ -23,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -59,6 +61,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState(false)
   const [uploading, setUploading] = useState(false)
 
   const { data: student, isLoading, isError, refetch } = useStudent(studentId)
@@ -94,6 +97,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
 
   const initials = `${student.first_name?.[0] ?? ""}${student.last_name?.[0] ?? ""}`.toUpperCase()
   const fullName = `${student.last_name} ${student.first_name}`
+  const photoSrc = getUploadUrl((student as Record<string, unknown>).photo_url as string | null | undefined)
 
   return (
     <div className="space-y-6">
@@ -108,22 +112,37 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
             <ArrowLeft className="h-4 w-4" />
           </Link>
 
-          <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-            <Avatar className="h-20 w-20 text-2xl">
-              {(student as Record<string, unknown>).photo_url ? (
-                <AvatarImage src={getUploadUrl(String((student as Record<string, unknown>).photo_url)) ?? ""} alt={fullName} />
-              ) : null}
-              <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-              {uploading ? (
-                <Clock className="h-5 w-5 text-white animate-spin" />
+          {/* Photo — clic = agrandir, bouton camera = upload */}
+          <div className="relative shrink-0">
+            <div
+              className={`overflow-hidden rounded-2xl border-2 border-border ${photoSrc ? "cursor-pointer" : ""}`}
+              onClick={() => photoSrc && setPhotoPreview(true)}
+            >
+              {photoSrc ? (
+                <img
+                  src={photoSrc}
+                  alt={fullName}
+                  className="h-28 w-28 object-cover"
+                />
               ) : (
-                <Camera className="h-5 w-5 text-white" />
+                <div className="flex h-28 w-28 items-center justify-center bg-primary/10">
+                  <span className="text-3xl font-semibold text-primary">{initials}</span>
+                </div>
               )}
             </div>
+            {/* Bouton camera en bas à droite */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
+            >
+              {uploading ? (
+                <Clock className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Camera className="h-3.5 w-3.5" />
+              )}
+            </button>
             <input
               ref={fileInputRef}
               type="file"
@@ -159,6 +178,35 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
           </Button>
         </div>
       </div>
+
+      {/* Photo preview dialog */}
+      {photoSrc && (
+        <Dialog open={photoPreview} onOpenChange={setPhotoPreview}>
+          <DialogContent className="max-w-md p-2">
+            <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+              <img
+                src={photoSrc}
+                alt={fullName}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="flex items-center justify-between px-2 pb-1">
+              <p className="text-sm font-medium">{fullName}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setPhotoPreview(false)
+                  fileInputRef.current?.click()
+                }}
+              >
+                <Camera className="mr-1.5 h-3.5 w-3.5" />
+                Changer la photo
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
