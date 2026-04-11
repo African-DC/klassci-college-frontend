@@ -48,6 +48,7 @@ interface CrudTableProps<T extends { id: number }> {
   errorMessage: string
   deleteTitle?: string
   deleteDescription?: string
+  onRowClick?: (item: T) => void
   page?: number
   onPageChange?: (page: number) => void
 }
@@ -67,6 +68,7 @@ export function CrudTable<T extends { id: number }>({
   errorMessage,
   deleteTitle = "Confirmer la suppression",
   deleteDescription = "Cette action est irréversible. L'élément sera définitivement supprimé.",
+  onRowClick,
   page,
   onPageChange,
 }: CrudTableProps<T>) {
@@ -87,16 +89,16 @@ export function CrudTable<T extends { id: number }>({
         return (
           <div className="flex items-center justify-end gap-1">
             {renderViewModal && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewId(row.original.id)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setViewId(row.original.id) }}>
                 <Eye className="h-4 w-4" />
                 <span className="sr-only">Voir {label}</span>
               </Button>
             )}
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditId(row.original.id)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setEditId(row.original.id) }}>
               <Pencil className="h-4 w-4" />
               <span className="sr-only">Modifier {label}</span>
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteId(row.original.id)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setDeleteId(row.original.id) }}>
               <Trash2 className="h-4 w-4 text-destructive" />
               <span className="sr-only">Supprimer {label}</span>
             </Button>
@@ -151,7 +153,11 @@ export function CrudTable<T extends { id: number }>({
               </TableRow>
             )}
             {!isLoading && table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                key={row.id}
+                className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
+                onClick={() => onRowClick?.(row.original)}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

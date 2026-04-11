@@ -1,0 +1,453 @@
+"use client"
+
+import { useRef, useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+import {
+  ArrowLeft,
+  Camera,
+  Pencil,
+  Trash2,
+  User,
+  GraduationCap,
+  Wallet,
+  ClipboardCheck,
+  BookOpen,
+  CalendarDays,
+  Clock,
+} from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { DataError } from "@/components/shared/DataError"
+import { StudentEditModal } from "./StudentEditModal"
+import { useStudent, useDeleteStudent, studentKeys } from "@/lib/hooks/useStudents"
+import { useEnrollments } from "@/lib/hooks/useEnrollments"
+import { useStudentAttendance } from "@/lib/hooks/useStudentPortal"
+import { studentsApi } from "@/lib/api/students"
+
+// ---------- Attendance status config ----------
+const ATTENDANCE_STATUS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className?: string }> = {
+  present: { label: "Présent", variant: "default", className: "bg-emerald-600 hover:bg-emerald-600/80" },
+  absent: { label: "Absent", variant: "destructive" },
+  late: { label: "En retard", variant: "secondary", className: "bg-amber-500 text-white hover:bg-amber-500/80" },
+  excused: { label: "Excusé", variant: "outline" },
+}
+
+function getAttendanceConfig(status: string) {
+  return ATTENDANCE_STATUS[status] ?? { label: status, variant: "outline" as const }
+}
+
+// ---------- Main component ----------
+interface StudentDetailClientProps {
+  studentId: number
+}
+
+export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
+  const { data: student, isLoading, isError, refetch } = useStudent(studentId)
+  const { mutate: deleteStudent, isPending: deleting } = useDeleteStudent()
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      await studentsApi.uploadPhoto(studentId, file)
+      queryClient.invalidateQueries({ queryKey: studentKeys.detail(studentId) })
+      toast.success("Photo mise à jour")
+    } catch {
+      toast.error("Erreur lors de l'upload")
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
+
+  const handleDelete = () => {
+    deleteStudent(studentId, {
+      onSuccess: () => {
+        router.push("/admin/students")
+      },
+    })
+  }
+
+  if (isLoading) return <DetailSkeleton />
+  if (isError) return <DataError message="Impossible de charger la fiche élève." onRetry={() => refetch()} />
+  if (!student) return <DataError message="Élève introuvable." />
+
+  const initials = `${student.first_name?.[0] ?? ""}${student.last_name?.[0] ?? ""}`.toUpperCase()
+  const fullName = `${student.last_name} ${student.first_name}`
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-4">
+          <Link
+            href="/admin/students"
+            aria-label="Retour à la liste des élèves"
+            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+
+          <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+            <Avatar className="h-20 w-20 text-2xl">
+              {(student as Record<string, unknown>).photo_url ? (
+                <AvatarImage src={String((student as Record<string, unknown>).photo_url)} alt={fullName} />
+              ) : null}
+              <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+              {uploading ? (
+                <Clock className="h-5 w-5 text-white animate-spin" />
+              ) : (
+                <Camera className="h-5 w-5 text-white" />
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoUpload}
+            />
+          </div>
+
+          <div className="min-w-0">
+            <h1 className="font-serif text-2xl tracking-tight">{fullName}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              {student.enrollment_number && (
+                <span className="font-mono text-xs">{student.enrollment_number}</span>
+              )}
+              {student.genre && (
+                <Badge variant="outline" className="text-[10px]">
+                  {student.genre === "M" ? "Masculin" : "Féminin"}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="mr-1.5 h-3.5 w-3.5" />
+            Modifier
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+            Supprimer
+          </Button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="profil" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="profil">
+            <User className="mr-1.5 h-3.5 w-3.5" />
+            Profil
+          </TabsTrigger>
+          <TabsTrigger value="inscription">
+            <GraduationCap className="mr-1.5 h-3.5 w-3.5" />
+            Inscription
+          </TabsTrigger>
+          <TabsTrigger value="paiements">
+            <Wallet className="mr-1.5 h-3.5 w-3.5" />
+            Paiements
+          </TabsTrigger>
+          <TabsTrigger value="presences">
+            <ClipboardCheck className="mr-1.5 h-3.5 w-3.5" />
+            Présences
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profil">
+          <ProfileTab student={student} />
+        </TabsContent>
+
+        <TabsContent value="inscription">
+          <EnrollmentTab studentId={studentId} />
+        </TabsContent>
+
+        <TabsContent value="paiements">
+          <PaymentsTab />
+        </TabsContent>
+
+        <TabsContent value="presences">
+          <AttendanceTab />
+        </TabsContent>
+      </Tabs>
+
+      {/* Edit modal */}
+      <StudentEditModal studentId={studentId} open={editOpen} onClose={() => setEditOpen(false)} />
+
+      {/* Delete confirmation */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cet élève ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. L&apos;élève {fullName} sera définitivement supprimé.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? "Suppression..." : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
+
+// ---------- Profile tab ----------
+function ProfileTab({ student }: { student: { first_name: string; last_name: string; birth_date?: string | null; genre?: string | null; enrollment_number?: string | null; created_at?: string } }) {
+  const fields = [
+    { label: "Nom", value: student.last_name, icon: User },
+    { label: "Prénom", value: student.first_name, icon: User },
+    { label: "Date de naissance", value: student.birth_date ? new Date(student.birth_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null, icon: CalendarDays },
+    { label: "Genre", value: student.genre === "M" ? "Masculin" : student.genre === "F" ? "Féminin" : null, icon: User },
+    { label: "Matricule", value: student.enrollment_number, icon: BookOpen },
+    { label: "Créé le", value: student.created_at ? new Date(student.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null, icon: CalendarDays },
+  ]
+
+  return (
+    <Card className="border-0 shadow-sm ring-1 ring-border">
+      <CardContent className="p-6">
+        <div className="grid gap-5 sm:grid-cols-2">
+          {fields.map((f) => (
+            <div key={f.label} className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">{f.label}</p>
+              <p className="text-sm font-medium">{f.value ?? "Non renseigné"}</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ---------- Enrollment tab ----------
+function EnrollmentTab({ studentId }: { studentId: number }) {
+  const { data, isLoading, isError, refetch } = useEnrollments({ student_id: studentId })
+
+  if (isLoading) return <TabSkeleton />
+  if (isError) return <DataError message="Impossible de charger les inscriptions." onRetry={() => refetch()} />
+
+  const enrollments = data?.items ?? []
+  if (enrollments.length === 0) {
+    return <EmptyState icon={GraduationCap} message="Aucune inscription enregistrée." />
+  }
+
+  return (
+    <div className="space-y-3">
+      {enrollments.map((enrollment) => (
+        <Card key={enrollment.id} className="border-0 shadow-sm ring-1 ring-border">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">
+                  {(enrollment as Record<string, unknown>).class_name
+                    ? String((enrollment as Record<string, unknown>).class_name)
+                    : `Classe #${(enrollment as Record<string, unknown>).class_id ?? "?"}`}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {(enrollment as Record<string, unknown>).academic_year_name
+                    ? String((enrollment as Record<string, unknown>).academic_year_name)
+                    : `Année #${(enrollment as Record<string, unknown>).academic_year_id ?? "?"}`}
+                </p>
+              </div>
+              <Badge
+                variant={
+                  (enrollment as Record<string, unknown>).status === "active" ? "default" :
+                  (enrollment as Record<string, unknown>).status === "completed" ? "secondary" :
+                  "outline"
+                }
+                className="text-[10px]"
+              >
+                {(enrollment as Record<string, unknown>).status === "active"
+                  ? "Actif"
+                  : (enrollment as Record<string, unknown>).status === "completed"
+                    ? "Terminé"
+                    : String((enrollment as Record<string, unknown>).status ?? "Inconnu")}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+// ---------- Payments tab (placeholder — needs enrollment-scoped data) ----------
+function PaymentsTab() {
+  return <EmptyState icon={Wallet} message="Les données de paiement seront disponibles prochainement." />
+}
+
+// ---------- Attendance tab ----------
+function AttendanceTab() {
+  const { data, isLoading, isError, refetch } = useStudentAttendance()
+
+  if (isLoading) return <TabSkeleton />
+  if (isError) return <DataError message="Impossible de charger les présences." onRetry={() => refetch()} />
+
+  const records = data?.items ?? []
+  if (records.length === 0) {
+    return <EmptyState icon={ClipboardCheck} message="Aucun enregistrement de présence." />
+  }
+
+  // Summary counts
+  const counts = records.reduce(
+    (acc, r) => {
+      if (r.status === "present") acc.present++
+      else if (r.status === "absent") acc.absent++
+      else if (r.status === "late") acc.late++
+      return acc
+    },
+    { present: 0, absent: 0, late: 0 },
+  )
+
+  return (
+    <div className="space-y-4">
+      {/* Stats summary */}
+      <div className="grid grid-cols-3 gap-3">
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardContent className="p-3 text-center">
+            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{counts.present}</p>
+            <p className="text-[10px] text-muted-foreground">Présent</p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardContent className="p-3 text-center">
+            <p className="text-sm font-bold text-destructive">{counts.absent}</p>
+            <p className="text-[10px] text-muted-foreground">Absent</p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardContent className="p-3 text-center">
+            <p className="text-sm font-bold text-amber-500">{counts.late}</p>
+            <p className="text-[10px] text-muted-foreground">En retard</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent records table */}
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Heure d&apos;arrivée</TableHead>
+              <TableHead>Notes</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {records.map((record) => {
+              const config = getAttendanceConfig(record.status)
+              return (
+                <TableRow key={record.id}>
+                  <TableCell className="text-sm">
+                    {new Date(record.created_at).toLocaleDateString("fr-FR", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={config.variant} className={`text-[10px] ${config.className ?? ""}`}>
+                      {config.label}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {record.time_in ?? "\u2014"}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                    {record.notes ?? "\u2014"}
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  )
+}
+
+// ---------- Shared empty state ----------
+function EmptyState({ icon: Icon, message }: { icon: React.ComponentType<{ className?: string }>; message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted mb-3">
+        <Icon className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
+  )
+}
+
+// ---------- Skeletons ----------
+function DetailSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start gap-4">
+        <Skeleton className="h-8 w-8 rounded-md" />
+        <Skeleton className="h-20 w-20 rounded-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+      <Skeleton className="h-10 w-80 rounded-lg" />
+      <Skeleton className="h-48 rounded-lg" />
+    </div>
+  )
+}
+
+function TabSkeleton() {
+  return (
+    <div className="space-y-3">
+      <Skeleton className="h-16 rounded-lg" />
+      <Skeleton className="h-16 rounded-lg" />
+      <Skeleton className="h-16 rounded-lg" />
+    </div>
+  )
+}

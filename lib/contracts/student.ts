@@ -7,6 +7,7 @@ export const StudentSchema = z.object({
   birth_date: z.string().nullish(),
   genre: z.enum(["M", "F"]).nullish(),
   enrollment_number: z.string().nullish(),
+  photo_url: z.string().nullable().optional(),
   user_id: z.number().nullable(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),

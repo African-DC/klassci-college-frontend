@@ -1,15 +1,17 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useStudents, useDeleteStudent } from "@/lib/hooks/useStudents"
 import type { Student } from "@/lib/contracts/student"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { StudentEditModal } from "./StudentEditModal"
-import { StudentViewModal } from "./StudentViewModal"
 
 export function StudentsTable() {
+  const router = useRouter()
   const [page, setPage] = useState(1)
   const { data, isLoading, isError, error, refetch } = useStudents({ page })
   const deleteMutation = useDeleteStudent()
@@ -25,11 +27,19 @@ export function StudentsTable() {
     {
       accessorKey: "last_name",
       header: "Nom",
-      cell: ({ row }) => (
-        <span className="font-medium">
-          {row.original.last_name} {row.original.first_name}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const s = row.original
+        const initials = `${s.first_name?.[0] ?? ""}${s.last_name?.[0] ?? ""}`.toUpperCase()
+        return (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              {s.photo_url && <AvatarImage src={s.photo_url} alt={`${s.first_name} ${s.last_name}`} />}
+              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+            </Avatar>
+            <span className="font-medium">{s.last_name} {s.first_name}</span>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "genre",
@@ -51,9 +61,7 @@ export function StudentsTable() {
       error={error}
       refetch={refetch}
       deleteMutation={deleteMutation}
-      renderViewModal={({ itemId, open, onClose }) => (
-        <StudentViewModal studentId={itemId} open={open} onClose={onClose} />
-      )}
+      onRowClick={(item) => router.push(`/admin/students/${item.id}`)}
       renderEditModal={({ itemId, open, onClose }) => (
         <StudentEditModal studentId={itemId} open={open} onClose={onClose} />
       )}
