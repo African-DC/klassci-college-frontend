@@ -23,10 +23,10 @@ import { useStudentAttendance } from "@/lib/hooks/useStudentPortal"
 import { DataError } from "@/components/shared/DataError"
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className?: string }> = {
-  present: { label: "Pr\u00e9sent", variant: "default", className: "bg-emerald-600 hover:bg-emerald-600/80" },
+  present: { label: "Présent", variant: "default", className: "bg-emerald-600 hover:bg-emerald-600/80" },
   absent: { label: "Absent", variant: "destructive" },
   late: { label: "En retard", variant: "secondary", className: "bg-amber-500 text-white hover:bg-amber-500/80" },
-  excused: { label: "Excus\u00e9", variant: "outline" },
+  excused: { label: "Excusé", variant: "outline" },
 }
 
 function getStatusConfig(status: string) {
@@ -49,8 +49,8 @@ export function StudentAttendanceClient() {
           <ClipboardCheck className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="font-serif text-xl tracking-tight">Pr\u00e9sences</h1>
-          <p className="text-sm text-muted-foreground">Historique de pr\u00e9sence</p>
+          <h1 className="font-serif text-xl tracking-tight">Présences</h1>
+          <p className="text-sm text-muted-foreground">Historique de présence</p>
         </div>
       </div>
 
@@ -68,10 +68,10 @@ export function StudentAttendanceClient() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les statuts</SelectItem>
-            <SelectItem value="present">Pr\u00e9sent</SelectItem>
+            <SelectItem value="present">Présent</SelectItem>
             <SelectItem value="absent">Absent</SelectItem>
             <SelectItem value="late">En retard</SelectItem>
-            <SelectItem value="excused">Excus\u00e9</SelectItem>
+            <SelectItem value="excused">Excusé</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -79,10 +79,10 @@ export function StudentAttendanceClient() {
       {isLoading ? (
         <AttendanceSkeleton />
       ) : isError ? (
-        <DataError message="Impossible de charger l'historique de pr\u00e9sence." onRetry={() => refetch()} />
+        <DataError message="Impossible de charger les présences." onRetry={() => refetch()} />
       ) : !data || data.items.length === 0 ? (
         <div className="py-12 text-center text-sm text-muted-foreground">
-          Aucun enregistrement de pr\u00e9sence.
+          Aucun enregistrement de présence.
         </div>
       ) : (
         <>
@@ -92,7 +92,7 @@ export function StudentAttendanceClient() {
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead>Heure d&apos;arriv\u00e9e</TableHead>
+                  <TableHead>Heure d&apos;arrivée</TableHead>
                   <TableHead>Notes</TableHead>
                 </TableRow>
               </TableHeader>
@@ -115,15 +115,10 @@ export function StudentAttendanceClient() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {record.time_in
-                          ? new Date(record.time_in).toLocaleTimeString("fr-FR", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "\u2014"}
+                        {record.time_in ?? "—"}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                        {record.notes ?? "\u2014"}
+                        {record.notes ?? "—"}
                       </TableCell>
                     </TableRow>
                   )
@@ -144,7 +139,7 @@ export function StudentAttendanceClient() {
                   disabled={data.page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  Pr\u00e9c\u00e9dent
+                  Précédent
                 </button>
                 <button
                   className="px-3 py-1.5 rounded-md border text-sm disabled:opacity-50"
