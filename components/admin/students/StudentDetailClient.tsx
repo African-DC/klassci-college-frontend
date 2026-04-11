@@ -46,7 +46,7 @@ import { DataError } from "@/components/shared/DataError"
 import { StudentEditModal } from "./StudentEditModal"
 import { useStudent, useDeleteStudent, studentKeys } from "@/lib/hooks/useStudents"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
-import { useStudentAttendance } from "@/lib/hooks/useStudentPortal"
+import { useStudentAttendance } from "@/lib/hooks/useAttendance"
 import { studentsApi } from "@/lib/api/students"
 
 // ---------- Attendance status config ----------
@@ -175,15 +175,19 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="profil" className="space-y-4">
+      <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="overview">
+            <BookOpen className="mr-1.5 h-3.5 w-3.5" />
+            Vue d&apos;ensemble
+          </TabsTrigger>
           <TabsTrigger value="profil">
             <User className="mr-1.5 h-3.5 w-3.5" />
             Profil
           </TabsTrigger>
           <TabsTrigger value="inscription">
             <GraduationCap className="mr-1.5 h-3.5 w-3.5" />
-            Inscription
+            Inscriptions
           </TabsTrigger>
           <TabsTrigger value="paiements">
             <Wallet className="mr-1.5 h-3.5 w-3.5" />
@@ -194,6 +198,10 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
             Présences
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="overview">
+          <OverviewTab studentId={studentId} student={student} />
+        </TabsContent>
 
         <TabsContent value="profil">
           <ProfileTab student={student} />
@@ -208,7 +216,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         </TabsContent>
 
         <TabsContent value="presences">
-          <AttendanceTab />
+          <AttendanceTab studentId={studentId} />
         </TabsContent>
       </Tabs>
 
@@ -236,6 +244,111 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
   )
 }
 
+// ---------- Overview tab ----------
+function OverviewTab({ studentId, student }: { studentId: number; student: { first_name: string; last_name: string; genre?: string | null; enrollment_number?: string | null; birth_date?: string | null } }) {
+  const { data: enrollmentsData, isLoading } = useEnrollments({ student_id: studentId })
+  const enrollments = enrollmentsData?.items ?? []
+
+  // Find the most recent enrollment (likely current year)
+  const current = enrollments[0] as Record<string, unknown> | undefined
+
+  if (isLoading) return <TabSkeleton />
+
+  return (
+    <div className="space-y-4">
+      {/* KPI cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <GraduationCap className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Classe</p>
+                <p className="text-sm font-semibold">
+                  {current?.class_name ? String(current.class_name) : "Non inscrit"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <CalendarDays className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Année scolaire</p>
+                <p className="text-sm font-semibold">
+                  {current?.academic_year_name ? String(current.academic_year_name) : "—"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                <ClipboardCheck className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Statut</p>
+                <p className="text-sm font-semibold">
+                  {current?.status === "valide" ? "Validé" : current?.status === "en_validation" ? "En validation" : current?.status === "prospect" ? "Prospect" : current?.status ? String(current.status) : "—"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <BookOpen className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Matricule</p>
+                <p className="text-sm font-semibold font-mono">
+                  {student.enrollment_number ?? "Non attribué"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Personal info summary */}
+      <Card className="border-0 shadow-sm ring-1 ring-border">
+        <CardContent className="p-6">
+          <h3 className="text-sm font-medium text-muted-foreground mb-4">Informations personnelles</h3>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Nom complet</p>
+              <p className="text-sm font-medium">{student.last_name} {student.first_name}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Genre</p>
+              <p className="text-sm font-medium">{student.genre === "M" ? "Masculin" : student.genre === "F" ? "Féminin" : "Non renseigné"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Date de naissance</p>
+              <p className="text-sm font-medium">
+                {student.birth_date ? new Date(student.birth_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "Non renseigné"}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 // ---------- Profile tab ----------
 function ProfileTab({ student }: { student: { first_name: string; last_name: string; birth_date?: string | null; genre?: string | null; enrollment_number?: string | null; created_at?: string } }) {
   const fields = [
@@ -244,7 +357,6 @@ function ProfileTab({ student }: { student: { first_name: string; last_name: str
     { label: "Date de naissance", value: student.birth_date ? new Date(student.birth_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null, icon: CalendarDays },
     { label: "Genre", value: student.genre === "M" ? "Masculin" : student.genre === "F" ? "Féminin" : null, icon: User },
     { label: "Matricule", value: student.enrollment_number, icon: BookOpen },
-    { label: "Créé le", value: student.created_at ? new Date(student.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null, icon: CalendarDays },
   ]
 
   return (
@@ -321,8 +433,8 @@ function PaymentsTab() {
 }
 
 // ---------- Attendance tab ----------
-function AttendanceTab() {
-  const { data, isLoading, isError, refetch } = useStudentAttendance()
+function AttendanceTab({ studentId }: { studentId: number }) {
+  const { data, isLoading, isError, refetch } = useStudentAttendance(studentId)
 
   if (isLoading) return <TabSkeleton />
   if (isError) return <DataError message="Impossible de charger les présences." onRetry={() => refetch()} />
