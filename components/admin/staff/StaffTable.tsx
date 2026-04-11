@@ -1,14 +1,16 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useStaffList, useDeleteStaff } from "@/lib/hooks/useStaff"
 import type { Staff } from "@/lib/contracts/staff"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { StaffEditModal } from "./StaffEditModal"
-import { StaffViewModal } from "./StaffViewModal"
 
 export function StaffTable() {
+  const router = useRouter()
   const [page, setPage] = useState(1)
   const { data, isLoading, isError, error, refetch } = useStaffList({ page })
   const deleteMutation = useDeleteStaff()
@@ -17,11 +19,18 @@ export function StaffTable() {
     {
       accessorKey: "last_name",
       header: "Nom",
-      cell: ({ row }) => (
-        <span className="font-medium">
-          {row.original.last_name} {row.original.first_name}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const s = row.original
+        const initials = `${s.first_name?.[0] ?? ""}${s.last_name?.[0] ?? ""}`.toUpperCase()
+        return (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+            </Avatar>
+            <span>{s.last_name} {s.first_name}</span>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "phone",
@@ -48,9 +57,7 @@ export function StaffTable() {
       error={error}
       refetch={refetch}
       deleteMutation={deleteMutation}
-      renderViewModal={({ itemId, open, onClose }) => (
-        <StaffViewModal staffId={itemId} open={open} onClose={onClose} />
-      )}
+      onRowClick={(item) => router.push(`/admin/staff/${item.id}`)}
       renderEditModal={({ itemId, open, onClose }) => (
         <StaffEditModal staffId={itemId} open={open} onClose={onClose} />
       )}

@@ -1,14 +1,16 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useTeachers, useDeleteTeacher } from "@/lib/hooks/useTeachers"
 import type { Teacher } from "@/lib/contracts/teacher"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { TeacherEditModal } from "./TeacherEditModal"
-import { TeacherViewModal } from "./TeacherViewModal"
 
 export function TeachersTable() {
+  const router = useRouter()
   const [page, setPage] = useState(1)
   const { data, isLoading, isError, error, refetch } = useTeachers({ page })
   const deleteMutation = useDeleteTeacher()
@@ -17,11 +19,18 @@ export function TeachersTable() {
     {
       accessorKey: "last_name",
       header: "Nom",
-      cell: ({ row }) => (
-        <span className="font-medium">
-          {row.original.last_name} {row.original.first_name}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const t = row.original
+        const initials = `${t.first_name?.[0] ?? ""}${t.last_name?.[0] ?? ""}`.toUpperCase()
+        return (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+            </Avatar>
+            <span className="font-medium">{t.last_name} {t.first_name}</span>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "speciality",
@@ -48,9 +57,7 @@ export function TeachersTable() {
       error={error}
       refetch={refetch}
       deleteMutation={deleteMutation}
-      renderViewModal={({ itemId, open, onClose }) => (
-        <TeacherViewModal teacherId={itemId} open={open} onClose={onClose} />
-      )}
+      onRowClick={(item) => router.push(`/admin/teachers/${item.id}`)}
       renderEditModal={({ itemId, open, onClose }) => (
         <TeacherEditModal teacherId={itemId} open={open} onClose={onClose} />
       )}

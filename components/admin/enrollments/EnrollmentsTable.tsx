@@ -1,13 +1,13 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useEnrollments, useDeleteEnrollment } from "@/lib/hooks/useEnrollments"
 import type { Enrollment, EnrollmentListParams } from "@/lib/contracts/enrollment"
 import { Badge } from "@/components/ui/badge"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { EnrollmentEditModal } from "./EnrollmentEditModal"
-import { EnrollmentViewModal } from "./EnrollmentViewModal"
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   prospect: { label: "Prospect", variant: "outline" },
@@ -22,6 +22,7 @@ interface EnrollmentsTableProps {
 }
 
 export function EnrollmentsTable({ filters = {} }: EnrollmentsTableProps) {
+  const router = useRouter()
   const [page, setPage] = useState(1)
   const { data, isLoading, isError, error, refetch } = useEnrollments({ ...filters, page })
   const deleteMutation = useDeleteEnrollment()
@@ -81,9 +82,7 @@ export function EnrollmentsTable({ filters = {} }: EnrollmentsTableProps) {
       error={error}
       refetch={refetch}
       deleteMutation={deleteMutation}
-      renderViewModal={({ itemId, open, onClose }) => (
-        <EnrollmentViewModal enrollmentId={itemId} open={open} onClose={onClose} />
-      )}
+      onRowClick={(item) => router.push(`/admin/enrollments/${item.id}`)}
       renderEditModal={({ itemId, open, onClose }) => (
         <EnrollmentEditModal enrollmentId={itemId} open={open} onClose={onClose} />
       )}
