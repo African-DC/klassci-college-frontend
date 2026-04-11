@@ -101,7 +101,7 @@ export function EnrollmentTab({ studentId }: EnrollmentTabProps) {
       )}
 
       {/* Enrollment cards */}
-      <div className="space-y-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         {filtered.map((enrollment) => {
           const e = enrollment as Record<string, unknown>
           const status = String(e.status ?? "")
@@ -116,15 +116,18 @@ export function EnrollmentTab({ studentId }: EnrollmentTabProps) {
 
           return (
             <Link key={enrollment.id} href={`/admin/enrollments/${enrollment.id}`}>
-              <Card className="border-0 shadow-sm ring-1 ring-border cursor-pointer hover:bg-muted/50 transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">
-                        {e.class_name ? String(e.class_name) : `Classe #${e.class_id ?? "?"}`}
-                      </p>
+              <Card className="border-0 shadow-sm ring-1 ring-border cursor-pointer hover:ring-primary/40 hover:shadow-md transition-all h-full">
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1.5 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-primary shrink-0" />
+                        <p className="text-sm font-semibold truncate">
+                          {e.class_name ? String(e.class_name) : `Classe #${e.class_id ?? "?"}`}
+                        </p>
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        {e.academic_year_name ? String(e.academic_year_name) : `Annee #${e.academic_year_id ?? "?"}`}
+                        {e.academic_year_name ? String(e.academic_year_name) : `Année #${e.academic_year_id ?? "?"}`}
                       </p>
                       {createdAt && (
                         <p className="text-[10px] text-muted-foreground/70">
@@ -132,7 +135,7 @@ export function EnrollmentTab({ studentId }: EnrollmentTabProps) {
                         </p>
                       )}
                     </div>
-                    <Badge variant={sc.variant} className={`text-[10px] ${sc.className ?? ""}`}>
+                    <Badge variant={sc.variant} className={`text-[10px] shrink-0 ${sc.className ?? ""}`}>
                       {sc.label}
                     </Badge>
                   </div>

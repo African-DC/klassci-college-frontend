@@ -56,7 +56,7 @@ export function createCrudHooks<
         // Ajout optimiste avec un id temporaire négatif
         const optimisticItem = { ...newData, id: -Date.now() } as unknown as T
         for (const [key, old] of queries) {
-          if (!old) continue
+          if (!old?.items) continue
           queryClient.setQueryData(key, {
             ...old,
             total: old.total + 1,
@@ -98,7 +98,7 @@ export function createCrudHooks<
           queryClient.setQueryData(keys.detail(id), { ...previousDetail, ...newData })
         }
         for (const [key, old] of queries) {
-          if (!old) continue
+          if (!old?.items) continue
           queryClient.setQueryData(key, {
             ...old,
             items: old.items.map((s) => (s.id === id ? { ...s, ...newData } : s)),
@@ -138,7 +138,7 @@ export function createCrudHooks<
         })
         const previous = new Map(queries)
         for (const [key, old] of queries) {
-          if (!old) continue
+          if (!old?.items) continue
           queryClient.setQueryData(key, {
             ...old,
             total: old.total - 1,

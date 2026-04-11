@@ -1,6 +1,6 @@
 "use client"
 
-import { User, CalendarDays, BookOpen, Mail, KeyRound, Shield } from "lucide-react"
+import { User, CalendarDays, BookOpen, Mail, KeyRound, Shield, UserPlus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -18,7 +18,7 @@ function InfoField({ label, value, icon: Icon }: { label: string; value: string 
         <Icon className="h-3.5 w-3.5 text-muted-foreground" />
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
       </div>
-      <p className="text-sm font-medium">{value ?? "Non renseigne"}</p>
+      <p className="text-sm font-medium">{value ?? "Non renseigné"}</p>
     </div>
   )
 }
@@ -32,12 +32,13 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
       })
     : null
 
-  const genre = student.genre === "M" ? "Masculin" : student.genre === "F" ? "Feminin" : null
+  const genre = student.genre === "M" ? "Masculin" : student.genre === "F" ? "Féminin" : null
 
   const userEmail = fullData.user_email ? String(fullData.user_email) : null
   const isActive = fullData.is_active === true
   const lastLogin = fullData.last_login ? String(fullData.last_login) : null
   const userCreatedAt = fullData.user_created_at ? String(fullData.user_created_at) : (student.created_at ?? null)
+  const hasUserAccount = !!student.user_id
 
   return (
     <div className="space-y-4">
@@ -47,7 +48,7 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
           <h3 className="text-sm font-medium text-muted-foreground mb-4">Informations personnelles</h3>
           <div className="grid gap-5 sm:grid-cols-3">
             <InfoField label="Nom" value={student.last_name} icon={User} />
-            <InfoField label="Prenom" value={student.first_name} icon={User} />
+            <InfoField label="Prénom" value={student.first_name} icon={User} />
             <InfoField label="Date de naissance" value={birthDate} icon={CalendarDays} />
             <InfoField label="Genre" value={genre} icon={User} />
             <InfoField label="Matricule" value={student.enrollment_number} icon={BookOpen} />
@@ -57,62 +58,78 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
       </Card>
 
       {/* Compte utilisateur */}
-      {student.user_id && (
-        <Card className="border-0 shadow-sm ring-1 ring-border">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-muted-foreground">Compte utilisateur</h3>
-              <Badge
-                variant={isActive ? "default" : "destructive"}
-                className={isActive ? "bg-emerald-600 hover:bg-emerald-600/80 text-[10px]" : "text-[10px]"}
-              >
-                {isActive ? "Actif" : "Inactif"}
-              </Badge>
-            </div>
-            <div className="grid gap-5 sm:grid-cols-3">
-              <InfoField
-                label="Email de connexion"
-                value={userEmail}
-                icon={Mail}
-              />
-              <InfoField
-                label="Derniere connexion"
-                value={
-                  lastLogin
-                    ? new Date(lastLogin).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : "Jamais connecte"
-                }
-                icon={Shield}
-              />
-              <InfoField
-                label="Compte cree"
-                value={
-                  userCreatedAt
-                    ? new Date(userCreatedAt).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })
-                    : null
-                }
-                icon={KeyRound}
-              />
-            </div>
-            <div className="mt-4">
-              <Button variant="outline" size="sm" disabled>
-                <KeyRound className="mr-1.5 h-3.5 w-3.5" />
-                Reinitialiser le mot de passe
+      <Card className="border-0 shadow-sm ring-1 ring-border">
+        <CardContent className="p-6">
+          {hasUserAccount ? (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-muted-foreground">Compte utilisateur</h3>
+                <Badge
+                  variant={isActive ? "default" : "destructive"}
+                  className={isActive ? "bg-emerald-600 hover:bg-emerald-600/80 text-[10px]" : "text-[10px]"}
+                >
+                  {isActive ? "Actif" : "Inactif"}
+                </Badge>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-3">
+                <InfoField
+                  label="Email de connexion"
+                  value={userEmail}
+                  icon={Mail}
+                />
+                <InfoField
+                  label="Dernière connexion"
+                  value={
+                    lastLogin
+                      ? new Date(lastLogin).toLocaleDateString("fr-FR", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "Jamais connecté"
+                  }
+                  icon={Shield}
+                />
+                <InfoField
+                  label="Compte créé"
+                  value={
+                    userCreatedAt
+                      ? new Date(userCreatedAt).toLocaleDateString("fr-FR", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })
+                      : null
+                  }
+                  icon={KeyRound}
+                />
+              </div>
+              <div className="mt-4">
+                <Button variant="outline" size="sm" disabled>
+                  <KeyRound className="mr-1.5 h-3.5 w-3.5" />
+                  Réinitialiser le mot de passe
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30 mb-3">
+                <UserPlus className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              </div>
+              <h3 className="text-sm font-medium mb-1">Aucun compte utilisateur</h3>
+              <p className="text-xs text-muted-foreground mb-4 max-w-sm">
+                Cet élève n&apos;a pas encore de compte pour se connecter au portail étudiant.
+              </p>
+              <Button variant="default" size="sm" disabled>
+                <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                Créer un compte
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

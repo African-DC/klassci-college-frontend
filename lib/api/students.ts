@@ -29,4 +29,15 @@ export const studentsApi = {
     if (!res.ok) throw new Error("Upload failed")
     return res.json()
   },
+
+  deletePhoto: async (studentId: number): Promise<void> => {
+    const session = await getSession()
+    const res = await fetch(`${getBaseUrl()}/admin/students/${studentId}/photo`, {
+      method: "DELETE",
+      headers: {
+        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
+      },
+    })
+    if (!res.ok) throw new Error("Erreur lors de la suppression de la photo")
+  },
 }

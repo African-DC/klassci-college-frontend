@@ -83,6 +83,18 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
     }
   }
 
+  const handleDeletePhoto = async () => {
+    try {
+      await studentsApi.deletePhoto(studentId)
+      queryClient.invalidateQueries({ queryKey: studentKeys.detail(studentId) })
+      queryClient.invalidateQueries({ queryKey: studentKeys.all })
+      setPhotoPreview(false)
+      toast.success("Photo supprimée")
+    } catch {
+      toast.error("Erreur lors de la suppression de la photo")
+    }
+  }
+
   const handleDelete = () => {
     deleteStudent(studentId, {
       onSuccess: () => {
@@ -192,17 +204,27 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
             </div>
             <div className="flex items-center justify-between px-2 pb-1">
               <p className="text-sm font-medium">{fullName}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setPhotoPreview(false)
-                  fileInputRef.current?.click()
-                }}
-              >
-                <Camera className="mr-1.5 h-3.5 w-3.5" />
-                Changer la photo
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setPhotoPreview(false)
+                    fileInputRef.current?.click()
+                  }}
+                >
+                  <Camera className="mr-1.5 h-3.5 w-3.5" />
+                  Changer
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeletePhoto}
+                >
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                  Supprimer
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
