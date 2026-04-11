@@ -2,7 +2,6 @@
 
 import {
   GraduationCap,
-  BookOpen,
   CalendarDays,
   FileText,
   ClipboardCheck,
@@ -15,9 +14,9 @@ import type { Enrollment } from "@/lib/contracts/enrollment"
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   prospect: { label: "Prospect", variant: "outline" },
   en_validation: { label: "En validation", variant: "secondary" },
-  valide: { label: "Valid\u00e9", variant: "default" },
-  rejete: { label: "Rejet\u00e9", variant: "destructive" },
-  annule: { label: "Annul\u00e9", variant: "destructive" },
+  valide: { label: "Validé", variant: "default" },
+  rejete: { label: "Rejeté", variant: "destructive" },
+  annule: { label: "Annulé", variant: "destructive" },
 }
 
 interface EnrollmentOverviewTabProps {
@@ -25,15 +24,14 @@ interface EnrollmentOverviewTabProps {
 }
 
 export function EnrollmentOverviewTab({ enrollment }: EnrollmentOverviewTabProps) {
-  const e = enrollment as Record<string, unknown>
   const status = statusConfig[enrollment.status] ?? { label: enrollment.status, variant: "outline" as const }
 
   const studentName = [enrollment.student_first_name, enrollment.student_last_name]
     .filter(Boolean)
-    .join(" ") || "Non renseign\u00e9"
+    .join(" ") || "Non renseigné"
 
-  const className = enrollment.class_name ?? "Non renseign\u00e9"
-  const academicYear = enrollment.academic_year_name ?? "Non renseign\u00e9"
+  const className = enrollment.class_name ?? "Non renseigné"
+  const academicYear = enrollment.academic_year_name ?? "Non renseigné"
 
   const createdAt = enrollment.created_at
     ? new Date(enrollment.created_at).toLocaleDateString("fr-FR", {
@@ -41,7 +39,7 @@ export function EnrollmentOverviewTab({ enrollment }: EnrollmentOverviewTabProps
         month: "long",
         year: "numeric",
       })
-    : "Non renseign\u00e9"
+    : "Non renseigné"
 
   return (
     <div className="space-y-4">
@@ -54,7 +52,7 @@ export function EnrollmentOverviewTab({ enrollment }: EnrollmentOverviewTabProps
                 <User className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">\u00c9l\u00e8ve</p>
+                <p className="text-xs text-muted-foreground">Élève</p>
                 <p className="text-sm font-semibold">{studentName}</p>
               </div>
             </div>
@@ -82,7 +80,7 @@ export function EnrollmentOverviewTab({ enrollment }: EnrollmentOverviewTabProps
                 <CalendarDays className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Ann\u00e9e scolaire</p>
+                <p className="text-xs text-muted-foreground">Année scolaire</p>
                 <p className="text-sm font-semibold">{academicYear}</p>
               </div>
             </div>
@@ -94,7 +92,7 @@ export function EnrollmentOverviewTab({ enrollment }: EnrollmentOverviewTabProps
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardContent className="p-6">
           <h3 className="text-sm font-medium text-muted-foreground mb-4">
-            D\u00e9tails de l&apos;inscription
+            Détails de l&apos;inscription
           </h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1">
