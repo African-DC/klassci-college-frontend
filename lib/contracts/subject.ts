@@ -8,6 +8,8 @@ export const SubjectSchema = z.object({
   coefficient: z.number(),
   hours_per_week: z.number(),
   color: z.string().nullable().optional(),
+  teacher_id: z.number().nullable().optional(),
+  teacher_name: z.string().nullable().optional(),
   level_name: z.string().nullable().optional(),
   series_name: z.string().nullable().optional(),
   created_at: z.string().optional(),
@@ -21,6 +23,7 @@ export const SubjectCreateSchema = z.object({
   level_id: z.number().nullable().optional(),
   series_id: z.number().nullable().optional(),
   color: z.string().nullable().optional(),
+  teacher_id: z.number().nullable().optional(),
 })
 
 export const SubjectUpdateSchema = SubjectCreateSchema.partial()

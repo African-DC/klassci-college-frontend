@@ -14,6 +14,7 @@ export async function duplicateSubject(data: {
   series_id?: number | null
   coefficient?: number
   hours_per_week?: number
+  teacher_id?: number | null
 }): Promise<Subject> {
   const res = await apiFetch<unknown>("/admin/subjects/duplicate", {
     method: "POST",

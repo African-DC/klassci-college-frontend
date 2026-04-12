@@ -18,6 +18,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useSubjects, useDeleteSubject } from "@/lib/hooks/useSubjects"
 import { useLevels } from "@/lib/hooks/useLevels"
 import { useSeriesList } from "@/lib/hooks/useSeries"
+import { useTeachers } from "@/lib/hooks/useTeachers"
 import { duplicateSubject } from "@/lib/api/subjects"
 import type { Subject } from "@/lib/contracts/subject"
 import type { Level } from "@/lib/contracts/level"
@@ -95,16 +96,14 @@ function AssignModal({
   onClose: () => void
 }) {
   const queryClient = useQueryClient()
+  const { data: teachersData } = useTeachers({ size: 100 })
+  const teachers = teachersData?.items ?? []
   const [coef, setCoef] = useState(target?.defaultCoef ?? 1)
   const [hours, setHours] = useState(target?.defaultHours ?? 2)
   const [seriesId, setSeriesId] = useState<number | null>(target?.seriesId ?? null)
+  const [teacherId, setTeacherId] = useState<number | null>(null)
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Reset when target changes
-  if (target && coef !== target.defaultCoef && !isPending) {
-    // initial state sync handled by useState defaults
-  }
 
   function handleSubmit() {
     if (!target) return
@@ -116,6 +115,7 @@ function AssignModal({
       series_id: seriesId,
       coefficient: coef,
       hours_per_week: hours,
+      teacher_id: teacherId,
     })
       .then(() => {
         toast.success(`${target.subjectName} assignée à ${target.levelName}`)
@@ -160,6 +160,27 @@ function AssignModal({
               </Select>
             </div>
           )}
+
+          {/* Teacher select */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Enseignant</label>
+            <Select
+              value={teacherId?.toString() ?? "none"}
+              onValueChange={(v) => setTeacherId(v === "none" ? null : Number(v))}
+            >
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Sélectionner un enseignant" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Aucun (à assigner plus tard)</SelectItem>
+                {teachers.map((t) => (
+                  <SelectItem key={t.id} value={t.id.toString()}>
+                    {t.first_name} {t.last_name} {t.speciality ? `(${t.speciality})` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -547,6 +568,11 @@ function SubjectCard({
             <span>Coef. {subject.coefficient}</span>
           </div>
         </div>
+      )}
+      {!isCatalogue && subject.teacher_name && (
+        <p className="text-[10px] text-muted-foreground mt-1 truncate">
+          Prof. {subject.teacher_name}
+        </p>
       )}
 
       <div className="flex items-center justify-between mt-2">
