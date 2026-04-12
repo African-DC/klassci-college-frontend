@@ -116,7 +116,7 @@ export function CrudTable<T extends { id: number }>({
   })
 
   if (isError) {
-    return <DataError message={error?.message ?? errorMessage} onRetry={refetch} />
+    return <DataError message={error?.message ?? errorMessage} error={error} onRetry={refetch} />
   }
 
   return (
