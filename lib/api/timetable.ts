@@ -3,15 +3,26 @@ import { apiFetch, safeValidate } from "./client"
 import {
   TimetableSlotSchema,
   GenerateTaskResponseSchema,
+  TeacherAvailabilitySchema,
   type TimetableSlot,
   type TimetableSlotCreate,
   type TimetableSlotUpdate,
   type GenerateTaskResponse,
+  type TeacherAvailability,
+  type TeacherAvailabilityCreate,
 } from "@/lib/contracts/timetable"
 
-export type { TimetableSlot, TimetableSlotCreate, TimetableSlotUpdate, GenerateTaskResponse }
+export type {
+  TimetableSlot,
+  TimetableSlotCreate,
+  TimetableSlotUpdate,
+  GenerateTaskResponse,
+  TeacherAvailability,
+  TeacherAvailabilityCreate,
+}
 
 const TimetableSlotArraySchema = z.array(TimetableSlotSchema)
+const TeacherAvailabilityArraySchema = z.array(TeacherAvailabilitySchema)
 
 export const timetableApi = {
   listByClass: async (classId: number, weekOffset?: number): Promise<TimetableSlot[]> => {
@@ -57,14 +68,37 @@ export const timetableApi = {
   },
 
   generate: async (classId: number): Promise<GenerateTaskResponse> => {
-    return apiFetch(`/timetable/generate`, {
+    return apiFetch(`/timetable/auto-generate?class_id=${classId}`, {
       method: "POST",
-      body: JSON.stringify({ class_id: classId }),
-      schema: GenerateTaskResponseSchema,
     })
   },
 
   taskStatus: async (taskId: string): Promise<GenerateTaskResponse> => {
     return apiFetch(`/timetable/tasks/${taskId}`, { schema: GenerateTaskResponseSchema })
+  },
+
+  // Teacher availabilities
+  listAvailabilities: async (teacherId: number): Promise<TeacherAvailability[]> => {
+    const json = await apiFetch<TeacherAvailability[] | { data?: TeacherAvailability[] }>(
+      `/teachers/${teacherId}/availabilities`,
+    )
+    const arr = Array.isArray(json) ? json : json.data ?? []
+    return safeValidate(TeacherAvailabilityArraySchema, arr, `/teachers/${teacherId}/availabilities`)
+  },
+
+  createAvailability: async (
+    teacherId: number,
+    data: TeacherAvailabilityCreate,
+  ): Promise<TeacherAvailability> => {
+    const json = await apiFetch<TeacherAvailability | { data?: TeacherAvailability }>(
+      `/teachers/${teacherId}/availabilities`,
+      { method: "POST", body: JSON.stringify(data) },
+    )
+    const item = (json as { data?: TeacherAvailability }).data ?? (json as TeacherAvailability)
+    return safeValidate(TeacherAvailabilitySchema, item, `POST /teachers/${teacherId}/availabilities`)
+  },
+
+  deleteAvailability: async (availabilityId: number): Promise<void> => {
+    await apiFetch<void>(`/teacher-availabilities/${availabilityId}`, { method: "DELETE" })
   },
 }

@@ -7,6 +7,7 @@ import type {
   TimetableSlot,
   TimetableSlotCreate,
   TimetableSlotUpdate,
+  TeacherAvailabilityCreate,
 } from "@/lib/contracts/timetable"
 
 export const timetableKeys = {
@@ -14,6 +15,8 @@ export const timetableKeys = {
   byClass: (classId: number, weekOffset?: number) =>
     ["timetable", "class", classId, weekOffset ?? 0] as const,
   byTeacher: (teacherId: number) => ["timetable", "teacher", teacherId] as const,
+  availabilities: (teacherId: number) =>
+    ["timetable", "availabilities", teacherId] as const,
 }
 
 export function useTimetable(classId: number, weekOffset: number = 0) {
@@ -160,6 +163,53 @@ export function useGenerateTimetable() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: timetableKeys.all })
       toast.success("Génération de l'emploi du temps lancée")
+    },
+    onError: (err) => {
+      toast.error("Erreur", { description: err.message })
+    },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Teacher availability hooks
+// ---------------------------------------------------------------------------
+
+export function useTeacherAvailabilities(teacherId: number) {
+  return useQuery({
+    queryKey: timetableKeys.availabilities(teacherId),
+    queryFn: () => timetableApi.listAvailabilities(teacherId),
+    enabled: !!teacherId,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useCreateAvailability(teacherId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: TeacherAvailabilityCreate) =>
+      timetableApi.createAvailability(teacherId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: timetableKeys.availabilities(teacherId),
+      })
+      toast.success("Disponibilité ajoutée")
+    },
+    onError: (err) => {
+      toast.error("Erreur", { description: err.message })
+    },
+  })
+}
+
+export function useDeleteAvailability(teacherId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (availabilityId: number) =>
+      timetableApi.deleteAvailability(availabilityId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: timetableKeys.availabilities(teacherId),
+      })
+      toast.success("Disponibilité supprimée")
     },
     onError: (err) => {
       toast.error("Erreur", { description: err.message })

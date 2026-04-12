@@ -44,3 +44,40 @@ export type TimetableSlot = z.infer<typeof TimetableSlotSchema>
 export type TimetableSlotCreate = z.infer<typeof TimetableSlotCreateSchema>
 export type TimetableSlotUpdate = z.infer<typeof TimetableSlotUpdateSchema>
 export type GenerateTaskResponse = z.infer<typeof GenerateTaskResponseSchema>
+
+// ---------------------------------------------------------------------------
+// Teacher availability
+// ---------------------------------------------------------------------------
+
+export const DayOfWeekSchema = z.enum([
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+])
+
+export const TeacherAvailabilitySchema = z.object({
+  id: z.number(),
+  teacher_id: z.number(),
+  day: DayOfWeekSchema,
+  start_time: z.string(),
+  end_time: z.string(),
+  available: z.boolean(),
+})
+
+export const TeacherAvailabilityCreateSchema = z.object({
+  day: DayOfWeekSchema,
+  start_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format HH:MM"),
+  end_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format HH:MM"),
+  available: z.boolean().default(true),
+})
+
+export type DayOfWeek = z.infer<typeof DayOfWeekSchema>
+export type TeacherAvailability = z.infer<typeof TeacherAvailabilitySchema>
+export type TeacherAvailabilityCreate = z.infer<typeof TeacherAvailabilityCreateSchema>

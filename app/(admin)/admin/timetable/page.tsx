@@ -18,6 +18,7 @@ import { timetableApi } from "@/lib/api/timetable"
 import { useQueryClient } from "@tanstack/react-query"
 import { timetableKeys } from "@/lib/hooks/useTimetable"
 import { TimetableGrid } from "@/components/admin/timetable/TimetableGrid"
+import { TimetableHoursSidebar } from "@/components/admin/timetable/TimetableHoursSidebar"
 
 export default function TimetablePage() {
   const { selectedClassId, setSelectedClassId, weekOffset, nextWeek, prevWeek, resetWeek } = useTimetableStore()
@@ -159,9 +160,14 @@ export default function TimetablePage() {
         </div>
       )}
 
-      {/* Grid */}
+      {/* Grid + Sidebar */}
       {selectedClassId ? (
-        <TimetableGrid classId={selectedClassId} weekOffset={weekOffset} />
+        <div className="flex gap-4 items-start">
+          <div className="flex-1 min-w-0">
+            <TimetableGrid classId={selectedClassId} weekOffset={weekOffset} />
+          </div>
+          <TimetableHoursSidebar classId={selectedClassId} weekOffset={weekOffset} />
+        </div>
       ) : (
         <div className="flex h-64 items-center justify-center rounded-lg border border-dashed bg-muted/20">
           <p className="text-sm text-muted-foreground">

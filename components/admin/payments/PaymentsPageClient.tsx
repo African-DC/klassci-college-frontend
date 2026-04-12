@@ -32,7 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { PaymentCreateModal } from "./PaymentCreateModal"
+import { PaymentCreateWizard } from "./PaymentCreateWizard"
 import { usePayments, useFinancialSummary, useValidatePayment, useCancelPayment } from "@/lib/hooks/usePayments"
 import { paymentsApi } from "@/lib/api/payments"
 import { downloadBlob } from "@/lib/utils"
@@ -272,7 +272,7 @@ export function PaymentsPageClient() {
         </div>
       )}
 
-      <PaymentCreateModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      <PaymentCreateWizard open={createOpen} onClose={() => setCreateOpen(false)} />
 
       {/* Dialog de confirmation pour valider/annuler un paiement */}
       <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null) }}>
