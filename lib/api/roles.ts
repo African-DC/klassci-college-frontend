@@ -5,7 +5,7 @@ import { createCrudApi } from "./createCrudApi"
 import { apiFetch, safeValidate } from "./client"
 
 export const rolesApi = createCrudApi<Role, RoleCreate, RoleUpdate>(
-  "/roles",
+  "/admin/roles",
   RoleSchema,
 )
 
@@ -13,8 +13,8 @@ const PermissionsArraySchema = z.array(PermissionSchema)
 
 /** Récupère toutes les permissions disponibles */
 export async function getPermissions(): Promise<Permission[]> {
-  const res = await apiFetch<unknown>("/permissions")
+  const res = await apiFetch<unknown>("/admin/permissions")
   // Gère les deux formats de réponse : Permission[] ou { data: Permission[] }
   const raw = Array.isArray(res) ? res : (res as { data?: unknown }).data ?? res
-  return safeValidate(PermissionsArraySchema, raw, "/permissions")
+  return safeValidate(PermissionsArraySchema, raw, "/admin/permissions")
 }
