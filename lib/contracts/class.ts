@@ -8,6 +8,10 @@ export const ClassSchema = z.object({
   academic_year_id: z.number(),
   room_id: z.number().nullable(),
   max_students: z.number().nullish(),
+  level_name: z.string().optional(),
+  series_name: z.string().nullable().optional(),
+  academic_year_name: z.string().optional(),
+  enrolled_count: z.number().optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 }).passthrough()

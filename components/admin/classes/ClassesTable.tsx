@@ -7,6 +7,35 @@ import type { Class } from "@/lib/contracts/class"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { ClassEditModal } from "./ClassEditModal"
 
+function EnrolledCell({ enrolled, max }: { enrolled?: number; max?: number | null }) {
+  const count = enrolled ?? 0
+  const capacity = max ?? 0
+  const ratio = capacity > 0 ? (count / capacity) * 100 : 0
+
+  const barColor =
+    ratio > 95
+      ? "bg-rose-500"
+      : ratio >= 80
+        ? "bg-amber-500"
+        : "bg-emerald-500"
+
+  return (
+    <div className="flex items-center gap-3 min-w-[120px]">
+      <span className="text-sm font-mono whitespace-nowrap">
+        {count} / {capacity || "—"}
+      </span>
+      {capacity > 0 && (
+        <div className="flex-1 h-2 rounded-full bg-muted max-w-[80px]">
+          <div
+            className={`h-full rounded-full transition-all ${barColor}`}
+            style={{ width: `${Math.min(ratio, 100)}%` }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function ClassesTable() {
   const [page, setPage] = useState(1)
   const { data, isLoading, isError, error, refetch } = useClasses({ page })
@@ -19,17 +48,31 @@ export function ClassesTable() {
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
     },
     {
-      accessorKey: "level_id",
+      accessorKey: "level_name",
       header: "Niveau",
       cell: ({ row }) => (
-        <span className="font-mono text-sm">{row.original.level_id}</span>
+        <span className="text-sm">
+          {row.original.level_name ?? row.original.level_id}
+        </span>
       ),
     },
     {
-      accessorKey: "max_students",
-      header: "Capacité max",
+      accessorKey: "series_name",
+      header: "Série",
       cell: ({ row }) => (
-        <span className="font-mono text-sm">{row.original.max_students ?? "—"}</span>
+        <span className="text-sm text-muted-foreground">
+          {row.original.series_name ?? "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "enrolled_count",
+      header: "Élèves",
+      cell: ({ row }) => (
+        <EnrolledCell
+          enrolled={row.original.enrolled_count}
+          max={row.original.max_students}
+        />
       ),
     },
   ], [])
