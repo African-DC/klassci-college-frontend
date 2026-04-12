@@ -28,24 +28,44 @@ import {
 import { SubjectEditModal } from "./SubjectEditModal"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 
-// Color palette for subjects — deterministic based on name
-const SUBJECT_COLORS = [
-  { bg: "bg-blue-500/10", text: "text-blue-700", border: "border-blue-200", badge: "bg-blue-500" },
-  { bg: "bg-emerald-500/10", text: "text-emerald-700", border: "border-emerald-200", badge: "bg-emerald-500" },
-  { bg: "bg-amber-500/10", text: "text-amber-700", border: "border-amber-200", badge: "bg-amber-500" },
-  { bg: "bg-violet-500/10", text: "text-violet-700", border: "border-violet-200", badge: "bg-violet-500" },
-  { bg: "bg-rose-500/10", text: "text-rose-700", border: "border-rose-200", badge: "bg-rose-500" },
-  { bg: "bg-cyan-500/10", text: "text-cyan-700", border: "border-cyan-200", badge: "bg-cyan-500" },
-  { bg: "bg-orange-500/10", text: "text-orange-700", border: "border-orange-200", badge: "bg-orange-500" },
-  { bg: "bg-indigo-500/10", text: "text-indigo-700", border: "border-indigo-200", badge: "bg-indigo-500" },
+// Color palette by discipline — matched by keyword in subject name
+const DISCIPLINE_COLORS: Record<string, { bg: string; text: string; border: string; badge: string }> = {
+  math: { bg: "bg-blue-500/10", text: "text-blue-700", border: "border-blue-200", badge: "bg-blue-600" },
+  francais: { bg: "bg-amber-500/10", text: "text-amber-700", border: "border-amber-200", badge: "bg-amber-600" },
+  anglais: { bg: "bg-red-500/10", text: "text-red-700", border: "border-red-200", badge: "bg-red-500" },
+  physique: { bg: "bg-violet-500/10", text: "text-violet-700", border: "border-violet-200", badge: "bg-violet-600" },
+  chimie: { bg: "bg-violet-500/10", text: "text-violet-700", border: "border-violet-200", badge: "bg-violet-600" },
+  svt: { bg: "bg-emerald-500/10", text: "text-emerald-700", border: "border-emerald-200", badge: "bg-emerald-600" },
+  science: { bg: "bg-emerald-500/10", text: "text-emerald-700", border: "border-emerald-200", badge: "bg-emerald-600" },
+  histoire: { bg: "bg-orange-500/10", text: "text-orange-700", border: "border-orange-200", badge: "bg-orange-500" },
+  geographie: { bg: "bg-orange-500/10", text: "text-orange-700", border: "border-orange-200", badge: "bg-orange-500" },
+  philo: { bg: "bg-indigo-500/10", text: "text-indigo-700", border: "border-indigo-200", badge: "bg-indigo-600" },
+  espagnol: { bg: "bg-yellow-500/10", text: "text-yellow-700", border: "border-yellow-200", badge: "bg-yellow-600" },
+  allemand: { bg: "bg-stone-500/10", text: "text-stone-700", border: "border-stone-200", badge: "bg-stone-600" },
+  sport: { bg: "bg-green-500/10", text: "text-green-700", border: "border-green-200", badge: "bg-green-600" },
+  education: { bg: "bg-teal-500/10", text: "text-teal-700", border: "border-teal-200", badge: "bg-teal-600" },
+  dessin: { bg: "bg-pink-500/10", text: "text-pink-700", border: "border-pink-200", badge: "bg-pink-500" },
+  art: { bg: "bg-pink-500/10", text: "text-pink-700", border: "border-pink-200", badge: "bg-pink-500" },
+  musique: { bg: "bg-fuchsia-500/10", text: "text-fuchsia-700", border: "border-fuchsia-200", badge: "bg-fuchsia-500" },
+  info: { bg: "bg-cyan-500/10", text: "text-cyan-700", border: "border-cyan-200", badge: "bg-cyan-600" },
+}
+
+const FALLBACK_COLORS = [
+  { bg: "bg-slate-500/10", text: "text-slate-700", border: "border-slate-200", badge: "bg-slate-500" },
+  { bg: "bg-zinc-500/10", text: "text-zinc-700", border: "border-zinc-200", badge: "bg-zinc-500" },
 ]
 
 function getSubjectColor(name: string) {
+  const lower = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  for (const [keyword, color] of Object.entries(DISCIPLINE_COLORS)) {
+    if (lower.includes(keyword)) return color
+  }
+  // Fallback: hash-based for unrecognized subjects
   let hash = 0
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash)
   }
-  return SUBJECT_COLORS[Math.abs(hash) % SUBJECT_COLORS.length]
+  return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length]
 }
 
 export function SubjectsKanbanView() {
@@ -259,11 +279,11 @@ function SubjectCard({
 
   return (
     <div
-      className={`group relative rounded-lg border p-3 transition-all hover:shadow-md ${color.bg} ${color.border}`}
+      className={`group rounded-lg border p-3 transition-all hover:shadow-md ${color.bg} ${color.border}`}
     >
-      {/* Name + Coefficient */}
+      {/* Name + Coefficient badge */}
       <div className="flex items-start justify-between mb-2">
-        <h4 className={`font-semibold text-sm leading-tight ${color.text}`}>
+        <h4 className={`font-semibold text-sm leading-tight pr-2 ${color.text}`}>
           {subject.name}
         </h4>
         <div className={`flex h-7 w-7 items-center justify-center rounded-full text-white text-xs font-bold shrink-0 ${color.badge}`}>
@@ -283,23 +303,23 @@ function SubjectCard({
         </div>
       </div>
 
-      {/* Series badge */}
-      {subject.series_name && (
-        <div className="mt-2">
+      {/* Series badge + actions row */}
+      <div className="flex items-center justify-between mt-2">
+        {subject.series_name ? (
           <Badge variant="outline" className="text-[10px]">
             Série {subject.series_name}
           </Badge>
+        ) : (
+          <span />
+        )}
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onEdit}>
+            <Pencil className="h-3 w-3" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete}>
+            <Trash2 className="h-3 w-3 text-destructive" />
+          </Button>
         </div>
-      )}
-
-      {/* Hover actions */}
-      <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onEdit}>
-          <Pencil className="h-3 w-3" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete}>
-          <Trash2 className="h-3 w-3 text-destructive" />
-        </Button>
       </div>
     </div>
   )
