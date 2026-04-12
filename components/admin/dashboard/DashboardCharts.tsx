@@ -94,11 +94,11 @@ export function DashboardCharts() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      {/* Bar chart — Inscriptions par niveau */}
+      {/* Bar chart — Inscriptions validées par niveau */}
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardHeader>
           <CardTitle className="text-base font-medium">
-            Inscriptions par niveau
+            Inscriptions validées par niveau
           </CardTitle>
         </CardHeader>
         <CardContent>
