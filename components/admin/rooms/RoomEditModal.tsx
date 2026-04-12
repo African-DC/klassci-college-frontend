@@ -4,6 +4,8 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { RoomUpdateSchema, type RoomUpdate, ROOM_TYPES } from "@/lib/contracts/room"
 import { useRoom, useUpdateRoom } from "@/lib/hooks/useRooms"
+import { useClasses } from "@/lib/hooks/useClasses"
+import { useQueryClient } from "@tanstack/react-query"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,7 +29,7 @@ import {
 function EditFormSkeleton() {
   return (
     <div className="space-y-5">
-      {Array.from({ length: 3 }).map((_, i) => (
+      {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="space-y-2">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-11 w-full" />
@@ -39,8 +41,15 @@ function EditFormSkeleton() {
 }
 
 function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) {
+  const queryClient = useQueryClient()
   const { data: roomData, isLoading } = useRoom(roomId)
   const { mutate, isPending, error } = useUpdateRoom(roomId)
+  const { data: classesData } = useClasses({ size: 100 })
+
+  // Show classes that either have no room OR are assigned to THIS room
+  const availableClasses = classesData?.items?.filter(
+    (c) => !c.room_id || c.room_id === roomId
+  ) ?? []
 
   const form = useForm<RoomUpdate>({
     resolver: zodResolver(RoomUpdateSchema),
@@ -49,6 +58,7 @@ function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) 
           name: roomData.name,
           capacity: roomData.capacity ?? undefined,
           room_type: roomData.room_type ?? "classroom",
+          class_id: roomData.class_id ?? undefined,
         }
       : undefined,
   })
@@ -56,12 +66,47 @@ function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) 
   if (isLoading || !roomData) return <EditFormSkeleton />
 
   function onSubmit(data: RoomUpdate) {
-    mutate(data, { onSuccess: onClose })
+    mutate(data, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["classes"] })
+        onClose()
+      },
+    })
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        {/* Class assignment */}
+        <FormField
+          control={form.control}
+          name="class_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Classe assignée</FormLabel>
+              <Select
+                onValueChange={(v) => field.onChange(v === "none" ? null : Number(v))}
+                value={field.value?.toString() ?? "none"}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Aucune classe" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">Aucune (labo, salle info, etc.)</SelectItem>
+                  {availableClasses.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
+                      {c.name} {c.level_name ? `(${c.level_name})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="name"
