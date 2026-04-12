@@ -65,6 +65,8 @@ export function PaymentsTab({ studentId, fullData }: PaymentsTabProps) {
         )
       )
       queryClient.invalidateQueries({ queryKey: studentKeys.all })
+      queryClient.invalidateQueries({ queryKey: studentKeys.detail(studentId) })
+      queryClient.invalidateQueries({ queryKey: ["students", studentId, "fees"] })
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all })
       toast.success("Frais régénérés avec succès")
     } catch (err) {
@@ -126,8 +128,8 @@ export function PaymentsTab({ studentId, fullData }: PaymentsTabProps) {
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                variant="outline"
-                className="text-xs border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+                variant="ghost"
+                className="text-xs text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10 border border-primary-foreground/30"
                 onClick={handleRegenerateFees}
                 disabled={regenerating}
               >
