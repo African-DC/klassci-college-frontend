@@ -270,8 +270,8 @@ export function TimetableSlotForm({
             <FormItem>
               <FormLabel>Salle</FormLabel>
               <Select
-                onValueChange={field.onChange}
-                value={field.value ?? ""}
+                onValueChange={(v) => field.onChange(v === "none" ? "" : v)}
+                value={field.value || "none"}
               >
                 <FormControl>
                   <SelectTrigger className="h-11">
@@ -279,7 +279,7 @@ export function TimetableSlotForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">Aucune salle</SelectItem>
+                  <SelectItem value="none">Aucune salle</SelectItem>
                   {rooms.map((r) => (
                     <SelectItem key={r.id} value={r.name}>
                       {r.name} {r.capacity ? `(${r.capacity} places)` : ""}

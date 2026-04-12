@@ -28,7 +28,7 @@ const DAY_LABELS: Record<string, string> = {
   vendredi: "Vendredi",
   samedi: "Samedi",
 }
-const HOURS = ["07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"]
+const HOURS = ["07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"]
 
 // Color mapping from DB subject_color to Tailwind classes
 const COLOR_MAP: Record<string, string> = {

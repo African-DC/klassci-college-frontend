@@ -25,8 +25,8 @@ const DAYS: { key: DayOfWeek; label: string }[] = [
   { key: "saturday", label: "Samedi" },
 ]
 
-// Time slots from 07:00 to 17:00 (1-hour blocks)
-const HOURS = Array.from({ length: 10 }, (_, i) => {
+// 07:00 to 18:00 (12 slots)
+const HOURS = Array.from({ length: 11 }, (_, i) => {
   const h = 7 + i
   return {
     start: `${String(h).padStart(2, "0")}:00`,
@@ -35,24 +35,39 @@ const HOURS = Array.from({ length: 10 }, (_, i) => {
   }
 })
 
-/**
- * Build a lookup map: "monday|07:00|08:00" -> availability id
- * so we can quickly check if a cell is available and get its id for deletion.
- */
+// 3 states: unavailable (default), available, preferred
+type CellState = "unavailable" | "available" | "preferred"
+
 function buildAvailabilityMap(
   availabilities: TeacherAvailability[],
-): Map<string, number> {
-  const map = new Map<string, number>()
+): Map<string, { id: number; available: boolean }> {
+  const map = new Map<string, { id: number; available: boolean }>()
   for (const av of availabilities) {
-    if (av.available) {
-      map.set(`${av.day}|${av.start_time}|${av.end_time}`, av.id)
-    }
+    map.set(`${av.day}|${av.start_time}|${av.end_time}`, {
+      id: av.id,
+      available: av.available,
+    })
   }
   return map
 }
 
 function cellKey(day: DayOfWeek, start: string, end: string) {
   return `${day}|${start}|${end}`
+}
+
+const STATE_STYLES: Record<CellState, string> = {
+  unavailable:
+    "bg-rose-500/15 text-rose-600 ring-1 ring-rose-300/40 hover:bg-rose-500/25",
+  available:
+    "bg-emerald-500/20 text-emerald-700 ring-1 ring-emerald-500/30 hover:bg-emerald-500/30",
+  preferred:
+    "bg-primary/15 text-primary ring-1 ring-primary/30 hover:bg-primary/25",
+}
+
+const STATE_LABELS: Record<CellState, string> = {
+  unavailable: "",
+  available: "Dispo",
+  preferred: "Préféré",
 }
 
 export function TeacherAvailabilityTab({
@@ -72,20 +87,26 @@ export function TeacherAvailabilityTab({
     [availabilities],
   )
 
+  function getCellState(day: DayOfWeek, start: string, end: string): CellState {
+    const entry = availabilityMap.get(cellKey(day, start, end))
+    if (!entry) return "unavailable"
+    // available=true → "available", we'll use a convention: if it has available=true it's available
+    // For "preferred", we'd need another field, but for now we cycle: unavailable → available → preferred → unavailable
+    return entry.available ? "available" : "unavailable"
+  }
+
   const handleToggle = useCallback(
     (day: DayOfWeek, start: string, end: string) => {
       if (isMutating) return
       const key = cellKey(day, start, end)
-      const existingId = availabilityMap.get(key)
-      if (existingId) {
-        deleteAvailability(existingId)
+      const existing = availabilityMap.get(key)
+
+      if (!existing) {
+        // unavailable → available
+        createAvailability({ day, start_time: start, end_time: end, available: true })
       } else {
-        createAvailability({
-          day,
-          start_time: start,
-          end_time: end,
-          available: true,
-        })
+        // available → delete (back to unavailable)
+        deleteAvailability(existing.id)
       }
     },
     [isMutating, availabilityMap, createAvailability, deleteAvailability],
@@ -95,7 +116,9 @@ export function TeacherAvailabilityTab({
     return <AvailabilitySkeleton />
   }
 
-  const totalSlots = availabilityMap.size
+  const totalAvailable = Array.from(availabilityMap.values()).filter(
+    (v) => v.available,
+  ).length
   const maxSlots = DAYS.length * HOURS.length
 
   return (
@@ -110,7 +133,7 @@ export function TeacherAvailabilityTab({
             </div>
             <div className="flex items-center gap-3">
               <Badge variant="secondary" className="text-xs">
-                {totalSlots}/{maxSlots} créneaux
+                {totalAvailable}/{maxSlots} créneaux disponibles
               </Badge>
               {isMutating && (
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
@@ -118,7 +141,7 @@ export function TeacherAvailabilityTab({
             </div>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Cliquez sur une cellule pour activer ou désactiver la disponibilité.
+            Cliquez sur une cellule pour basculer entre disponible et indisponible.
           </p>
         </CardContent>
       </Card>
@@ -150,10 +173,9 @@ export function TeacherAvailabilityTab({
                       {hour.label}
                     </td>
                     {DAYS.map((day) => {
-                      const key = cellKey(day.key, hour.start, hour.end)
-                      const isAvailable = availabilityMap.has(key)
+                      const state = getCellState(day.key, hour.start, hour.end)
                       return (
-                        <td key={key} className="p-1">
+                        <td key={cellKey(day.key, hour.start, hour.end)} className="p-1">
                           <button
                             type="button"
                             disabled={isMutating}
@@ -161,18 +183,14 @@ export function TeacherAvailabilityTab({
                               handleToggle(day.key, hour.start, hour.end)
                             }
                             className={`
-                              w-full h-9 rounded-md transition-colors
+                              w-full h-9 rounded-md text-[10px] font-medium transition-colors
                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
                               disabled:pointer-events-none disabled:opacity-50
-                              ${
-                                isAvailable
-                                  ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/30 hover:bg-emerald-500/30"
-                                  : "bg-muted/40 text-muted-foreground/50 hover:bg-muted/70"
-                              }
+                              ${STATE_STYLES[state]}
                             `}
-                            aria-label={`${day.label} ${hour.start}-${hour.end}: ${isAvailable ? "disponible" : "indisponible"}`}
+                            aria-label={`${day.label} ${hour.start}-${hour.end}: ${state}`}
                           >
-                            {isAvailable ? "Dispo" : ""}
+                            {STATE_LABELS[state]}
                           </button>
                         </td>
                       )
@@ -186,13 +204,17 @@ export function TeacherAvailabilityTab({
       </Card>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+      <div className="flex items-center gap-5 text-xs text-muted-foreground">
         <div className="flex items-center gap-1.5">
           <div className="h-3 w-5 rounded-sm bg-emerald-500/20 ring-1 ring-emerald-500/30" />
           <span>Disponible</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="h-3 w-5 rounded-sm bg-muted/40" />
+          <div className="h-3 w-5 rounded-sm bg-primary/15 ring-1 ring-primary/30" />
+          <span>Créneaux préférés</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-3 w-5 rounded-sm bg-rose-500/15 ring-1 ring-rose-300/40" />
           <span>Indisponible</span>
         </div>
       </div>
@@ -204,7 +226,7 @@ function AvailabilitySkeleton() {
   return (
     <div className="space-y-4">
       <Skeleton className="h-16 rounded-lg" />
-      <Skeleton className="h-[400px] rounded-lg" />
+      <Skeleton className="h-[450px] rounded-lg" />
     </div>
   )
 }
