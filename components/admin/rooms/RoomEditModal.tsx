@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { RoomUpdateSchema, type RoomUpdate } from "@/lib/contracts/room"
+import { RoomUpdateSchema, type RoomUpdate, ROOM_TYPES } from "@/lib/contracts/room"
 import { useRoom, useUpdateRoom } from "@/lib/hooks/useRooms"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -16,11 +16,18 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 function EditFormSkeleton() {
   return (
     <div className="space-y-5">
-      {Array.from({ length: 2 }).map((_, i) => (
+      {Array.from({ length: 3 }).map((_, i) => (
         <div key={i} className="space-y-2">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-11 w-full" />
@@ -41,6 +48,7 @@ function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) 
       ? {
           name: roomData.name,
           capacity: roomData.capacity ?? undefined,
+          room_type: roomData.room_type ?? "classroom",
         }
       : undefined,
   })
@@ -68,25 +76,52 @@ function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) 
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="capacity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Capacite</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min={1}
-                  className="h-11"
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                  value={field.value ?? ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="room_type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Type de salle</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value ?? "classroom"}>
+                  <FormControl>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Type de salle" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {ROOM_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="capacity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Capacité</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={1}
+                    className="h-11"
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
@@ -95,7 +130,7 @@ function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) 
         )}
 
         <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending ? "Enregistrement..." : "Mettre a jour"}
+          {isPending ? "Enregistrement..." : "Mettre à jour"}
         </Button>
       </form>
     </Form>

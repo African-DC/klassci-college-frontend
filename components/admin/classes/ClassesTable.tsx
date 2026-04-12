@@ -1,11 +1,14 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useClasses, useDeleteClass } from "@/lib/hooks/useClasses"
+import { useLevels } from "@/lib/hooks/useLevels"
 import type { Class } from "@/lib/contracts/class"
-import { CrudTable } from "@/components/shared/CrudTable"
+import { CrudTable, type FilterConfig } from "@/components/shared/CrudTable"
 import { ClassEditModal } from "./ClassEditModal"
+import { useDebounce } from "@/lib/hooks/useDebounce"
 
 function EnrolledCell({ enrolled, max }: { enrolled?: number; max?: number | null }) {
   const count = enrolled ?? 0
@@ -37,8 +40,39 @@ function EnrolledCell({ enrolled, max }: { enrolled?: number; max?: number | nul
 }
 
 export function ClassesTable() {
+  const router = useRouter()
   const [page, setPage] = useState(1)
-  const { data, isLoading, isError, error, refetch } = useClasses({ page })
+  const [search, setSearch] = useState("")
+  const [filters, setFilters] = useState<Record<string, string>>({})
+  const debouncedSearch = useDebounce(search)
+
+  const { data: levelsData } = useLevels({ size: 100 })
+  const levelOptions = useMemo(
+    () => levelsData?.items?.map((l) => ({ value: l.id.toString(), label: l.name })) ?? [],
+    [levelsData],
+  )
+
+  const filterConfigs: FilterConfig[] = useMemo(() => [
+    { key: "level_id", label: "Niveau", type: "select", options: levelOptions },
+  ], [levelOptions])
+
+  const handleFilterChange = useCallback((key: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+    setPage(1)
+  }, [])
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value)
+    setPage(1)
+  }, [])
+
+  const params = useMemo(() => ({
+    page,
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(filters.level_id && { level_id: Number(filters.level_id) }),
+  }), [page, debouncedSearch, filters])
+
+  const { data, isLoading, isError, error, refetch } = useClasses(params)
   const deleteMutation = useDeleteClass()
 
   const columns: ColumnDef<Class>[] = useMemo(() => [
@@ -86,6 +120,7 @@ export function ClassesTable() {
       error={error}
       refetch={refetch}
       deleteMutation={deleteMutation}
+      onRowClick={(item) => router.push(`/admin/classes/${item.id}`)}
       renderEditModal={({ itemId, open, onClose }) => (
         <ClassEditModal classId={itemId} open={open} onClose={onClose} />
       )}
@@ -95,6 +130,12 @@ export function ClassesTable() {
       deleteDescription="Cette action est irréversible. La classe sera définitivement supprimée."
       page={page}
       onPageChange={setPage}
+      searchPlaceholder="Rechercher une classe..."
+      searchValue={search}
+      onSearchChange={handleSearchChange}
+      filterConfigs={filterConfigs}
+      filterValues={filters}
+      onFilterChange={handleFilterChange}
     />
   )
 }

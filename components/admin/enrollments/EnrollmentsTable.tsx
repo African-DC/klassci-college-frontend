@@ -1,13 +1,14 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useEnrollments, useDeleteEnrollment } from "@/lib/hooks/useEnrollments"
 import type { Enrollment, EnrollmentListParams } from "@/lib/contracts/enrollment"
 import { Badge } from "@/components/ui/badge"
-import { CrudTable } from "@/components/shared/CrudTable"
+import { CrudTable, type FilterConfig } from "@/components/shared/CrudTable"
 import { EnrollmentEditModal } from "./EnrollmentEditModal"
+import { useDebounce } from "@/lib/hooks/useDebounce"
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   prospect: { label: "Prospect", variant: "outline" },
@@ -17,14 +18,47 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
   annule: { label: "Annulé", variant: "destructive" },
 }
 
+const statusFilterOptions = [
+  { value: "prospect", label: "Prospect" },
+  { value: "en_validation", label: "En validation" },
+  { value: "valide", label: "Validé" },
+  { value: "rejete", label: "Rejeté" },
+  { value: "annule", label: "Annulé" },
+]
+
+const filterConfigs: FilterConfig[] = [
+  { key: "status", label: "Statut", type: "select", options: statusFilterOptions },
+]
+
 interface EnrollmentsTableProps {
   filters?: EnrollmentListParams
 }
 
-export function EnrollmentsTable({ filters = {} }: EnrollmentsTableProps) {
+export function EnrollmentsTable({ filters: externalFilters = {} }: EnrollmentsTableProps) {
   const router = useRouter()
   const [page, setPage] = useState(1)
-  const { data, isLoading, isError, error, refetch } = useEnrollments({ ...filters, page })
+  const [search, setSearch] = useState("")
+  const [filters, setFilters] = useState<Record<string, string>>({})
+  const debouncedSearch = useDebounce(search)
+
+  const handleFilterChange = useCallback((key: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+    setPage(1)
+  }, [])
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value)
+    setPage(1)
+  }, [])
+
+  const params = useMemo(() => ({
+    ...externalFilters,
+    page,
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(filters.status && { status: filters.status }),
+  }), [externalFilters, page, debouncedSearch, filters])
+
+  const { data, isLoading, isError, error, refetch } = useEnrollments(params)
   const deleteMutation = useDeleteEnrollment()
 
   const columns: ColumnDef<Enrollment>[] = useMemo(() => [
@@ -93,6 +127,12 @@ export function EnrollmentsTable({ filters = {} }: EnrollmentsTableProps) {
       deleteDescription="Cette action est irréversible. L'inscription sera définitivement supprimée."
       page={page}
       onPageChange={setPage}
+      searchPlaceholder="Rechercher une inscription..."
+      searchValue={search}
+      onSearchChange={handleSearchChange}
+      filterConfigs={filterConfigs}
+      filterValues={filters}
+      onFilterChange={handleFilterChange}
     />
   )
 }

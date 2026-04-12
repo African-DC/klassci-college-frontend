@@ -1,9 +1,13 @@
 "use client"
 
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ClassUpdateSchema, type ClassUpdate } from "@/lib/contracts/class"
 import { useClass, useUpdateClass } from "@/lib/hooks/useClasses"
+import { useLevels } from "@/lib/hooks/useLevels"
+import { useSeriesList } from "@/lib/hooks/useSeries"
+import { useRooms } from "@/lib/hooks/useRooms"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 
 function EditFormSkeleton() {
   return (
@@ -42,8 +45,12 @@ function EditFormSkeleton() {
 function EditForm({ classId, onClose }: { classId: number; onClose: () => void }) {
   const { data: classData, isLoading } = useClass(classId)
   const { mutate, isPending, error } = useUpdateClass(classId)
-  const { data: academicYearsData } = useAcademicYears()
-  const academicYears = academicYearsData?.items
+
+  const { data: levelsData } = useLevels({ size: 100 })
+  const levels = levelsData?.items
+
+  const { data: roomsData } = useRooms({ size: 100 })
+  const rooms = roomsData?.items
 
   const form = useForm<ClassUpdate>({
     resolver: zodResolver(ClassUpdateSchema),
@@ -53,16 +60,34 @@ function EditForm({ classId, onClose }: { classId: number; onClose: () => void }
           level_id: classData.level_id,
           series_id: classData.series_id ?? undefined,
           max_students: classData.max_students ?? undefined,
-          academic_year_id: classData.academic_year_id ?? undefined,
           room_id: classData.room_id ?? undefined,
         }
       : undefined,
   })
 
+  const selectedLevelId = form.watch("level_id")
+  const { data: seriesData } = useSeriesList(
+    selectedLevelId ? { level_id: selectedLevelId, size: 100 } : {},
+  )
+  const seriesForLevel = selectedLevelId ? (seriesData?.items ?? []) : []
+
+  // Reset series when level changes (but not on initial load)
+  const initialLevelRef = classData?.level_id
+  useEffect(() => {
+    if (initialLevelRef && selectedLevelId && selectedLevelId !== initialLevelRef) {
+      form.setValue("series_id", undefined)
+    }
+  }, [selectedLevelId, initialLevelRef, form])
+
   if (isLoading || !classData) return <EditFormSkeleton />
 
   function onSubmit(data: ClassUpdate) {
-    mutate(data, { onSuccess: onClose })
+    const payload = {
+      ...data,
+      series_id: data.series_id || null,
+      room_id: data.room_id || null,
+    }
+    mutate(payload, { onSuccess: onClose })
   }
 
   return (
@@ -88,20 +113,62 @@ function EditForm({ classId, onClose }: { classId: number; onClose: () => void }
             name="level_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Niveau (ID)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={1}
-                    className="h-11"
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                    value={field.value ?? ""}
-                  />
-                </FormControl>
+                <FormLabel>Niveau</FormLabel>
+                <Select
+                  onValueChange={(v) => field.onChange(Number(v))}
+                  value={field.value?.toString() ?? ""}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Sélectionner un niveau" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {levels?.map((level) => (
+                      <SelectItem key={level.id} value={level.id.toString()}>
+                        {level.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {seriesForLevel.length > 0 && (
+            <FormField
+              control={form.control}
+              name="series_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Série</FormLabel>
+                  <Select
+                    onValueChange={(v) => field.onChange(v === "none" ? undefined : Number(v))}
+                    value={field.value?.toString() ?? "none"}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Aucune série" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">Aucune</SelectItem>
+                      {seriesForLevel.map((s) => (
+                        <SelectItem key={s.id} value={s.id.toString()}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="max_students"
@@ -121,35 +188,36 @@ function EditForm({ classId, onClose }: { classId: number; onClose: () => void }
               </FormItem>
             )}
           />
-        </div>
 
-        <FormField
-          control={form.control}
-          name="academic_year_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Année académique</FormLabel>
-              <Select
-                onValueChange={(v) => field.onChange(Number(v))}
-                value={field.value?.toString() ?? ""}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Sélectionner une année" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {academicYears?.map((ay) => (
-                    <SelectItem key={ay.id} value={ay.id.toString()}>
-                      {ay.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="room_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Salle</FormLabel>
+                <Select
+                  onValueChange={(v) => field.onChange(v === "none" ? undefined : Number(v))}
+                  value={field.value?.toString() ?? "none"}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Aucune salle" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">Aucune</SelectItem>
+                    {rooms?.map((room) => (
+                      <SelectItem key={room.id} value={room.id.toString()}>
+                        {room.name} {room.capacity ? `(${room.capacity} places)` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">

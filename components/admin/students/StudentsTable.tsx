@@ -1,20 +1,49 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useStudents, useDeleteStudent } from "@/lib/hooks/useStudents"
 import type { Student } from "@/lib/contracts/student"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { CrudTable } from "@/components/shared/CrudTable"
+import { CrudTable, type FilterConfig } from "@/components/shared/CrudTable"
 import { getUploadUrl } from "@/lib/utils"
 import { StudentEditModal } from "./StudentEditModal"
+import { useDebounce } from "@/lib/hooks/useDebounce"
+
+const genderFilterOptions = [
+  { value: "M", label: "Masculin" },
+  { value: "F", label: "Féminin" },
+]
+
+const filterConfigs: FilterConfig[] = [
+  { key: "genre", label: "Genre", type: "select", options: genderFilterOptions },
+]
 
 export function StudentsTable() {
   const router = useRouter()
   const [page, setPage] = useState(1)
-  const { data, isLoading, isError, error, refetch } = useStudents({ page })
+  const [search, setSearch] = useState("")
+  const [filters, setFilters] = useState<Record<string, string>>({})
+  const debouncedSearch = useDebounce(search)
+
+  const handleFilterChange = useCallback((key: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+    setPage(1)
+  }, [])
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value)
+    setPage(1)
+  }, [])
+
+  const params = useMemo(() => ({
+    page,
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(filters.genre && { genre: filters.genre }),
+  }), [page, debouncedSearch, filters])
+
+  const { data, isLoading, isError, error, refetch } = useStudents(params)
   const deleteMutation = useDeleteStudent()
 
   const columns: ColumnDef<Student>[] = useMemo(() => [
@@ -85,6 +114,12 @@ export function StudentsTable() {
       deleteDescription="Cette action est irréversible. L'élève sera définitivement supprimé."
       page={page}
       onPageChange={setPage}
+      searchPlaceholder="Rechercher un élève..."
+      searchValue={search}
+      onSearchChange={handleSearchChange}
+      filterConfigs={filterConfigs}
+      filterValues={filters}
+      onFilterChange={handleFilterChange}
     />
   )
 }
