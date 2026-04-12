@@ -12,6 +12,7 @@ export const TimetableSlotSchema = z.object({
   teacher_name: z.string(),
   subject_id: z.number(),
   subject_name: z.string(),
+  subject_color: z.string().nullish(),
   academic_year_id: z.number(),
   day: DaySchema,
   start_time: z.string(),
