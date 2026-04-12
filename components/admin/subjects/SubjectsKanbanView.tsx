@@ -12,6 +12,7 @@ import {
   GripVertical,
   BookMarked,
 } from "lucide-react"
+import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { useQueryClient } from "@tanstack/react-query"
 import { useSubjects, useDeleteSubject } from "@/lib/hooks/useSubjects"
@@ -32,11 +33,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { SubjectEditModal } from "./SubjectEditModal"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 
 // ---------------------------------------------------------------------------
-// Color mapping from DB value to Tailwind classes
+// Color mapping
 // ---------------------------------------------------------------------------
 
 const COLOR_MAP: Record<string, { bg: string; text: string; border: string; badge: string }> = {
@@ -62,6 +70,137 @@ function getColor(color: string | null | undefined) {
 }
 
 // ---------------------------------------------------------------------------
+// Assign modal form
+// ---------------------------------------------------------------------------
+
+interface AssignTarget {
+  subjectId: number
+  subjectName: string
+  levelId: number
+  levelName: string
+  seriesId: number | null
+  defaultCoef: number
+  defaultHours: number
+}
+
+function AssignModal({
+  target,
+  series,
+  open,
+  onClose,
+}: {
+  target: AssignTarget | null
+  series: { id: number; name: string }[]
+  open: boolean
+  onClose: () => void
+}) {
+  const queryClient = useQueryClient()
+  const [coef, setCoef] = useState(target?.defaultCoef ?? 1)
+  const [hours, setHours] = useState(target?.defaultHours ?? 2)
+  const [seriesId, setSeriesId] = useState<number | null>(target?.seriesId ?? null)
+  const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Reset when target changes
+  if (target && coef !== target.defaultCoef && !isPending) {
+    // initial state sync handled by useState defaults
+  }
+
+  function handleSubmit() {
+    if (!target) return
+    setIsPending(true)
+    setError(null)
+    duplicateSubject({
+      subject_id: target.subjectId,
+      level_id: target.levelId,
+      series_id: seriesId,
+    })
+      .then(() => {
+        toast.success(`${target.subjectName} assignée à ${target.levelName}`)
+        queryClient.invalidateQueries({ queryKey: ["subjects"] })
+        onClose()
+      })
+      .catch((err: Error) => {
+        setError(err.message)
+      })
+      .finally(() => setIsPending(false))
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Assigner à {target?.levelName}</DialogTitle>
+          <DialogDescription>
+            Configurer {target?.subjectName} pour ce niveau
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {series.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Série (optionnel)</label>
+              <Select
+                value={seriesId?.toString() ?? "none"}
+                onValueChange={(v) => setSeriesId(v === "none" ? null : Number(v))}
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Toutes séries" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Toutes séries</SelectItem>
+                  {series.map((s) => (
+                    <SelectItem key={s.id} value={s.id.toString()}>
+                      Série {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Coefficient</label>
+              <Input
+                type="number"
+                min={1}
+                value={coef}
+                onChange={(e) => setCoef(Number(e.target.value) || 1)}
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Heures / semaine</label>
+              <Input
+                type="number"
+                min={1}
+                value={hours}
+                onChange={(e) => setHours(Number(e.target.value) || 1)}
+                className="h-10"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button onClick={handleSubmit} disabled={isPending}>
+            {isPending ? "Assignation..." : "Assigner"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -74,6 +213,7 @@ export function SubjectsKanbanView() {
 
   const [editId, setEditId] = useState<number | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null)
+  const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null)
   const [search, setSearch] = useState("")
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null)
   const debouncedSearch = useDebounce(search)
@@ -88,26 +228,32 @@ export function SubjectsKanbanView() {
     const q = debouncedSearch.toLowerCase()
     return subjects.filter((s) =>
       s.name.toLowerCase().includes(q) ||
-      s.level_name?.toLowerCase().includes(q) ||
-      s.series_name?.toLowerCase().includes(q)
+      s.level_name?.toLowerCase().includes(q)
     )
   }, [subjects, debouncedSearch])
 
-  // Group subjects: null level = reservoir, others by level_id
-  const reservoir = useMemo(
+  // Catalogue = subjects without level_id
+  const catalogue = useMemo(
     () => filteredSubjects.filter((s) => s.level_id === null),
     [filteredSubjects],
   )
 
-  function handleDrop(subjectId: number, levelId: number, seriesId: number | null) {
-    duplicateSubject({ subject_id: subjectId, level_id: levelId, series_id: seriesId })
-      .then(() => {
-        toast.success("Matière assignée au niveau")
-        queryClient.invalidateQueries({ queryKey: ["subjects"] })
-      })
-      .catch((err: Error) => {
-        toast.error("Erreur", { description: err.message })
-      })
+  function handleDrop(subjectId: number, levelId: number, levelName: string, seriesId: number | null) {
+    const source = subjects.find((s) => s.id === subjectId)
+    if (!source) return
+
+    // Get series for this level
+    const levelSeries = allSeries.filter((s) => s.level_id === levelId)
+
+    setAssignTarget({
+      subjectId,
+      subjectName: source.name,
+      levelId,
+      levelName,
+      seriesId,
+      defaultCoef: source.coefficient,
+      defaultHours: source.hours_per_week,
+    })
   }
 
   const totalSubjects = subjects.length
@@ -134,7 +280,7 @@ export function SubjectsKanbanView() {
           <span className="text-border">|</span>
           <span>{totalHours}h / semaine au total</span>
           <span className="text-border">|</span>
-          <span className="text-xs italic">Glisser une matière vers un niveau pour l'assigner</span>
+          <span className="text-xs italic">Glisser du catalogue vers un niveau pour assigner</span>
         </div>
         <div className="relative max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -148,29 +294,44 @@ export function SubjectsKanbanView() {
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2">
-        {/* Reservoir: all-levels subjects */}
-        <KanbanColumn
-          title="Toutes niveaux"
-          icon={<BookMarked className="h-4 w-4" />}
-          subjects={reservoir}
-          isDraggable
-          onEdit={setEditId}
-          onDelete={(id, name) => setDeleteTarget({ id, name })}
-        />
+        {/* Catalogue */}
+        <div className="w-72 shrink-0 rounded-lg border bg-card shadow-sm">
+          <div className="flex items-center justify-between px-4 py-3 border-b bg-primary/5">
+            <div className="flex items-center gap-2">
+              <BookMarked className="h-4 w-4 text-primary" />
+              <span className="font-semibold text-sm">Catalogue</span>
+              <Badge variant="secondary" className="text-xs">{catalogue.length}</Badge>
+            </div>
+          </div>
+          <div className="p-2 space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
+            {catalogue.length === 0 ? (
+              <div className="py-8 text-center text-xs text-muted-foreground italic">
+                {debouncedSearch ? "Aucun résultat" : "Créez des matières avec le bouton +"}
+              </div>
+            ) : (
+              catalogue.map((s) => (
+                <SubjectCard
+                  key={s.id}
+                  subject={s}
+                  isDraggable
+                  onEdit={() => setEditId(s.id)}
+                  onDelete={() => setDeleteTarget({ id: s.id, name: s.name })}
+                />
+              ))
+            )}
+          </div>
+        </div>
 
         {/* Level columns */}
         {levels.map((level) => {
           const levelSubjects = filteredSubjects.filter((s) => s.level_id === level.id)
           const levelSeries = allSeries.filter((s) => s.level_id === level.id)
 
-          // Include "all levels" subjects (level_id=null) in every column
-          const allLevelSubjects = [...levelSubjects, ...reservoir]
-
           return (
             <LevelColumn
               key={level.id}
               level={level}
-              subjects={allLevelSubjects}
+              subjects={levelSubjects}
               series={levelSeries}
               dragOverTarget={dragOverTarget}
               setDragOverTarget={setDragOverTarget}
@@ -181,6 +342,14 @@ export function SubjectsKanbanView() {
           )
         })}
       </div>
+
+      {/* Assign modal */}
+      <AssignModal
+        target={assignTarget}
+        series={assignTarget ? allSeries.filter((s) => s.level_id === assignTarget.levelId) : []}
+        open={assignTarget !== null}
+        onClose={() => setAssignTarget(null)}
+      />
 
       <SubjectEditModal subjectId={editId} open={editId !== null} onClose={() => setEditId(null)} />
 
@@ -213,7 +382,7 @@ export function SubjectsKanbanView() {
 }
 
 // ---------------------------------------------------------------------------
-// Level column with optional series sub-groups
+// Level column with series sub-groups
 // ---------------------------------------------------------------------------
 
 function LevelColumn({
@@ -231,7 +400,7 @@ function LevelColumn({
   series: { id: number; name: string }[]
   dragOverTarget: string | null
   setDragOverTarget: (t: string | null) => void
-  onDrop: (subjectId: number, levelId: number, seriesId: number | null) => void
+  onDrop: (subjectId: number, levelId: number, levelName: string, seriesId: number | null) => void
   onEdit: (id: number) => void
   onDelete: (id: number, name: string) => void
 }) {
@@ -239,8 +408,6 @@ function LevelColumn({
   const key = `level-${level.id}`
   const isDragOver = dragOverTarget === key
   const hasSeries = series.length > 0
-
-  // Subjects without series in this level
   const directSubjects = subjects.filter((s) => !s.series_id)
 
   return (
@@ -254,7 +421,7 @@ function LevelColumn({
         e.preventDefault()
         setDragOverTarget(null)
         const subjectId = Number(e.dataTransfer.getData("subjectId"))
-        if (subjectId) onDrop(subjectId, level.id, null)
+        if (subjectId) onDrop(subjectId, level.id, level.name, null)
       }}
     >
       <div className="flex items-center justify-between px-4 py-3 border-b">
@@ -291,16 +458,14 @@ function LevelColumn({
                 e.stopPropagation()
                 setDragOverTarget(null)
                 const subjectId = Number(e.dataTransfer.getData("subjectId"))
-                if (subjectId) onDrop(subjectId, level.id, ser.id)
+                if (subjectId) onDrop(subjectId, level.id, level.name, ser.id)
               }}
             >
               <p className="text-[10px] font-medium text-muted-foreground px-1 mb-1">
                 Série {ser.name}
               </p>
               {seriesSubjects.length === 0 ? (
-                <p className="text-[10px] text-muted-foreground/60 italic px-1 py-2">
-                  Déposer ici
-                </p>
+                <p className="text-[10px] text-muted-foreground/60 italic px-1 py-2">Déposer ici</p>
               ) : (
                 seriesSubjects.map((s) => (
                   <SubjectCard key={s.id} subject={s} onEdit={() => onEdit(s.id)} onDelete={() => onDelete(s.id, s.name)} />
@@ -314,59 +479,6 @@ function LevelColumn({
           <div className="py-8 text-center text-xs text-muted-foreground italic">
             Déposer une matière ici
           </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Generic column (for reservoir)
-// ---------------------------------------------------------------------------
-
-function KanbanColumn({
-  title,
-  icon,
-  subjects,
-  isDraggable,
-  onEdit,
-  onDelete,
-}: {
-  title: string
-  icon: React.ReactNode
-  subjects: Subject[]
-  isDraggable?: boolean
-  onEdit: (id: number) => void
-  onDelete: (id: number, name: string) => void
-}) {
-  const totalHours = subjects.reduce((sum, s) => sum + s.hours_per_week, 0)
-
-  return (
-    <div className="w-72 shrink-0 rounded-lg border bg-card shadow-sm">
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-primary/5">
-        <div className="flex items-center gap-2">
-          <span className="text-primary">{icon}</span>
-          <span className="font-semibold text-sm">{title}</span>
-          <Badge variant="secondary" className="text-xs">{subjects.length}</Badge>
-        </div>
-        <span className="text-xs text-muted-foreground">{totalHours}h</span>
-      </div>
-
-      <div className="p-2 space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
-        {subjects.length === 0 ? (
-          <div className="py-8 text-center text-xs text-muted-foreground italic">
-            Aucune matière
-          </div>
-        ) : (
-          subjects.map((s) => (
-            <SubjectCard
-              key={s.id}
-              subject={s}
-              isDraggable={isDraggable}
-              onEdit={() => onEdit(s.id)}
-              onDelete={() => onDelete(s.id, s.name)}
-            />
-          ))
         )}
       </div>
     </div>
