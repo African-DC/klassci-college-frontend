@@ -163,11 +163,14 @@ export function SubjectsKanbanView() {
           const levelSubjects = filteredSubjects.filter((s) => s.level_id === level.id)
           const levelSeries = allSeries.filter((s) => s.level_id === level.id)
 
+          // Include "all levels" subjects (level_id=null) in every column
+          const allLevelSubjects = [...levelSubjects, ...reservoir]
+
           return (
             <LevelColumn
               key={level.id}
               level={level}
-              subjects={levelSubjects}
+              subjects={allLevelSubjects}
               series={levelSeries}
               dragOverTarget={dragOverTarget}
               setDragOverTarget={setDragOverTarget}
