@@ -72,7 +72,7 @@ export function RoomsPageClient() {
   const debouncedSearch = useDebounce(search)
 
   const params = useMemo(() => ({
-    size: 200,
+    size: 100,
     ...(debouncedSearch && { search: debouncedSearch }),
     ...(typeFilter !== "all" && { room_type: typeFilter }),
   }), [debouncedSearch, typeFilter])

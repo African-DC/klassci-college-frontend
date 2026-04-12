@@ -41,8 +41,8 @@ interface TreeNode {
 export function ClassesTreeView() {
   const router = useRouter()
   const { data: levelsData, isLoading: levelsLoading } = useLevels({ size: 100 })
-  const { data: seriesData, isLoading: seriesLoading } = useSeriesList({ size: 200 })
-  const { data: classesData, isLoading: classesLoading } = useClasses({ size: 500 })
+  const { data: seriesData, isLoading: seriesLoading } = useSeriesList({ size: 100 })
+  const { data: classesData, isLoading: classesLoading } = useClasses({ size: 100 })
   const deleteMutation = useDeleteClass()
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["all"]))
