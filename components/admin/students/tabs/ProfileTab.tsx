@@ -1,10 +1,18 @@
 "use client"
 
+import { useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { User, CalendarDays, BookOpen, Mail, KeyRound, Shield, UserPlus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import type { Student } from "@/lib/contracts/student"
+import { studentKeys } from "@/lib/hooks/useStudents"
+import { getSession } from "next-auth/react"
 
 interface ProfileTabProps {
   student: Student
@@ -24,6 +32,12 @@ function InfoField({ label, value, icon: Icon }: { label: string; value: string 
 }
 
 export function ProfileTab({ student, fullData }: ProfileTabProps) {
+  const queryClient = useQueryClient()
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
+  const [emailValue, setEmailValue] = useState("")
+  const [passwordValue, setPasswordValue] = useState("")
+  const [saving, setSaving] = useState(false)
+
   const birthDate = student.birth_date
     ? new Date(student.birth_date).toLocaleDateString("fr-FR", {
         day: "numeric",
@@ -39,6 +53,45 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
   const lastLogin = fullData.last_login ? String(fullData.last_login) : null
   const userCreatedAt = fullData.user_created_at ? String(fullData.user_created_at) : (student.created_at ?? null)
   const hasUserAccount = !!student.user_id
+  const needsEmailConfig = hasUserAccount && !userEmail
+
+  const handleSaveAccount = async () => {
+    if (!student.user_id) return
+    if (!emailValue.includes("@")) {
+      toast.error("Veuillez saisir un email valide")
+      return
+    }
+    setSaving(true)
+    try {
+      const session = await getSession()
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL
+      const body: Record<string, string> = { email: emailValue }
+      if (passwordValue.length > 0) body.password = passwordValue
+
+      const res = await fetch(`${baseUrl}/admin/users/${student.user_id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
+        },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: "Erreur serveur" }))
+        throw new Error(err.detail || "Erreur lors de la mise à jour")
+      }
+      queryClient.invalidateQueries({ queryKey: studentKeys.all })
+      queryClient.invalidateQueries({ queryKey: studentKeys.detail(student.id) })
+      toast.success("Compte mis à jour")
+      setEmailDialogOpen(false)
+      setEmailValue("")
+      setPasswordValue("")
+    } catch (err) {
+      toast.error("Erreur", { description: err instanceof Error ? err.message : "Erreur inconnue" })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -106,11 +159,24 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
                   icon={KeyRound}
                 />
               </div>
-              <div className="mt-4">
-                <Button variant="outline" size="sm" disabled>
-                  <KeyRound className="mr-1.5 h-3.5 w-3.5" />
-                  Réinitialiser le mot de passe
-                </Button>
+              <div className="mt-4 flex gap-2">
+                {needsEmailConfig ? (
+                  <Button variant="default" size="sm" onClick={() => setEmailDialogOpen(true)}>
+                    <Mail className="mr-1.5 h-3.5 w-3.5" />
+                    Configurer l&apos;email
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => setEmailDialogOpen(true)}>
+                      <Mail className="mr-1.5 h-3.5 w-3.5" />
+                      Modifier l&apos;email
+                    </Button>
+                    <Button variant="outline" size="sm" disabled>
+                      <KeyRound className="mr-1.5 h-3.5 w-3.5" />
+                      Réinitialiser le mot de passe
+                    </Button>
+                  </>
+                )}
               </div>
             </>
           ) : (
@@ -130,6 +196,50 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Email configuration dialog */}
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="max-w-md" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>
+              {needsEmailConfig ? "Configurer le compte" : "Modifier l'email"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="account-email">Email de connexion</Label>
+              <Input
+                id="account-email"
+                type="email"
+                placeholder="eleve@exemple.ci"
+                value={emailValue}
+                onChange={(e) => setEmailValue(e.target.value)}
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="account-password">
+                Mot de passe {!needsEmailConfig && "(laisser vide pour ne pas changer)"}
+              </Label>
+              <Input
+                id="account-password"
+                type="password"
+                placeholder={needsEmailConfig ? "Minimum 8 caractères" : "Nouveau mot de passe"}
+                value={passwordValue}
+                onChange={(e) => setPasswordValue(e.target.value)}
+                className="h-11"
+              />
+            </div>
+            <Button
+              className="w-full h-11"
+              onClick={handleSaveAccount}
+              disabled={saving || !emailValue}
+            >
+              {saving ? "Enregistrement..." : "Enregistrer"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
