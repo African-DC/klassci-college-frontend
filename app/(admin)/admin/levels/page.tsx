@@ -1,7 +1,7 @@
-import { LevelsPageClient } from "@/components/admin/levels/LevelsPageClient"
+import { LevelsAndSeriesPageClient } from "@/components/admin/levels/LevelsAndSeriesPageClient"
 
-export const metadata = { title: "Niveaux | KLASSCI" }
+export const metadata = { title: "Niveaux & Séries | KLASSCI" }
 
 export default function LevelsPage() {
-  return <LevelsPageClient />
+  return <LevelsAndSeriesPageClient />
 }

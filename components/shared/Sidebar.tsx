@@ -13,7 +13,6 @@ import {
   School,
   BookOpen,
   Layers,
-  GitBranch,
   DoorOpen,
   Wallet,
   CreditCard,
@@ -62,8 +61,7 @@ const navigation: NavSection[] = [
     title: "Academique",
     items: [
       { label: "Annees scolaires", href: "/admin/academic-years" as Route, icon: CalendarRange },
-      { label: "Niveaux", href: "/admin/levels" as Route, icon: Layers },
-      { label: "Series", href: "/admin/series" as Route, icon: GitBranch },
+      { label: "Niveaux & Séries", href: "/admin/levels" as Route, icon: Layers },
       { label: "Classes", href: "/admin/classes", icon: School },
       { label: "Salles", href: "/admin/rooms" as Route, icon: DoorOpen },
       { label: "Matieres", href: "/admin/subjects", icon: BookOpen },

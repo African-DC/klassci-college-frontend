@@ -25,14 +25,15 @@ import {
 
 interface SeriesFormProps {
   onSuccess: () => void
+  defaultLevelId?: number
 }
 
-export function SeriesForm({ onSuccess }: SeriesFormProps) {
+export function SeriesForm({ onSuccess, defaultLevelId }: SeriesFormProps) {
   const form = useForm<SeriesCreate>({
     resolver: zodResolver(SeriesCreateSchema),
     defaultValues: {
       name: "",
-      level_id: undefined,
+      level_id: defaultLevelId,
     },
   })
 
