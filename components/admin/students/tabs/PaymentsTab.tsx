@@ -2,14 +2,18 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Wallet, Plus, GraduationCap } from "lucide-react"
+import { Wallet, Plus, GraduationCap, RefreshCw } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
+import { getSession } from "next-auth/react"
+import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
-import { useEnrollments } from "@/lib/hooks/useEnrollments"
+import { useEnrollments, enrollmentKeys } from "@/lib/hooks/useEnrollments"
+import { studentKeys } from "@/lib/hooks/useStudents"
 import { StudentPaymentModal } from "./StudentPaymentModal"
 
 interface PaymentsTabProps {
@@ -31,6 +35,8 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function PaymentsTab({ studentId, fullData }: PaymentsTabProps) {
   const [paymentOpen, setPaymentOpen] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
+  const queryClient = useQueryClient()
   const { data: enrollmentsData, isLoading, isError, refetch } = useEnrollments({ student_id: studentId })
   const enrollments = enrollmentsData?.items ?? []
 
@@ -38,6 +44,36 @@ export function PaymentsTab({ studentId, fullData }: PaymentsTabProps) {
   const totalPaid = typeof fullData.fees_paid === "number" ? fullData.fees_paid : 0
   const feesRate = typeof fullData.fees_rate === "number" ? fullData.fees_rate : (totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0)
   const feesRemaining = typeof fullData.fees_remaining === "number" ? fullData.fees_remaining : Math.max(0, totalExpected - totalPaid)
+
+  async function handleRegenerateFees() {
+    if (enrollments.length === 0) return
+    setRegenerating(true)
+    try {
+      const session = await getSession()
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL
+      await Promise.all(
+        enrollments.map((enrollment) =>
+          fetch(`${baseUrl}/admin/enrollments/${enrollment.id}/regenerate-fees`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
+            },
+          }).then((res) => {
+            if (!res.ok) throw new Error(`Erreur pour l'inscription #${enrollment.id}`)
+          })
+        )
+      )
+      queryClient.invalidateQueries({ queryKey: studentKeys.all })
+      queryClient.invalidateQueries({ queryKey: enrollmentKeys.all })
+      toast.success("Frais régénérés avec succès")
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erreur lors de la régénération des frais"
+      toast.error(message)
+    } finally {
+      setRegenerating(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -87,15 +123,27 @@ export function PaymentsTab({ studentId, fullData }: PaymentsTabProps) {
             <p className="text-sm text-primary-foreground/80">
               Reste à payer : <span className="font-semibold">{formatFCFA(feesRemaining as number)}</span>
             </p>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="text-xs"
-              onClick={() => setPaymentOpen(true)}
-            >
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Enregistrer un paiement
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+                onClick={handleRegenerateFees}
+                disabled={regenerating}
+              >
+                <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
+                {regenerating ? "Régénération..." : "Régénérer les frais"}
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="text-xs"
+                onClick={() => setPaymentOpen(true)}
+              >
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Enregistrer un paiement
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
