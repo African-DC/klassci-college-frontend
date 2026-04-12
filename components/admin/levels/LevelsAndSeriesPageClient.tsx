@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Layers,
   ChevronRight,
@@ -39,12 +39,21 @@ export function LevelsAndSeriesPageClient() {
   const { mutate: deleteLevel } = useDeleteLevel()
   const { mutate: deleteSeries } = useDeleteSeries()
 
-  const [expanded, setExpanded] = useState<Set<number>>(() => new Set())
+  const [expanded, setExpanded] = useState<Set<number>>(new Set())
+  const [initialized, setInitialized] = useState(false)
   const [levelCreateOpen, setLevelCreateOpen] = useState(false)
   const [editLevelId, setEditLevelId] = useState<number | null>(null)
   const [seriesCreateForLevel, setSeriesCreateForLevel] = useState<number | null>(null)
   const [editSeriesId, setEditSeriesId] = useState<number | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: "level" | "series"; id: number; name: string } | null>(null)
+
+  // Expand all on first load
+  useEffect(() => {
+    if (!initialized && levelsData?.items?.length) {
+      setExpanded(new Set(levelsData.items.map((l: Level) => l.id)))
+      setInitialized(true)
+    }
+  }, [levelsData, initialized])
 
   const levels: Level[] = levelsData?.items ?? []
   const allSeries: Series[] = seriesData?.items ?? []
@@ -107,10 +116,28 @@ export function LevelsAndSeriesPageClient() {
             <p className="text-sm text-muted-foreground">Structure académique de l&apos;établissement</p>
           </div>
         </div>
-        <Button size="sm" onClick={() => setLevelCreateOpen(true)}>
-          <Plus className="mr-1.5 h-3.5 w-3.5" />
-          Nouveau niveau
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs"
+            onClick={() => setExpanded(new Set(levels.map((l) => l.id)))}
+          >
+            Tout déplier
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs"
+            onClick={() => setExpanded(new Set())}
+          >
+            Tout replier
+          </Button>
+          <Button size="sm" onClick={() => setLevelCreateOpen(true)}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            Nouveau niveau
+          </Button>
+        </div>
       </div>
 
       {/* Tree */}
@@ -147,11 +174,11 @@ export function LevelsAndSeriesPageClient() {
                   </button>
 
                   {/* Icon */}
-                  <GraduationCap className={`h-5 w-5 shrink-0 ${isOpen ? "text-primary" : "text-primary/60"}`} />
+                  <GraduationCap className={`h-6 w-6 shrink-0 ${isOpen ? "text-primary" : "text-primary/60"}`} />
 
                   {/* Name */}
                   <span
-                    className="text-[15px] font-semibold cursor-pointer"
+                    className="text-base font-semibold cursor-pointer"
                     onClick={() => toggleExpand(level.id)}
                   >
                     {level.name}
@@ -159,19 +186,19 @@ export function LevelsAndSeriesPageClient() {
 
                   {/* Series count badge */}
                   {levelSeries.length > 0 && (
-                    <span className="text-[11px] text-muted-foreground bg-muted rounded-full px-2 py-0.5">
+                    <span className="text-xs text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">
                       {levelSeries.length}
                     </span>
                   )}
 
-                  {/* Actions — right after name, not pushed to end */}
+                  {/* Actions — right after name */}
                   <button
                     type="button"
                     className="p-1.5 rounded hover:bg-primary/10 transition-colors"
                     onClick={() => setSeriesCreateForLevel(level.id)}
                     title="Ajouter une série"
                   >
-                    <Plus className="h-3.5 w-3.5 text-primary/60 hover:text-primary" />
+                    <Plus className="h-4 w-4 text-primary/60 hover:text-primary" />
                   </button>
                   <button
                     type="button"
@@ -179,7 +206,7 @@ export function LevelsAndSeriesPageClient() {
                     onClick={() => setEditLevelId(level.id)}
                     title="Modifier le niveau"
                   >
-                    <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                    <Pencil className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                   </button>
                   <button
                     type="button"
@@ -187,7 +214,7 @@ export function LevelsAndSeriesPageClient() {
                     onClick={() => setDeleteTarget({ type: "level", id: level.id, name: level.name })}
                     title="Supprimer le niveau"
                   >
-                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-destructive" />
+                    <Trash2 className="h-4 w-4 text-muted-foreground/60 hover:text-destructive" />
                   </button>
                 </div>
 
@@ -199,28 +226,28 @@ export function LevelsAndSeriesPageClient() {
                         key={series.id}
                         className="flex items-center gap-1.5 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors"
                       >
-                        <BookOpen className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+                        <BookOpen className="h-5 w-5 shrink-0 text-muted-foreground/60" />
 
-                        <span className="text-[14px] text-foreground/80">
+                        <span className="text-sm font-medium text-foreground/80">
                           Série {series.name}
                         </span>
 
                         {/* Actions — right after name */}
                         <button
                           type="button"
-                          className="p-1 rounded hover:bg-muted transition-colors"
+                          className="p-1.5 rounded hover:bg-muted transition-colors"
                           onClick={() => setEditSeriesId(series.id)}
                           title="Modifier la série"
                         >
-                          <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
                         </button>
                         <button
                           type="button"
-                          className="p-1 rounded hover:bg-destructive/10 transition-colors"
+                          className="p-1.5 rounded hover:bg-destructive/10 transition-colors"
                           onClick={() => setDeleteTarget({ type: "series", id: series.id, name: `Série ${series.name}` })}
                           title="Supprimer la série"
                         >
-                          <Trash2 className="h-3 w-3 text-muted-foreground/60 hover:text-destructive" />
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-destructive" />
                         </button>
                       </div>
                     ))}
