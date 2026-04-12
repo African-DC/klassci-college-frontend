@@ -8,9 +8,8 @@ import {
   Plus,
   Pencil,
   Trash2,
-  FolderOpen,
-  Folder,
-  FileText,
+  GraduationCap,
+  BookOpen,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -68,9 +67,6 @@ export function LevelsAndSeriesPageClient() {
     })
   }
 
-  const expandAll = () => setExpanded(new Set(levels.map((l) => l.id)))
-  const collapseAll = () => setExpanded(new Set())
-
   const handleDelete = () => {
     if (!deleteTarget) return
     if (deleteTarget.type === "level") deleteLevel(deleteTarget.id)
@@ -85,13 +81,9 @@ export function LevelsAndSeriesPageClient() {
           <Skeleton className="h-8 w-60" />
           <Skeleton className="h-9 w-40" />
         </div>
-        <div className="rounded-lg border bg-card">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-2 px-4 py-2.5 border-b last:border-0">
-              <Skeleton className="h-4 w-4" />
-              <Skeleton className="h-4 w-4" />
-              <Skeleton className="h-4 w-32" />
-            </div>
+        <div className="rounded-lg border bg-card p-4 space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-72" />
           ))}
         </div>
       </div>
@@ -103,7 +95,7 @@ export function LevelsAndSeriesPageClient() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
@@ -112,24 +104,16 @@ export function LevelsAndSeriesPageClient() {
           </div>
           <div>
             <h1 className="font-serif text-xl tracking-tight">Niveaux & Séries</h1>
-            <p className="text-sm text-muted-foreground">Structure académique</p>
+            <p className="text-sm text-muted-foreground">Structure académique de l&apos;établissement</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="text-xs" onClick={expandAll}>
-            Tout déplier
-          </Button>
-          <Button variant="ghost" size="sm" className="text-xs" onClick={collapseAll}>
-            Tout replier
-          </Button>
-          <Button size="sm" onClick={() => setLevelCreateOpen(true)}>
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Nouveau niveau
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => setLevelCreateOpen(true)}>
+          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          Nouveau niveau
+        </Button>
       </div>
 
-      {/* Tree explorer */}
+      {/* Tree */}
       {sortedLevels.length === 0 ? (
         <div className="rounded-lg border bg-card flex flex-col items-center justify-center py-16 text-center">
           <Layers className="h-8 w-8 text-muted-foreground/40 mb-3" />
@@ -140,176 +124,121 @@ export function LevelsAndSeriesPageClient() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border bg-card overflow-hidden select-none">
-          {/* Tree header */}
-          <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/40">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Explorateur
-            </p>
-            <p className="text-[10px] text-muted-foreground">
-              {levels.length} niveau{levels.length > 1 ? "x" : ""} · {allSeries.length} série{allSeries.length > 1 ? "s" : ""}
-            </p>
-          </div>
+        <div className="rounded-lg border bg-card overflow-hidden select-none p-3 space-y-1">
+          {sortedLevels.map((level) => {
+            const isOpen = expanded.has(level.id)
+            const levelSeries = seriesByLevel.get(level.id) ?? []
 
-          {/* Tree body */}
-          <div className="text-sm">
-            {sortedLevels.map((level, levelIdx) => {
-              const isOpen = expanded.has(level.id)
-              const levelSeries = seriesByLevel.get(level.id) ?? []
-              const isLast = levelIdx === sortedLevels.length - 1
+            return (
+              <div key={level.id}>
+                {/* Level row */}
+                <div className="flex items-center gap-1.5 rounded-md px-2 py-2 hover:bg-muted/60 transition-colors">
+                  {/* Chevron */}
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(level.id)}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded hover:bg-muted transition-colors"
+                  >
+                    {isOpen ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
 
-              return (
-                <div key={level.id}>
-                  {/* Level row */}
-                  <div
-                    className="group flex items-center gap-0 pr-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                  {/* Icon */}
+                  <GraduationCap className={`h-5 w-5 shrink-0 ${isOpen ? "text-primary" : "text-primary/60"}`} />
+
+                  {/* Name */}
+                  <span
+                    className="text-[15px] font-semibold cursor-pointer"
                     onClick={() => toggleExpand(level.id)}
                   >
-                    {/* Indent guide + chevron */}
-                    <div className="flex items-center justify-center w-8 shrink-0">
-                      {isOpen ? (
-                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                      ) : (
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                      )}
-                    </div>
+                    {level.name}
+                  </span>
 
-                    {/* Folder icon */}
-                    <div className="flex items-center justify-center w-6 shrink-0">
-                      {isOpen ? (
-                        <FolderOpen className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Folder className="h-4 w-4 text-primary/70" />
-                      )}
-                    </div>
-
-                    {/* Name */}
-                    <span className="flex-1 py-[7px] pl-1.5 font-medium text-[13px] truncate">
-                      {level.name}
+                  {/* Series count badge */}
+                  {levelSeries.length > 0 && (
+                    <span className="text-[11px] text-muted-foreground bg-muted rounded-full px-2 py-0.5">
+                      {levelSeries.length}
                     </span>
-
-                    {/* Series count */}
-                    {levelSeries.length > 0 && (
-                      <span className="text-[10px] text-muted-foreground/60 mr-1 tabular-nums">
-                        {levelSeries.length}
-                      </span>
-                    )}
-
-                    {/* Actions — visible on hover */}
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        type="button"
-                        className="p-1 rounded hover:bg-muted"
-                        onClick={(e) => { e.stopPropagation(); setSeriesCreateForLevel(level.id) }}
-                        title="Ajouter une série"
-                      >
-                        <Plus className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                      </button>
-                      <button
-                        type="button"
-                        className="p-1 rounded hover:bg-muted"
-                        onClick={(e) => { e.stopPropagation(); setEditLevelId(level.id) }}
-                        title="Modifier"
-                      >
-                        <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                      </button>
-                      <button
-                        type="button"
-                        className="p-1 rounded hover:bg-destructive/10"
-                        onClick={(e) => { e.stopPropagation(); setDeleteTarget({ type: "level", id: level.id, name: level.name }) }}
-                        title="Supprimer"
-                      >
-                        <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Series children */}
-                  {isOpen && (
-                    <div>
-                      {levelSeries.length === 0 ? (
-                        <div className="flex items-center gap-0 pr-2 hover:bg-muted/30 transition-colors">
-                          {/* Indent: tree line */}
-                          <div className="relative w-8 shrink-0">
-                            {!isLast && <div className="absolute left-[15px] top-0 bottom-0 w-px bg-border" />}
-                            <div className="absolute left-[15px] top-1/2 w-3 h-px bg-border" />
-                          </div>
-                          <div className="flex items-center justify-center w-6 shrink-0" />
-                          <button
-                            type="button"
-                            className="py-[6px] pl-1.5 text-[12px] text-muted-foreground/50 italic hover:text-primary transition-colors"
-                            onClick={() => setSeriesCreateForLevel(level.id)}
-                          >
-                            + Ajouter une série...
-                          </button>
-                        </div>
-                      ) : (
-                        levelSeries.map((series, seriesIdx) => {
-                          const isLastSeries = seriesIdx === levelSeries.length - 1
-
-                          return (
-                            <div
-                              key={series.id}
-                              className="group/series flex items-center gap-0 pr-2 hover:bg-muted/30 transition-colors"
-                            >
-                              {/* Indent: tree connector lines */}
-                              <div className="relative w-8 shrink-0 self-stretch">
-                                {/* Vertical line from parent */}
-                                {(!isLast || !isLastSeries) && (
-                                  <div
-                                    className="absolute left-[15px] top-0 w-px bg-border"
-                                    style={{ bottom: isLastSeries ? "50%" : 0 }}
-                                  />
-                                )}
-                                {isLast && !isLastSeries && (
-                                  <div className="absolute left-[15px] top-0 bottom-0 w-px bg-border" />
-                                )}
-                                {isLast && isLastSeries && (
-                                  <div className="absolute left-[15px] top-0 w-px bg-border" style={{ height: "50%" }} />
-                                )}
-                                {/* Horizontal branch */}
-                                <div className="absolute left-[15px] top-1/2 w-3 h-px bg-border" />
-                              </div>
-
-                              {/* File icon */}
-                              <div className="flex items-center justify-center w-6 shrink-0">
-                                <FileText className="h-3.5 w-3.5 text-muted-foreground/60" />
-                              </div>
-
-                              {/* Name */}
-                              <span className="flex-1 py-[6px] pl-1.5 text-[13px] truncate text-muted-foreground">
-                                Série {series.name}
-                              </span>
-
-                              {/* Actions on hover */}
-                              <div className="flex items-center gap-0.5 opacity-0 group-hover/series:opacity-100 transition-opacity">
-                                <button
-                                  type="button"
-                                  className="p-1 rounded hover:bg-muted"
-                                  onClick={() => setEditSeriesId(series.id)}
-                                  title="Modifier"
-                                >
-                                  <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="p-1 rounded hover:bg-destructive/10"
-                                  onClick={() => setDeleteTarget({ type: "series", id: series.id, name: `Série ${series.name}` })}
-                                  title="Supprimer"
-                                >
-                                  <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                                </button>
-                              </div>
-                            </div>
-                          )
-                        })
-                      )}
-                    </div>
                   )}
+
+                  {/* Actions — right after name, not pushed to end */}
+                  <button
+                    type="button"
+                    className="p-1.5 rounded hover:bg-primary/10 transition-colors"
+                    onClick={() => setSeriesCreateForLevel(level.id)}
+                    title="Ajouter une série"
+                  >
+                    <Plus className="h-3.5 w-3.5 text-primary/60 hover:text-primary" />
+                  </button>
+                  <button
+                    type="button"
+                    className="p-1.5 rounded hover:bg-muted transition-colors"
+                    onClick={() => setEditLevelId(level.id)}
+                    title="Modifier le niveau"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                  </button>
+                  <button
+                    type="button"
+                    className="p-1.5 rounded hover:bg-destructive/10 transition-colors"
+                    onClick={() => setDeleteTarget({ type: "level", id: level.id, name: level.name })}
+                    title="Supprimer le niveau"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-destructive" />
+                  </button>
                 </div>
-              )
-            })}
-          </div>
+
+                {/* Series children */}
+                {isOpen && (
+                  <div className="ml-5 pl-4 border-l-2 border-border/60 space-y-0.5 mt-0.5 mb-2">
+                    {levelSeries.map((series) => (
+                      <div
+                        key={series.id}
+                        className="flex items-center gap-1.5 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors"
+                      >
+                        <BookOpen className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+
+                        <span className="text-[14px] text-foreground/80">
+                          Série {series.name}
+                        </span>
+
+                        {/* Actions — right after name */}
+                        <button
+                          type="button"
+                          className="p-1 rounded hover:bg-muted transition-colors"
+                          onClick={() => setEditSeriesId(series.id)}
+                          title="Modifier la série"
+                        >
+                          <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </button>
+                        <button
+                          type="button"
+                          className="p-1 rounded hover:bg-destructive/10 transition-colors"
+                          onClick={() => setDeleteTarget({ type: "series", id: series.id, name: `Série ${series.name}` })}
+                          title="Supprimer la série"
+                        >
+                          <Trash2 className="h-3 w-3 text-muted-foreground/60 hover:text-destructive" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Add series inline */}
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-muted-foreground/50 hover:text-primary hover:bg-primary/5 transition-colors"
+                      onClick={() => setSeriesCreateForLevel(level.id)}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Ajouter une série
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
