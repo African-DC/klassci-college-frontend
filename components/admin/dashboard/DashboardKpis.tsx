@@ -36,30 +36,45 @@ export function DashboardKpis() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <KpiCard
-        title="Eleves inscrits"
+        title="Élèves inscrits"
         value={data?.enrolled_students ?? 0}
-        description="Inscriptions validees"
+        description={
+          <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              {data?.enrollment_validated ?? 0} validées
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500" />
+              {data?.enrollment_prospect ?? 0} prospects
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
+              {data?.enrollment_pending ?? 0} en attente
+            </span>
+          </span>
+        }
         icon={GraduationCap}
         variant="blue"
       />
       <KpiCard
         title="Paiements en attente"
         value={data?.pending_payments ?? 0}
-        description="A traiter"
+        description="À traiter"
         icon={Wallet}
         variant="orange"
       />
       <KpiCard
         title="Cours du jour"
         value={data?.courses_today ?? 0}
-        description="Programmes aujourd'hui"
+        description="Programmés aujourd'hui"
         icon={CalendarDays}
         variant="emerald"
       />
       <KpiCard
         title="Alertes"
         value={data?.alerts ?? 0}
-        description="Evaluations sans notes"
+        description="Évaluations sans notes"
         icon={AlertTriangle}
         variant="rose"
       />

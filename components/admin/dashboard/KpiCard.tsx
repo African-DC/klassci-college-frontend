@@ -29,7 +29,7 @@ const variantStyles: Record<KpiVariant, { bg: string; icon: string; ring: string
 interface KpiCardProps {
   title: string
   value: React.ReactNode
-  description?: string
+  description?: React.ReactNode
   icon: React.ComponentType<{ className?: string }>
   variant?: KpiVariant
   trend?: {
