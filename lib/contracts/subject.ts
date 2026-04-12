@@ -7,6 +7,8 @@ export const SubjectSchema = z.object({
   series_id: z.number().nullable(),
   coefficient: z.number(),
   hours_per_week: z.number(),
+  level_name: z.string().nullable().optional(),
+  series_name: z.string().nullable().optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 }).passthrough()
@@ -21,14 +23,6 @@ export const SubjectCreateSchema = z.object({
 
 export const SubjectUpdateSchema = SubjectCreateSchema.partial()
 
-export const SubjectListParamsSchema = z.object({
-  page: z.number().optional(),
-  size: z.number().optional(),
-  search: z.string().optional(),
-  level_id: z.number().optional(),
-})
-
 export type Subject = z.infer<typeof SubjectSchema>
 export type SubjectCreate = z.infer<typeof SubjectCreateSchema>
 export type SubjectUpdate = z.infer<typeof SubjectUpdateSchema>
-export type SubjectListParams = z.infer<typeof SubjectListParamsSchema>

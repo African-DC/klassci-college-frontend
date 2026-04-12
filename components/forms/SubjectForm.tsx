@@ -1,9 +1,12 @@
 "use client"
 
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { SubjectCreateSchema, type SubjectCreate } from "@/lib/contracts/subject"
 import { useCreateSubject } from "@/lib/hooks/useSubjects"
+import { useLevels } from "@/lib/hooks/useLevels"
+import { useSeriesList } from "@/lib/hooks/useSeries"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -14,6 +17,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface SubjectFormProps {
   onSuccess: () => void
@@ -26,13 +36,33 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
       name: "",
       coefficient: 1,
       hours_per_week: 1,
+      level_id: undefined,
+      series_id: undefined,
     },
   })
+
+  const { data: levelsData } = useLevels({ size: 100 })
+  const levels = levelsData?.items
+
+  const selectedLevelId = form.watch("level_id")
+  const { data: seriesData } = useSeriesList(
+    selectedLevelId ? { level_id: selectedLevelId, size: 100 } : {},
+  )
+  const seriesForLevel = selectedLevelId ? (seriesData?.items ?? []) : []
+
+  useEffect(() => {
+    form.setValue("series_id", undefined)
+  }, [selectedLevelId, form])
 
   const { mutate, isPending, error } = useCreateSubject()
 
   function onSubmit(data: SubjectCreate) {
-    mutate(data, {
+    const payload = {
+      ...data,
+      level_id: data.level_id || null,
+      series_id: data.series_id || null,
+    }
+    mutate(payload, {
       onSuccess: () => {
         form.reset()
         onSuccess()
@@ -56,6 +86,68 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
             </FormItem>
           )}
         />
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="level_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Niveau</FormLabel>
+                <Select
+                  onValueChange={(v) => field.onChange(v === "all" ? undefined : Number(v))}
+                  value={field.value?.toString() ?? "all"}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Tous les niveaux" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les niveaux</SelectItem>
+                    {levels?.map((level) => (
+                      <SelectItem key={level.id} value={level.id.toString()}>
+                        {level.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {seriesForLevel.length > 0 ? (
+            <FormField
+              control={form.control}
+              name="series_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Série</FormLabel>
+                  <Select
+                    onValueChange={(v) => field.onChange(v === "none" ? undefined : Number(v))}
+                    value={field.value?.toString() ?? "none"}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Toutes séries" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">Toutes séries</SelectItem>
+                      {seriesForLevel.map((s) => (
+                        <SelectItem key={s.id} value={s.id.toString()}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : null}
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <FormField
