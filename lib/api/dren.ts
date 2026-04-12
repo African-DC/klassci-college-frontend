@@ -5,17 +5,17 @@ export const drenApi = {
   // Récupérer les statistiques agrégées pour une année académique
   getStats: async (academicYearId: number): Promise<DrenStats> => {
     const json = await apiFetch<{ data?: DrenStats } | DrenStats>(
-      `/reports/dren?academic_year_id=${academicYearId}`,
+      `/reports/dren-stats/${academicYearId}`,
     )
     const stats = (json as { data?: DrenStats }).data ?? (json as DrenStats)
-    return safeValidate(DrenStatsSchema, stats, "GET /reports/dren")
+    return safeValidate(DrenStatsSchema, stats, "GET /reports/dren-stats")
   },
 
-  // Télécharger l'export Excel (authentifié)
+  // Télécharger l'export (authentifié) — le BE retourne un export JSON/blob
   downloadExcel: (academicYearId: number): Promise<Blob> =>
-    apiFetchBlob(`/reports/dren/excel?academic_year_id=${academicYearId}`),
+    apiFetchBlob(`/reports/dren-stats/${academicYearId}/export`),
 
   // Télécharger l'export PDF (authentifié)
   downloadPdf: (academicYearId: number): Promise<Blob> =>
-    apiFetchBlob(`/reports/dren/pdf?academic_year_id=${academicYearId}`),
+    apiFetchBlob(`/reports/dren-stats/${academicYearId}/export`),
 }

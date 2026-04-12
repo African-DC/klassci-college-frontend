@@ -10,7 +10,10 @@ import {
   Trash2,
   GraduationCap,
   BookOpen,
+  GripVertical,
 } from "lucide-react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -25,13 +28,14 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
 import { useLevels, useDeleteLevel } from "@/lib/hooks/useLevels"
-import { useSeriesList, useDeleteSeries } from "@/lib/hooks/useSeries"
+import { useSeriesList, useDeleteSeries, seriesKeys } from "@/lib/hooks/useSeries"
+import { seriesApi } from "@/lib/api/series"
 import { LevelCreateModal } from "./LevelCreateModal"
 import { LevelEditModal } from "./LevelEditModal"
 import { SeriesCreateModal } from "../series/SeriesCreateModal"
 import { SeriesEditModal } from "../series/SeriesEditModal"
 import type { Level } from "@/lib/contracts/level"
-import type { Series } from "@/lib/contracts/series"
+import type { Series, SeriesUpdate } from "@/lib/contracts/series"
 
 export function LevelsAndSeriesPageClient() {
   const { data: levelsData, isLoading: levelsLoading, isError: levelsError, error: levelsErr, refetch: refetchLevels } = useLevels()
@@ -46,6 +50,9 @@ export function LevelsAndSeriesPageClient() {
   const [seriesCreateForLevel, setSeriesCreateForLevel] = useState<number | null>(null)
   const [editSeriesId, setEditSeriesId] = useState<number | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: "level" | "series"; id: number; name: string } | null>(null)
+  const [dragOverLevelId, setDragOverLevelId] = useState<number | null>(null)
+
+  const queryClient = useQueryClient()
 
   // Expand all on first load
   useEffect(() => {
@@ -57,6 +64,22 @@ export function LevelsAndSeriesPageClient() {
 
   const levels: Level[] = levelsData?.items ?? []
   const allSeries: Series[] = seriesData?.items ?? []
+
+  const { mutate: moveSeries } = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: SeriesUpdate }) =>
+      seriesApi.update(id, data),
+    onSuccess: (_result, variables) => {
+      const targetLevel = levels.find((l) => l.id === variables.data.level_id)
+      const movedSeries = allSeries.find((s) => s.id === variables.id)
+      if (targetLevel && movedSeries) {
+        toast.success(`Série ${movedSeries.name} déplacée vers ${targetLevel.name}`)
+      }
+      queryClient.invalidateQueries({ queryKey: seriesKeys.all })
+    },
+    onError: (err) => {
+      toast.error("Erreur lors du déplacement", { description: err.message })
+    },
+  })
 
   const seriesByLevel = new Map<number, Series[]>()
   for (const s of allSeries) {
@@ -157,9 +180,30 @@ export function LevelsAndSeriesPageClient() {
             const levelSeries = seriesByLevel.get(level.id) ?? []
 
             return (
-              <div key={level.id}>
+              <div
+                key={level.id}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setDragOverLevelId(level.id)
+                }}
+                onDragLeave={(e) => {
+                  // Only reset if leaving the level container itself
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setDragOverLevelId(null)
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  const seriesId = Number(e.dataTransfer.getData("seriesId"))
+                  const fromLevelId = Number(e.dataTransfer.getData("fromLevelId"))
+                  if (fromLevelId !== level.id && seriesId) {
+                    moveSeries({ id: seriesId, data: { level_id: level.id } })
+                  }
+                  setDragOverLevelId(null)
+                }}
+              >
                 {/* Level row */}
-                <div className="flex items-center gap-1.5 rounded-md px-2 py-2 hover:bg-muted/60 transition-colors">
+                <div className={`flex items-center gap-1.5 rounded-md px-2 py-2 transition-colors ${dragOverLevelId === level.id ? "ring-2 ring-primary bg-primary/5" : "hover:bg-muted/60"}`}>
                   {/* Chevron */}
                   <button
                     type="button"
@@ -224,8 +268,21 @@ export function LevelsAndSeriesPageClient() {
                     {levelSeries.map((series) => (
                       <div
                         key={series.id}
-                        className="flex items-center gap-1.5 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("seriesId", String(series.id))
+                          e.dataTransfer.setData("fromLevelId", String(level.id))
+                          e.dataTransfer.effectAllowed = "move"
+                          // Add grabbing cursor via class on body
+                          document.body.classList.add("cursor-grabbing")
+                        }}
+                        onDragEnd={() => {
+                          document.body.classList.remove("cursor-grabbing")
+                          setDragOverLevelId(null)
+                        }}
+                        className="flex items-center gap-1.5 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors cursor-grab active:cursor-grabbing"
                       >
+                        <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/40" />
                         <BookOpen className="h-5 w-5 shrink-0 text-muted-foreground/60" />
 
                         <span className="text-sm font-medium text-foreground/80">
