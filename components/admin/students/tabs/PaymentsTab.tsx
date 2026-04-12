@@ -120,8 +120,8 @@ export function PaymentsTab({ studentId }: PaymentsTabProps) {
             </div>
           </div>
           <Progress
-            value={feesRate as number}
-            className="h-2.5 bg-primary-foreground/20"
+            value={feesRate}
+            className="h-3 bg-primary-foreground/20 [&>div]:bg-primary-foreground"
           />
           <div className="mt-3 flex items-center justify-between">
             <p className="text-sm text-primary-foreground/80">

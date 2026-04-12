@@ -9,7 +9,7 @@ export const PaymentStatusSchema = z.enum(["pending", "completed", "failed", "re
 export const PaymentSchema = z.object({
   id: z.number(),
   enrollment_fee_id: z.number(),
-  amount: z.number(),
+  amount: z.coerce.number(),
   method: PaymentMethodSchema,
   status: PaymentStatusSchema,
   reference: z.string().nullable(),
