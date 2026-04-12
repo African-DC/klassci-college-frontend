@@ -9,13 +9,14 @@ import {
   ChevronRight,
   ChevronDown,
   Users,
-  Plus,
   Pencil,
   Trash2,
+  GripVertical,
 } from "lucide-react"
+import { toast } from "sonner"
 import { useLevels } from "@/lib/hooks/useLevels"
 import { useSeriesList } from "@/lib/hooks/useSeries"
-import { useClasses, useDeleteClass } from "@/lib/hooks/useClasses"
+import { useClasses, useDeleteClass, useUpdateClass } from "@/lib/hooks/useClasses"
 import type { Class } from "@/lib/contracts/class"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -34,6 +35,8 @@ interface TreeNode {
   type: "level" | "series" | "class"
   id: number
   name: string
+  levelId?: number
+  seriesId?: number | null
   children?: TreeNode[]
   classData?: Class
 }
@@ -48,8 +51,29 @@ export function ClassesTreeView() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["all"]))
   const [editId, setEditId] = useState<number | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null)
+  const [dragOverTarget, setDragOverTarget] = useState<string | null>(null)
+
+  // We need a dynamic updateClass — use ID 0 as placeholder, actual ID comes from drag data
+  const [dragClassId, setDragClassId] = useState<number>(0)
+  const updateMutation = useUpdateClass(dragClassId)
 
   const isLoading = levelsLoading || seriesLoading || classesLoading
+
+  function handleDrop(classId: number, targetLevelId: number, targetSeriesId: number | null) {
+    setDragClassId(classId)
+    // Use direct API call instead of hook (hook has stale ID)
+    import("@/lib/api/classes").then(({ classesApi }) => {
+      classesApi.update(classId, { level_id: targetLevelId, series_id: targetSeriesId ?? null })
+        .then(() => {
+          toast.success("Classe déplacée avec succès")
+          // Invalidate queries
+          window.location.reload() // Simple refresh to update tree
+        })
+        .catch((err: Error) => {
+          toast.error("Erreur", { description: err.message })
+        })
+    })
+  }
 
   // Build tree: Level > Series > Classes
   const tree = useMemo(() => {
@@ -59,7 +83,6 @@ export function ClassesTreeView() {
     const series = seriesData?.items ?? []
     const classes = classesData.items
 
-    // Group classes by level_id and series_id
     const classesByLevel = new Map<number, Class[]>()
     const classesByLevelSeries = new Map<string, Class[]>()
 
@@ -74,13 +97,12 @@ export function ClassesTreeView() {
       }
     }
 
-    const nodes: TreeNode[] = levels
+    return levels
       .sort((a, b) => a.order - b.order)
       .map((level) => {
         const levelSeries = series.filter((s) => s.level_id === level.id)
         const children: TreeNode[] = []
 
-        // Add series with their classes
         for (const s of levelSeries) {
           const key = `${level.id}-${s.id}`
           const seriesClasses = classesByLevelSeries.get(key) ?? []
@@ -88,6 +110,7 @@ export function ClassesTreeView() {
             type: "series",
             id: s.id,
             name: s.name,
+            levelId: level.id,
             children: seriesClasses.map((c) => ({
               type: "class",
               id: c.id,
@@ -97,7 +120,6 @@ export function ClassesTreeView() {
           })
         }
 
-        // Add classes without series (direct under level)
         const directClasses = classesByLevel.get(level.id) ?? []
         for (const c of directClasses) {
           children.push({
@@ -115,8 +137,6 @@ export function ClassesTreeView() {
           children,
         }
       })
-
-    return nodes
   }, [levelsData, seriesData, classesData])
 
   // Auto-expand all on first load
@@ -162,20 +182,19 @@ export function ClassesTreeView() {
     )
   }
 
-  // Total classes count
   const totalClasses = classesData?.items?.length ?? 0
   const totalStudents = classesData?.items?.reduce((sum, c) => sum + (c.enrolled_count ?? 0), 0) ?? 0
 
   return (
     <div className="space-y-4">
-      {/* Summary bar */}
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <span>{totalClasses} classes</span>
         <span className="text-border">|</span>
         <span>{totalStudents} élèves inscrits</span>
+        <span className="text-border">|</span>
+        <span className="text-xs italic">Glisser-déposer pour déplacer une classe</span>
       </div>
 
-      {/* Tree */}
       <div className="rounded-lg border bg-card">
         {tree.map((levelNode) => (
           <LevelRow
@@ -186,18 +205,19 @@ export function ClassesTreeView() {
             onClickClass={(id) => router.push(`/admin/classes/${id}`)}
             onEditClass={setEditId}
             onDeleteClass={(id, name) => setDeleteTarget({ id, name })}
+            onDropClass={handleDrop}
+            dragOverTarget={dragOverTarget}
+            setDragOverTarget={setDragOverTarget}
           />
         ))}
       </div>
 
-      {/* Edit modal */}
       <ClassEditModal
         classId={editId}
         open={editId !== null}
         onClose={() => setEditId(null)}
       />
 
-      {/* Delete dialog */}
       <Dialog open={deleteTarget !== null} onOpenChange={() => setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
@@ -232,6 +252,12 @@ export function ClassesTreeView() {
 // Tree row components
 // ---------------------------------------------------------------------------
 
+interface DropHandlerProps {
+  onDropClass: (classId: number, levelId: number, seriesId: number | null) => void
+  dragOverTarget: string | null
+  setDragOverTarget: (target: string | null) => void
+}
+
 function LevelRow({
   node,
   expanded,
@@ -239,6 +265,9 @@ function LevelRow({
   onClickClass,
   onEditClass,
   onDeleteClass,
+  onDropClass,
+  dragOverTarget,
+  setDragOverTarget,
 }: {
   node: TreeNode
   expanded: Set<string>
@@ -246,18 +275,35 @@ function LevelRow({
   onClickClass: (id: number) => void
   onEditClass: (id: number) => void
   onDeleteClass: (id: number, name: string) => void
-}) {
+} & DropHandlerProps) {
   const key = `level-${node.id}`
   const isExpanded = expanded.has(key)
   const childCount = node.children?.length ?? 0
   const classCount = countClasses(node)
+  const isDragOver = dragOverTarget === key
 
   return (
     <div>
       <button
         type="button"
-        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors border-b"
+        className={`flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors border-b ${
+          isDragOver ? "bg-primary/10 ring-2 ring-primary/30 ring-inset" : ""
+        }`}
         onClick={() => onToggle(key)}
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = "move"
+          setDragOverTarget(key)
+        }}
+        onDragLeave={() => setDragOverTarget(null)}
+        onDrop={(e) => {
+          e.preventDefault()
+          setDragOverTarget(null)
+          const classId = Number(e.dataTransfer.getData("classId"))
+          if (classId) {
+            onDropClass(classId, node.id, null)
+          }
+        }}
       >
         {isExpanded ? (
           <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -283,6 +329,9 @@ function LevelRow({
                 onClickClass={onClickClass}
                 onEditClass={onEditClass}
                 onDeleteClass={onDeleteClass}
+                onDropClass={onDropClass}
+                dragOverTarget={dragOverTarget}
+                setDragOverTarget={setDragOverTarget}
               />
             ) : (
               <ClassRow
@@ -313,6 +362,9 @@ function SeriesRow({
   onClickClass,
   onEditClass,
   onDeleteClass,
+  onDropClass,
+  dragOverTarget,
+  setDragOverTarget,
 }: {
   node: TreeNode
   expanded: Set<string>
@@ -320,17 +372,34 @@ function SeriesRow({
   onClickClass: (id: number) => void
   onEditClass: (id: number) => void
   onDeleteClass: (id: number, name: string) => void
-}) {
+} & DropHandlerProps) {
   const key = `series-${node.id}`
   const isExpanded = expanded.has(key)
   const classCount = node.children?.length ?? 0
+  const isDragOver = dragOverTarget === key
 
   return (
     <div>
       <button
         type="button"
-        className="flex w-full items-center gap-3 pl-10 pr-4 py-2.5 text-left hover:bg-muted/50 transition-colors border-b border-border/50"
+        className={`flex w-full items-center gap-3 pl-10 pr-4 py-2.5 text-left hover:bg-muted/50 transition-colors border-b border-border/50 ${
+          isDragOver ? "bg-accent/10 ring-2 ring-accent/30 ring-inset" : ""
+        }`}
         onClick={() => onToggle(key)}
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = "move"
+          setDragOverTarget(key)
+        }}
+        onDragLeave={() => setDragOverTarget(null)}
+        onDrop={(e) => {
+          e.preventDefault()
+          setDragOverTarget(null)
+          const classId = Number(e.dataTransfer.getData("classId"))
+          if (classId && node.levelId) {
+            onDropClass(classId, node.levelId, node.id)
+          }
+        }}
       >
         {isExpanded ? (
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -387,12 +456,21 @@ function ClassRow({
   return (
     <div
       className={`group flex items-center gap-3 ${paddingLeft} pr-4 py-2.5 hover:bg-primary/5 cursor-pointer transition-colors border-b border-border/30`}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("classId", String(node.id))
+        e.dataTransfer.effectAllowed = "move"
+        document.body.classList.add("cursor-grabbing")
+      }}
+      onDragEnd={() => {
+        document.body.classList.remove("cursor-grabbing")
+      }}
       onClick={() => onClickClass(node.id)}
     >
+      <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 group-hover:text-muted-foreground cursor-grab" />
       <School className="h-4 w-4 shrink-0 text-muted-foreground" />
       <span className="text-sm font-medium flex-1">{node.name}</span>
 
-      {/* Enrolled count */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Users className="h-3.5 w-3.5" />
         <span className="font-mono">{enrolled}/{max || "—"}</span>
@@ -408,7 +486,6 @@ function ClassRow({
         )}
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           variant="ghost"
