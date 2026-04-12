@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { Wallet, Plus, GraduationCap } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -9,6 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
+import { StudentPaymentModal } from "./StudentPaymentModal"
 
 interface PaymentsTabProps {
   studentId: number
@@ -28,6 +30,7 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 export function PaymentsTab({ studentId, fullData }: PaymentsTabProps) {
+  const [paymentOpen, setPaymentOpen] = useState(false)
   const { data: enrollmentsData, isLoading, isError, refetch } = useEnrollments({ student_id: studentId })
   const enrollments = enrollmentsData?.items ?? []
 
@@ -84,16 +87,15 @@ export function PaymentsTab({ studentId, fullData }: PaymentsTabProps) {
             <p className="text-sm text-primary-foreground/80">
               Reste à payer : <span className="font-semibold">{formatFCFA(feesRemaining as number)}</span>
             </p>
-            <Link href="/admin/payments">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="text-xs"
-              >
-                <Plus className="mr-1.5 h-3.5 w-3.5" />
-                Enregistrer un paiement
-              </Button>
-            </Link>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="text-xs"
+              onClick={() => setPaymentOpen(true)}
+            >
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Enregistrer un paiement
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -133,6 +135,12 @@ export function PaymentsTab({ studentId, fullData }: PaymentsTabProps) {
           )
         })}
       </div>
+
+      <StudentPaymentModal
+        studentId={studentId}
+        open={paymentOpen}
+        onClose={() => setPaymentOpen(false)}
+      />
     </div>
   )
 }

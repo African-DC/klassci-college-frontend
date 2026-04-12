@@ -40,4 +40,30 @@ export const studentsApi = {
     })
     if (!res.ok) throw new Error("Erreur lors de la suppression de la photo")
   },
+
+  getEnrollmentFees: async (studentId: number): Promise<StudentEnrollmentFee[]> => {
+    const session = await getSession()
+    const res = await fetch(`${getBaseUrl()}/admin/students/${studentId}/fees`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
+      },
+    })
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
+      throw new Error(error.detail || "Impossible de charger les frais")
+    }
+    const data = await res.json()
+    return Array.isArray(data) ? data : data.items ?? data.data ?? []
+  },
+}
+
+export interface StudentEnrollmentFee {
+  id: number
+  enrollment_id: number
+  category_name: string
+  amount: number
+  paid: number
+  remaining: number
+  status: string
 }

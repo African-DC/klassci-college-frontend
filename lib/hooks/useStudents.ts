@@ -1,5 +1,6 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
 import { studentsApi } from "@/lib/api/students"
 import type { Student, StudentCreate, StudentUpdate } from "@/lib/contracts/student"
 import { createCrudHooks } from "./createCrudHooks"
@@ -23,3 +24,12 @@ export const useStudent = useDetail
 export const useCreateStudent = useCreate
 export const useUpdateStudent = useUpdate
 export const useDeleteStudent = useDelete
+
+export function useStudentFees(studentId: number) {
+  return useQuery({
+    queryKey: ["students", studentId, "fees"],
+    queryFn: () => studentsApi.getEnrollmentFees(studentId),
+    enabled: !!studentId,
+    staleTime: 1000 * 60 * 2,
+  })
+}
