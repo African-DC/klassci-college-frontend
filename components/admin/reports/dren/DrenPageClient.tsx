@@ -117,8 +117,8 @@ export function DrenPageClient() {
             <KpiCard
               icon={UserCheck}
               label="Taux de réussite"
-              value={`${stats.success_rate.toFixed(1)}%`}
-              className={stats.success_rate >= 60 ? "text-emerald-600" : "text-accent"}
+              value={stats.success_rate != null ? `${stats.success_rate.toFixed(1)}%` : "—"}
+              className={stats.success_rate != null && stats.success_rate >= 60 ? "text-emerald-600" : "text-accent"}
             />
             <KpiCard
               icon={BarChart3}
@@ -128,14 +128,14 @@ export function DrenPageClient() {
             <KpiCard
               icon={TrendingUp}
               label="Taux d'échec"
-              value={`${stats.failure_rate.toFixed(1)}%`}
+              value={stats.failure_rate != null ? `${stats.failure_rate.toFixed(1)}%` : "—"}
             />
           </div>
 
           {/* Graphiques */}
           <div className="grid gap-6 lg:grid-cols-2">
             <EnrollmentByLevelChart data={stats.levels.map((l) => ({ level: l.level_name, male: l.male_count, female: l.female_count }))} />
-            <SuccessRateChart data={stats.levels.map((l) => ({ level: l.level_name, rate: l.total_students > 0 ? (stats.success_rate) : 0 }))} />
+            <SuccessRateChart data={stats.levels.map((l) => ({ level: l.level_name, rate: l.total_students > 0 ? (stats.success_rate ?? 0) : 0 }))} />
           </div>
 
           {/* Tableau détaillé */}

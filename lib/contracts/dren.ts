@@ -9,6 +9,7 @@ export const ClassStatsSchema = z.object({
   total_students: z.number(),
   male_count: z.number(),
   female_count: z.number(),
+  average: z.number().nullable().optional(),
 })
 
 export const LevelStatsSchema = z.object({
@@ -23,7 +24,7 @@ export const LevelStatsSchema = z.object({
 export const SubjectStatsSchema = z.object({
   subject_id: z.number(),
   subject_name: z.string(),
-  overall_average: z.coerce.number(),
+  overall_average: z.coerce.number().nullable().optional(),
   teacher_count: z.number(),
 })
 
@@ -33,10 +34,10 @@ export const DrenStatsSchema = z.object({
   total_students: z.number(),
   male_count: z.number(),
   female_count: z.number(),
-  success_rate: z.number(),
-  failure_rate: z.number(),
-  redoublement_rate: z.number(),
-  exclusion_rate: z.number(),
+  success_rate: z.number().nullable().optional(),
+  failure_rate: z.number().nullable().optional(),
+  redoublement_rate: z.number().nullable().optional(),
+  exclusion_rate: z.number().nullable().optional(),
   levels: z.array(LevelStatsSchema),
   subjects: z.array(SubjectStatsSchema),
 })
