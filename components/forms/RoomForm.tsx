@@ -1,9 +1,12 @@
 "use client"
 
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { RoomCreateSchema, type RoomCreate, ROOM_TYPES } from "@/lib/contracts/room"
 import { useCreateRoom } from "@/lib/hooks/useRooms"
+import { useClasses } from "@/lib/hooks/useClasses"
+import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -27,21 +30,46 @@ interface RoomFormProps {
 }
 
 export function RoomForm({ onSuccess }: RoomFormProps) {
+  const queryClient = useQueryClient()
   const form = useForm<RoomCreate>({
     resolver: zodResolver(RoomCreateSchema),
     defaultValues: {
       name: "",
       capacity: undefined,
       room_type: "classroom",
+      class_id: undefined,
     },
   })
 
+  const { data: classesData } = useClasses({ size: 100 })
+  // Only show classes without a room already assigned
+  const availableClasses = classesData?.items?.filter((c) => !c.room_id) ?? []
+
   const { mutate, isPending, error } = useCreateRoom()
+
+  const selectedClassId = form.watch("class_id")
+
+  // Auto-fill name + capacity when selecting a class
+  useEffect(() => {
+    if (selectedClassId) {
+      const cls = availableClasses.find((c) => c.id === selectedClassId)
+      if (cls) {
+        const currentName = form.getValues("name")
+        if (!currentName || currentName.startsWith("Salle ")) {
+          form.setValue("name", `Salle ${cls.name}`)
+        }
+        if (!form.getValues("capacity") && cls.max_students) {
+          form.setValue("capacity", cls.max_students)
+        }
+      }
+    }
+  }, [selectedClassId])
 
   function onSubmit(data: RoomCreate) {
     mutate(data, {
       onSuccess: () => {
         form.reset()
+        queryClient.invalidateQueries({ queryKey: ["classes"] })
         onSuccess()
       },
     })
@@ -50,6 +78,38 @@ export function RoomForm({ onSuccess }: RoomFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        {/* Class assignment */}
+        {availableClasses.length > 0 && (
+          <FormField
+            control={form.control}
+            name="class_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assigner à une classe</FormLabel>
+                <Select
+                  onValueChange={(v) => field.onChange(v === "none" ? undefined : Number(v))}
+                  value={field.value?.toString() ?? "none"}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Aucune classe (salle indépendante)" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">Aucune (labo, salle info, etc.)</SelectItem>
+                    {availableClasses.map((c) => (
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        {c.name} {c.level_name ? `(${c.level_name})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         <FormField
           control={form.control}
           name="name"

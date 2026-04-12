@@ -6,6 +6,7 @@ export const RoomSchema = z.object({
   capacity: z.number().nullable(),
   room_type: z.string(),
   class_name: z.string().nullable().optional(),
+  class_id: z.number().nullable().optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 }).passthrough()
@@ -14,6 +15,7 @@ export const RoomCreateSchema = z.object({
   name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
   capacity: z.number().int().positive("La capacité doit être positive").nullable().optional(),
   room_type: z.string().default("classroom"),
+  class_id: z.number().nullable().optional(),
 })
 
 export const RoomUpdateSchema = RoomCreateSchema.partial()
