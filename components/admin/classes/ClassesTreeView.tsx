@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   GraduationCap,
   BookOpen,
@@ -43,6 +44,7 @@ interface TreeNode {
 
 export function ClassesTreeView() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const { data: levelsData, isLoading: levelsLoading } = useLevels({ size: 100 })
   const { data: seriesData, isLoading: seriesLoading } = useSeriesList({ size: 100 })
   const { data: classesData, isLoading: classesLoading } = useClasses({ size: 100 })
@@ -61,13 +63,11 @@ export function ClassesTreeView() {
 
   function handleDrop(classId: number, targetLevelId: number, targetSeriesId: number | null) {
     setDragClassId(classId)
-    // Use direct API call instead of hook (hook has stale ID)
     import("@/lib/api/classes").then(({ classesApi }) => {
       classesApi.update(classId, { level_id: targetLevelId, series_id: targetSeriesId ?? null })
         .then(() => {
           toast.success("Classe déplacée avec succès")
-          // Invalidate queries
-          window.location.reload() // Simple refresh to update tree
+          queryClient.invalidateQueries({ queryKey: ["classes"] })
         })
         .catch((err: Error) => {
           toast.error("Erreur", { description: err.message })

@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { RoomUpdateSchema, type RoomUpdate, ROOM_TYPES } from "@/lib/contracts/room"
@@ -46,7 +47,6 @@ function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) 
   const { mutate, isPending, error } = useUpdateRoom(roomId)
   const { data: classesData } = useClasses({ size: 100 })
 
-  // Show classes that either have no room OR are assigned to THIS room
   const availableClasses = classesData?.items?.filter(
     (c) => !c.room_id || c.room_id === roomId
   ) ?? []
@@ -63,10 +63,24 @@ function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) 
       : undefined,
   })
 
+  const watchRoomType = form.watch("room_type")
+  const isClassroom = watchRoomType === "classroom"
+
+  // When switching away from classroom, clear class_id
+  useEffect(() => {
+    if (!isClassroom) {
+      form.setValue("class_id", undefined)
+    }
+  }, [isClassroom, form])
+
   if (isLoading || !roomData) return <EditFormSkeleton />
 
   function onSubmit(data: RoomUpdate) {
-    mutate(data, {
+    const payload = { ...data }
+    if (!isClassroom) {
+      payload.class_id = null
+    }
+    mutate(payload, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["classes"] })
         onClose()
@@ -77,27 +91,22 @@ function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-        {/* Class assignment */}
         <FormField
           control={form.control}
-          name="class_id"
+          name="room_type"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Classe assignée</FormLabel>
-              <Select
-                onValueChange={(v) => field.onChange(v === "none" ? null : Number(v))}
-                value={field.value?.toString() ?? "none"}
-              >
+              <FormLabel>Type de salle</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ?? "classroom"}>
                 <FormControl>
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Aucune classe" />
+                    <SelectValue placeholder="Type de salle" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="none">Aucune (labo, salle info, etc.)</SelectItem>
-                  {availableClasses.map((c) => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.name} {c.level_name ? `(${c.level_name})` : ""}
+                  {ROOM_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -106,6 +115,38 @@ function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) 
             </FormItem>
           )}
         />
+
+        {/* Class select — only for classroom type */}
+        {isClassroom && (
+          <FormField
+            control={form.control}
+            name="class_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Classe assignée</FormLabel>
+                <Select
+                  onValueChange={(v) => field.onChange(v === "none" ? null : Number(v))}
+                  value={field.value?.toString() ?? "none"}
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Aucune classe" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">Aucune classe</SelectItem>
+                    {availableClasses.map((c) => (
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        {c.name} {c.level_name ? `(${c.level_name})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}
@@ -121,32 +162,8 @@ function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) 
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="room_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Type de salle</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value ?? "classroom"}>
-                  <FormControl>
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Type de salle" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {ROOM_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
+        {/* Capacity — only for non-classroom types (classroom inherits from class) */}
+        {!isClassroom && (
           <FormField
             control={form.control}
             name="capacity"
@@ -166,7 +183,7 @@ function EditForm({ roomId, onClose }: { roomId: number; onClose: () => void }) 
               </FormItem>
             )}
           />
-        </div>
+        )}
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
