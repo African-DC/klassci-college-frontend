@@ -30,6 +30,7 @@ export const EnrollmentCreateSchema = z.object({
 })
 
 export const EnrollmentUpdateSchema = z.object({
+  class_id: z.number().positive().optional(),
   status: EnrollmentStatusSchema.optional(),
   notes: z.string().optional().nullable(),
 })
