@@ -114,6 +114,8 @@ function AssignModal({
       subject_id: target.subjectId,
       level_id: target.levelId,
       series_id: seriesId,
+      coefficient: coef,
+      hours_per_week: hours,
     })
       .then(() => {
         toast.success(`${target.subjectName} assignée à ${target.levelName}`)
@@ -314,6 +316,7 @@ export function SubjectsKanbanView() {
                   key={s.id}
                   subject={s}
                   isDraggable
+                  isCatalogue
                   onEdit={() => setEditId(s.id)}
                   onDelete={() => setDeleteTarget({ id: s.id, name: s.name })}
                 />
@@ -492,11 +495,13 @@ function LevelColumn({
 function SubjectCard({
   subject,
   isDraggable,
+  isCatalogue,
   onEdit,
   onDelete,
 }: {
   subject: Subject
   isDraggable?: boolean
+  isCatalogue?: boolean
   onEdit: () => void
   onDelete: () => void
 }) {
@@ -513,28 +518,36 @@ function SubjectCard({
         e.dataTransfer.effectAllowed = "copy"
       } : undefined}
     >
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-start justify-between">
         <div className="flex items-center gap-1.5">
           {isDraggable && <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />}
           <h4 className={`font-semibold text-sm leading-tight ${color.text}`}>
             {subject.name}
           </h4>
         </div>
-        <div className={`flex h-7 w-7 items-center justify-center rounded-full text-white text-xs font-bold shrink-0 ml-2 ${color.badge}`}>
-          {subject.coefficient}
-        </div>
+        {!isCatalogue && (
+          <div className={`flex h-7 w-7 items-center justify-center rounded-full text-white text-xs font-bold shrink-0 ml-2 ${color.badge}`}>
+            {subject.coefficient}
+          </div>
+        )}
+        {isCatalogue && (
+          <div className={`h-3 w-3 rounded-full shrink-0 ml-2 ${color.badge}`} />
+        )}
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          <span>{subject.hours_per_week}h/sem</span>
+      {/* Only show coef/hours for assigned subjects (not catalogue) */}
+      {!isCatalogue && (
+        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span>{subject.hours_per_week}h/sem</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Award className="h-3 w-3" />
+            <span>Coef. {subject.coefficient}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Award className="h-3 w-3" />
-          <span>Coef. {subject.coefficient}</span>
-        </div>
-      </div>
+      )}
 
       <div className="flex items-center justify-between mt-2">
         {subject.series_name ? (

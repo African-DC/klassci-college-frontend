@@ -1,12 +1,10 @@
 "use client"
 
-import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { SubjectCreateSchema, type SubjectCreate, SUBJECT_COLOR_PALETTE } from "@/lib/contracts/subject"
+import { z } from "zod"
 import { useCreateSubject } from "@/lib/hooks/useSubjects"
-import { useLevels } from "@/lib/hooks/useLevels"
-import { useSeriesList } from "@/lib/hooks/useSeries"
+import { SUBJECT_COLOR_PALETTE } from "@/lib/contracts/subject"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -17,53 +15,35 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+
+const CatalogueSubjectSchema = z.object({
+  name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
+  color: z.string().default("blue"),
+  coefficient: z.number().default(1),
+  hours_per_week: z.number().default(1),
+})
+
+type CatalogueSubject = z.infer<typeof CatalogueSubjectSchema>
 
 interface SubjectFormProps {
   onSuccess: () => void
 }
 
 export function SubjectForm({ onSuccess }: SubjectFormProps) {
-  const form = useForm<SubjectCreate>({
-    resolver: zodResolver(SubjectCreateSchema),
+  const form = useForm<CatalogueSubject>({
+    resolver: zodResolver(CatalogueSubjectSchema),
     defaultValues: {
       name: "",
+      color: "blue",
       coefficient: 1,
       hours_per_week: 1,
-      level_id: undefined,
-      series_id: undefined,
-      color: "blue",
     },
   })
 
-  const { data: levelsData } = useLevels({ size: 100 })
-  const levels = levelsData?.items
-
-  const selectedLevelId = form.watch("level_id")
-  const { data: seriesData } = useSeriesList(
-    selectedLevelId ? { level_id: selectedLevelId, size: 100 } : {},
-  )
-  const seriesForLevel = selectedLevelId ? (seriesData?.items ?? []) : []
-
-  useEffect(() => {
-    form.setValue("series_id", undefined)
-  }, [selectedLevelId, form])
-
   const { mutate, isPending, error } = useCreateSubject()
 
-  function onSubmit(data: SubjectCreate) {
-    const payload = {
-      ...data,
-      level_id: data.level_id || null,
-      series_id: data.series_id || null,
-    }
-    mutate(payload, {
+  function onSubmit(data: CatalogueSubject) {
+    mutate(data, {
       onSuccess: () => {
         form.reset()
         onSuccess()
@@ -88,14 +68,13 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
           )}
         />
 
-        {/* Color picker */}
         <FormField
           control={form.control}
           name="color"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Couleur</FormLabel>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-6 gap-2">
                 {SUBJECT_COLOR_PALETTE.map((c) => (
                   <button
                     key={c.value}
@@ -115,109 +94,9 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="level_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Niveau</FormLabel>
-                <Select
-                  onValueChange={(v) => field.onChange(v === "all" ? undefined : Number(v))}
-                  value={field.value?.toString() ?? "all"}
-                >
-                  <FormControl>
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Tous les niveaux" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les niveaux</SelectItem>
-                    {levels?.map((level) => (
-                      <SelectItem key={level.id} value={level.id.toString()}>
-                        {level.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {seriesForLevel.length > 0 ? (
-            <FormField
-              control={form.control}
-              name="series_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Série</FormLabel>
-                  <Select
-                    onValueChange={(v) => field.onChange(v === "none" ? undefined : Number(v))}
-                    value={field.value?.toString() ?? "none"}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Toutes séries" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">Toutes séries</SelectItem>
-                      {seriesForLevel.map((s) => (
-                        <SelectItem key={s.id} value={s.id.toString()}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          ) : null}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="coefficient"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Coefficient *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={1}
-                    className="h-11"
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                    value={field.value ?? ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="hours_per_week"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Heures / semaine *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={1}
-                    className="h-11"
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                    value={field.value ?? ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Le coefficient et les heures/semaine seront configurés lors de l'assignation à un niveau.
+        </p>
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
@@ -226,7 +105,7 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
         )}
 
         <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending ? "Enregistrement..." : "Enregistrer la matière"}
+          {isPending ? "Enregistrement..." : "Ajouter au catalogue"}
         </Button>
       </form>
     </Form>
