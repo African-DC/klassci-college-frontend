@@ -5,6 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { TimetableSlotCreateSchema, type TimetableSlotCreate } from "@/lib/contracts/timetable"
 import { useCreateSlot, useUpdateSlot } from "@/lib/hooks/useTimetable"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
+import { useSubjects } from "@/lib/hooks/useSubjects"
+import { useTeachers } from "@/lib/hooks/useTeachers"
+import { useClass } from "@/lib/hooks/useClasses"
+import { useRooms } from "@/lib/hooks/useRooms"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -29,6 +34,7 @@ const DAYS = [
   { value: "mercredi", label: "Mercredi" },
   { value: "jeudi", label: "Jeudi" },
   { value: "vendredi", label: "Vendredi" },
+  { value: "samedi", label: "Samedi" },
 ] as const
 
 interface TimetableSlotFormProps {
@@ -47,6 +53,28 @@ export function TimetableSlotForm({
   onSuccess,
 }: TimetableSlotFormProps) {
   const isEdit = !!slot
+  const effectiveClassId = classId ?? slot?.class_id
+
+  // Fetch class to get level_id/series_id for subject filtering
+  const { data: classData } = useClass(effectiveClassId ?? 0)
+
+  // Subjects filtered by level of the class
+  const { data: subjectsData } = useSubjects(
+    classData?.level_id ? { level_id: classData.level_id, size: 100 } : { size: 100 },
+  )
+  const subjects = subjectsData?.items ?? []
+
+  // Teachers list
+  const { data: teachersData } = useTeachers({ size: 100 })
+  const teachers = teachersData?.items ?? []
+
+  // Rooms list
+  const { data: roomsData } = useRooms({ size: 100 })
+  const rooms = roomsData?.items ?? []
+
+  // Current academic year
+  const { data: yearsData } = useAcademicYears()
+  const currentYear = yearsData?.items?.find((y) => y.is_current)
 
   const form = useForm<TimetableSlotCreate>({
     resolver: zodResolver(TimetableSlotCreateSchema),
@@ -58,16 +86,22 @@ export function TimetableSlotForm({
           class_id: slot.class_id,
           teacher_id: slot.teacher_id,
           subject_id: slot.subject_id,
+          academic_year_id: slot.academic_year_id,
           room: slot.room ?? "",
         }
       : {
           day: defaultDay as TimetableSlotCreate["day"] | undefined,
           start_time: defaultStartTime ?? "",
-          end_time: "",
+          end_time: defaultStartTime ? addHour(defaultStartTime) : "",
           class_id: classId,
+          academic_year_id: currentYear?.id,
           room: "",
         },
   })
+
+  const selectedSubjectId = form.watch("subject_id")
+  // Filter teachers by the selected subject's teacher (if assigned)
+  const selectedSubject = subjects.find((s) => s.id === selectedSubjectId)
 
   const createMutation = useCreateSlot()
   const updateMutation = useUpdateSlot(slot?.id ?? 0)
@@ -76,20 +110,25 @@ export function TimetableSlotForm({
   const error = mutation.error
 
   function onSubmit(data: TimetableSlotCreate) {
+    // Auto-set academic_year_id if not set
+    const payload = {
+      ...data,
+      academic_year_id: data.academic_year_id || currentYear?.id || 1,
+    }
     if (isEdit) {
       updateMutation.mutate(
         {
-          teacher_id: data.teacher_id,
-          subject_id: data.subject_id,
-          day: data.day,
-          start_time: data.start_time,
-          end_time: data.end_time,
-          room: data.room,
+          teacher_id: payload.teacher_id,
+          subject_id: payload.subject_id,
+          day: payload.day,
+          start_time: payload.start_time,
+          end_time: payload.end_time,
+          room: payload.room,
         },
         { onSuccess },
       )
     } else {
-      createMutation.mutate(data, {
+      createMutation.mutate(payload, {
         onSuccess: () => {
           form.reset()
           onSuccess()
@@ -101,66 +140,68 @@ export function TimetableSlotForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="teacher_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Enseignant *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="ID enseignant"
-                    className="h-11"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                    value={field.value ?? ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="subject_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Matiere *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="ID matiere"
-                    className="h-11"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                    value={field.value ?? ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
+        {/* Subject select — filtered by class level */}
         <FormField
           control={form.control}
-          name="class_id"
+          name="subject_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Classe *</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="ID classe"
-                  className="h-11"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                  value={field.value ?? ""}
-                />
-              </FormControl>
+              <FormLabel>Matière *</FormLabel>
+              <Select
+                onValueChange={(v) => field.onChange(Number(v))}
+                value={field.value?.toString() ?? ""}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Sélectionner une matière" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {subjects.map((s) => (
+                    <SelectItem key={s.id} value={s.id.toString()}>
+                      {s.name} (Coef. {s.coefficient}, {s.hours_per_week}h/sem)
+                      {s.teacher_name ? ` — ${s.teacher_name}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Teacher select */}
+        <FormField
+          control={form.control}
+          name="teacher_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Enseignant *</FormLabel>
+              <Select
+                onValueChange={(v) => field.onChange(Number(v))}
+                value={field.value?.toString() ?? ""}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Sélectionner un enseignant" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {/* Show assigned teacher first if subject has one */}
+                  {selectedSubject?.teacher_id && selectedSubject?.teacher_name && (
+                    <SelectItem value={selectedSubject.teacher_id.toString()}>
+                      {selectedSubject.teacher_name} (assigné à cette matière)
+                    </SelectItem>
+                  )}
+                  {teachers
+                    .filter((t) => t.id !== selectedSubject?.teacher_id)
+                    .map((t) => (
+                      <SelectItem key={t.id} value={t.id.toString()}>
+                        {t.first_name} {t.last_name} {t.speciality ? `(${t.speciality})` : ""}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -197,7 +238,7 @@ export function TimetableSlotForm({
             name="start_time"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Debut *</FormLabel>
+                <FormLabel>Début *</FormLabel>
                 <FormControl>
                   <Input type="time" className="h-11" {...field} />
                 </FormControl>
@@ -221,15 +262,31 @@ export function TimetableSlotForm({
           />
         </div>
 
+        {/* Room select */}
         <FormField
           control={form.control}
           name="room"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Salle</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: Salle 201" className="h-11" {...field} value={field.value ?? ""} />
-              </FormControl>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value ?? ""}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Sélectionner une salle (optionnel)" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="">Aucune salle</SelectItem>
+                  {rooms.map((r) => (
+                    <SelectItem key={r.id} value={r.name}>
+                      {r.name} {r.capacity ? `(${r.capacity} places)` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -241,19 +298,19 @@ export function TimetableSlotForm({
           </div>
         )}
 
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full h-11 font-semibold"
-          disabled={isPending}
-        >
+        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
           {isPending
             ? "Enregistrement..."
             : isEdit
               ? "Enregistrer les modifications"
-              : "Ajouter le creneau"}
+              : "Ajouter le créneau"}
         </Button>
       </form>
     </Form>
   )
+}
+
+function addHour(time: string): string {
+  const [h, m] = time.split(":").map(Number)
+  return `${String(h + 1).padStart(2, "0")}:${String(m).padStart(2, "0")}`
 }
