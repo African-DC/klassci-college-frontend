@@ -13,12 +13,12 @@ import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { useEnrollments, enrollmentKeys } from "@/lib/hooks/useEnrollments"
-import { studentKeys } from "@/lib/hooks/useStudents"
+import { studentKeys, useStudentFees } from "@/lib/hooks/useStudents"
 import { StudentPaymentModal } from "./StudentPaymentModal"
 
 interface PaymentsTabProps {
   studentId: number
-  fullData: Record<string, unknown>
+  fullData?: Record<string, unknown>
 }
 
 function formatFCFA(amount: number): string {
@@ -33,17 +33,19 @@ const STATUS_LABEL: Record<string, string> = {
   annule: "Annulé",
 }
 
-export function PaymentsTab({ studentId, fullData }: PaymentsTabProps) {
+export function PaymentsTab({ studentId }: PaymentsTabProps) {
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
   const queryClient = useQueryClient()
   const { data: enrollmentsData, isLoading, isError, refetch } = useEnrollments({ student_id: studentId })
+  const { data: fees } = useStudentFees(studentId)
   const enrollments = enrollmentsData?.items ?? []
 
-  const totalExpected = typeof fullData.fees_total === "number" ? fullData.fees_total : 0
-  const totalPaid = typeof fullData.fees_paid === "number" ? fullData.fees_paid : 0
-  const feesRate = typeof fullData.fees_rate === "number" ? fullData.fees_rate : (totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0)
-  const feesRemaining = typeof fullData.fees_remaining === "number" ? fullData.fees_remaining : Math.max(0, totalExpected - totalPaid)
+  // Compute totals from actual enrollment fees (not stale fullData)
+  const totalExpected = (fees ?? []).reduce((sum, f) => sum + f.amount, 0)
+  const totalPaid = (fees ?? []).reduce((sum, f) => sum + f.paid, 0)
+  const feesRemaining = Math.max(0, totalExpected - totalPaid)
+  const feesRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0
 
   async function handleRegenerateFees() {
     if (enrollments.length === 0) return
