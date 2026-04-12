@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { SubjectCreateSchema, type SubjectCreate } from "@/lib/contracts/subject"
+import { SubjectCreateSchema, type SubjectCreate, SUBJECT_COLOR_PALETTE } from "@/lib/contracts/subject"
 import { useCreateSubject } from "@/lib/hooks/useSubjects"
 import { useLevels } from "@/lib/hooks/useLevels"
 import { useSeriesList } from "@/lib/hooks/useSeries"
@@ -38,6 +38,7 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
       hours_per_week: 1,
       level_id: undefined,
       series_id: undefined,
+      color: "blue",
     },
   })
 
@@ -82,6 +83,33 @@ export function SubjectForm({ onSuccess }: SubjectFormProps) {
               <FormControl>
                 <Input placeholder="Ex : Mathématiques" className="h-11" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Color picker */}
+        <FormField
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Couleur</FormLabel>
+              <div className="flex flex-wrap gap-2">
+                {SUBJECT_COLOR_PALETTE.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    className={`h-8 w-8 rounded-full transition-all ${c.class} ${
+                      field.value === c.value
+                        ? "ring-2 ring-offset-2 ring-primary scale-110"
+                        : "opacity-70 hover:opacity-100 hover:scale-105"
+                    }`}
+                    title={c.label}
+                    onClick={() => field.onChange(c.value)}
+                  />
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}

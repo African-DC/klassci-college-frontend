@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { SubjectUpdateSchema, type SubjectUpdate } from "@/lib/contracts/subject"
+import { SubjectUpdateSchema, type SubjectUpdate, SUBJECT_COLOR_PALETTE } from "@/lib/contracts/subject"
 import { useSubject, useUpdateSubject } from "@/lib/hooks/useSubjects"
 import { useLevels } from "@/lib/hooks/useLevels"
 import { useSeriesList } from "@/lib/hooks/useSeries"
@@ -56,6 +56,7 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
           hours_per_week: subject.hours_per_week,
           level_id: subject.level_id ?? undefined,
           series_id: subject.series_id ?? undefined,
+          color: subject.color ?? "blue",
         }
       : undefined,
   })
@@ -96,6 +97,33 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
               <FormControl>
                 <Input className="h-11" {...field} value={field.value ?? ""} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Color picker */}
+        <FormField
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Couleur</FormLabel>
+              <div className="flex flex-wrap gap-2">
+                {SUBJECT_COLOR_PALETTE.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    className={`h-8 w-8 rounded-full transition-all ${c.class} ${
+                      field.value === c.value
+                        ? "ring-2 ring-offset-2 ring-primary scale-110"
+                        : "opacity-70 hover:opacity-100 hover:scale-105"
+                    }`}
+                    title={c.label}
+                    onClick={() => field.onChange(c.value)}
+                  />
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}
