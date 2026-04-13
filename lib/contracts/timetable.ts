@@ -88,6 +88,18 @@ export const TeacherAvailabilityUpdateSchema = z.object({
   preferred: z.boolean().optional(),
 })
 
+// Diagnostic pre-generation
+export interface TimetableDiagnostic {
+  ready: boolean
+  class_id: number
+  class_name: string
+  subjects_without_teacher: { id: number; name: string; hours_per_week: number }[]
+  subjects_with_teacher: { id: number; name: string; hours_per_week: number; teacher_id: number; teacher_name: string }[]
+  total_hours_required: number
+  total_slots_available: number
+  manual_slots_count: number
+}
+
 export type DayOfWeek = z.infer<typeof DayOfWeekSchema>
 export type TeacherAvailability = z.infer<typeof TeacherAvailabilitySchema>
 export type TeacherAvailabilityCreate = z.infer<typeof TeacherAvailabilityCreateSchema>

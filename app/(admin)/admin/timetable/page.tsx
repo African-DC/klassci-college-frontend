@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { Calendar, ChevronLeft, ChevronRight, Wand2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,8 @@ import { useQueryClient } from "@tanstack/react-query"
 import { timetableKeys } from "@/lib/hooks/useTimetable"
 import { TimetableGrid } from "@/components/admin/timetable/TimetableGrid"
 import { TimetableHoursSidebar } from "@/components/admin/timetable/TimetableHoursSidebar"
+import { GenerateDiagnosticModal } from "@/components/admin/timetable/GenerateDiagnosticModal"
+import type { TimetableDiagnostic } from "@/lib/contracts/timetable"
 
 export default function TimetablePage() {
   const { selectedClassId, setSelectedClassId, weekOffset, nextWeek, prevWeek, resetWeek } = useTimetableStore()
@@ -29,51 +31,95 @@ export default function TimetablePage() {
   const pollCountRef = useRef(0)
   const MAX_POLL_ATTEMPTS = 100
 
+  const [diagnosticOpen, setDiagnosticOpen] = useState(false)
+  const [diagnostic, setDiagnostic] = useState<TimetableDiagnostic | null>(null)
+  const [loadingDiagnostic, setLoadingDiagnostic] = useState(false)
+
   const { data: classesData } = useClasses({ size: 100 })
   const classes = useMemo(() => classesData?.items ?? [], [classesData])
 
+  // Cleanup polling on unmount or class change
   useEffect(() => {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current)
     }
   }, [])
 
-  function handleGenerate() {
+  // Clear polling when class changes
+  useEffect(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current)
+      pollingRef.current = null
+    }
+  }, [selectedClassId])
+
+  function startPolling(taskId: string) {
+    pollCountRef.current = 0
+    pollFnRef.current = async () => {
+      pollCountRef.current++
+      if (pollCountRef.current > MAX_POLL_ATTEMPTS) {
+        if (pollingRef.current) clearInterval(pollingRef.current)
+        pollingRef.current = null
+        toast.error("Timeout", { description: "La generation prend trop de temps." })
+        return
+      }
+      try {
+        const status = await timetableApi.taskStatus(taskId)
+        if (status.status === "completed") {
+          if (pollingRef.current) clearInterval(pollingRef.current)
+          pollingRef.current = null
+          queryClient.invalidateQueries({ queryKey: timetableKeys.all })
+          toast.success("Emploi du temps genere avec succes")
+        } else if (status.status === "failed") {
+          if (pollingRef.current) clearInterval(pollingRef.current)
+          pollingRef.current = null
+          toast.error("Echec de la generation", { description: status.message ?? "Erreur inconnue" })
+        }
+      } catch {
+        if (pollingRef.current) clearInterval(pollingRef.current)
+        pollingRef.current = null
+      }
+    }
+    pollingRef.current = setInterval(() => { pollFnRef.current?.() }, 3000)
+  }
+
+  // Step 1: Run diagnostic before generating
+  async function handleGenerateClick() {
     if (!selectedClassId || pollingRef.current) return
+    setLoadingDiagnostic(true)
+    try {
+      const diag = await timetableApi.diagnostic(selectedClassId)
+      setDiagnostic(diag)
+      if (diag.ready) {
+        // All subjects have teachers — generate directly
+        launchGeneration()
+      } else {
+        // Missing teachers — show modal
+        setDiagnosticOpen(true)
+      }
+    } catch (err) {
+      toast.error("Erreur diagnostic", {
+        description: err instanceof Error ? err.message : "Erreur inconnue",
+      })
+    } finally {
+      setLoadingDiagnostic(false)
+    }
+  }
+
+  // Step 2: Launch generation (after diagnostic passes or after inline assignment)
+  const launchGeneration = useCallback(() => {
+    if (!selectedClassId) return
+    setDiagnosticOpen(false)
     generateMutation.mutate(selectedClassId, {
       onSuccess: (data) => {
-        toast.info("Génération lancée", { description: "Veuillez patienter..." })
-        pollCountRef.current = 0
-        pollFnRef.current = async () => {
-          pollCountRef.current++
-          if (pollCountRef.current > MAX_POLL_ATTEMPTS) {
-            if (pollingRef.current) clearInterval(pollingRef.current)
-            pollingRef.current = null
-            toast.error("Timeout", { description: "La génération prend trop de temps." })
-            return
-          }
-          try {
-            const status = await timetableApi.taskStatus(data.task_id)
-            if (status.status === "completed") {
-              if (pollingRef.current) clearInterval(pollingRef.current)
-              pollingRef.current = null
-              queryClient.invalidateQueries({ queryKey: timetableKeys.all })
-              toast.success("Emploi du temps généré avec succès")
-            } else if (status.status === "failed") {
-              if (pollingRef.current) clearInterval(pollingRef.current)
-              pollingRef.current = null
-              toast.error("Échec de la génération", { description: status.message ?? "Erreur" })
-            }
-          } catch {
-            if (pollingRef.current) clearInterval(pollingRef.current)
-            pollingRef.current = null
-          }
-        }
-        pollingRef.current = setInterval(() => { pollFnRef.current?.() }, 3000)
+        toast.info("Generation lancee", { description: "Les creneaux manuels sont preserves." })
+        startPolling(data.task_id)
       },
       onError: (error) => toast.error("Erreur", { description: error.message }),
     })
-  }
+  }, [selectedClassId, generateMutation, queryClient])
+
+  const isGenerating = generateMutation.isPending || !!pollingRef.current || loadingDiagnostic
 
   return (
     <div className="space-y-6">
@@ -85,26 +131,25 @@ export default function TimetablePage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Emploi du temps</h1>
-            <p className="text-sm text-muted-foreground">Gérez les créneaux horaires par classe</p>
+            <p className="text-sm text-muted-foreground">Gerez les creneaux horaires par classe</p>
           </div>
         </div>
         <Button
           variant="outline"
-          onClick={handleGenerate}
-          disabled={!selectedClassId || generateMutation.isPending}
+          onClick={handleGenerateClick}
+          disabled={!selectedClassId || isGenerating}
         >
-          {generateMutation.isPending ? (
+          {isGenerating ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
             <Wand2 className="mr-2 h-4 w-4" />
           )}
-          Générer automatiquement
+          Generer automatiquement
         </Button>
       </div>
 
       {/* Controls */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Class selector */}
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">
             Classe :
@@ -114,7 +159,7 @@ export default function TimetablePage() {
             onValueChange={(v) => setSelectedClassId(v ? Number(v) : null)}
           >
             <SelectTrigger className="h-10 w-56">
-              <SelectValue placeholder="Sélectionner une classe" />
+              <SelectValue placeholder="Selectionner une classe" />
             </SelectTrigger>
             <SelectContent>
               {classes.map((c) => (
@@ -126,7 +171,6 @@ export default function TimetablePage() {
           </Select>
         </div>
 
-        {/* Week nav */}
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" className="h-9 w-9" onClick={prevWeek}>
             <ChevronLeft className="h-4 w-4" />
@@ -140,7 +184,7 @@ export default function TimetablePage() {
         </div>
       </div>
 
-      {/* Class tabs (quick switch) */}
+      {/* Class tabs */}
       {classes.length > 0 && (
         <div className="flex gap-1 overflow-x-auto pb-1">
           {classes.slice(0, 15).map((c) => (
@@ -171,10 +215,18 @@ export default function TimetablePage() {
       ) : (
         <div className="flex h-64 items-center justify-center rounded-lg border border-dashed bg-muted/20">
           <p className="text-sm text-muted-foreground">
-            Sélectionnez une classe pour afficher l'emploi du temps
+            Selectionnez une classe pour afficher l'emploi du temps
           </p>
         </div>
       )}
+
+      {/* Diagnostic Modal */}
+      <GenerateDiagnosticModal
+        open={diagnosticOpen}
+        diagnostic={diagnostic}
+        onClose={() => setDiagnosticOpen(false)}
+        onGenerate={launchGeneration}
+      />
     </div>
   )
 }

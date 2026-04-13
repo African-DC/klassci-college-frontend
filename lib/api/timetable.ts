@@ -11,6 +11,7 @@ import {
   type TeacherAvailability,
   type TeacherAvailabilityCreate,
   type TeacherAvailabilityUpdate,
+  type TimetableDiagnostic,
 } from "@/lib/contracts/timetable"
 
 export type {
@@ -86,6 +87,10 @@ export const timetableApi = {
 
   remove: async (id: number): Promise<void> => {
     await apiFetch<void>(`/timetable/slots/${id}`, { method: "DELETE" })
+  },
+
+  diagnostic: async (classId: number): Promise<TimetableDiagnostic> => {
+    return apiFetch(`/timetable/diagnostic?class_id=${classId}`)
   },
 
   generate: async (classId: number): Promise<GenerateTaskResponse> => {
