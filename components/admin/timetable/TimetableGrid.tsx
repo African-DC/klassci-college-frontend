@@ -217,61 +217,67 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
                     />
                   ))}
 
-                  {/* Free slot "+" buttons — visible in ALL gaps */}
+                  {/* Free slot "+" buttons — one per free sub-segment within each hour */}
                   {(() => {
                     const occupied = daySlots
                       .map((s) => ({ start: timeToMinutes(s.start_time), end: timeToMinutes(s.end_time) }))
                       .sort((a, b) => a.start - b.start)
 
-                    // Compute all free segments for the entire day
-                    const dayStartMin = START_HOUR * 60
-                    const dayEndMin = END_HOUR * 60
-                    const freeSegments: { start: number; end: number }[] = []
+                    const buttons: React.ReactNode[] = []
+                    for (let hour = START_HOUR; hour < END_HOUR; hour++) {
+                      const hourStart = hour * 60
+                      const hourEnd = (hour + 1) * 60
 
-                    let cursor = dayStartMin
-                    for (const occ of occupied) {
-                      if (occ.start > cursor) {
-                        freeSegments.push({ start: cursor, end: occ.start })
+                      // Find free sub-segments within this hour
+                      // Start with the full hour as free, then subtract occupied ranges
+                      let segments: { start: number; end: number }[] = [{ start: hourStart, end: hourEnd }]
+
+                      for (const occ of occupied) {
+                        if (occ.end <= hourStart || occ.start >= hourEnd) continue
+                        // This slot overlaps with this hour — split free segments
+                        const newSegs: { start: number; end: number }[] = []
+                        for (const seg of segments) {
+                          if (occ.start > seg.start) newSegs.push({ start: seg.start, end: Math.min(occ.start, seg.end) })
+                          if (occ.end < seg.end) newSegs.push({ start: Math.max(occ.end, seg.start), end: seg.end })
+                        }
+                        segments = newSegs
                       }
-                      cursor = Math.max(cursor, occ.end)
+
+                      // Render a "+" for each free sub-segment
+                      for (const seg of segments) {
+                        const freeHeight = ((seg.end - seg.start) / 60) * PX_PER_HOUR
+                        if (freeHeight < 12) continue
+
+                        const freeTop = minutesToPx(seg.start)
+                        const startStr = `${String(Math.floor(seg.start / 60)).padStart(2, "0")}:${String(seg.start % 60).padStart(2, "0")}`
+                        const endStr = `${String(Math.floor(seg.end / 60)).padStart(2, "0")}:${String(seg.end % 60).padStart(2, "0")}`
+
+                        buttons.push(
+                          <button
+                            key={`free-${seg.start}`}
+                            type="button"
+                            className="absolute left-1 right-1 z-0 flex items-center justify-center rounded-lg border border-dashed border-muted-foreground/20 text-muted-foreground/30 transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary/50"
+                            style={{ top: freeTop + 1, height: freeHeight - 2 }}
+                            onClick={() => setCreateModal({ day, time: startStr, endTime: endStr })}
+                            onDragOver={(e) => {
+                              e.preventDefault()
+                              e.dataTransfer.dropEffect = "move"
+                              setDragOverCell(`${day}:${seg.start}`)
+                            }}
+                            onDragLeave={() => setDragOverCell(null)}
+                            onDrop={(e) => {
+                              e.preventDefault()
+                              setDragOverCell(null)
+                              const slotId = Number(e.dataTransfer.getData("slotId"))
+                              if (slotId) handleDrop(day, startStr, slotId)
+                            }}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>,
+                        )
+                      }
                     }
-                    if (cursor < dayEndMin) {
-                      freeSegments.push({ start: cursor, end: dayEndMin })
-                    }
-
-                    // Render "+" button for each free segment
-                    return freeSegments.map((seg) => {
-                      const freeHeight = ((seg.end - seg.start) / 60) * PX_PER_HOUR
-                      if (freeHeight < 15) return null
-
-                      const freeTop = minutesToPx(seg.start)
-                      const startStr = `${String(Math.floor(seg.start / 60)).padStart(2, "0")}:${String(seg.start % 60).padStart(2, "0")}`
-                      const endStr = `${String(Math.floor(seg.end / 60)).padStart(2, "0")}:${String(seg.end % 60).padStart(2, "0")}`
-
-                      return (
-                        <button
-                          key={`free-${seg.start}`}
-                          type="button"
-                          className="absolute left-1 right-1 z-0 flex items-center justify-center rounded-lg border border-dashed border-muted-foreground/20 text-muted-foreground/30 transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary/50"
-                          style={{ top: freeTop + 1, height: freeHeight - 2 }}
-                          onClick={() => setCreateModal({ day, time: startStr, endTime: endStr })}
-                          onDragOver={(e) => {
-                            e.preventDefault()
-                            e.dataTransfer.dropEffect = "move"
-                            setDragOverCell(`${day}:${seg.start}`)
-                          }}
-                          onDragLeave={() => setDragOverCell(null)}
-                          onDrop={(e) => {
-                            e.preventDefault()
-                            setDragOverCell(null)
-                            const slotId = Number(e.dataTransfer.getData("slotId"))
-                            if (slotId) handleDrop(day, startStr, slotId)
-                          }}
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      )
-                    })
+                    return buttons
                   })()}
 
                   {/* Rendered slots */}

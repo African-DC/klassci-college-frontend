@@ -113,7 +113,7 @@ export default function TimetablePage() {
     generateMutation.mutate(selectedClassId, {
       onSuccess: (data) => {
         toast.info("Generation lancee", { description: "Les creneaux manuels sont preserves." })
-        startPolling(data.task_id)
+        if (data.task_id) startPolling(data.task_id)
       },
       onError: (error) => toast.error("Erreur", { description: error.message }),
     })

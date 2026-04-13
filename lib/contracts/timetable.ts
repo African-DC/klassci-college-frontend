@@ -37,9 +37,10 @@ export const TimetableSlotCreateSchema = z.object({
 export const TimetableSlotUpdateSchema = TimetableSlotCreateSchema.omit({ class_id: true }).partial()
 
 export const GenerateTaskResponseSchema = z.object({
-  task_id: z.string(),
+  task_id: z.string().optional(),
   status: z.enum(["pending", "running", "completed", "failed"]),
   message: z.string().optional(),
+  result: z.any().optional(),
 })
 
 export type Day = z.infer<typeof DaySchema>
