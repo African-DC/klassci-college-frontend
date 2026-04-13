@@ -181,9 +181,10 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
                       key={day}
                       rowSpan={span}
                       className={cn(
-                        "p-1.5 align-top transition-colors",
+                        "p-1.5 transition-colors",
                         isDragOver && !slot ? "bg-primary/10" : "",
                       )}
+                      style={{ height: span > 1 ? `${span * 60}px` : undefined, verticalAlign: "top" }}
                       onDragOver={(e) => {
                         if (!slot) {
                           e.preventDefault()
@@ -210,9 +211,10 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
                           }}
                           onClick={() => setSelectedSlot(slot)}
                           className={cn(
-                            "w-full h-full min-h-14 rounded-lg border p-2 text-left transition-shadow hover:shadow-md cursor-grab active:cursor-grabbing",
+                            "w-full rounded-lg border p-2 text-left transition-shadow hover:shadow-md cursor-grab active:cursor-grabbing",
                             getSlotColor(slot.subject_color)
                           )}
+                          style={{ height: "100%", minHeight: "56px" }}
                         >
                           <p className="text-xs font-semibold truncate">{slot.subject_name}</p>
                           <p className="text-[10px] opacity-75 truncate">{slot.teacher_name}</p>
