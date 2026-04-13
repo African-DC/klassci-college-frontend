@@ -27,17 +27,9 @@ import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { useLevels } from "@/lib/hooks/useLevels"
 import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
 
-// Color scheme for fee categories
-const CATEGORY_COLORS = [
-  { bg: "bg-blue-50", border: "border-blue-200", icon: "bg-blue-100 text-blue-600", badge: "bg-blue-100 text-blue-700" },
-  { bg: "bg-violet-50", border: "border-violet-200", icon: "bg-violet-100 text-violet-600", badge: "bg-violet-100 text-violet-700" },
-  { bg: "bg-emerald-50", border: "border-emerald-200", icon: "bg-emerald-100 text-emerald-600", badge: "bg-emerald-100 text-emerald-700" },
-  { bg: "bg-amber-50", border: "border-amber-200", icon: "bg-amber-100 text-amber-600", badge: "bg-amber-100 text-amber-700" },
-  { bg: "bg-rose-50", border: "border-rose-200", icon: "bg-rose-100 text-rose-600", badge: "bg-rose-100 text-rose-700" },
-  { bg: "bg-cyan-50", border: "border-cyan-200", icon: "bg-cyan-100 text-cyan-600", badge: "bg-cyan-100 text-cyan-700" },
-  { bg: "bg-orange-50", border: "border-orange-200", icon: "bg-orange-100 text-orange-600", badge: "bg-orange-100 text-orange-700" },
-  { bg: "bg-teal-50", border: "border-teal-200", icon: "bg-teal-100 text-teal-600", badge: "bg-teal-100 text-teal-700" },
-]
+// Colors based on mandatory/optional type — semantic, not arbitrary
+const MANDATORY_COLOR = { bg: "bg-rose-50/60", border: "border-rose-200/80", icon: "bg-rose-100 text-rose-600" }
+const OPTIONAL_COLOR = { bg: "bg-blue-50/60", border: "border-blue-200/80", icon: "bg-blue-100 text-blue-600" }
 
 export function FeesPageClient() {
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
@@ -181,8 +173,8 @@ export function FeesPageClient() {
           </div>
         ) : categories && categories.length > 0 ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map((cat, idx) => {
-              const color = CATEGORY_COLORS[idx % CATEGORY_COLORS.length]
+            {categories.map((cat) => {
+              const color = cat.is_mandatory ? MANDATORY_COLOR : OPTIONAL_COLOR
               const catVariants = variantsByCategory.get(cat.id) ?? []
               const totalAmount = catVariants.reduce((sum, v) => sum + v.amount, 0)
               return (
