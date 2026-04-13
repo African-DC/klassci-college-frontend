@@ -280,7 +280,9 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
                     const endMin = timeToMinutes(slot.end_time)
                     const top = minutesToPx(startMin)
                     const height = ((endMin - startMin) / 60) * PX_PER_HOUR
-                    const showDetails = height >= 35
+                    const showTeacher = height >= 40
+                    const showRoom = height >= 55
+                    const showTime = height >= 70
 
                     return (
                       <button
@@ -292,15 +294,15 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
                         }}
                         onClick={() => setSelectedSlot(slot)}
                         className={cn(
-                          "absolute left-1 right-1 z-10 rounded-lg border p-1.5 text-left transition-shadow hover:shadow-md cursor-grab active:cursor-grabbing overflow-hidden",
+                          "absolute left-1 right-1 z-10 rounded-lg border p-2 text-left transition-shadow hover:shadow-md cursor-grab active:cursor-grabbing overflow-hidden",
                           getSlotColor(slot.subject_color)
                         )}
                         style={{ top: top + 1, height: height - 2 }}
                       >
-                        <p className="text-[10px] text-current/50 leading-tight">{slot.start_time} - {slot.end_time}</p>
-                        <p className="text-xs font-semibold truncate leading-tight">{slot.subject_name}</p>
-                        {showDetails && <p className="text-[10px] opacity-75 truncate">{slot.teacher_name}</p>}
-                        {showDetails && slot.room && <p className="text-[10px] opacity-60 truncate">{slot.room}</p>}
+                        <p className="text-xs font-semibold truncate">{slot.subject_name}</p>
+                        {showTeacher && <p className="text-[10px] opacity-75 truncate">{slot.teacher_name}</p>}
+                        {showRoom && slot.room && <p className="text-[10px] opacity-60 truncate">{slot.room}</p>}
+                        {showTime && <p className="text-[10px] opacity-50">{slot.start_time} - {slot.end_time}</p>}
                       </button>
                     )
                   })}
