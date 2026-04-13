@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from "react"
 import {
   Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp,
   AlertCircle, Banknote, CreditCard, Search, X, Eye,
-  Receipt, Coins, Smartphone, Building2, FileText, User,
+  Receipt, Coins, Smartphone, Building2, FileText, CalendarDays,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -46,9 +46,12 @@ import {
 } from "@/components/ui/table"
 import { PaymentCreateWizard } from "./PaymentCreateWizard"
 import { usePayments, useFinancialSummary, useValidatePayment, useCancelPayment } from "@/lib/hooks/usePayments"
+import { useFeeCategories } from "@/lib/hooks/useFees"
 import { paymentsApi } from "@/lib/api/payments"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@/lib/contracts/payment"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ""
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; dot: string }> = {
   pending: { label: "En attente", variant: "secondary", dot: "bg-amber-500" },
@@ -77,7 +80,9 @@ export function PaymentsPageClient() {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | undefined>(undefined)
   const [methodFilter, setMethodFilter] = useState<PaymentMethod | undefined>(undefined)
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [categoryFilter, setCategoryFilter] = useState<string | undefined>(undefined)
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
   const [confirmAction, setConfirmAction] = useState<{ type: "validate" | "cancel"; payment: Payment } | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -89,16 +94,30 @@ export function PaymentsPageClient() {
     ...(statusFilter && { status: statusFilter }),
     ...(methodFilter && { method: methodFilter }),
     ...(debouncedSearch && { search: debouncedSearch }),
+    ...(categoryFilter && { fee_category_id: Number(categoryFilter) }),
   }
 
   const { data, isLoading } = usePayments(params)
   const { data: summary, isLoading: loadingSummary } = useFinancialSummary()
   const { mutate: validatePayment, isPending: validating } = useValidatePayment()
   const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
+  const { data: feeCategories } = useFeeCategories()
 
-  const payments = useMemo(() => data?.items ?? [], [data])
+  // Client-side date filtering (BE doesn't support date params yet)
+  const payments = useMemo(() => {
+    let items = data?.items ?? []
+    if (dateFrom) {
+      const from = new Date(dateFrom)
+      items = items.filter((p) => new Date(p.created_at) >= from)
+    }
+    if (dateTo) {
+      const to = new Date(dateTo + "T23:59:59")
+      items = items.filter((p) => new Date(p.created_at) <= to)
+    }
+    return items
+  }, [data, dateFrom, dateTo])
 
-  const activeFilterCount = [statusFilter, methodFilter].filter(Boolean).length
+  const activeFilterCount = [statusFilter, methodFilter, categoryFilter, dateFrom, dateTo].filter(Boolean).length
 
   const handlePreviewReceipt = useCallback(async (payment: Payment) => {
     setDownloadingId(payment.id)
@@ -144,6 +163,9 @@ export function PaymentsPageClient() {
   function clearFilters() {
     setStatusFilter(undefined)
     setMethodFilter(undefined)
+    setCategoryFilter(undefined)
+    setDateFrom("")
+    setDateTo("")
     setSearch("")
   }
 
@@ -264,11 +286,58 @@ export function PaymentsPageClient() {
               </SelectContent>
             </Select>
 
+            {/* Filtre catégorie de frais */}
+            <Select
+              value={categoryFilter ?? "all"}
+              onValueChange={(v) => setCategoryFilter(v === "all" ? undefined : v)}
+            >
+              <SelectTrigger className="w-[160px] h-10">
+                <SelectValue placeholder="Catégorie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes catégories</SelectItem>
+                {feeCategories?.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id.toString()}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             {activeFilterCount > 0 && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10 text-xs text-muted-foreground">
                 <X className="mr-1 h-3 w-3" />
                 Réinitialiser ({activeFilterCount})
               </Button>
+            )}
+          </div>
+
+          {/* Date range filter */}
+          <div className="flex items-center gap-2 mt-3">
+            <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-xs text-muted-foreground shrink-0">Période :</span>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-8 text-xs w-[140px]"
+              placeholder="Du"
+            />
+            <span className="text-xs text-muted-foreground">au</span>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-8 text-xs w-[140px]"
+              placeholder="Au"
+            />
+            {(dateFrom || dateTo) && (
+              <button
+                onClick={() => { setDateFrom(""); setDateTo("") }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             )}
           </div>
         </CardContent>
@@ -325,17 +394,10 @@ export function PaymentsPageClient() {
                     >
                       <TableCell>
                         <div className="flex items-center gap-2.5">
-                          {payment.student_photo_url ? (
-                            <img
-                              src={payment.student_photo_url}
-                              alt=""
-                              className="h-8 w-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                              {initials}
-                            </div>
-                          )}
+                          <StudentAvatar
+                            photoUrl={payment.student_photo_url}
+                            initials={initials}
+                          />
                           <div>
                             <p className="text-sm font-medium leading-tight">
                               {payment.student_name ?? `Paiement #${payment.id}`}
@@ -479,6 +541,32 @@ export function PaymentsPageClient() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Student Avatar with fallback
+// ---------------------------------------------------------------------------
+
+function StudentAvatar({ photoUrl, initials }: { photoUrl?: string | null; initials: string }) {
+  const [imgError, setImgError] = useState(false)
+  const fullUrl = photoUrl && !imgError ? `${API_URL}${photoUrl}` : null
+
+  if (fullUrl) {
+    return (
+      <img
+        src={fullUrl}
+        alt=""
+        className="h-8 w-8 rounded-full object-cover"
+        onError={() => setImgError(true)}
+      />
+    )
+  }
+
+  return (
+    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+      {initials}
     </div>
   )
 }
