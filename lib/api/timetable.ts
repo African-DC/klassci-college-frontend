@@ -49,24 +49,24 @@ export const timetableApi = {
 
   create: async (data: TimetableSlotCreate): Promise<TimetableSlot> => {
     const json = await apiFetch<{ data?: TimetableSlot } | TimetableSlot>(
-      `/timetable`,
+      `/timetable/slots`,
       { method: "POST", body: JSON.stringify(data) },
     )
     const slot = (json as { data?: TimetableSlot }).data ?? (json as TimetableSlot)
-    return safeValidate(TimetableSlotSchema, slot, "POST /timetable")
+    return safeValidate(TimetableSlotSchema, slot, "POST /timetable/slots")
   },
 
   update: async (id: number, data: TimetableSlotUpdate): Promise<TimetableSlot> => {
     const json = await apiFetch<{ data?: TimetableSlot } | TimetableSlot>(
-      `/timetable/${id}`,
+      `/timetable/slots/${id}`,
       { method: "PATCH", body: JSON.stringify(data) },
     )
     const slot = (json as { data?: TimetableSlot }).data ?? (json as TimetableSlot)
-    return safeValidate(TimetableSlotSchema, slot, `PATCH /timetable/${id}`)
+    return safeValidate(TimetableSlotSchema, slot, `PATCH /timetable/slots/${id}`)
   },
 
   remove: async (id: number): Promise<void> => {
-    await apiFetch<void>(`/timetable/${id}`, { method: "DELETE" })
+    await apiFetch<void>(`/timetable/slots/${id}`, { method: "DELETE" })
   },
 
   generate: async (classId: number): Promise<GenerateTaskResponse> => {
