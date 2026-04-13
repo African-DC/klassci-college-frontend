@@ -28,9 +28,13 @@ const DAY_LABELS: Record<string, string> = {
   vendredi: "Vendredi",
   samedi: "Samedi",
 }
-const HOURS = ["07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"]
 
-// Color mapping from DB subject_color to Tailwind classes
+// Grid config
+const START_HOUR = 7
+const END_HOUR = 18
+const TOTAL_HOURS = END_HOUR - START_HOUR // 11
+const PX_PER_HOUR = 60 // pixels per hour
+
 const COLOR_MAP: Record<string, string> = {
   blue: "bg-blue-100 border-blue-300 text-blue-800",
   emerald: "bg-emerald-100 border-emerald-300 text-emerald-800",
@@ -45,12 +49,20 @@ const COLOR_MAP: Record<string, string> = {
   green: "bg-green-100 border-green-300 text-green-800",
   pink: "bg-pink-100 border-pink-300 text-pink-800",
 }
-
 const DEFAULT_SLOT_COLOR = "bg-slate-100 border-slate-300 text-slate-800"
 
 function getSlotColor(subjectColor: string | null | undefined): string {
   if (!subjectColor) return DEFAULT_SLOT_COLOR
   return COLOR_MAP[subjectColor] ?? DEFAULT_SLOT_COLOR
+}
+
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(":").map(Number)
+  return h * 60 + m
+}
+
+function minutesToPx(minutes: number): number {
+  return ((minutes - START_HOUR * 60) / 60) * PX_PER_HOUR
 }
 
 interface TimetableGridProps {
@@ -68,38 +80,29 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [dragOverCell, setDragOverCell] = useState<string | null>(null)
 
-  // Build a map that handles multi-hour slots
-  // For each (day, hour): "start" = slot starts here, "occupied" = slot covers this cell but started earlier, null = empty
-  const slotMap = useMemo(() => {
-    const startMap = new Map<string, TimetableSlot>()
-    const occupiedSet = new Set<string>()
+  // Group slots by day
+  const slotsByDay = useMemo(() => {
+    const map = new Map<string, TimetableSlot[]>()
+    DAYS.forEach((d) => map.set(d, []))
     slots?.forEach((s) => {
-      startMap.set(`${s.day}:${s.start_time}`, s)
-      // Mark intermediate hours as occupied
-      const startH = parseInt(s.start_time.split(":")[0])
-      const endH = parseInt(s.end_time.split(":")[0])
-      const endM = parseInt(s.end_time.split(":")[1])
-      const lastFullHour = endM > 0 ? endH : endH - 1
-      for (let h = startH + 1; h <= lastFullHour; h++) {
-        occupiedSet.add(`${s.day}:${String(h).padStart(2, "0")}:00`)
-      }
+      const existing = map.get(s.day) ?? []
+      existing.push(s)
+      map.set(s.day, existing)
     })
-    return { startMap, occupiedSet }
+    return map
   }, [slots])
 
-  function getSlotAt(day: string, hour: string): TimetableSlot | undefined {
-    return slotMap.startMap.get(`${day}:${hour}`)
-  }
-
-  function isOccupied(day: string, hour: string): boolean {
-    return slotMap.occupiedSet.has(`${day}:${hour}`)
-  }
-
-  function getSlotSpan(slot: TimetableSlot): number {
-    const [sh, sm] = slot.start_time.split(":").map(Number)
-    const [eh, em] = slot.end_time.split(":").map(Number)
-    return Math.max(1, Math.ceil((eh * 60 + em - sh * 60 - sm) / 60))
-  }
+  // Collect special time labels (non-hour boundaries where slots start/end)
+  const specialTimes = useMemo(() => {
+    const times = new Set<number>()
+    slots?.forEach((s) => {
+      const startMin = timeToMinutes(s.start_time)
+      const endMin = timeToMinutes(s.end_time)
+      if (startMin % 60 !== 0) times.add(startMin)
+      if (endMin % 60 !== 0) times.add(endMin)
+    })
+    return times
+  }, [slots])
 
   function handleDrop(targetDay: string, targetHour: string, slotId: number) {
     import("@/lib/api/timetable").then(({ timetableApi }) => {
@@ -112,139 +115,171 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
     })
   }
 
+  const gridHeight = TOTAL_HOURS * PX_PER_HOUR
+
   if (isLoading) {
     return (
       <div className="rounded-lg border bg-card overflow-x-auto">
-        <table className="w-full min-w-[900px] border-collapse">
-          <thead>
-            <tr>
-              <th className="p-3 w-[70px]" />
-              {DAYS.map((d) => (
-                <th key={d} className="p-3 text-center">
-                  <Skeleton className="h-4 w-16 mx-auto" />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {HOURS.slice(0, 6).map((h) => (
-              <tr key={h} className="border-t border-border/50">
-                <td className="p-3"><Skeleton className="h-4 w-12" /></td>
-                {DAYS.map((d) => (
-                  <td key={d} className="p-2">
-                    <Skeleton className="h-14 w-full rounded-lg" />
-                  </td>
-                ))}
-              </tr>
+        <div className="min-w-[900px]">
+          <div className="flex border-b bg-muted/30">
+            <div className="w-[55px] p-2" />
+            {DAYS.map((d) => (
+              <div key={d} className="flex-1 p-2 text-center">
+                <Skeleton className="h-4 w-16 mx-auto" />
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+          <Skeleton className="h-[400px] m-4 rounded-lg" />
+        </div>
       </div>
     )
+  }
+
+  // Build hour lines
+  const hourLines: { hour: number; label: string }[] = []
+  for (let h = START_HOUR; h <= END_HOUR; h++) {
+    hourLines.push({ hour: h, label: `${String(h).padStart(2, "0")}:00` })
   }
 
   return (
     <>
       <div className="rounded-lg border bg-card overflow-x-auto">
-        <table className="w-full min-w-[900px] border-collapse">
-          <thead>
-            <tr className="bg-muted/30">
-              <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[70px]">
-                Heure
-              </th>
-              {DAYS.map((day) => (
-                <th key={day} className="p-3 text-center text-sm font-semibold text-foreground">
-                  {DAY_LABELS[day]}
-                </th>
+        <div className="min-w-[900px]">
+          {/* Header */}
+          <div className="flex border-b bg-muted/30">
+            <div className="w-[55px] shrink-0 p-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Heure
+            </div>
+            {DAYS.map((day) => (
+              <div key={day} className="flex-1 p-2 text-center text-sm font-semibold text-foreground">
+                {DAY_LABELS[day]}
+              </div>
+            ))}
+          </div>
+
+          {/* Grid body — absolute positioning */}
+          <div className="flex">
+            {/* Time axis */}
+            <div className="w-[55px] shrink-0 relative" style={{ height: gridHeight }}>
+              {hourLines.map(({ hour, label }) => (
+                <div
+                  key={hour}
+                  className="absolute right-0 left-0 flex items-center"
+                  style={{ top: (hour - START_HOUR) * PX_PER_HOUR - 7 }}
+                >
+                  <span className="text-[10px] font-mono text-muted-foreground pl-1 pr-2 bg-card relative z-10">
+                    {label}
+                  </span>
+                </div>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {HOURS.map((hour) => (
-              <tr key={hour} className="border-t border-border/50">
-                <td className="p-3 text-sm font-mono text-muted-foreground align-top">
-                  {hour}
-                </td>
-                {DAYS.map((day) => {
-                  const slot = getSlotAt(day, hour)
-                  const occupied = isOccupied(day, hour)
-                  const cellK = `${day}:${hour}`
-                  const isDragOver = dragOverCell === cellK
+              {/* Special time labels (e.g., 10:30) */}
+              {Array.from(specialTimes).map((min) => {
+                const hh = String(Math.floor(min / 60)).padStart(2, "0")
+                const mm = String(min % 60).padStart(2, "0")
+                return (
+                  <div
+                    key={min}
+                    className="absolute right-0 left-0 flex items-center"
+                    style={{ top: minutesToPx(min) - 5 }}
+                  >
+                    <span className="text-[9px] font-mono text-muted-foreground/60 pl-1 pr-2 bg-card relative z-10">
+                      {hh}:{mm}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
 
-                  // Cell occupied by a multi-hour slot rowSpan — skip (don't render <td>)
-                  if (occupied) return null
+            {/* Day columns */}
+            {DAYS.map((day) => {
+              const daySlots = slotsByDay.get(day) ?? []
+              return (
+                <div
+                  key={day}
+                  className="flex-1 relative border-l border-border/30"
+                  style={{ height: gridHeight }}
+                >
+                  {/* Hour lines (horizontal guides) */}
+                  {hourLines.map(({ hour }) => (
+                    <div
+                      key={hour}
+                      className="absolute left-0 right-0 border-t border-border/40"
+                      style={{ top: (hour - START_HOUR) * PX_PER_HOUR }}
+                    />
+                  ))}
 
-                  const span = slot ? getSlotSpan(slot) : 1
+                  {/* Half-hour lines (dotted) */}
+                  {hourLines.slice(0, -1).map(({ hour }) => (
+                    <div
+                      key={`${hour}-30`}
+                      className="absolute left-0 right-0 border-t border-border/15 border-dashed"
+                      style={{ top: (hour - START_HOUR) * PX_PER_HOUR + PX_PER_HOUR / 2 }}
+                    />
+                  ))}
 
-                  return (
-                    <td
-                      key={day}
-                      rowSpan={span}
-                      className={cn(
-                        "p-1.5 transition-colors",
-                        isDragOver && !slot ? "bg-primary/10" : "",
-                      )}
-                      style={{ height: span > 1 ? `${span * 60}px` : undefined, verticalAlign: "top" }}
+                  {/* Click zones for creating slots (one per hour) */}
+                  {hourLines.slice(0, -1).map(({ hour }) => (
+                    <button
+                      key={`create-${hour}`}
+                      type="button"
+                      className="absolute left-1 right-1 z-0 rounded transition-colors hover:bg-primary/5"
+                      style={{
+                        top: (hour - START_HOUR) * PX_PER_HOUR + 1,
+                        height: PX_PER_HOUR - 2,
+                      }}
+                      onClick={() => setCreateModal({ day, time: `${String(hour).padStart(2, "0")}:00` })}
                       onDragOver={(e) => {
-                        if (!slot) {
-                          e.preventDefault()
-                          e.dataTransfer.dropEffect = "move"
-                          setDragOverCell(cellK)
-                        }
+                        e.preventDefault()
+                        e.dataTransfer.dropEffect = "move"
+                        setDragOverCell(`${day}:${hour}`)
                       }}
                       onDragLeave={() => setDragOverCell(null)}
                       onDrop={(e) => {
                         e.preventDefault()
                         setDragOverCell(null)
                         const slotId = Number(e.dataTransfer.getData("slotId"))
-                        if (slotId && !slot) {
-                          handleDrop(day, hour, slotId)
-                        }
+                        if (slotId) handleDrop(day, `${String(hour).padStart(2, "0")}:00`, slotId)
                       }}
-                    >
-                      {slot ? (
-                        <button
-                          draggable
-                          onDragStart={(e) => {
-                            e.dataTransfer.setData("slotId", String(slot.id))
-                            e.dataTransfer.effectAllowed = "move"
-                          }}
-                          onClick={() => setSelectedSlot(slot)}
-                          className={cn(
-                            "w-full rounded-lg border p-2 text-left transition-shadow hover:shadow-md cursor-grab active:cursor-grabbing",
-                            getSlotColor(slot.subject_color)
-                          )}
-                          style={{ height: "100%", minHeight: "56px" }}
-                        >
-                          <p className="text-xs font-semibold truncate">{slot.subject_name}</p>
-                          <p className="text-[10px] opacity-75 truncate">{slot.teacher_name}</p>
-                          {slot.room && (
-                            <p className="text-[10px] opacity-60">{slot.room}</p>
-                          )}
-                          {span > 1 && (
-                            <p className="text-[10px] opacity-50 mt-0.5">{slot.start_time} - {slot.end_time}</p>
-                          )}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setCreateModal({ day, time: hour })}
-                          className={cn(
-                            "flex h-14 w-full items-center justify-center rounded-lg border border-dashed transition-colors",
-                            isDragOver
-                              ? "border-primary/60 bg-primary/10 text-primary/60"
-                              : "border-muted-foreground/20 text-muted-foreground/30 hover:border-primary/40 hover:bg-primary/5 hover:text-primary/50"
-                          )}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      )}
-                    </td>
-                  )
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    />
+                  ))}
+
+                  {/* Rendered slots */}
+                  {daySlots.map((slot) => {
+                    const startMin = timeToMinutes(slot.start_time)
+                    const endMin = timeToMinutes(slot.end_time)
+                    const top = minutesToPx(startMin)
+                    const height = ((endMin - startMin) / 60) * PX_PER_HOUR
+                    const showTeacher = height >= 40
+                    const showRoom = height >= 55
+                    const showTime = height >= 70
+
+                    return (
+                      <button
+                        key={slot.id}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("slotId", String(slot.id))
+                          e.dataTransfer.effectAllowed = "move"
+                        }}
+                        onClick={() => setSelectedSlot(slot)}
+                        className={cn(
+                          "absolute left-1 right-1 z-10 rounded-lg border p-1.5 text-left transition-shadow hover:shadow-md cursor-grab active:cursor-grabbing overflow-hidden",
+                          getSlotColor(slot.subject_color)
+                        )}
+                        style={{ top: top + 1, height: height - 2 }}
+                      >
+                        <p className="text-xs font-semibold truncate leading-tight">{slot.subject_name}</p>
+                        {showTeacher && <p className="text-[10px] opacity-75 truncate">{slot.teacher_name}</p>}
+                        {showRoom && slot.room && <p className="text-[10px] opacity-60 truncate">{slot.room}</p>}
+                        {showTime && <p className="text-[10px] opacity-50">{slot.start_time} - {slot.end_time}</p>}
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Create modal */}
