@@ -8,6 +8,13 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { KpiCard } from "@/components/admin/dashboard/KpiCard"
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -59,6 +66,8 @@ export function PaymentsPageClient() {
   const [methodFilter, setMethodFilter] = useState<PaymentMethod | undefined>(undefined)
   const [confirmAction, setConfirmAction] = useState<{ type: "validate" | "cancel"; payment: Payment } | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewPaymentId, setPreviewPaymentId] = useState<number | null>(null)
 
   const params: PaymentListParams = {
     ...(statusFilter && { status: statusFilter }),
@@ -72,19 +81,36 @@ export function PaymentsPageClient() {
 
   const payments = useMemo(() => data?.items ?? [], [data])
 
-  const handleDownloadReceipt = useCallback(async (payment: Payment) => {
+  const handlePreviewReceipt = useCallback(async (payment: Payment) => {
     setDownloadingId(payment.id)
     try {
       const blob = await paymentsApi.downloadReceipt(payment.id)
-      downloadBlob(blob, `recu-${payment.id}.pdf`)
+      const url = URL.createObjectURL(blob)
+      setPreviewUrl(url)
+      setPreviewPaymentId(payment.id)
     } catch (err) {
-      toast.error("Erreur lors du téléchargement", {
+      toast.error("Erreur lors du chargement du reçu", {
         description: err instanceof Error ? err.message : "Erreur inconnue",
       })
     } finally {
       setDownloadingId(null)
     }
   }, [])
+
+  function handleClosePreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
+    setPreviewPaymentId(null)
+  }
+
+  function handleDownloadFromPreview() {
+    if (previewUrl && previewPaymentId) {
+      const a = document.createElement("a")
+      a.href = previewUrl
+      a.download = `recu-${previewPaymentId}.pdf`
+      a.click()
+    }
+  }
 
   function handleConfirmAction() {
     if (!confirmAction) return
@@ -250,7 +276,7 @@ export function PaymentsPageClient() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => handleDownloadReceipt(payment)}
+                          onClick={() => handlePreviewReceipt(payment)}
                           disabled={downloadingId === payment.id}
                         >
                           <Download className="h-4 w-4" />
@@ -297,6 +323,31 @@ export function PaymentsPageClient() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Receipt Preview Dialog */}
+      <Dialog open={previewUrl !== null} onOpenChange={handleClosePreview}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Reçu de paiement #{previewPaymentId}</DialogTitle>
+          </DialogHeader>
+          {previewUrl && (
+            <iframe
+              src={previewUrl}
+              className="w-full h-[65vh] rounded-lg border"
+              title="Aperçu du reçu"
+            />
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={handleClosePreview}>
+              Fermer
+            </Button>
+            <Button onClick={handleDownloadFromPreview}>
+              <Download className="mr-2 h-4 w-4" />
+              Télécharger le PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
