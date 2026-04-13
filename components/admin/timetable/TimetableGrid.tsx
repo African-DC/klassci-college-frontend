@@ -115,26 +115,30 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
   if (isLoading) {
     return (
       <div className="rounded-lg border bg-card overflow-x-auto">
-        <div className="min-w-[900px]">
-          <div className="grid grid-cols-7 border-b">
-            <div className="p-3" />
-            {DAYS.map((d) => (
-              <div key={d} className="p-3 text-center">
-                <Skeleton className="h-4 w-16 mx-auto" />
-              </div>
-            ))}
-          </div>
-          {HOURS.map((h) => (
-            <div key={h} className="grid grid-cols-7 border-b last:border-0">
-              <div className="p-3"><Skeleton className="h-4 w-12" /></div>
+        <table className="w-full min-w-[900px] border-collapse">
+          <thead>
+            <tr>
+              <th className="p-3 w-[70px]" />
               {DAYS.map((d) => (
-                <div key={d} className="p-2">
-                  <Skeleton className="h-14 w-full rounded-lg" />
-                </div>
+                <th key={d} className="p-3 text-center">
+                  <Skeleton className="h-4 w-16 mx-auto" />
+                </th>
               ))}
-            </div>
-          ))}
-        </div>
+            </tr>
+          </thead>
+          <tbody>
+            {HOURS.slice(0, 6).map((h) => (
+              <tr key={h} className="border-t border-border/50">
+                <td className="p-3"><Skeleton className="h-4 w-12" /></td>
+                {DAYS.map((d) => (
+                  <td key={d} className="p-2">
+                    <Skeleton className="h-14 w-full rounded-lg" />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     )
   }
@@ -142,103 +146,103 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
   return (
     <>
       <div className="rounded-lg border bg-card overflow-x-auto">
-        <div className="min-w-[900px]">
-          {/* Header */}
-          <div className="grid grid-cols-7 border-b bg-muted/30">
-            <div className="p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Heure
-            </div>
-            {DAYS.map((day) => (
-              <div key={day} className="p-3 text-center text-sm font-semibold text-foreground">
-                {DAY_LABELS[day]}
-              </div>
-            ))}
-          </div>
+        <table className="w-full min-w-[900px] border-collapse">
+          <thead>
+            <tr className="bg-muted/30">
+              <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider w-[70px]">
+                Heure
+              </th>
+              {DAYS.map((day) => (
+                <th key={day} className="p-3 text-center text-sm font-semibold text-foreground">
+                  {DAY_LABELS[day]}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {HOURS.map((hour) => (
+              <tr key={hour} className="border-t border-border/50">
+                <td className="p-3 text-sm font-mono text-muted-foreground align-top">
+                  {hour}
+                </td>
+                {DAYS.map((day) => {
+                  const slot = getSlotAt(day, hour)
+                  const occupied = isOccupied(day, hour)
+                  const cellK = `${day}:${hour}`
+                  const isDragOver = dragOverCell === cellK
 
-          {/* Grid rows */}
-          {HOURS.map((hour) => (
-            <div key={hour} className="grid grid-cols-7 border-b last:border-0">
-              <div className="flex items-center p-3 text-sm font-mono text-muted-foreground">
-                {hour}
-              </div>
-              {DAYS.map((day) => {
-                const slot = getSlotAt(day, hour)
-                const occupied = isOccupied(day, hour)
-                const cellK = `${day}:${hour}`
-                const isDragOver = dragOverCell === cellK
+                  // Cell occupied by a multi-hour slot rowSpan — skip (don't render <td>)
+                  if (occupied) return null
 
-                // Cell occupied by a multi-hour slot that started earlier — skip rendering
-                if (occupied) {
-                  return <div key={day} className="p-1.5" />
-                }
+                  const span = slot ? getSlotSpan(slot) : 1
 
-                const span = slot ? getSlotSpan(slot) : 1
-                const slotHeight = span > 1 ? `${span * 56 + (span - 1) * 1}px` : undefined
-
-                return (
-                  <div
-                    key={day}
-                    className={`p-1.5 transition-colors ${isDragOver && !slot ? "bg-primary/10" : ""}`}
-                    style={span > 1 ? { position: "relative", zIndex: 2 } : undefined}
-                    onDragOver={(e) => {
-                      if (!slot) {
+                  return (
+                    <td
+                      key={day}
+                      rowSpan={span}
+                      className={cn(
+                        "p-1.5 align-top transition-colors",
+                        isDragOver && !slot ? "bg-primary/10" : "",
+                      )}
+                      onDragOver={(e) => {
+                        if (!slot) {
+                          e.preventDefault()
+                          e.dataTransfer.dropEffect = "move"
+                          setDragOverCell(cellK)
+                        }
+                      }}
+                      onDragLeave={() => setDragOverCell(null)}
+                      onDrop={(e) => {
                         e.preventDefault()
-                        e.dataTransfer.dropEffect = "move"
-                        setDragOverCell(cellK)
-                      }
-                    }}
-                    onDragLeave={() => setDragOverCell(null)}
-                    onDrop={(e) => {
-                      e.preventDefault()
-                      setDragOverCell(null)
-                      const slotId = Number(e.dataTransfer.getData("slotId"))
-                      if (slotId && !slot) {
-                        handleDrop(day, hour, slotId)
-                      }
-                    }}
-                  >
-                    {slot ? (
-                      <button
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData("slotId", String(slot.id))
-                          e.dataTransfer.effectAllowed = "move"
-                        }}
-                        onClick={() => setSelectedSlot(slot)}
-                        className={cn(
-                          "w-full rounded-lg border p-2 text-left transition-shadow hover:shadow-md cursor-grab active:cursor-grabbing",
-                          getSlotColor(slot.subject_color)
-                        )}
-                        style={slotHeight ? { height: slotHeight } : { height: "56px" }}
-                      >
-                        <p className="text-xs font-semibold truncate">{slot.subject_name}</p>
-                        <p className="text-[10px] opacity-75 truncate">{slot.teacher_name}</p>
-                        {slot.room && (
-                          <p className="text-[10px] opacity-60">{slot.room}</p>
-                        )}
-                        {span > 1 && (
-                          <p className="text-[10px] opacity-50 mt-0.5">{slot.start_time} - {slot.end_time}</p>
-                        )}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setCreateModal({ day, time: hour })}
-                        className={cn(
-                          "flex h-14 w-full items-center justify-center rounded-lg border border-dashed transition-colors",
-                          isDragOver
-                            ? "border-primary/60 bg-primary/10 text-primary/60"
-                            : "border-muted-foreground/20 text-muted-foreground/30 hover:border-primary/40 hover:bg-primary/5 hover:text-primary/50"
-                        )}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          ))}
-        </div>
+                        setDragOverCell(null)
+                        const slotId = Number(e.dataTransfer.getData("slotId"))
+                        if (slotId && !slot) {
+                          handleDrop(day, hour, slotId)
+                        }
+                      }}
+                    >
+                      {slot ? (
+                        <button
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData("slotId", String(slot.id))
+                            e.dataTransfer.effectAllowed = "move"
+                          }}
+                          onClick={() => setSelectedSlot(slot)}
+                          className={cn(
+                            "w-full h-full min-h-14 rounded-lg border p-2 text-left transition-shadow hover:shadow-md cursor-grab active:cursor-grabbing",
+                            getSlotColor(slot.subject_color)
+                          )}
+                        >
+                          <p className="text-xs font-semibold truncate">{slot.subject_name}</p>
+                          <p className="text-[10px] opacity-75 truncate">{slot.teacher_name}</p>
+                          {slot.room && (
+                            <p className="text-[10px] opacity-60">{slot.room}</p>
+                          )}
+                          {span > 1 && (
+                            <p className="text-[10px] opacity-50 mt-0.5">{slot.start_time} - {slot.end_time}</p>
+                          )}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setCreateModal({ day, time: hour })}
+                          className={cn(
+                            "flex h-14 w-full items-center justify-center rounded-lg border border-dashed transition-colors",
+                            isDragOver
+                              ? "border-primary/60 bg-primary/10 text-primary/60"
+                              : "border-muted-foreground/20 text-muted-foreground/30 hover:border-primary/40 hover:bg-primary/5 hover:text-primary/50"
+                          )}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      )}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Create modal */}
