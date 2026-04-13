@@ -10,6 +10,7 @@ import {
   type GenerateTaskResponse,
   type TeacherAvailability,
   type TeacherAvailabilityCreate,
+  type TeacherAvailabilityUpdate,
 } from "@/lib/contracts/timetable"
 
 export type {
@@ -19,6 +20,7 @@ export type {
   GenerateTaskResponse,
   TeacherAvailability,
   TeacherAvailabilityCreate,
+  TeacherAvailabilityUpdate,
 }
 
 const TimetableSlotArraySchema = z.array(TimetableSlotSchema)
@@ -96,6 +98,18 @@ export const timetableApi = {
     )
     const item = (json as { data?: TeacherAvailability }).data ?? (json as TeacherAvailability)
     return safeValidate(TeacherAvailabilitySchema, item, `POST /teachers/${teacherId}/availabilities`)
+  },
+
+  updateAvailability: async (
+    availabilityId: number,
+    data: TeacherAvailabilityUpdate,
+  ): Promise<TeacherAvailability> => {
+    const json = await apiFetch<TeacherAvailability | { data?: TeacherAvailability }>(
+      `/teacher-availabilities/${availabilityId}`,
+      { method: "PATCH", body: JSON.stringify(data) },
+    )
+    const item = (json as { data?: TeacherAvailability }).data ?? (json as TeacherAvailability)
+    return safeValidate(TeacherAvailabilitySchema, item, `PATCH /teacher-availabilities/${availabilityId}`)
   },
 
   deleteAvailability: async (availabilityId: number): Promise<void> => {

@@ -8,6 +8,7 @@ import type {
   TimetableSlotCreate,
   TimetableSlotUpdate,
   TeacherAvailabilityCreate,
+  TeacherAvailabilityUpdate,
 } from "@/lib/contracts/timetable"
 
 export const timetableKeys = {
@@ -193,6 +194,22 @@ export function useCreateAvailability(teacherId: number) {
         queryKey: timetableKeys.availabilities(teacherId),
       })
       toast.success("Disponibilité ajoutée")
+    },
+    onError: (err) => {
+      toast.error("Erreur", { description: err.message })
+    },
+  })
+}
+
+export function useUpdateAvailability(teacherId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: TeacherAvailabilityUpdate }) =>
+      timetableApi.updateAvailability(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: timetableKeys.availabilities(teacherId),
+      })
     },
     onError: (err) => {
       toast.error("Erreur", { description: err.message })

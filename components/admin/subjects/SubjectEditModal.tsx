@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { SubjectUpdateSchema, type SubjectUpdate, SUBJECT_COLOR_PALETTE } from "@/lib/contracts/subject"
 import { useSubject, useUpdateSubject } from "@/lib/hooks/useSubjects"
 import { useSeriesList } from "@/lib/hooks/useSeries"
+import { useTeachers } from "@/lib/hooks/useTeachers"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,6 +54,9 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
   )
   const seriesForLevel = subject?.level_id ? (seriesData?.items ?? []) : []
 
+  const { data: teachersData } = useTeachers({ size: 100 })
+  const allTeachers = teachersData?.items ?? []
+
   const form = useForm<SubjectUpdate>({
     resolver: zodResolver(SubjectUpdateSchema),
     values: subject
@@ -62,6 +66,7 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
           hours_per_week: subject.hours_per_week,
           color: subject.color ?? "blue",
           series_id: subject.series_id ?? undefined,
+          teacher_id: subject.teacher_id ?? undefined,
         }
       : undefined,
   })
@@ -203,6 +208,36 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
                 )}
               />
             </div>
+
+            {/* Teacher select */}
+            <FormField
+              control={form.control}
+              name="teacher_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Enseignant assigné</FormLabel>
+                  <Select
+                    onValueChange={(v) => field.onChange(v === "none" ? null : Number(v))}
+                    value={field.value?.toString() ?? "none"}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Aucun enseignant" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun enseignant</SelectItem>
+                      {allTeachers.map((t) => (
+                        <SelectItem key={t.id} value={t.id.toString()}>
+                          {t.first_name} {t.last_name} {t.speciality ? `(${t.speciality})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </>
         )}
 

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import {
   useTeacherAvailabilities,
   useCreateAvailability,
+  useUpdateAvailability,
   useDeleteAvailability,
 } from "@/lib/hooks/useTimetable"
 import type { DayOfWeek, TeacherAvailability } from "@/lib/contracts/timetable"
@@ -25,7 +26,7 @@ const DAYS: { key: DayOfWeek; label: string }[] = [
   { key: "saturday", label: "Samedi" },
 ]
 
-// 07:00 to 18:00 (12 slots)
+// 07:00 to 18:00 (11 slots)
 const HOURS = Array.from({ length: 11 }, (_, i) => {
   const h = 7 + i
   return {
@@ -40,12 +41,13 @@ type CellState = "unavailable" | "available" | "preferred"
 
 function buildAvailabilityMap(
   availabilities: TeacherAvailability[],
-): Map<string, { id: number; available: boolean }> {
-  const map = new Map<string, { id: number; available: boolean }>()
+): Map<string, { id: number; available: boolean; preferred: boolean }> {
+  const map = new Map<string, { id: number; available: boolean; preferred: boolean }>()
   for (const av of availabilities) {
     map.set(`${av.day}|${av.start_time}|${av.end_time}`, {
       id: av.id,
       available: av.available,
+      preferred: av.preferred ?? false,
     })
   }
   return map
@@ -77,10 +79,12 @@ export function TeacherAvailabilityTab({
     useTeacherAvailabilities(teacherId)
   const { mutate: createAvailability, isPending: creating } =
     useCreateAvailability(teacherId)
+  const { mutate: updateAvailability, isPending: updating } =
+    useUpdateAvailability(teacherId)
   const { mutate: deleteAvailability, isPending: deleting } =
     useDeleteAvailability(teacherId)
 
-  const isMutating = creating || deleting
+  const isMutating = creating || updating || deleting
 
   const availabilityMap = useMemo(
     () => buildAvailabilityMap(availabilities ?? []),
@@ -90,11 +94,12 @@ export function TeacherAvailabilityTab({
   function getCellState(day: DayOfWeek, start: string, end: string): CellState {
     const entry = availabilityMap.get(cellKey(day, start, end))
     if (!entry) return "unavailable"
-    // available=true → "available", we'll use a convention: if it has available=true it's available
-    // For "preferred", we'd need another field, but for now we cycle: unavailable → available → preferred → unavailable
-    return entry.available ? "available" : "unavailable"
+    if (entry.preferred) return "preferred"
+    if (entry.available) return "available"
+    return "unavailable"
   }
 
+  // Cycle: unavailable → available → preferred → unavailable (delete)
   const handleToggle = useCallback(
     (day: DayOfWeek, start: string, end: string) => {
       if (isMutating) return
@@ -102,14 +107,17 @@ export function TeacherAvailabilityTab({
       const existing = availabilityMap.get(key)
 
       if (!existing) {
-        // unavailable → available
-        createAvailability({ day, start_time: start, end_time: end, available: true })
+        // unavailable → available: create entry
+        createAvailability({ day, start_time: start, end_time: end, available: true, preferred: false })
+      } else if (existing.available && !existing.preferred) {
+        // available → preferred: update
+        updateAvailability({ id: existing.id, data: { preferred: true } })
       } else {
-        // available → delete (back to unavailable)
+        // preferred → unavailable: delete
         deleteAvailability(existing.id)
       }
     },
-    [isMutating, availabilityMap, createAvailability, deleteAvailability],
+    [isMutating, availabilityMap, createAvailability, updateAvailability, deleteAvailability],
   )
 
   if (isLoading) {
@@ -118,6 +126,9 @@ export function TeacherAvailabilityTab({
 
   const totalAvailable = Array.from(availabilityMap.values()).filter(
     (v) => v.available,
+  ).length
+  const totalPreferred = Array.from(availabilityMap.values()).filter(
+    (v) => v.preferred,
   ).length
   const maxSlots = DAYS.length * HOURS.length
 
@@ -135,13 +146,18 @@ export function TeacherAvailabilityTab({
               <Badge variant="secondary" className="text-xs">
                 {totalAvailable}/{maxSlots} créneaux disponibles
               </Badge>
+              {totalPreferred > 0 && (
+                <Badge variant="outline" className="text-xs text-primary">
+                  {totalPreferred} préférés
+                </Badge>
+              )}
               {isMutating && (
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
               )}
             </div>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Cliquez sur une cellule pour basculer entre disponible et indisponible.
+            Cliquez pour basculer : indisponible → disponible → préféré → indisponible.
           </p>
         </CardContent>
       </Card>

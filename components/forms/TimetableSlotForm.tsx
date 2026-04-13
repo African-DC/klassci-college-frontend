@@ -1,18 +1,20 @@
 "use client"
 
-import { useMemo } from "react"
+import { useState, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Plus } from "lucide-react"
 import { TimetableSlotCreateSchema, type TimetableSlotCreate } from "@/lib/contracts/timetable"
 import { useCreateSlot, useUpdateSlot } from "@/lib/hooks/useTimetable"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
-import { useSubjects } from "@/lib/hooks/useSubjects"
-import { useTeachers } from "@/lib/hooks/useTeachers"
+import { useSubjects, useCreateSubject } from "@/lib/hooks/useSubjects"
+import { useTeachers, useCreateTeacher } from "@/lib/hooks/useTeachers"
 import { useClass } from "@/lib/hooks/useClasses"
 import { useRooms } from "@/lib/hooks/useRooms"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -20,6 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -56,6 +65,10 @@ export function TimetableSlotForm({
   const isEdit = !!slot
   const effectiveClassId = classId ?? slot?.class_id
 
+  // Inline create dialogs
+  const [showCreateSubject, setShowCreateSubject] = useState(false)
+  const [showCreateTeacher, setShowCreateTeacher] = useState(false)
+
   // Fetch class to get level_id/series_id for subject filtering
   const { data: classData } = useClass(effectiveClassId ?? 0)
 
@@ -74,15 +87,16 @@ export function TimetableSlotForm({
   const allRooms = roomsData?.items ?? []
   const filteredRooms = useMemo(() => {
     return allRooms.filter((r) => {
-      // Always show the room assigned to this class
-      if (classData?.room_id && r.class_id === classData.room_id) return true
-      if (r.class_name && classData?.name && r.class_name === classData.name) return true
+      // Show the room assigned to this class (room.id matches class.room_id)
+      if (classData?.room_id && r.id === classData.room_id) return true
+      // Show rooms linked to this class (room.class_id matches class.id)
+      if (effectiveClassId && r.class_id === effectiveClassId) return true
       // Show non-classroom rooms (labos, salle info, etc.)
       if (r.room_type !== "classroom") return true
       // Hide other classes' classroom rooms
       return false
     })
-  }, [allRooms, classData])
+  }, [allRooms, classData, effectiveClassId])
 
   // Current academic year
   const { data: yearsData } = useAcademicYears()
@@ -156,93 +170,176 @@ export function TimetableSlotForm({
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* Subject select — filtered by class level */}
-        <FormField
-          control={form.control}
-          name="subject_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Matière *</FormLabel>
-              <Select
-                onValueChange={(v) => field.onChange(Number(v))}
-                value={field.value?.toString() ?? ""}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Sélectionner une matière" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {subjects.map((s) => (
-                    <SelectItem key={s.id} value={s.id.toString()}>
-                      {s.name} (Coef. {s.coefficient}, {s.hours_per_week}h/sem)
-                      {s.teacher_name ? ` — ${s.teacher_name}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Teacher select */}
-        <FormField
-          control={form.control}
-          name="teacher_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Enseignant *</FormLabel>
-              <Select
-                onValueChange={(v) => field.onChange(Number(v))}
-                value={field.value?.toString() ?? ""}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Sélectionner un enseignant" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {/* Show assigned teacher first if subject has one */}
-                  {selectedSubject?.teacher_id && selectedSubject?.teacher_name && (
-                    <SelectItem value={selectedSubject.teacher_id.toString()}>
-                      {selectedSubject.teacher_name} (assigné à cette matière)
-                    </SelectItem>
-                  )}
-                  {/* Show other teachers only if no subject teacher or user wants to override */}
-                  {allTeachers
-                    .filter((t) => t.id !== selectedSubject?.teacher_id)
-                    .map((t) => (
-                      <SelectItem key={t.id} value={t.id.toString()}>
-                        {t.first_name} {t.last_name} {t.speciality ? `(${t.speciality})` : ""}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid gap-4 sm:grid-cols-3">
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Subject select — filtered by class level */}
           <FormField
             control={form.control}
-            name="day"
+            name="subject_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Jour *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormLabel>Matière *</FormLabel>
+                <div className="flex items-center gap-2">
+                  <Select
+                    onValueChange={(v) => field.onChange(Number(v))}
+                    value={field.value?.toString() ?? ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-11 flex-1">
+                        <SelectValue placeholder="Sélectionner une matière" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {subjects.map((s) => (
+                        <SelectItem key={s.id} value={s.id.toString()}>
+                          {s.name} (Coef. {s.coefficient}, {s.hours_per_week}h/sem)
+                          {s.teacher_name ? ` — ${s.teacher_name}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-11 w-11 shrink-0"
+                    onClick={() => setShowCreateSubject(true)}
+                    title="Créer une matière"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Teacher select */}
+          <FormField
+            control={form.control}
+            name="teacher_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Enseignant *</FormLabel>
+                <div className="flex items-center gap-2">
+                  <Select
+                    onValueChange={(v) => field.onChange(Number(v))}
+                    value={field.value?.toString() ?? ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-11 flex-1">
+                        <SelectValue placeholder="Sélectionner un enseignant" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {selectedSubject?.teacher_id && selectedSubject?.teacher_name ? (
+                        /* Subject has an assigned teacher: show only that teacher */
+                        <SelectItem value={selectedSubject.teacher_id.toString()}>
+                          {selectedSubject.teacher_name}
+                        </SelectItem>
+                      ) : (
+                        /* No assigned teacher: show all teachers */
+                        allTeachers.map((t) => (
+                          <SelectItem key={t.id} value={t.id.toString()}>
+                            {t.first_name} {t.last_name} {t.speciality ? `(${t.speciality})` : ""}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-11 w-11 shrink-0"
+                    onClick={() => setShowCreateTeacher(true)}
+                    title="Créer un enseignant"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <FormField
+              control={form.control}
+              name="day"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Jour *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Jour" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {DAYS.map((d) => (
+                        <SelectItem key={d.value} value={d.value}>
+                          {d.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="start_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Début *</FormLabel>
+                  <FormControl>
+                    <Input type="time" className="h-11" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="end_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fin *</FormLabel>
+                  <FormControl>
+                    <Input type="time" className="h-11" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Room select */}
+          <FormField
+            control={form.control}
+            name="room"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Salle</FormLabel>
+                <Select
+                  onValueChange={(v) => field.onChange(v === "none" ? "" : v)}
+                  value={field.value || "none"}
+                >
                   <FormControl>
                     <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Jour" />
+                      <SelectValue placeholder="Sélectionner une salle (optionnel)" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {DAYS.map((d) => (
-                      <SelectItem key={d.value} value={d.value}>
-                        {d.label}
+                    <SelectItem value="none">Aucune salle</SelectItem>
+                    {filteredRooms.map((r) => (
+                      <SelectItem key={r.id} value={r.name}>
+                        {r.name} {r.capacity ? `(${r.capacity} places)` : ""} {r.room_type !== "classroom" ? `— ${r.room_type}` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -252,80 +349,230 @@ export function TimetableSlotForm({
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="start_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Début *</FormLabel>
-                <FormControl>
-                  <Input type="time" className="h-11" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="end_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Fin *</FormLabel>
-                <FormControl>
-                  <Input type="time" className="h-11" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Room select */}
-        <FormField
-          control={form.control}
-          name="room"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Salle</FormLabel>
-              <Select
-                onValueChange={(v) => field.onChange(v === "none" ? "" : v)}
-                value={field.value || "none"}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Sélectionner une salle (optionnel)" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="none">Aucune salle</SelectItem>
-                  {filteredRooms.map((r) => (
-                    <SelectItem key={r.id} value={r.name}>
-                      {r.name} {r.capacity ? `(${r.capacity} places)` : ""} {r.room_type !== "classroom" ? `— ${r.room_type}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
+          {error && (
+            <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
+              <p className="text-sm text-destructive">{error.message}</p>
+            </div>
           )}
-        />
 
-        {error && (
-          <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
-            <p className="text-sm text-destructive">{error.message}</p>
+          <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
+            {isPending
+              ? "Enregistrement..."
+              : isEdit
+                ? "Enregistrer les modifications"
+                : "Ajouter le créneau"}
+          </Button>
+        </form>
+      </Form>
+
+      {/* Inline create subject dialog */}
+      <InlineCreateSubjectDialog
+        open={showCreateSubject}
+        onClose={() => setShowCreateSubject(false)}
+        onCreated={(id) => {
+          form.setValue("subject_id", id)
+          setShowCreateSubject(false)
+        }}
+      />
+
+      {/* Inline create teacher dialog */}
+      <InlineCreateTeacherDialog
+        open={showCreateTeacher}
+        onClose={() => setShowCreateTeacher(false)}
+        onCreated={(id) => {
+          form.setValue("teacher_id", id)
+          setShowCreateTeacher(false)
+        }}
+      />
+    </>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Inline mini-dialogs
+// ---------------------------------------------------------------------------
+
+function InlineCreateSubjectDialog({
+  open,
+  onClose,
+  onCreated,
+}: {
+  open: boolean
+  onClose: () => void
+  onCreated: (id: number) => void
+}) {
+  const [name, setName] = useState("")
+  const { mutate, isPending } = useCreateSubject()
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim()) return
+    mutate(
+      {
+        name: name.trim(),
+        coefficient: 1,
+        hours_per_week: 1,
+      },
+      {
+        onSuccess: (created) => {
+          setName("")
+          onCreated(created.id)
+        },
+      },
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Créer une matière</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="subject-name">Nom de la matière *</Label>
+            <Input
+              id="subject-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Mathématiques"
+              className="h-11"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">
+              Crée une matière catalogue. Le coefficient et les heures seront configurés lors de l'assignation à un niveau.
+            </p>
           </div>
-        )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={isPending || !name.trim()}>
+              {isPending ? "Création..." : "Créer"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
-        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending
-            ? "Enregistrement..."
-            : isEdit
-              ? "Enregistrer les modifications"
-              : "Ajouter le créneau"}
-        </Button>
-      </form>
-    </Form>
+function InlineCreateTeacherDialog({
+  open,
+  onClose,
+  onCreated,
+}: {
+  open: boolean
+  onClose: () => void
+  onCreated: (id: number) => void
+}) {
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [speciality, setSpeciality] = useState("")
+  const { mutate, isPending } = useCreateTeacher()
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) return
+    mutate(
+      {
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: email.trim(),
+        password: password.trim(),
+        speciality: speciality.trim() || undefined,
+      },
+      {
+        onSuccess: (created) => {
+          setFirstName("")
+          setLastName("")
+          setEmail("")
+          setPassword("")
+          setSpeciality("")
+          onCreated(created.id)
+        },
+      },
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Créer un enseignant</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="teacher-first">Prénom *</Label>
+              <Input
+                id="teacher-first"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Prénom"
+                className="h-11"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="teacher-last">Nom *</Label>
+              <Input
+                id="teacher-last"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Nom"
+                className="h-11"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="teacher-email">Email *</Label>
+            <Input
+              id="teacher-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="enseignant@klassci.com"
+              className="h-11"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="teacher-pwd">Mot de passe *</Label>
+            <Input
+              id="teacher-pwd"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="8 caractères minimum"
+              className="h-11"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="teacher-spec">Spécialité</Label>
+            <Input
+              id="teacher-spec"
+              value={speciality}
+              onChange={(e) => setSpeciality(e.target.value)}
+              placeholder="Ex: Mathématiques (optionnel)"
+              className="h-11"
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              disabled={isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()}
+            >
+              {isPending ? "Création..." : "Créer"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

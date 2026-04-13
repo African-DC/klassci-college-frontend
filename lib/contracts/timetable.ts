@@ -65,6 +65,7 @@ export const TeacherAvailabilitySchema = z.object({
   start_time: z.string(),
   end_time: z.string(),
   available: z.boolean(),
+  preferred: z.boolean(),
 })
 
 export const TeacherAvailabilityCreateSchema = z.object({
@@ -76,8 +77,15 @@ export const TeacherAvailabilityCreateSchema = z.object({
     .string()
     .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format HH:MM"),
   available: z.boolean().default(true),
+  preferred: z.boolean().default(false),
+})
+
+export const TeacherAvailabilityUpdateSchema = z.object({
+  available: z.boolean().optional(),
+  preferred: z.boolean().optional(),
 })
 
 export type DayOfWeek = z.infer<typeof DayOfWeekSchema>
 export type TeacherAvailability = z.infer<typeof TeacherAvailabilitySchema>
 export type TeacherAvailabilityCreate = z.infer<typeof TeacherAvailabilityCreateSchema>
+export type TeacherAvailabilityUpdate = z.infer<typeof TeacherAvailabilityUpdateSchema>
