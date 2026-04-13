@@ -68,14 +68,37 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [dragOverCell, setDragOverCell] = useState<string | null>(null)
 
+  // Build a map that handles multi-hour slots
+  // For each (day, hour): "start" = slot starts here, "occupied" = slot covers this cell but started earlier, null = empty
   const slotMap = useMemo(() => {
-    const map = new Map<string, TimetableSlot>()
-    slots?.forEach((s) => map.set(`${s.day}:${s.start_time}`, s))
-    return map
+    const startMap = new Map<string, TimetableSlot>()
+    const occupiedSet = new Set<string>()
+    slots?.forEach((s) => {
+      startMap.set(`${s.day}:${s.start_time}`, s)
+      // Mark intermediate hours as occupied
+      const startH = parseInt(s.start_time.split(":")[0])
+      const endH = parseInt(s.end_time.split(":")[0])
+      const endM = parseInt(s.end_time.split(":")[1])
+      const lastFullHour = endM > 0 ? endH : endH - 1
+      for (let h = startH + 1; h <= lastFullHour; h++) {
+        occupiedSet.add(`${s.day}:${String(h).padStart(2, "0")}:00`)
+      }
+    })
+    return { startMap, occupiedSet }
   }, [slots])
 
-  function getSlot(day: string, hour: string): TimetableSlot | undefined {
-    return slotMap.get(`${day}:${hour}`)
+  function getSlotAt(day: string, hour: string): TimetableSlot | undefined {
+    return slotMap.startMap.get(`${day}:${hour}`)
+  }
+
+  function isOccupied(day: string, hour: string): boolean {
+    return slotMap.occupiedSet.has(`${day}:${hour}`)
+  }
+
+  function getSlotSpan(slot: TimetableSlot): number {
+    const [sh, sm] = slot.start_time.split(":").map(Number)
+    const [eh, em] = slot.end_time.split(":").map(Number)
+    return Math.max(1, Math.ceil((eh * 60 + em - sh * 60 - sm) / 60))
   }
 
   function handleDrop(targetDay: string, targetHour: string, slotId: number) {
@@ -139,19 +162,29 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
                 {hour}
               </div>
               {DAYS.map((day) => {
-                const slot = getSlot(day, hour)
-                const cellKey = `${day}:${hour}`
-                const isDragOver = dragOverCell === cellKey
+                const slot = getSlotAt(day, hour)
+                const occupied = isOccupied(day, hour)
+                const cellK = `${day}:${hour}`
+                const isDragOver = dragOverCell === cellK
+
+                // Cell occupied by a multi-hour slot that started earlier — skip rendering
+                if (occupied) {
+                  return <div key={day} className="p-1.5" />
+                }
+
+                const span = slot ? getSlotSpan(slot) : 1
+                const slotHeight = span > 1 ? `${span * 56 + (span - 1) * 1}px` : undefined
 
                 return (
                   <div
                     key={day}
                     className={`p-1.5 transition-colors ${isDragOver && !slot ? "bg-primary/10" : ""}`}
+                    style={span > 1 ? { position: "relative", zIndex: 2 } : undefined}
                     onDragOver={(e) => {
                       if (!slot) {
                         e.preventDefault()
                         e.dataTransfer.dropEffect = "move"
-                        setDragOverCell(cellKey)
+                        setDragOverCell(cellK)
                       }
                     }}
                     onDragLeave={() => setDragOverCell(null)}
@@ -176,11 +209,15 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
                           "w-full rounded-lg border p-2 text-left transition-shadow hover:shadow-md cursor-grab active:cursor-grabbing",
                           getSlotColor(slot.subject_color)
                         )}
+                        style={slotHeight ? { height: slotHeight } : { height: "56px" }}
                       >
                         <p className="text-xs font-semibold truncate">{slot.subject_name}</p>
                         <p className="text-[10px] opacity-75 truncate">{slot.teacher_name}</p>
                         {slot.room && (
                           <p className="text-[10px] opacity-60">{slot.room}</p>
+                        )}
+                        {span > 1 && (
+                          <p className="text-[10px] opacity-50 mt-0.5">{slot.start_time} - {slot.end_time}</p>
                         )}
                       </button>
                     ) : (

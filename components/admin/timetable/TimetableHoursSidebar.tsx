@@ -61,6 +61,13 @@ function computeSlotHours(start: string, end: string): number {
   return (eh * 60 + em - sh * 60 - sm) / 60
 }
 
+function formatHours(h: number): string {
+  const hours = Math.floor(h)
+  const minutes = Math.round((h - hours) * 60)
+  if (minutes === 0) return `${hours}h`
+  return `${hours}h${String(minutes).padStart(2, "0")}`
+}
+
 export function TimetableHoursSidebar({ classId, weekOffset = 0 }: TimetableHoursSidebarProps) {
   const { data: slots, isLoading: slotsLoading } = useTimetable(classId, weekOffset)
   const { data: classDetail } = useClass(classId)
@@ -173,7 +180,7 @@ export function TimetableHoursSidebar({ classId, weekOffset = 0 }: TimetableHour
                 />
                 <span className="text-xs font-medium truncate flex-1">{s.name}</span>
                 <span className={cn("text-xs font-semibold tabular-nums", statusColor)}>
-                  {s.assigned}h / {s.required}h
+                  {formatHours(s.assigned)} / {formatHours(s.required)}
                 </span>
               </div>
               <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -204,7 +211,7 @@ export function TimetableHoursSidebar({ classId, weekOffset = 0 }: TimetableHour
               getStatusColor(totals.assigned, totals.required),
             )}
           >
-            {totals.assigned}h / {totals.required}h
+            {formatHours(totals.assigned)} / {formatHours(totals.required)}
           </span>
         </div>
         {totals.required > 0 && (
@@ -224,7 +231,7 @@ export function TimetableHoursSidebar({ classId, weekOffset = 0 }: TimetableHour
           <p className="text-[10px] text-muted-foreground mt-1">
             {totals.assigned >= totals.required
               ? "Toutes les heures sont couvertes"
-              : `${totals.required - totals.assigned}h restante${totals.required - totals.assigned > 1 ? "s" : ""} a assigner`}
+              : `${formatHours(totals.required - totals.assigned)} restante${totals.required - totals.assigned > 1 ? "s" : ""} a assigner`}
           </p>
         )}
       </div>
