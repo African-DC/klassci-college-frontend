@@ -7,12 +7,21 @@ import { useStaffList, useDeleteStaff } from "@/lib/hooks/useStaff"
 import type { Staff } from "@/lib/contracts/staff"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { CrudTable } from "@/components/shared/CrudTable"
+import { useDebounce } from "@/lib/hooks/useDebounce"
 import { StaffEditModal } from "./StaffEditModal"
 
 export function StaffTable() {
   const router = useRouter()
   const [page, setPage] = useState(1)
-  const { data, isLoading, isError, error, refetch } = useStaffList({ page })
+  const [search, setSearch] = useState("")
+  const debouncedSearch = useDebounce(search)
+
+  const params = useMemo(() => ({
+    page,
+    ...(debouncedSearch && { search: debouncedSearch }),
+  }), [page, debouncedSearch])
+
+  const { data, isLoading, isError, error, refetch } = useStaffList(params)
   const deleteMutation = useDeleteStaff()
 
   const columns: ColumnDef<Staff>[] = useMemo(() => [
@@ -65,6 +74,9 @@ export function StaffTable() {
       emptyMessage="Aucun personnel trouvé"
       errorMessage="Impossible de charger le personnel"
       deleteDescription="Cette action est irréversible. Le membre du personnel sera définitivement supprimé."
+      searchPlaceholder="Rechercher un membre du personnel..."
+      searchValue={search}
+      onSearchChange={(v) => { setSearch(v); setPage(1) }}
       page={page}
       onPageChange={setPage}
     />

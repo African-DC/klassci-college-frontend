@@ -3,8 +3,8 @@
 import { useState, useMemo, useCallback } from "react"
 import {
   Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp,
-  AlertCircle, Banknote, CreditCard, Search, SlidersHorizontal, X, Eye,
-  Hash, Receipt,
+  AlertCircle, Banknote, CreditCard, Search, X, Eye,
+  Receipt, Coins, Smartphone, Building2, FileText, User,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -65,11 +65,11 @@ const METHOD_LABELS: Record<PaymentMethod, string> = {
   check: "Chèque",
 }
 
-const METHOD_ICONS: Record<PaymentMethod, string> = {
-  cash: "💵",
-  mobile_money: "📱",
-  bank_transfer: "🏦",
-  check: "📝",
+const METHOD_ICON_MAP: Record<PaymentMethod, React.ComponentType<{ className?: string }>> = {
+  cash: Coins,
+  mobile_money: Smartphone,
+  bank_transfer: Building2,
+  check: FileText,
 }
 
 export function PaymentsPageClient() {
@@ -297,9 +297,8 @@ export function PaymentsPageClient() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="w-[60px]">
-                    <Hash className="h-3.5 w-3.5" />
-                  </TableHead>
+                  <TableHead>Élève</TableHead>
+                  <TableHead>Frais</TableHead>
                   <TableHead className="text-right">Montant</TableHead>
                   <TableHead>Méthode</TableHead>
                   <TableHead>Statut</TableHead>
@@ -310,10 +309,45 @@ export function PaymentsPageClient() {
               <TableBody>
                 {payments.map((payment: Payment) => {
                   const statusCfg = STATUS_CONFIG[payment.status]
+                  const MethodIcon = METHOD_ICON_MAP[payment.method]
+                  const initials = payment.student_name
+                    ? payment.student_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
+                    : "?"
                   return (
-                    <TableRow key={payment.id} className="group">
+                    <TableRow
+                      key={payment.id}
+                      className="group cursor-pointer"
+                      onClick={() => {
+                        // Navigate to student detail if we have student info
+                        // For now, open receipt preview
+                        handlePreviewReceipt(payment)
+                      }}
+                    >
                       <TableCell>
-                        <span className="text-xs font-mono text-muted-foreground">#{payment.id}</span>
+                        <div className="flex items-center gap-2.5">
+                          {payment.student_photo_url ? (
+                            <img
+                              src={payment.student_photo_url}
+                              alt=""
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                              {initials}
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-medium leading-tight">
+                              {payment.student_name ?? `Paiement #${payment.id}`}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">#{payment.id}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {payment.fee_name ?? "—"}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right">
                         <span className="font-semibold tabular-nums">
@@ -323,7 +357,7 @@ export function PaymentsPageClient() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm">{METHOD_ICONS[payment.method]}</span>
+                          <MethodIcon className="h-3.5 w-3.5 text-muted-foreground" />
                           <span className="text-sm">{METHOD_LABELS[payment.method]}</span>
                         </div>
                       </TableCell>
@@ -341,7 +375,10 @@ export function PaymentsPageClient() {
                         })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                        <div
+                          className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {payment.status === "pending" && (
                             <>
                               <Button

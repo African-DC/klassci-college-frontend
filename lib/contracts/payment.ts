@@ -16,6 +16,9 @@ export const PaymentSchema = z.object({
   notes: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
+  student_name: z.string().nullable().optional(),
+  student_photo_url: z.string().nullable().optional(),
+  fee_name: z.string().nullable().optional(),
 }).passthrough()
 
 export const PaymentCreateSchema = z.object({

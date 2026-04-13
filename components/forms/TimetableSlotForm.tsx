@@ -457,6 +457,15 @@ function InlineCreateSubjectDialog({
   )
 }
 
+function generateAutoCredentials(first: string, last: string) {
+  const slug = `${first}.${last}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ".")
+  const suffix = String(Math.floor(Math.random() * 900) + 100)
+  return {
+    email: `${slug}.${suffix}@klassci.local`,
+    password: `Klassci${suffix}!${first[0]?.toUpperCase() ?? "X"}`,
+  }
+}
+
 function InlineCreateTeacherDialog({
   open,
   onClose,
@@ -468,28 +477,25 @@ function InlineCreateTeacherDialog({
 }) {
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [speciality, setSpeciality] = useState("")
   const { mutate, isPending } = useCreateTeacher()
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) return
+    if (!firstName.trim() || !lastName.trim()) return
+    const { email, password } = generateAutoCredentials(firstName.trim(), lastName.trim())
     mutate(
       {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-        email: email.trim(),
-        password: password.trim(),
+        email,
+        password,
         speciality: speciality.trim() || undefined,
       },
       {
         onSuccess: (created) => {
           setFirstName("")
           setLastName("")
-          setEmail("")
-          setPassword("")
           setSpeciality("")
           onCreated(created.id)
         },
@@ -499,7 +505,7 @@ function InlineCreateTeacherDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Créer un enseignant</DialogTitle>
         </DialogHeader>
@@ -524,30 +530,8 @@ function InlineCreateTeacherDialog({
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Nom"
                 className="h-11"
-              />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="teacher-email">Email *</Label>
-            <Input
-              id="teacher-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="enseignant@klassci.com"
-              className="h-11"
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="teacher-pwd">Mot de passe *</Label>
-            <Input
-              id="teacher-pwd"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="8 caractères minimum"
-              className="h-11"
-            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="teacher-spec">Spécialité</Label>
@@ -559,13 +543,16 @@ function InlineCreateTeacherDialog({
               className="h-11"
             />
           </div>
+          <p className="text-xs text-muted-foreground">
+            Un compte sera créé automatiquement. Pour configurer les identifiants, rendez-vous sur la page de l'enseignant.
+          </p>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
             <Button
               type="submit"
-              disabled={isPending || !firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()}
+              disabled={isPending || !firstName.trim() || !lastName.trim()}
             >
               {isPending ? "Création..." : "Créer"}
             </Button>

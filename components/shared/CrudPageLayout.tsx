@@ -11,9 +11,10 @@ interface CrudPageLayoutProps {
   icon?: LucideIcon
   table: React.ReactNode
   createModal: (props: { open: boolean; onClose: () => void }) => React.ReactNode
+  kpiCards?: React.ReactNode
 }
 
-export function CrudPageLayout({ title, subtitle, createLabel, icon: Icon, table, createModal }: CrudPageLayoutProps) {
+export function CrudPageLayout({ title, subtitle, createLabel, icon: Icon, table, createModal, kpiCards }: CrudPageLayoutProps) {
   const [createOpen, setCreateOpen] = useState(false)
 
   return (
@@ -34,6 +35,7 @@ export function CrudPageLayout({ title, subtitle, createLabel, icon: Icon, table
           <Plus className="mr-2 h-4 w-4" /> {createLabel}
         </Button>
       </div>
+      {kpiCards}
       {table}
       {createModal({ open: createOpen, onClose: () => setCreateOpen(false) })}
     </div>
