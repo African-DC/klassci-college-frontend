@@ -74,7 +74,7 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
   const queryClient = useQueryClient()
   const { data: slots, isLoading } = useTimetable(classId, weekOffset)
   const deleteMutation = useDeleteSlot()
-  const [createModal, setCreateModal] = useState<{ day: string; time: string } | null>(null)
+  const [createModal, setCreateModal] = useState<{ day: string; time: string; endTime?: string } | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<TimetableSlot | null>(null)
   const [editSlot, setEditSlot] = useState<TimetableSlot | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -247,13 +247,17 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
 
                         // Only show "+" if there's enough space (at least 20px)
                         if (freeHeight >= 20) {
+                          // Compute end time for this free segment
+                          const freeEndMin = hourEnd
+                          const freeEndStr = `${String(Math.floor(freeEndMin / 60)).padStart(2, "0")}:${String(freeEndMin % 60).padStart(2, "0")}`
+
                           buttons.push(
                             <button
                               key={`free-${hour}`}
                               type="button"
                               className="absolute left-1 right-1 z-0 flex items-center justify-center rounded-lg border border-dashed border-muted-foreground/20 text-muted-foreground/30 transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary/50"
                               style={{ top: freeTop + 1, height: freeHeight - 2 }}
-                              onClick={() => setCreateModal({ day, time: freeTimeStr })}
+                              onClick={() => setCreateModal({ day, time: freeTimeStr, endTime: freeEndStr })}
                               onDragOver={(e) => {
                                 e.preventDefault()
                                 e.dataTransfer.dropEffect = "move"
@@ -324,6 +328,7 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
           <TimetableSlotForm
             defaultDay={createModal?.day}
             defaultStartTime={createModal?.time}
+            defaultEndTime={createModal?.endTime}
             classId={classId}
             onSuccess={() => setCreateModal(null)}
           />

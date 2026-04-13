@@ -50,6 +50,7 @@ const DAYS = [
 interface TimetableSlotFormProps {
   defaultDay?: string
   defaultStartTime?: string
+  defaultEndTime?: string
   classId?: number
   slot?: TimetableSlot
   onSuccess: () => void
@@ -58,6 +59,7 @@ interface TimetableSlotFormProps {
 export function TimetableSlotForm({
   defaultDay,
   defaultStartTime,
+  defaultEndTime,
   classId,
   slot,
   onSuccess,
@@ -118,7 +120,7 @@ export function TimetableSlotForm({
       : {
           day: defaultDay as TimetableSlotCreate["day"] | undefined,
           start_time: defaultStartTime ?? "",
-          end_time: defaultStartTime ? addHour(defaultStartTime) : "",
+          end_time: defaultEndTime ?? (defaultStartTime ? addHour(defaultStartTime) : ""),
           class_id: classId,
           academic_year_id: currentYear?.id,
           room: "",
