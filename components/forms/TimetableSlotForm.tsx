@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { TimetableSlotCreateSchema, type TimetableSlotCreate } from "@/lib/contracts/timetable"
@@ -64,13 +65,24 @@ export function TimetableSlotForm({
   )
   const subjects = subjectsData?.items ?? []
 
-  // Teachers list
+  // Teachers — only show the teacher assigned to the selected subject
   const { data: teachersData } = useTeachers({ size: 100 })
-  const teachers = teachersData?.items ?? []
+  const allTeachers = teachersData?.items ?? []
 
-  // Rooms list
+  // Rooms — only show: 1) the class's assigned room, 2) non-classroom rooms (labos, etc.)
   const { data: roomsData } = useRooms({ size: 100 })
-  const rooms = roomsData?.items ?? []
+  const allRooms = roomsData?.items ?? []
+  const filteredRooms = useMemo(() => {
+    return allRooms.filter((r) => {
+      // Always show the room assigned to this class
+      if (classData?.room_id && r.class_id === classData.room_id) return true
+      if (r.class_name && classData?.name && r.class_name === classData.name) return true
+      // Show non-classroom rooms (labos, salle info, etc.)
+      if (r.room_type !== "classroom") return true
+      // Hide other classes' classroom rooms
+      return false
+    })
+  }, [allRooms, classData])
 
   // Current academic year
   const { data: yearsData } = useAcademicYears()
@@ -100,8 +112,14 @@ export function TimetableSlotForm({
   })
 
   const selectedSubjectId = form.watch("subject_id")
-  // Filter teachers by the selected subject's teacher (if assigned)
   const selectedSubject = subjects.find((s) => s.id === selectedSubjectId)
+
+  // Auto-select teacher when subject changes (if subject has assigned teacher)
+  const prevSubjectRef = useMemo(() => ({ id: 0 }), [])
+  if (selectedSubject?.teacher_id && selectedSubjectId !== prevSubjectRef.id) {
+    prevSubjectRef.id = selectedSubjectId ?? 0
+    form.setValue("teacher_id", selectedSubject.teacher_id)
+  }
 
   const createMutation = useCreateSlot()
   const updateMutation = useUpdateSlot(slot?.id ?? 0)
@@ -193,7 +211,8 @@ export function TimetableSlotForm({
                       {selectedSubject.teacher_name} (assigné à cette matière)
                     </SelectItem>
                   )}
-                  {teachers
+                  {/* Show other teachers only if no subject teacher or user wants to override */}
+                  {allTeachers
                     .filter((t) => t.id !== selectedSubject?.teacher_id)
                     .map((t) => (
                       <SelectItem key={t.id} value={t.id.toString()}>
@@ -280,9 +299,9 @@ export function TimetableSlotForm({
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="none">Aucune salle</SelectItem>
-                  {rooms.map((r) => (
+                  {filteredRooms.map((r) => (
                     <SelectItem key={r.id} value={r.name}>
-                      {r.name} {r.capacity ? `(${r.capacity} places)` : ""}
+                      {r.name} {r.capacity ? `(${r.capacity} places)` : ""} {r.room_type !== "classroom" ? `— ${r.room_type}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
