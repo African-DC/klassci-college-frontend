@@ -217,31 +217,64 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
                     />
                   ))}
 
-                  {/* Click zones for creating slots (one per hour) */}
-                  {hourLines.slice(0, -1).map(({ hour }) => (
-                    <button
-                      key={`create-${hour}`}
-                      type="button"
-                      className="absolute left-1 right-1 z-0 rounded transition-colors hover:bg-primary/5"
-                      style={{
-                        top: (hour - START_HOUR) * PX_PER_HOUR + 1,
-                        height: PX_PER_HOUR - 2,
-                      }}
-                      onClick={() => setCreateModal({ day, time: `${String(hour).padStart(2, "0")}:00` })}
-                      onDragOver={(e) => {
-                        e.preventDefault()
-                        e.dataTransfer.dropEffect = "move"
-                        setDragOverCell(`${day}:${hour}`)
-                      }}
-                      onDragLeave={() => setDragOverCell(null)}
-                      onDrop={(e) => {
-                        e.preventDefault()
-                        setDragOverCell(null)
-                        const slotId = Number(e.dataTransfer.getData("slotId"))
-                        if (slotId) handleDrop(day, `${String(hour).padStart(2, "0")}:00`, slotId)
-                      }}
-                    />
-                  ))}
+                  {/* Free slot "+" buttons — visible in gaps between existing slots */}
+                  {(() => {
+                    // Compute occupied ranges for this day
+                    const occupied = daySlots
+                      .map((s) => ({ start: timeToMinutes(s.start_time), end: timeToMinutes(s.end_time) }))
+                      .sort((a, b) => a.start - b.start)
+
+                    // Generate "+" buttons for each free hour-aligned segment
+                    const buttons: React.ReactNode[] = []
+                    for (let hour = START_HOUR; hour < END_HOUR; hour++) {
+                      const hourStart = hour * 60
+                      const hourEnd = (hour + 1) * 60
+
+                      // Find the actual free start within this hour (after any overlapping slot)
+                      let freeStart = hourStart
+                      for (const occ of occupied) {
+                        if (occ.start < hourEnd && occ.end > hourStart) {
+                          // This slot overlaps with this hour
+                          freeStart = Math.max(freeStart, occ.end)
+                        }
+                      }
+
+                      // If there's free space in this hour
+                      if (freeStart < hourEnd) {
+                        const freeHeight = ((hourEnd - freeStart) / 60) * PX_PER_HOUR
+                        const freeTop = minutesToPx(freeStart)
+                        const freeTimeStr = `${String(Math.floor(freeStart / 60)).padStart(2, "0")}:${String(freeStart % 60).padStart(2, "0")}`
+
+                        // Only show "+" if there's enough space (at least 20px)
+                        if (freeHeight >= 20) {
+                          buttons.push(
+                            <button
+                              key={`free-${hour}`}
+                              type="button"
+                              className="absolute left-1 right-1 z-0 flex items-center justify-center rounded-lg border border-dashed border-muted-foreground/20 text-muted-foreground/30 transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary/50"
+                              style={{ top: freeTop + 1, height: freeHeight - 2 }}
+                              onClick={() => setCreateModal({ day, time: freeTimeStr })}
+                              onDragOver={(e) => {
+                                e.preventDefault()
+                                e.dataTransfer.dropEffect = "move"
+                                setDragOverCell(`${day}:${hour}`)
+                              }}
+                              onDragLeave={() => setDragOverCell(null)}
+                              onDrop={(e) => {
+                                e.preventDefault()
+                                setDragOverCell(null)
+                                const slotId = Number(e.dataTransfer.getData("slotId"))
+                                if (slotId) handleDrop(day, freeTimeStr, slotId)
+                              }}
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>,
+                          )
+                        }
+                      }
+                    }
+                    return buttons
+                  })()}
 
                   {/* Rendered slots */}
                   {daySlots.map((slot) => {
