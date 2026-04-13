@@ -68,7 +68,17 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-    throw new Error(error.detail || `Erreur ${res.status}`)
+    // FastAPI 422 returns detail as array of validation errors
+    const detail = error.detail
+    let message: string
+    if (typeof detail === "string") {
+      message = detail
+    } else if (Array.isArray(detail)) {
+      message = detail.map((d: { msg?: string; loc?: string[] }) => d.msg ?? JSON.stringify(d)).join(", ")
+    } else {
+      message = `Erreur ${res.status}`
+    }
+    throw new Error(message)
   }
 
   if (res.status === 204) return undefined as T

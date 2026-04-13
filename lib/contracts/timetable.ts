@@ -2,7 +2,10 @@ import { z } from "zod"
 
 // Miroir de app/schemas/timetable.py (backend)
 
-export const DaySchema = z.enum(["lundi", "mardi", "mercredi", "jeudi", "vendredi"])
+export const DaySchema = z.enum([
+  "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi",
+  "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+])
 
 export const TimetableSlotSchema = z.object({
   id: z.number(),
