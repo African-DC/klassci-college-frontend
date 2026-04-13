@@ -1,12 +1,17 @@
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
-import { Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp, AlertCircle, Banknote, CreditCard } from "lucide-react"
+import {
+  Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp,
+  AlertCircle, Banknote, CreditCard, Search, SlidersHorizontal, X, Eye,
+  Hash, Receipt,
+} from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { KpiCard } from "@/components/admin/dashboard/KpiCard"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -42,15 +47,15 @@ import {
 import { PaymentCreateWizard } from "./PaymentCreateWizard"
 import { usePayments, useFinancialSummary, useValidatePayment, useCancelPayment } from "@/lib/hooks/usePayments"
 import { paymentsApi } from "@/lib/api/payments"
-import { downloadBlob } from "@/lib/utils"
+import { useDebounce } from "@/lib/hooks/useDebounce"
 import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@/lib/contracts/payment"
 
-const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pending: { label: "En attente", variant: "secondary" },
-  completed: { label: "Validé", variant: "default" },
-  failed: { label: "Échoué", variant: "destructive" },
-  refunded: { label: "Remboursé", variant: "outline" },
-  cancelled: { label: "Annulé", variant: "destructive" },
+const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; dot: string }> = {
+  pending: { label: "En attente", variant: "secondary", dot: "bg-amber-500" },
+  completed: { label: "Validé", variant: "default", dot: "bg-emerald-500" },
+  failed: { label: "Échoué", variant: "destructive", dot: "bg-red-500" },
+  refunded: { label: "Remboursé", variant: "outline", dot: "bg-blue-500" },
+  cancelled: { label: "Annulé", variant: "destructive", dot: "bg-rose-500" },
 }
 
 const METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -60,18 +65,30 @@ const METHOD_LABELS: Record<PaymentMethod, string> = {
   check: "Chèque",
 }
 
+const METHOD_ICONS: Record<PaymentMethod, string> = {
+  cash: "💵",
+  mobile_money: "📱",
+  bank_transfer: "🏦",
+  check: "📝",
+}
+
 export function PaymentsPageClient() {
   const [createOpen, setCreateOpen] = useState(false)
+  const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | undefined>(undefined)
   const [methodFilter, setMethodFilter] = useState<PaymentMethod | undefined>(undefined)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{ type: "validate" | "cancel"; payment: Payment } | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewPaymentId, setPreviewPaymentId] = useState<number | null>(null)
 
+  const debouncedSearch = useDebounce(search)
+
   const params: PaymentListParams = {
     ...(statusFilter && { status: statusFilter }),
     ...(methodFilter && { method: methodFilter }),
+    ...(debouncedSearch && { search: debouncedSearch }),
   }
 
   const { data, isLoading } = usePayments(params)
@@ -80,6 +97,8 @@ export function PaymentsPageClient() {
   const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
 
   const payments = useMemo(() => data?.items ?? [], [data])
+
+  const activeFilterCount = [statusFilter, methodFilter].filter(Boolean).length
 
   const handlePreviewReceipt = useCallback(async (payment: Payment) => {
     setDownloadingId(payment.id)
@@ -122,9 +141,15 @@ export function PaymentsPageClient() {
     }
   }
 
+  function clearFilters() {
+    setStatusFilter(undefined)
+    setMethodFilter(undefined)
+    setSearch("")
+  }
+
   return (
     <div className="space-y-6">
-      {/* En-tête */}
+      {/* En-tête premium */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
@@ -143,156 +168,225 @@ export function PaymentsPageClient() {
         </Button>
       </div>
 
-      {/* KPIs financiers */}
+      {/* KPIs financiers premium */}
       {loadingSummary ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-lg" />
+            <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
       ) : summary ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <KpiCard
             icon={Banknote}
-            title="Attendu"
-            value={`${summary.total_expected.toLocaleString("fr-FR")} FCFA`}
-            variant="blue"
+            label="Attendu"
+            value={summary.total_expected}
+            color="blue"
           />
           <KpiCard
             icon={Wallet}
-            title="Collecté"
-            value={`${summary.total_collected.toLocaleString("fr-FR")} FCFA`}
-            variant="emerald"
+            label="Collecté"
+            value={summary.total_paid}
+            color="emerald"
+            subtext={`${summary.payment_count} paiement(s)`}
           />
           <KpiCard
             icon={AlertCircle}
-            title="Restant"
-            value={`${summary.total_pending.toLocaleString("fr-FR")} FCFA`}
-            variant="orange"
+            label="En attente"
+            value={summary.total_pending}
+            color="amber"
           />
           <KpiCard
             icon={TrendingUp}
-            title="Taux de recouvrement"
-            value={`${summary.collection_rate.toFixed(1)}%`}
-            variant={summary.collection_rate >= 70 ? "emerald" : "orange"}
+            label="Taux de recouvrement"
+            value={summary.completion_rate}
+            isPercent
+            color={summary.completion_rate >= 70 ? "emerald" : "amber"}
+            subtext={summary.total_cancelled > 0 ? `${summary.total_cancelled.toLocaleString("fr-FR")} FCFA annulés` : undefined}
           />
         </div>
       ) : null}
 
-      {/* Filtres */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Select
-          value={statusFilter ?? "all"}
-          onValueChange={(v) => setStatusFilter(v === "all" ? undefined : (v as PaymentStatus))}
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les statuts</SelectItem>
-            <SelectItem value="pending">En attente</SelectItem>
-            <SelectItem value="completed">Validé</SelectItem>
-            <SelectItem value="failed">Échoué</SelectItem>
-            <SelectItem value="refunded">Remboursé</SelectItem>
-            <SelectItem value="cancelled">Annulé</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Barre de recherche + filtres */}
+      <Card className="border-0 shadow-sm ring-1 ring-border">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par élève, référence..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-10 pl-9 pr-9"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
 
-        <Select
-          value={methodFilter ?? "all"}
-          onValueChange={(v) => setMethodFilter(v === "all" ? undefined : (v as PaymentMethod))}
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Méthode" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les méthodes</SelectItem>
-            <SelectItem value="cash">Espèces</SelectItem>
-            <SelectItem value="mobile_money">Mobile Money</SelectItem>
-            <SelectItem value="bank_transfer">Virement</SelectItem>
-            <SelectItem value="check">Chèque</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+            {/* Filtres rapides */}
+            <Select
+              value={statusFilter ?? "all"}
+              onValueChange={(v) => setStatusFilter(v === "all" ? undefined : (v as PaymentStatus))}
+            >
+              <SelectTrigger className="w-[150px] h-10">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="pending">En attente</SelectItem>
+                <SelectItem value="completed">Validé</SelectItem>
+                <SelectItem value="failed">Échoué</SelectItem>
+                <SelectItem value="refunded">Remboursé</SelectItem>
+                <SelectItem value="cancelled">Annulé</SelectItem>
+              </SelectContent>
+            </Select>
 
-      {/* Tableau des paiements */}
-      {isLoading ? (
-        <Skeleton className="h-80 rounded-lg" />
-      ) : payments.length === 0 ? (
-        <div className="py-12 text-center text-sm text-muted-foreground">
-          Aucun paiement trouvé.
-        </div>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Frais</TableHead>
-                <TableHead className="text-right">Montant</TableHead>
-                <TableHead>Méthode</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {payments.map((payment: Payment) => {
-                const statusCfg = STATUS_CONFIG[payment.status]
-                return (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-medium">#{payment.id}</TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {Number(payment.amount).toLocaleString("fr-FR")} FCFA
-                    </TableCell>
-                    <TableCell>{METHOD_LABELS[payment.method]}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(payment.created_at).toLocaleDateString("fr-FR")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {payment.status === "pending" && (
-                          <>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => setConfirmAction({ type: "validate", payment })}
-                            >
-                              <CheckCircle className="h-4 w-4 text-emerald-600" />
-                              <span className="sr-only">Valider le paiement de {payment.id}</span>
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => setConfirmAction({ type: "cancel", payment })}
-                            >
-                              <XCircle className="h-4 w-4 text-destructive" />
-                              <span className="sr-only">Annuler le paiement de {payment.id}</span>
-                            </Button>
-                          </>
-                        )}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handlePreviewReceipt(payment)}
-                          disabled={downloadingId === payment.id}
-                        >
-                          <Download className="h-4 w-4" />
-                          <span className="sr-only">Télécharger le reçu de {payment.id}</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+            <Select
+              value={methodFilter ?? "all"}
+              onValueChange={(v) => setMethodFilter(v === "all" ? undefined : (v as PaymentMethod))}
+            >
+              <SelectTrigger className="w-[150px] h-10">
+                <SelectValue placeholder="Méthode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes méthodes</SelectItem>
+                <SelectItem value="cash">Espèces</SelectItem>
+                <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                <SelectItem value="bank_transfer">Virement</SelectItem>
+                <SelectItem value="check">Chèque</SelectItem>
+              </SelectContent>
+            </Select>
 
-      {data && (
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10 text-xs text-muted-foreground">
+                <X className="mr-1 h-3 w-3" />
+                Réinitialiser ({activeFilterCount})
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tableau des paiements premium */}
+      <Card className="border-0 shadow-sm ring-1 ring-border overflow-hidden">
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-6 space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 rounded-lg" />
+              ))}
+            </div>
+          ) : payments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <Receipt className="h-10 w-10 mb-3 opacity-40" />
+              <p className="text-sm font-medium">Aucun paiement trouvé</p>
+              <p className="text-xs mt-1">
+                {activeFilterCount > 0 || search
+                  ? "Essayez de modifier vos filtres"
+                  : "Créez votre premier paiement"}
+              </p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                  <TableHead className="w-[60px]">
+                    <Hash className="h-3.5 w-3.5" />
+                  </TableHead>
+                  <TableHead className="text-right">Montant</TableHead>
+                  <TableHead>Méthode</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {payments.map((payment: Payment) => {
+                  const statusCfg = STATUS_CONFIG[payment.status]
+                  return (
+                    <TableRow key={payment.id} className="group">
+                      <TableCell>
+                        <span className="text-xs font-mono text-muted-foreground">#{payment.id}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="font-semibold tabular-nums">
+                          {Number(payment.amount).toLocaleString("fr-FR")}
+                        </span>
+                        <span className="ml-1 text-xs text-muted-foreground">FCFA</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{METHOD_ICONS[payment.method]}</span>
+                          <span className="text-sm">{METHOD_LABELS[payment.method]}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className={`h-2 w-2 rounded-full ${statusCfg.dot}`} />
+                          <span className="text-sm">{statusCfg.label}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground tabular-nums">
+                        {new Date(payment.created_at).toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                          {payment.status === "pending" && (
+                            <>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => setConfirmAction({ type: "validate", payment })}
+                                title="Valider"
+                              >
+                                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => setConfirmAction({ type: "cancel", payment })}
+                                title="Annuler"
+                              >
+                                <XCircle className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            onClick={() => handlePreviewReceipt(payment)}
+                            disabled={downloadingId === payment.id}
+                            title="Voir le reçu"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Pagination info */}
+      {data && payments.length > 0 && (
         <div className="text-xs text-muted-foreground text-right">
           {data.total} paiement(s) — Page {data.page}/{data.size > 0 ? Math.ceil(data.total / data.size) : 1}
         </div>
@@ -300,7 +394,7 @@ export function PaymentsPageClient() {
 
       <PaymentCreateWizard open={createOpen} onClose={() => setCreateOpen(false)} />
 
-      {/* Dialog de confirmation pour valider/annuler un paiement */}
+      {/* Confirmation dialog */}
       <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null) }}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -349,5 +443,56 @@ export function PaymentsPageClient() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Premium KPI Card
+// ---------------------------------------------------------------------------
+
+const KPI_COLORS = {
+  blue: { bg: "bg-blue-50", icon: "text-blue-600 bg-blue-100", ring: "ring-blue-200/60" },
+  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600 bg-emerald-100", ring: "ring-emerald-200/60" },
+  amber: { bg: "bg-amber-50", icon: "text-amber-600 bg-amber-100", ring: "ring-amber-200/60" },
+  rose: { bg: "bg-rose-50", icon: "text-rose-600 bg-rose-100", ring: "ring-rose-200/60" },
+}
+
+function KpiCard({
+  icon: Icon,
+  label,
+  value,
+  color,
+  isPercent,
+  subtext,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: number
+  color: keyof typeof KPI_COLORS
+  isPercent?: boolean
+  subtext?: string
+}) {
+  const c = KPI_COLORS[color]
+  return (
+    <Card className={`border-0 shadow-sm ring-1 ${c.ring} overflow-hidden`}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+            <p className="text-2xl font-bold tabular-nums tracking-tight">
+              {isPercent
+                ? `${value.toFixed(1)}%`
+                : `${value.toLocaleString("fr-FR")} FCFA`}
+            </p>
+            {subtext && (
+              <p className="text-[11px] text-muted-foreground">{subtext}</p>
+            )}
+          </div>
+          <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${c.icon}`}>
+            <Icon className="h-4.5 w-4.5" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

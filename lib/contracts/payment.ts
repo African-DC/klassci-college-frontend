@@ -26,27 +26,14 @@ export const PaymentCreateSchema = z.object({
   notes: z.string().nullable().optional(),
 })
 
-// Résumé financier pour le dashboard
+// Résumé financier — miroir de PaymentSummaryResponse (backend)
 export const FinancialSummarySchema = z.object({
   total_expected: z.number(),
-  total_collected: z.number(),
+  total_paid: z.number(),
   total_pending: z.number(),
-  collection_rate: z.number(),
-  by_category: z.array(
-    z.object({
-      category_name: z.string(),
-      expected: z.number(),
-      collected: z.number(),
-      rate: z.number(),
-    }),
-  ),
-  by_method: z.array(
-    z.object({
-      method: PaymentMethodSchema,
-      total: z.number(),
-      count: z.number(),
-    }),
-  ),
+  total_cancelled: z.number(),
+  payment_count: z.number(),
+  completion_rate: z.number(),
 })
 
 export const PaymentListParamsSchema = z.object({
