@@ -34,6 +34,7 @@ export default function TimetablePage() {
   const [diagnosticOpen, setDiagnosticOpen] = useState(false)
   const [diagnostic, setDiagnostic] = useState<TimetableDiagnostic | null>(null)
   const [loadingDiagnostic, setLoadingDiagnostic] = useState(false)
+  const [isPolling, setIsPolling] = useState(false)
 
   const { data: classesData } = useClasses({ size: 100 })
   const classes = useMemo(() => classesData?.items ?? [], [classesData])
@@ -47,37 +48,37 @@ export default function TimetablePage() {
 
   // Clear polling when class changes
   useEffect(() => {
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current)
-      pollingRef.current = null
-    }
+    stopPolling()
   }, [selectedClassId])
 
+  function stopPolling() {
+    if (pollingRef.current) clearInterval(pollingRef.current)
+    pollingRef.current = null
+    setIsPolling(false)
+  }
+
   function startPolling(taskId: string) {
+    setIsPolling(true)
     pollCountRef.current = 0
     pollFnRef.current = async () => {
       pollCountRef.current++
       if (pollCountRef.current > MAX_POLL_ATTEMPTS) {
-        if (pollingRef.current) clearInterval(pollingRef.current)
-        pollingRef.current = null
+        stopPolling()
         toast.error("Timeout", { description: "La generation prend trop de temps." })
         return
       }
       try {
         const status = await timetableApi.taskStatus(taskId)
         if (status.status === "completed") {
-          if (pollingRef.current) clearInterval(pollingRef.current)
-          pollingRef.current = null
+          stopPolling()
           queryClient.invalidateQueries({ queryKey: timetableKeys.all })
           toast.success("Emploi du temps genere avec succes")
         } else if (status.status === "failed") {
-          if (pollingRef.current) clearInterval(pollingRef.current)
-          pollingRef.current = null
+          stopPolling()
           toast.error("Echec de la generation", { description: status.message ?? "Erreur inconnue" })
         }
       } catch {
-        if (pollingRef.current) clearInterval(pollingRef.current)
-        pollingRef.current = null
+        stopPolling()
       }
     }
     pollingRef.current = setInterval(() => { pollFnRef.current?.() }, 3000)
@@ -119,7 +120,7 @@ export default function TimetablePage() {
     })
   }, [selectedClassId, generateMutation, queryClient])
 
-  const isGenerating = generateMutation.isPending || !!pollingRef.current || loadingDiagnostic
+  const isGenerating = generateMutation.isPending || isPolling || loadingDiagnostic
 
   return (
     <div className="space-y-6">
