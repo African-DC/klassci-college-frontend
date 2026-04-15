@@ -952,8 +952,8 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                 </dl>
               </div>
 
-              {/* Fee info */}
-              {selectedFeeVariant && (
+              {/* Fee info — mandatory + optional */}
+              {(feeVariants ?? []).length > 0 && (
                 <>
                   <Separator />
                   <div>
@@ -961,14 +961,27 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                       <CreditCard className="h-4 w-4" />
                       Frais
                     </h4>
-                    <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                      <dt className="text-muted-foreground">Formule</dt>
-                      <dd>{selectedFeeVariant.description ?? "Frais standard"}</dd>
-                      <dt className="text-muted-foreground">Montant</dt>
-                      <dd className="font-semibold text-primary">
-                        {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(selectedFeeVariant.amount)}
-                      </dd>
-                    </dl>
+                    {(feeVariants ?? []).filter((v) => v.is_mandatory !== false).map((v) => (
+                      <div key={v.id} className="flex justify-between text-sm py-0.5">
+                        <span className="text-muted-foreground">{v.category_name ?? "Frais"}</span>
+                        <span className="font-mono">{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(v.amount)}</span>
+                      </div>
+                    ))}
+                    {selectedFeeVariant && selectedFeeVariant.is_mandatory === false && (
+                      <div className="flex justify-between text-sm py-0.5">
+                        <span className="text-muted-foreground">{selectedFeeVariant.category_name ?? "Option"}</span>
+                        <span className="font-mono">{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(selectedFeeVariant.amount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm pt-1 mt-1 border-t border-border/50">
+                      <span className="font-semibold">Total</span>
+                      <span className="font-mono font-bold text-primary">
+                        {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(
+                          (feeVariants ?? []).filter((v) => v.is_mandatory !== false).reduce((s, v) => s + v.amount, 0) +
+                          (selectedFeeVariant && selectedFeeVariant.is_mandatory === false ? selectedFeeVariant.amount : 0)
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </>
               )}
@@ -1105,45 +1118,88 @@ function ClassAndFeesFields({
         </div>
       )}
 
-      {/* Fee variant cards */}
-      {feeVariants.length > 0 && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium leading-none">Formule de frais</label>
-          <div className="grid grid-cols-1 gap-2">
-            {feeVariants.map((variant) => (
-              <Card
-                key={variant.id}
-                className={cn(
-                  "cursor-pointer transition-colors hover:border-primary/50",
-                  feeVariantId === variant.id && "border-primary ring-2 ring-primary/20"
-                )}
-                onClick={() => onFeeVariantChange(variant.id)}
-              >
-                <CardContent className="flex items-center justify-between py-3 px-4">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "h-4 w-4 rounded-full border-2 flex items-center justify-center",
-                      feeVariantId === variant.id
-                        ? "border-primary"
-                        : "border-muted-foreground/30"
-                    )}>
-                      {feeVariantId === variant.id && (
-                        <div className="h-2 w-2 rounded-full bg-primary" />
-                      )}
+      {/* Mandatory fees — auto-applied, read-only summary */}
+      {(() => {
+        const mandatory = feeVariants.filter((v) => v.is_mandatory !== false)
+        const optional = feeVariants.filter((v) => v.is_mandatory === false)
+        const mandatoryTotal = mandatory.reduce((sum, v) => sum + v.amount, 0)
+        const fmt = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(n)
+
+        return (
+          <>
+            {mandatory.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">
+                  Frais obligatoires
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">(appliqués automatiquement)</span>
+                </label>
+                <Card className="border-border/50 bg-muted/30">
+                  <CardContent className="p-0">
+                    {mandatory.map((variant, i) => (
+                      <div
+                        key={variant.id}
+                        className={cn(
+                          "flex items-center justify-between px-4 py-2.5",
+                          i < mandatory.length - 1 && "border-b border-border/30"
+                        )}
+                      >
+                        <span className="text-sm">{variant.category_name ?? variant.description ?? "Frais"}</span>
+                        <Badge variant="secondary" className="font-mono text-xs">
+                          {fmt(variant.amount)}
+                        </Badge>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between px-4 py-2.5 border-t border-border bg-primary/5">
+                      <span className="text-sm font-semibold">Total obligatoire</span>
+                      <span className="font-mono font-bold text-primary">{fmt(mandatoryTotal)}</span>
                     </div>
-                    <span className="text-sm">
-                      {variant.description ?? "Frais standard"}
-                    </span>
-                  </div>
-                  <Badge variant="secondary" className="font-mono">
-                    {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(variant.amount)}
-                  </Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Optional fees — selectable */}
+            {optional.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">Frais optionnels</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {optional.map((variant) => (
+                    <Card
+                      key={variant.id}
+                      className={cn(
+                        "cursor-pointer transition-colors hover:border-primary/50",
+                        feeVariantId === variant.id && "border-primary ring-2 ring-primary/20"
+                      )}
+                      onClick={() => onFeeVariantChange(feeVariantId === variant.id ? null : variant.id)}
+                    >
+                      <CardContent className="flex items-center justify-between py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "h-4 w-4 rounded-sm border-2 flex items-center justify-center",
+                            feeVariantId === variant.id
+                              ? "border-primary bg-primary"
+                              : "border-muted-foreground/30"
+                          )}>
+                            {feeVariantId === variant.id && (
+                              <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className="text-sm">{variant.category_name ?? variant.description ?? "Option"}</span>
+                        </div>
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {fmt(variant.amount)}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )
+      })()}
 
       {/* Notes */}
       <div className="space-y-2">

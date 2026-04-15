@@ -1,10 +1,10 @@
 "use client"
 
-import { Users, UserCheck, User } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Users, UserCheck, User, Plus } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { CrudPageLayout } from "@/components/shared/CrudPageLayout"
+import { Button } from "@/components/ui/button"
 import { StudentsTable } from "./StudentsTable"
-import { StudentCreateModal } from "./StudentCreateModal"
 import { useStudents } from "@/lib/hooks/useStudents"
 
 function StudentKpis() {
@@ -56,15 +56,26 @@ function StudentKpis() {
 }
 
 export function StudentsPageClient() {
+  const router = useRouter()
+
   return (
-    <CrudPageLayout
-      title="Élèves"
-      subtitle="Gestion des élèves inscrits"
-      createLabel="Nouvel élève"
-      icon={Users}
-      kpiCards={<StudentKpis />}
-      table={<StudentsTable />}
-      createModal={(props) => <StudentCreateModal {...props} />}
-    />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="font-serif text-2xl tracking-tight">Élèves</h1>
+            <p className="text-sm text-muted-foreground">Gestion des élèves inscrits</p>
+          </div>
+        </div>
+        <Button onClick={() => router.push("/admin/enrollments?create=1")}>
+          <Plus className="mr-2 h-4 w-4" /> Nouvelle inscription
+        </Button>
+      </div>
+      <StudentKpis />
+      <StudentsTable />
+    </div>
   )
 }

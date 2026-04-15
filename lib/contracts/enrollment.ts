@@ -91,6 +91,8 @@ export const ReEnrollmentSchema = z.object({
 export const FeeVariantOptionSchema = z.object({
   id: z.number(),
   fee_category_id: z.number(),
+  category_name: z.string().optional(),
+  is_mandatory: z.boolean().optional().default(true),
   amount: z.coerce.number(),
   description: z.string().nullable(),
 })
