@@ -70,7 +70,7 @@ export function StudentsPageClient() {
             <p className="text-sm text-muted-foreground">Gestion des élèves inscrits</p>
           </div>
         </div>
-        <Button onClick={() => router.push("/admin/enrollments?create=1")}>
+        <Button onClick={() => router.push("/admin/enrollments?action=create")}>
           <Plus className="mr-2 h-4 w-4" /> Nouvelle inscription
         </Button>
       </div>
