@@ -1,12 +1,15 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useState } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { getSession } from "next-auth/react"
-import { Wallet, CheckCircle } from "lucide-react"
+import { Wallet, CheckCircle, Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
+import { StudentPaymentModal } from "@/components/admin/students/tabs/StudentPaymentModal"
 
 interface EnrollmentPaymentsTabProps {
   enrollmentId: number
@@ -37,6 +40,8 @@ const STATUS_LABEL: Record<string, { label: string; variant: "default" | "second
 }
 
 export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPaymentsTabProps) {
+  const [paymentOpen, setPaymentOpen] = useState(false)
+  const queryClient = useQueryClient()
   const studentId = (enrollment as Record<string, unknown>)?.student_id as number | undefined
 
   const { data: fees, isLoading } = useQuery({
@@ -80,15 +85,28 @@ export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPa
       {/* Hero section */}
       <Card className="border-0 shadow-sm ring-1 ring-border bg-primary text-primary-foreground">
         <CardContent className="p-6">
-          <div className="grid gap-4 sm:grid-cols-2 mb-4">
-            <div>
-              <p className="text-xs text-primary-foreground/70">Total attendu</p>
-              <p className="text-2xl font-bold">{formatFCFA(totalExpected)}</p>
+          <div className="flex items-start justify-between mb-4">
+            <div className="grid gap-4 sm:grid-cols-2 flex-1">
+              <div>
+                <p className="text-xs text-primary-foreground/70">Total attendu</p>
+                <p className="text-2xl font-bold">{formatFCFA(totalExpected)}</p>
+              </div>
+              <div className="sm:text-right">
+                <p className="text-xs text-primary-foreground/70">Total payé</p>
+                <p className="text-2xl font-bold">{formatFCFA(totalPaid)}</p>
+              </div>
             </div>
-            <div className="sm:text-right">
-              <p className="text-xs text-primary-foreground/70">Total payé</p>
-              <p className="text-2xl font-bold">{formatFCFA(totalPaid)}</p>
-            </div>
+            {studentId && feesRemaining > 0 && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="shrink-0 ml-4"
+                onClick={() => setPaymentOpen(true)}
+              >
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Enregistrer paiement
+              </Button>
+            )}
           </div>
           <Progress
             value={feesRate}
@@ -133,6 +151,18 @@ export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPa
           </div>
           <p className="text-sm text-muted-foreground">Aucun frais associé à cette inscription.</p>
         </div>
+      )}
+
+      {/* Payment modal */}
+      {studentId && (
+        <StudentPaymentModal
+          studentId={studentId}
+          open={paymentOpen}
+          onClose={() => {
+            setPaymentOpen(false)
+            queryClient.invalidateQueries({ queryKey: ["enrollment-fees", enrollmentId] })
+          }}
+        />
       )}
     </div>
   )

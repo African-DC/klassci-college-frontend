@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
+  ExternalLink,
   Pencil,
   Trash2,
   BookOpen,
@@ -94,6 +95,7 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
           </Avatar>
 
           <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Fiche inscription</p>
             <h1 className="font-serif text-2xl tracking-tight">{studentName}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <span>{subtitle}</span>
@@ -103,6 +105,12 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
         </div>
 
         <div className="flex gap-2 shrink-0">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/admin/students/${enrollment.student_id}`}>
+              <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+              Fiche élève
+            </Link>
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             <Pencil className="mr-1.5 h-3.5 w-3.5" />
             Modifier
