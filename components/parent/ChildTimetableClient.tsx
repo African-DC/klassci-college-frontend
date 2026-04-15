@@ -3,20 +3,19 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
-import { useStudentTimetable } from "@/lib/hooks/useStudentPortal"
-import type { TimetableSlot } from "@/lib/contracts/timetable"
+import { useParentChildTimetable } from "@/lib/hooks/useParentPortal"
+import type { ChildTimetableSlot } from "@/lib/api/parent-portal"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
 const DAY_LABELS: Record<string, string> = {
-  lundi: "Lun",
-  mardi: "Mar",
-  mercredi: "Mer",
-  jeudi: "Jeu",
-  vendredi: "Ven",
-  samedi: "Sam",
+  lundi: "Lundi",
+  mardi: "Mardi",
+  mercredi: "Mercredi",
+  jeudi: "Jeudi",
+  vendredi: "Vendredi",
+  samedi: "Samedi",
 }
 
-// Couleurs par matière pour différencier visuellement
 const SUBJECT_COLORS = [
   "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200",
   "bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200",
@@ -28,33 +27,46 @@ const SUBJECT_COLORS = [
   "bg-indigo-50 dark:bg-indigo-950 border-indigo-200 dark:border-indigo-800 text-indigo-800 dark:text-indigo-200",
 ]
 
-function getSubjectColor(subjectId: number): string {
-  return SUBJECT_COLORS[subjectId % SUBJECT_COLORS.length]
+function hashCode(str: string): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
 }
 
-export function StudentTimetableClient() {
-  const { data: slots, isLoading, isError, refetch } = useStudentTimetable()
+interface ChildTimetableClientProps {
+  childId: number
+}
 
-  // Grouper les créneaux par jour
+export function ChildTimetableClient({ childId }: ChildTimetableClientProps) {
+  const { data, isLoading, isError, refetch } = useParentChildTimetable(childId)
+
+  const slots = data?.slots ?? []
+  const className = data?.class_name ?? ""
+
   const slotsByDay = DAYS.reduce((acc, day) => {
-    acc[day] = (slots ?? [])
-      .filter((s) => s.day === day)
-      .sort((a, b) => a.start_time.localeCompare(b.start_time))
+    acc[day] = slots
+      .filter((s: ChildTimetableSlot) => s.day === day)
+      .sort((a: ChildTimetableSlot, b: ChildTimetableSlot) => a.start_time.localeCompare(b.start_time))
     return acc
-  }, {} as Record<string, TimetableSlot[]>)
+  }, {} as Record<string, ChildTimetableSlot[]>)
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-xl tracking-tight">Emploi du temps</h1>
-        <p className="text-sm text-muted-foreground">Votre planning de la semaine</p>
+        <p className="text-sm text-muted-foreground">
+          {className ? `Classe : ${className}` : "Planning de la semaine"}
+        </p>
       </div>
 
       {isError ? (
         <DataError message="Impossible de charger l'emploi du temps" onRetry={() => refetch()} />
       ) : isLoading ? (
         <TimetableSkeleton />
-      ) : !slots || slots.length === 0 ? (
+      ) : slots.length === 0 ? (
         <div className="py-12 text-center text-sm text-muted-foreground">
           Aucun emploi du temps disponible.
         </div>
@@ -62,7 +74,7 @@ export function StudentTimetableClient() {
         <div className="space-y-4">
           {DAYS.map((day) => {
             const daySlots = slotsByDay[day]
-            if (daySlots.length === 0) return null
+            if (!daySlots || daySlots.length === 0) return null
             return (
               <div key={day}>
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
@@ -72,7 +84,7 @@ export function StudentTimetableClient() {
                   {daySlots.map((slot) => (
                     <Card
                       key={slot.id}
-                      className={`border ${getSubjectColor(slot.subject_id)} shadow-none`}
+                      className={`border ${SUBJECT_COLORS[hashCode(slot.subject_name) % SUBJECT_COLORS.length]} shadow-none`}
                     >
                       <CardContent className="flex items-center gap-3 p-3">
                         <div className="text-center min-w-[50px]">
@@ -83,7 +95,7 @@ export function StudentTimetableClient() {
                           <p className="text-sm font-semibold truncate">{slot.subject_name}</p>
                           <p className="text-xs opacity-75">
                             {slot.teacher_name}
-                            {slot.room && ` • ${slot.room}`}
+                            {slot.room_name && ` \u2022 ${slot.room_name}`}
                           </p>
                         </div>
                       </CardContent>

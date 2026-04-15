@@ -10,6 +10,22 @@ import {
   type ParentChildBulletinsResponse,
 } from "@/lib/contracts/parent-portal"
 
+export interface ChildTimetableSlot {
+  id: number
+  day: string
+  start_time: string
+  end_time: string
+  subject_name: string
+  teacher_name: string
+  room_name: string | null
+}
+
+export interface ChildTimetableResponse {
+  student_id: number
+  class_name: string
+  slots: ChildTimetableSlot[]
+}
+
 // Extrait l'item de la réponse API, qu'elle soit { data: T } ou T directement
 function unwrapResponse<T>(res: unknown): T {
   if (res !== null && typeof res === "object" && "data" in res && (res as Record<string, unknown>).data !== undefined) {
@@ -47,5 +63,11 @@ export const parentPortalApi = {
   // Télécharger un bulletin en PDF
   downloadChildBulletinPdf: async (bulletinId: number): Promise<Blob> => {
     return apiFetchBlob(`/reports/bulletins/${bulletinId}/pdf`)
+  },
+
+  // Emploi du temps d'un enfant
+  getChildTimetable: async (childId: number): Promise<ChildTimetableResponse> => {
+    const res = await apiFetch<unknown>(`/parent/children/${childId}/timetable`)
+    return unwrapResponse(res) as ChildTimetableResponse
   },
 }
