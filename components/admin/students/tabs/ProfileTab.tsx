@@ -34,6 +34,7 @@ function InfoField({ label, value, icon: Icon }: { label: string; value: string 
 export function ProfileTab({ student, fullData }: ProfileTabProps) {
   const queryClient = useQueryClient()
   const [emailDialogOpen, setEmailDialogOpen] = useState(false)
+  const [createAccountOpen, setCreateAccountOpen] = useState(false)
   const [emailValue, setEmailValue] = useState("")
   const [passwordValue, setPasswordValue] = useState("")
   const [saving, setSaving] = useState(false)
@@ -190,7 +191,11 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
               <p className="text-xs text-muted-foreground mb-4 max-w-sm">
                 Cet élève n&apos;a pas encore de compte pour se connecter au portail étudiant.
               </p>
-              <Button variant="default" size="sm" disabled>
+              <Button variant="default" size="sm" onClick={() => {
+                setEmailValue("")
+                setPasswordValue("")
+                setCreateAccountOpen(true)
+              }}>
                 <UserPlus className="mr-1.5 h-3.5 w-3.5" />
                 Créer un compte
               </Button>
@@ -238,6 +243,85 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
               disabled={saving || !emailValue}
             >
               {saving ? "Enregistrement..." : "Enregistrer"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create account dialog — for students without user account */}
+      <Dialog open={createAccountOpen} onOpenChange={setCreateAccountOpen}>
+        <DialogContent className="max-w-md" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>Créer un compte utilisateur</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Ce compte permettra à l&apos;élève de se connecter au portail étudiant.
+          </p>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-account-email">Email de connexion *</Label>
+              <Input
+                id="new-account-email"
+                type="email"
+                placeholder="eleve@exemple.ci"
+                value={emailValue}
+                onChange={(e) => setEmailValue(e.target.value)}
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-account-password">Mot de passe *</Label>
+              <Input
+                id="new-account-password"
+                type="password"
+                placeholder="Minimum 8 caractères"
+                value={passwordValue}
+                onChange={(e) => setPasswordValue(e.target.value)}
+                className="h-11"
+              />
+            </div>
+            <Button
+              className="w-full h-11"
+              onClick={async () => {
+                if (!emailValue.includes("@")) {
+                  toast.error("Veuillez saisir un email valide")
+                  return
+                }
+                if (passwordValue.length < 8) {
+                  toast.error("Le mot de passe doit contenir au moins 8 caractères")
+                  return
+                }
+                setSaving(true)
+                try {
+                  const session = await getSession()
+                  const baseUrl = process.env.NEXT_PUBLIC_API_URL
+                  const res = await fetch(`${baseUrl}/admin/students/${student.id}/account`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
+                    },
+                    body: JSON.stringify({ email: emailValue, password: passwordValue }),
+                  })
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => ({ detail: "Erreur serveur" }))
+                    throw new Error(typeof err.detail === "string" ? err.detail : "Erreur lors de la création")
+                  }
+                  queryClient.invalidateQueries({ queryKey: studentKeys.all })
+                  queryClient.invalidateQueries({ queryKey: studentKeys.detail(student.id) })
+                  toast.success("Compte créé avec succès")
+                  setCreateAccountOpen(false)
+                  setEmailValue("")
+                  setPasswordValue("")
+                } catch (err) {
+                  toast.error("Erreur", { description: err instanceof Error ? err.message : "Erreur inconnue" })
+                } finally {
+                  setSaving(false)
+                }
+              }}
+              disabled={saving || !emailValue || passwordValue.length < 8}
+            >
+              {saving ? "Création en cours..." : "Créer le compte"}
             </Button>
           </div>
         </DialogContent>
