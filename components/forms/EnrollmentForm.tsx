@@ -964,21 +964,21 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                     {(feeVariants ?? []).filter((v) => v.is_mandatory !== false).map((v) => (
                       <div key={v.id} className="flex justify-between text-sm py-0.5">
                         <span className="text-muted-foreground">{v.category_name ?? "Frais"}</span>
-                        <span className="font-mono">{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(v.amount)}</span>
+                        <span className="font-mono">{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(Number(v.amount))}</span>
                       </div>
                     ))}
                     {selectedFeeVariant && selectedFeeVariant.is_mandatory === false && (
                       <div className="flex justify-between text-sm py-0.5">
                         <span className="text-muted-foreground">{selectedFeeVariant.category_name ?? "Option"}</span>
-                        <span className="font-mono">{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(selectedFeeVariant.amount)}</span>
+                        <span className="font-mono">{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(Number(selectedFeeVariant.amount))}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm pt-1 mt-1 border-t border-border/50">
                       <span className="font-semibold">Total</span>
                       <span className="font-mono font-bold text-primary">
                         {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(
-                          (feeVariants ?? []).filter((v) => v.is_mandatory !== false).reduce((s, v) => s + v.amount, 0) +
-                          (selectedFeeVariant && selectedFeeVariant.is_mandatory === false ? selectedFeeVariant.amount : 0)
+                          (feeVariants ?? []).filter((v) => v.is_mandatory !== false).reduce((s, v) => s + Number(v.amount), 0) +
+                          (selectedFeeVariant && selectedFeeVariant.is_mandatory === false ? Number(selectedFeeVariant.amount) : 0)
                         )}
                       </span>
                     </div>
@@ -1122,8 +1122,8 @@ function ClassAndFeesFields({
       {(() => {
         const mandatory = feeVariants.filter((v) => v.is_mandatory !== false)
         const optional = feeVariants.filter((v) => v.is_mandatory === false)
-        const mandatoryTotal = mandatory.reduce((sum, v) => sum + v.amount, 0)
-        const fmt = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(n)
+        const mandatoryTotal = mandatory.reduce((sum, v) => sum + Number(v.amount), 0)
+        const fmt = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "XOF" }).format(Number(n))
 
         return (
           <>
