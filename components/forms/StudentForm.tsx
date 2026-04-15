@@ -37,6 +37,8 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
       enrollment_number: "",
       birth_date: "",
       genre: undefined,
+      city: "",
+      commune: "",
     },
   })
 
@@ -165,6 +167,36 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
             </FormItem>
           )}
         />
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ville</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex : Abidjan" className="h-11" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="commune"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Commune</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex : Cocody" className="h-11" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">

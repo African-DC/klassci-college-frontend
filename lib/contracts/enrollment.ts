@@ -58,6 +58,8 @@ export const ParentInputSchema = z.object({
   email: z.string().email("Email invalide").nullable().optional(),
   password: z.string().min(8, "8 caractères minimum").nullable().optional(),
   relationship_type: z.enum(["father", "mother", "guardian", "other"]).default("guardian"),
+  city: z.string().nullable().optional(),
+  commune: z.string().nullable().optional(),
 })
 
 export const NewEnrollmentSchema = z.object({
@@ -68,6 +70,8 @@ export const NewEnrollmentSchema = z.object({
   birth_date: z.string().nullable().optional(),
   genre: z.enum(["M", "F"]).nullable().optional(),
   enrollment_number: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  commune: z.string().nullable().optional(),
   // Parent info (optional)
   parent: ParentInputSchema.nullable().optional(),
   // Class

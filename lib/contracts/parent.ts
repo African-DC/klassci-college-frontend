@@ -7,6 +7,8 @@ export const ParentSchema = z.object({
   last_name: z.string(),
   phone: z.string().nullish(),
   email: z.string().nullish(),
+  city: z.string().nullish(),
+  commune: z.string().nullish(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 }).passthrough()
@@ -18,6 +20,8 @@ export const ParentCreateSchema = z.object({
   email: z.string().email("Email invalide").optional(),
   password: z.string().min(8, "8 caractères minimum").optional(),
   relationship_type: z.enum(["father", "mother", "guardian", "other"]).default("guardian"),
+  city: z.string().optional(),
+  commune: z.string().optional(),
 })
 
 export const ParentUpdateSchema = z.object({
@@ -25,6 +29,8 @@ export const ParentUpdateSchema = z.object({
   last_name: z.string().min(1).optional(),
   phone: z.string().optional(),
   email: z.string().email().optional(),
+  city: z.string().optional(),
+  commune: z.string().optional(),
 })
 
 export type Parent = z.infer<typeof ParentSchema>

@@ -107,6 +107,8 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
       birth_date: null,
       genre: null,
       enrollment_number: null,
+      city: null,
+      commune: null,
       parent: null,
       class_id: undefined,
       fee_variant_id: null,
@@ -442,6 +444,47 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
               )}
             />
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={newForm.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ville</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Ex : Abidjan"
+                        className="h-10"
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value || null)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={newForm.control}
+                name="commune"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Commune</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Ex : Cocody"
+                        className="h-10"
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value || null)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <Separator />
 
             {/* Parent section */}
@@ -461,6 +504,8 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                     email: null,
                     password: null,
                     relationship_type: "guardian",
+                    city: null,
+                    commune: null,
                   })
                 }
               }}
@@ -530,6 +575,47 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                           <Input
                             type="email"
                             placeholder="Adresse email"
+                            className="h-10"
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value || null)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={newForm.control}
+                    name="parent.city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ville</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Ex : Abidjan"
+                            className="h-10"
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value || null)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={newForm.control}
+                    name="parent.commune"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Commune</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Ex : Cocody"
                             className="h-10"
                             {...field}
                             value={field.value ?? ""}

@@ -4,13 +4,15 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus, Unlink, Mail, Phone, UserCheck, Users } from "lucide-react"
-import { ParentCreateSchema, type ParentCreate } from "@/lib/contracts/parent"
+import { ParentCreateSchema, type ParentCreate, type Parent } from "@/lib/contracts/parent"
 import {
   useStudentParents,
+  useParents,
   useCreateParent,
   useLinkParent,
   useUnlinkParent,
 } from "@/lib/hooks/useParents"
+import { useDebounce } from "@/lib/hooks/useDebounce"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -50,6 +52,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 
 const RELATIONSHIP_TYPES = [
   { value: "father", label: "Père", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
@@ -170,8 +173,8 @@ export function ParentsTab({ studentId }: ParentsTabProps) {
         </Button>
       </div>
 
-      {/* Create parent dialog */}
-      <CreateParentDialog
+      {/* Add parent dialog (new or existing) */}
+      <AddParentDialog
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         studentId={studentId}
@@ -202,9 +205,11 @@ export function ParentsTab({ studentId }: ParentsTabProps) {
   )
 }
 
-// ---------- Create parent dialog ----------
+// ---------- Add parent dialog (create new or link existing) ----------
 
-function CreateParentDialog({
+type AddParentMode = "new" | "existing"
+
+function AddParentDialog({
   open,
   onClose,
   studentId,
@@ -213,9 +218,21 @@ function CreateParentDialog({
   onClose: () => void
   studentId: number
 }) {
+  const [mode, setMode] = useState<AddParentMode>("new")
   const [createAccount, setCreateAccount] = useState(false)
   const { mutate: createParent, isPending: creating } = useCreateParent()
-  const { mutate: linkParent } = useLinkParent()
+  const { mutate: linkParent, isPending: linking } = useLinkParent()
+
+  // --- Existing parent search state ---
+  const [searchQuery, setSearchQuery] = useState("")
+  const debouncedSearch = useDebounce(searchQuery, 300)
+  const [selectedParent, setSelectedParent] = useState<Parent | null>(null)
+  const [linkRelationship, setLinkRelationship] = useState<string>("guardian")
+
+  const { data: searchResults, isLoading: searchLoading } = useParents(
+    debouncedSearch.length >= 2 ? { search: debouncedSearch, size: 20 } : { size: 0 },
+  )
+  const matchingParents: Parent[] = debouncedSearch.length >= 2 ? (searchResults?.items ?? []) : []
 
   const form = useForm<ParentCreate>({
     resolver: zodResolver(ParentCreateSchema),
@@ -229,125 +246,333 @@ function CreateParentDialog({
     },
   })
 
-  const handleSubmit = (data: ParentCreate) => {
-    // Remove account fields if not creating account
+  const handleSubmitNew = (data: ParentCreate) => {
     const payload = { ...data }
     if (!createAccount) {
       delete payload.password
-      // Keep email as contact info even without account
     }
 
     createParent(payload, {
       onSuccess: (parent) => {
-        // Auto-link the newly created parent to this student
         linkParent({
           parentId: parent.id,
           studentId,
           relationshipType: data.relationship_type,
         })
-        form.reset()
-        setCreateAccount(false)
-        onClose()
+        resetAndClose()
       },
     })
   }
 
-  const handleClose = () => {
+  const handleLinkExisting = () => {
+    if (!selectedParent) return
+    linkParent(
+      { parentId: selectedParent.id, studentId, relationshipType: linkRelationship },
+      { onSuccess: () => resetAndClose() },
+    )
+  }
+
+  const resetAndClose = () => {
     form.reset()
     setCreateAccount(false)
+    setMode("new")
+    setSearchQuery("")
+    setSelectedParent(null)
+    setLinkRelationship("guardian")
     onClose()
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
+    <Dialog open={open} onOpenChange={(o) => !o && resetAndClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Ajouter un parent</DialogTitle>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="first_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prénom *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Prénom" className="h-10" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="last_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nom *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nom" className="h-10" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+        {/* Mode toggle */}
+        <div className="flex gap-1 rounded-md bg-muted p-1">
+          <button
+            type="button"
+            className={cn(
+              "flex-1 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors",
+              mode === "new"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            onClick={() => setMode("new")}
+          >
+            Nouveau parent
+          </button>
+          <button
+            type="button"
+            className={cn(
+              "flex-1 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors",
+              mode === "existing"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            onClick={() => setMode("existing")}
+          >
+            Parent existant
+          </button>
+        </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Téléphone</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Numéro de téléphone"
-                        className="h-10"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="Adresse email"
-                        className="h-10"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+        {mode === "new" ? (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmitNew)} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="first_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prénom *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Prénom" className="h-10" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="last_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nom" className="h-10" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-            <FormField
-              control={form.control}
-              name="relationship_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lien de parenté</FormLabel>
-                  <Select value={field.value ?? "guardian"} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger className="h-10">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Téléphone</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Numéro de téléphone"
+                          className="h-10"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="Adresse email"
+                          className="h-10"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="relationship_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lien de parenté</FormLabel>
+                    <Select value={field.value ?? "guardian"} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger className="h-10">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="father">Père</SelectItem>
+                        <SelectItem value="mother">Mère</SelectItem>
+                        <SelectItem value="guardian">Tuteur</SelectItem>
+                        <SelectItem value="other">Autre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Account creation toggle */}
+              <div className="space-y-3 rounded-md border p-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="create-account"
+                    checked={createAccount}
+                    onCheckedChange={(checked) => {
+                      setCreateAccount(checked === true)
+                      if (!checked) {
+                        form.setValue("password", "")
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="create-account"
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    Créer un compte de connexion pour le parent
+                  </label>
+                </div>
+
+                {createAccount && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email du compte *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="email@exemple.com"
+                              className="h-10"
+                              {...field}
+                              value={field.value ?? ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mot de passe *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="password"
+                              placeholder="8 caractères minimum"
+                              className="h-10"
+                              {...field}
+                              value={field.value ?? ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={resetAndClose}>
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={creating}>
+                  {creating ? "Création..." : "Créer et lier"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        ) : (
+          /* ---- Existing parent search & link ---- */
+          <div className="space-y-4">
+            <Input
+              placeholder="Rechercher un parent (nom, prénom, téléphone)..."
+              className="h-10"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setSelectedParent(null)
+              }}
+            />
+
+            {searchLoading && debouncedSearch.length >= 2 && (
+              <div className="flex items-center justify-center py-6">
+                <Skeleton className="h-16 w-full rounded-lg" />
+              </div>
+            )}
+
+            {!searchLoading && debouncedSearch.length >= 2 && matchingParents.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Aucun parent trouvé pour &laquo; {debouncedSearch} &raquo;
+              </p>
+            )}
+
+            {matchingParents.length > 0 && (
+              <div className="max-h-48 overflow-y-auto space-y-2">
+                {matchingParents.map((p) => {
+                  const isSelected = selectedParent?.id === p.id
+                  const initials = `${p.first_name?.[0] ?? ""}${p.last_name?.[0] ?? ""}`.toUpperCase()
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={cn(
+                        "w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors",
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                          : "hover:bg-muted/50",
+                      )}
+                      onClick={() => setSelectedParent(p)}
+                    >
+                      <Avatar className="h-9 w-9 shrink-0">
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">
+                          {p.last_name} {p.first_name}
+                        </p>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          {p.phone && (
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {p.phone}
+                            </span>
+                          )}
+                          {p.email && (
+                            <span className="flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {p.email}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <Badge variant="secondary" className="shrink-0 text-[10px] bg-primary/10 text-primary">
+                          Sélectionné
+                        </Badge>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {selectedParent && (
+              <div className="space-y-3 pt-2 border-t">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Lien de parenté</label>
+                  <Select value={linkRelationship} onValueChange={setLinkRelationship}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="father">Père</SelectItem>
                       <SelectItem value="mother">Mère</SelectItem>
@@ -355,86 +580,24 @@ function CreateParentDialog({
                       <SelectItem value="other">Autre</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Account creation toggle */}
-            <div className="space-y-3 rounded-md border p-3">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="create-account"
-                  checked={createAccount}
-                  onCheckedChange={(checked) => {
-                    setCreateAccount(checked === true)
-                    if (!checked) {
-                      form.setValue("password", "")
-                    }
-                  }}
-                />
-                <label
-                  htmlFor="create-account"
-                  className="text-sm font-medium leading-none cursor-pointer"
-                >
-                  Créer un compte de connexion pour le parent
-                </label>
-              </div>
-
-              {createAccount && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email du compte *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="email@exemple.com"
-                            className="h-10"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Mot de passe *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="8 caractères minimum"
-                            className="h-10"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button type="button" variant="outline" onClick={resetAndClose}>
                 Annuler
               </Button>
-              <Button type="submit" disabled={creating}>
-                {creating ? "Création..." : "Créer et lier"}
+              <Button
+                type="button"
+                disabled={!selectedParent || linking}
+                onClick={handleLinkExisting}
+              >
+                {linking ? "Liaison..." : "Lier le parent"}
               </Button>
             </DialogFooter>
-          </form>
-        </Form>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

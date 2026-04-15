@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { User, CalendarDays, BookOpen, Mail, KeyRound, Shield, UserPlus } from "lucide-react"
+import { User, CalendarDays, BookOpen, Mail, KeyRound, Shield, UserPlus, MapPin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -106,6 +106,8 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
             <InfoField label="Genre" value={genre} icon={User} />
             <InfoField label="Matricule" value={student.enrollment_number} icon={BookOpen} />
             <InfoField label="Email" value={userEmail ?? (fullData.email ? String(fullData.email) : null)} icon={Mail} />
+            <InfoField label="Ville" value={student.city} icon={MapPin} />
+            <InfoField label="Commune" value={student.commune} icon={MapPin} />
           </div>
         </CardContent>
       </Card>
