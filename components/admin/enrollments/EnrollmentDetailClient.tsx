@@ -10,6 +10,7 @@ import {
   BookOpen,
   Wallet,
 } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -33,9 +34,9 @@ import { useEnrollment, useDeleteEnrollment } from "@/lib/hooks/useEnrollments"
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   prospect: { label: "Prospect", variant: "outline" },
   en_validation: { label: "En validation", variant: "secondary" },
-  valide: { label: "Valid\u00e9", variant: "default" },
-  rejete: { label: "Rejet\u00e9", variant: "destructive" },
-  annule: { label: "Annul\u00e9", variant: "destructive" },
+  valide: { label: "Validé", variant: "default" },
+  rejete: { label: "Rejeté", variant: "destructive" },
+  annule: { label: "Annulé", variant: "destructive" },
 }
 
 interface EnrollmentDetailClientProps {
@@ -65,11 +66,13 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
 
   const studentName = [enrollment.student_first_name, enrollment.student_last_name]
     .filter(Boolean)
-    .join(" ") || `\u00c9l\u00e8ve #${enrollment.student_id}`
+    .join(" ") || `Élève #${enrollment.student_id}`
   const className = enrollment.class_name ?? `Classe #${enrollment.class_id}`
   const academicYear = enrollment.academic_year_name ?? ""
-  const subtitle = [className, academicYear].filter(Boolean).join(" \u2014 ")
+  const subtitle = [className, academicYear].filter(Boolean).join(" — ")
   const status = statusConfig[enrollment.status] ?? { label: enrollment.status, variant: "outline" as const }
+
+  const initials = `${enrollment.student_first_name?.[0] ?? ""}${enrollment.student_last_name?.[0] ?? ""}`.toUpperCase()
 
   return (
     <div className="space-y-6">
@@ -78,11 +81,17 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
         <div className="flex items-start gap-4">
           <Link
             href="/admin/enrollments"
-            aria-label="Retour \u00e0 la liste des inscriptions"
+            aria-label="Retour à la liste des inscriptions"
             className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
+
+          <Avatar className="h-20 w-20 text-2xl shrink-0">
+            <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
 
           <div className="min-w-0">
             <h1 className="font-serif text-2xl tracking-tight">{studentName}</h1>
@@ -136,7 +145,7 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cette inscription ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irr&eacute;versible. L&apos;inscription de {studentName} sera d&eacute;finitivement supprim&eacute;e.
+              Cette action est irréversible. L&apos;inscription de {studentName} sera définitivement supprimée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -161,6 +170,7 @@ function DetailSkeleton() {
     <div className="space-y-6">
       <div className="flex items-start gap-4">
         <Skeleton className="h-8 w-8 rounded-md" />
+        <Skeleton className="h-20 w-20 rounded-full" />
         <div className="space-y-2">
           <Skeleton className="h-7 w-48" />
           <Skeleton className="h-4 w-64" />

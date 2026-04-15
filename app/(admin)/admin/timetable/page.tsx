@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react"
-import { Calendar, ChevronLeft, ChevronRight, Wand2, Loader2 } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, FileDown, Wand2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,6 +15,7 @@ import { useTimetableStore } from "@/lib/stores/useTimetableStore"
 import { useGenerateTimetable } from "@/lib/hooks/useTimetable"
 import { useClasses } from "@/lib/hooks/useClasses"
 import { timetableApi } from "@/lib/api/timetable"
+import { downloadBlob } from "@/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
 import { timetableKeys } from "@/lib/hooks/useTimetable"
 import { TimetableGrid } from "@/components/admin/timetable/TimetableGrid"
@@ -35,6 +36,7 @@ export default function TimetablePage() {
   const [diagnostic, setDiagnostic] = useState<TimetableDiagnostic | null>(null)
   const [loadingDiagnostic, setLoadingDiagnostic] = useState(false)
   const [isPolling, setIsPolling] = useState(false)
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   const { data: classesData } = useClasses({ size: 100 })
   const classes = useMemo(() => classesData?.items ?? [], [classesData])
@@ -64,7 +66,7 @@ export default function TimetablePage() {
       pollCountRef.current++
       if (pollCountRef.current > MAX_POLL_ATTEMPTS) {
         stopPolling()
-        toast.error("Timeout", { description: "La generation prend trop de temps." })
+        toast.error("Timeout", { description: "La génération prend trop de temps." })
         return
       }
       try {
@@ -72,10 +74,10 @@ export default function TimetablePage() {
         if (status.status === "completed") {
           stopPolling()
           queryClient.invalidateQueries({ queryKey: timetableKeys.all })
-          toast.success("Emploi du temps genere avec succes")
+          toast.success("Emploi du temps généré avec succès")
         } else if (status.status === "failed") {
           stopPolling()
-          toast.error("Echec de la generation", { description: status.message ?? "Erreur inconnue" })
+          toast.error("Échec de la génération", { description: status.message ?? "Erreur inconnue" })
         }
       } catch {
         stopPolling()
@@ -113,7 +115,7 @@ export default function TimetablePage() {
     setDiagnosticOpen(false)
     generateMutation.mutate(selectedClassId, {
       onSuccess: (data) => {
-        toast.info("Generation lancee", { description: "Les creneaux manuels sont preserves." })
+        toast.info("Génération lancée", { description: "Les créneaux manuels sont préservés." })
         if (data.task_id) startPolling(data.task_id)
       },
       onError: (error) => toast.error("Erreur", { description: error.message }),
@@ -121,6 +123,23 @@ export default function TimetablePage() {
   }, [selectedClassId, generateMutation, queryClient])
 
   const isGenerating = generateMutation.isPending || isPolling || loadingDiagnostic
+
+  async function handleExportPdf() {
+    if (!selectedClassId) return
+    setExportingPdf(true)
+    try {
+      const blob = await timetableApi.exportPdf(selectedClassId, weekOffset)
+      const className = classes.find((c) => c.id === selectedClassId)?.name ?? "classe"
+      downloadBlob(blob, `emploi-du-temps-${className}.pdf`)
+      toast.success("PDF exporté avec succès")
+    } catch (err) {
+      toast.error("Erreur export PDF", {
+        description: err instanceof Error ? err.message : "Erreur inconnue",
+      })
+    } finally {
+      setExportingPdf(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -132,21 +151,35 @@ export default function TimetablePage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Emploi du temps</h1>
-            <p className="text-sm text-muted-foreground">Gerez les creneaux horaires par classe</p>
+            <p className="text-sm text-muted-foreground">Gérez les créneaux horaires par classe</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleGenerateClick}
-          disabled={!selectedClassId || isGenerating}
-        >
-          {isGenerating ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Wand2 className="mr-2 h-4 w-4" />
-          )}
-          Generer automatiquement
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExportPdf}
+            disabled={!selectedClassId || exportingPdf}
+          >
+            {exportingPdf ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FileDown className="mr-2 h-4 w-4" />
+            )}
+            Exporter PDF
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleGenerateClick}
+            disabled={!selectedClassId || isGenerating}
+          >
+            {isGenerating ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Wand2 className="mr-2 h-4 w-4" />
+            )}
+            Générer automatiquement
+          </Button>
+        </div>
       </div>
 
       {/* Controls */}
@@ -160,7 +193,7 @@ export default function TimetablePage() {
             onValueChange={(v) => setSelectedClassId(v ? Number(v) : null)}
           >
             <SelectTrigger className="h-10 w-56">
-              <SelectValue placeholder="Selectionner une classe" />
+              <SelectValue placeholder="Sélectionner une classe" />
             </SelectTrigger>
             <SelectContent>
               {classes.map((c) => (
@@ -216,7 +249,7 @@ export default function TimetablePage() {
       ) : (
         <div className="flex h-64 items-center justify-center rounded-lg border border-dashed bg-muted/20">
           <p className="text-sm text-muted-foreground">
-            Selectionnez une classe pour afficher l'emploi du temps
+            Sélectionnez une classe pour afficher l'emploi du temps
           </p>
         </div>
       )}

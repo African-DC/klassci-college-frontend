@@ -78,8 +78,16 @@ export function EnrollmentsTable({ filters: externalFilters = {} }: EnrollmentsT
       cell: ({ row }) => {
         const first = row.original.student_first_name
         const last = row.original.student_last_name
+        const initials = `${(first?.[0] ?? "")}${(last?.[0] ?? "")}`.toUpperCase()
         if (first || last) {
-          return <span className="font-medium">{first} {last}</span>
+          return (
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 border border-border">
+                <span className="text-xs font-semibold text-primary">{initials || "?"}</span>
+              </div>
+              <span className="font-medium">{first} {last}</span>
+            </div>
+          )
         }
         return <span className="font-medium text-muted-foreground">#{row.original.student_id}</span>
       },

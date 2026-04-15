@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { getSession } from "next-auth/react"
 import { apiFetch, safeValidate } from "./client"
 import {
   TimetableSlotSchema,
@@ -138,5 +139,21 @@ export const timetableApi = {
 
   deleteAvailability: async (availabilityId: number): Promise<void> => {
     await apiFetch<void>(`/teacher-availabilities/${availabilityId}`, { method: "DELETE" })
+  },
+
+  exportPdf: async (classId: number, weekOffset?: number): Promise<Blob> => {
+    const session = await getSession()
+    const params = new URLSearchParams({ class_id: String(classId) })
+    if (weekOffset !== undefined && weekOffset !== 0) {
+      params.set("week_offset", String(weekOffset))
+    }
+    const base = process.env.NEXT_PUBLIC_API_URL ?? ""
+    const res = await fetch(`${base}/timetable/export-pdf?${params}`, {
+      headers: {
+        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
+      },
+    })
+    if (!res.ok) throw new Error("Erreur lors de l'export PDF")
+    return res.blob()
   },
 }
