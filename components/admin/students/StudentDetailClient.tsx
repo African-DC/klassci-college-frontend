@@ -12,6 +12,7 @@ import {
   Pencil,
   Trash2,
   User,
+  Users,
   GraduationCap,
   Wallet,
   ClipboardCheck,
@@ -43,6 +44,7 @@ import { ProfileTab } from "./tabs/ProfileTab"
 import { PaymentsTab } from "./tabs/PaymentsTab"
 import { EnrollmentTab } from "./tabs/EnrollmentTab"
 import { AttendanceTab } from "./tabs/AttendanceTab"
+import { ParentsTab } from "./tabs/ParentsTab"
 import { DocumentsTab } from "./tabs/DocumentsTab"
 import { useStudent, useDeleteStudent, studentKeys } from "@/lib/hooks/useStudents"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
@@ -253,6 +255,10 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
             <ClipboardCheck className="mr-1.5 h-3.5 w-3.5" />
             Présences
           </TabsTrigger>
+          <TabsTrigger value="parents">
+            <Users className="mr-1.5 h-3.5 w-3.5" />
+            Parents
+          </TabsTrigger>
           <TabsTrigger value="documents">
             <FileText className="mr-1.5 h-3.5 w-3.5" />
             Documents
@@ -277,6 +283,10 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
 
         <TabsContent value="presences">
           <AttendanceTab studentId={studentId} />
+        </TabsContent>
+
+        <TabsContent value="parents">
+          <ParentsTab studentId={studentId} />
         </TabsContent>
 
         <TabsContent value="documents">

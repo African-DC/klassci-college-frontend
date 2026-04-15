@@ -53,7 +53,7 @@ function EditFormSkeleton() {
 function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: () => void }) {
   const { data: enrollment, isLoading } = useEnrollment(enrollmentId)
   const { mutate, isPending, error } = useUpdateEnrollment(enrollmentId)
-  const { data: classesData, isLoading: classesLoading } = useClasses({ size: 200 })
+  const { data: classesData, isLoading: classesLoading } = useClasses({ size: 100 })
 
   const classes = classesData?.items ?? []
 

@@ -52,10 +52,11 @@ export type EnrollmentListParams = z.infer<typeof EnrollmentListParamsSchema>
 // --- Multi-step enrollment form schemas ---
 
 export const ParentInputSchema = z.object({
-  first_name: z.string().min(1, "Le prenom est requis"),
+  first_name: z.string().min(1, "Le prénom est requis"),
   last_name: z.string().min(1, "Le nom est requis"),
   phone: z.string().nullable().optional(),
   email: z.string().email("Email invalide").nullable().optional(),
+  password: z.string().min(8, "8 caractères minimum").nullable().optional(),
   relationship_type: z.enum(["father", "mother", "guardian", "other"]).default("guardian"),
 })
 

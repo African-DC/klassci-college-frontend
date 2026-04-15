@@ -52,6 +52,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
@@ -65,8 +66,8 @@ const STEPS = [
 ] as const
 
 const RELATIONSHIP_TYPES = [
-  { value: "father", label: "Pere" },
-  { value: "mother", label: "Mere" },
+  { value: "father", label: "Père" },
+  { value: "mother", label: "Mère" },
   { value: "guardian", label: "Tuteur" },
   { value: "other", label: "Autre" },
 ] as const
@@ -82,6 +83,7 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
   const [step, setStep] = useState(0)
   const [enrollmentType, setEnrollmentType] = useState<EnrollmentType | null>(null)
   const [showParentFields, setShowParentFields] = useState(false)
+  const [showParentAccount, setShowParentAccount] = useState(false)
   const [maxReachedStep, setMaxReachedStep] = useState(0)
 
   // Mutations
@@ -89,8 +91,8 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
   const reEnroll = useReEnroll()
 
   // Data queries
-  const { data: studentsData, isLoading: studentsLoading } = useStudents({ size: 200 })
-  const { data: classesData, isLoading: classesLoading } = useClasses({ size: 200 })
+  const { data: studentsData, isLoading: studentsLoading } = useStudents({ size: 100 })
+  const { data: classesData, isLoading: classesLoading } = useClasses({ size: 100 })
 
   const students: Student[] = studentsData?.items ?? []
   const classes: Class[] = classesData?.items ?? []
@@ -450,12 +452,14 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                 setShowParentFields(!showParentFields)
                 if (showParentFields) {
                   newForm.setValue("parent", null)
+                  setShowParentAccount(false)
                 } else {
                   newForm.setValue("parent", {
                     first_name: "",
                     last_name: "",
                     phone: null,
                     email: null,
+                    password: null,
                     relationship_type: "guardian",
                   })
                 }
@@ -473,9 +477,9 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                     name="parent.first_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Prenom du parent *</FormLabel>
+                        <FormLabel>Prénom du parent *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Prenom" className="h-10" {...field} />
+                          <Input placeholder="Prénom" className="h-10" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -502,10 +506,10 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                     name="parent.phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Telephone</FormLabel>
+                        <FormLabel>Téléphone</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Numero de telephone"
+                            placeholder="Numéro de téléphone"
                             className="h-10"
                             {...field}
                             value={field.value ?? ""}
@@ -543,7 +547,7 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                   name="parent.relationship_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Lien de parente</FormLabel>
+                      <FormLabel>Lien de parenté</FormLabel>
                       <Select
                         value={field.value ?? "guardian"}
                         onValueChange={field.onChange}
@@ -565,6 +569,73 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
                     </FormItem>
                   )}
                 />
+
+                {/* Compte de connexion parent */}
+                <div className="space-y-3 rounded-md border p-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="parent-create-account"
+                      checked={showParentAccount}
+                      onCheckedChange={(checked) => {
+                        setShowParentAccount(checked === true)
+                        if (!checked) {
+                          newForm.setValue("parent.password", null)
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="parent-create-account"
+                      className="text-sm font-medium leading-none cursor-pointer"
+                    >
+                      Créer un compte de connexion pour le parent
+                    </label>
+                  </div>
+
+                  {showParentAccount && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      <FormField
+                        control={newForm.control}
+                        name="parent.email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email du compte *</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="email@exemple.com"
+                                className="h-10"
+                                {...field}
+                                value={field.value ?? ""}
+                                onChange={(e) => field.onChange(e.target.value || null)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={newForm.control}
+                        name="parent.password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Mot de passe *</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="password"
+                                placeholder="8 caractères minimum"
+                                className="h-10"
+                                {...field}
+                                value={field.value ?? ""}
+                                onChange={(e) => field.onChange(e.target.value || null)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
