@@ -95,7 +95,7 @@ export function LoginForm() {
                   className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                   tabIndex={-1}
                 >
-                  Mot de passe oublie ?
+                  Mot de passe oublié ?
                 </button>
               </div>
               <FormControl>
