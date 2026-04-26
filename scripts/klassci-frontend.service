@@ -2,6 +2,8 @@
 Description=KLASSCI College Frontend (Next.js 15 standalone)
 Documentation=https://github.com/African-DC/klassci-college-frontend
 After=network.target klassci-backend.service
+StartLimitBurst=10
+StartLimitIntervalSec=300
 
 [Service]
 Type=simple
@@ -15,8 +17,6 @@ Environment=HOSTNAME=0.0.0.0
 ExecStart=/usr/bin/node /home/ubuntu/klassci/klassci-frontend/.next/standalone/server.js
 Restart=always
 RestartSec=5
-StartLimitBurst=10
-StartLimitIntervalSec=300
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=klassci-frontend
