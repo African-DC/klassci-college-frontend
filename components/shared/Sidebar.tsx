@@ -49,22 +49,22 @@ const navigation: NavSection[] = [
     ],
   },
   {
-    title: "Scolarite",
+    title: "Scolarité",
     items: [
       { label: "Inscriptions", href: "/admin/enrollments", icon: UserPlus },
-      { label: "Eleves", href: "/admin/students", icon: GraduationCap },
+      { label: "Élèves", href: "/admin/students", icon: GraduationCap },
       { label: "Enseignants", href: "/admin/teachers", icon: Users },
       { label: "Personnel", href: "/admin/staff", icon: UserCog },
     ],
   },
   {
-    title: "Academique",
+    title: "Académique",
     items: [
-      { label: "Annees scolaires", href: "/admin/academic-years" as Route, icon: CalendarRange },
+      { label: "Années scolaires", href: "/admin/academic-years" as Route, icon: CalendarRange },
       { label: "Niveaux & Séries", href: "/admin/levels" as Route, icon: Layers },
       { label: "Classes", href: "/admin/classes", icon: School },
       { label: "Salles", href: "/admin/rooms" as Route, icon: DoorOpen },
-      { label: "Matieres", href: "/admin/subjects", icon: BookOpen },
+      { label: "Matières", href: "/admin/subjects", icon: BookOpen },
     ],
   },
   {
@@ -79,16 +79,16 @@ const navigation: NavSection[] = [
     items: [
       { label: "Emploi du temps", href: "/admin/timetable", icon: CalendarDays },
       { label: "Notes", href: "/admin/grades", icon: ClipboardList },
-      { label: "Presences", href: "/admin/attendance", icon: UserCheck },
+      { label: "Présences", href: "/admin/attendance", icon: UserCheck },
       { label: "Bulletins", href: "/admin/reports", icon: FileText },
     ],
   },
   {
-    title: "Systeme",
+    title: "Système",
     items: [
       { label: "Notifications", href: "/admin/notifications", icon: Bell },
-      { label: "Roles & Permissions", href: "/admin/roles", icon: ShieldCheck },
-      { label: "Parametres", href: "/admin/settings" as Route, icon: Settings },
+      { label: "Rôles & Permissions", href: "/admin/roles", icon: ShieldCheck },
+      { label: "Paramètres", href: "/admin/settings" as Route, icon: Settings },
     ],
   },
 ]
