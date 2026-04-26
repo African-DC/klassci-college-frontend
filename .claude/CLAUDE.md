@@ -102,5 +102,6 @@ npm run test:e2e
 @rules/components.md
 @rules/forms.md
 @rules/data-fetching.md
+@rules/auth-architecture.md
 @rules/deploy.md
 @rules/git.md
