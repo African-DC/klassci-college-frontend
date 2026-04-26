@@ -47,11 +47,19 @@ jobs:
           NODE_OPTIONS: "--max-old-space-size=4096"
         run: pnpm build
 
-      - name: Sanity check — no IP/localhost leaked into bundle
+      - name: Sanity check — no IP leaked into user bundle
         run: |
-          if grep -rE "16\.58\.132\.68|http://localhost|http://127\.0\.0\.1" .next/standalone/ 2>/dev/null; then
-            echo "::error::IP/localhost leaked into bundle. Check NEXT_PUBLIC_* env vars."
+          # Scan uniquement les chunks USER (.next/server + .next/static),
+          # PAS node_modules/ qui contient du code interne Next.js avec des
+          # URL placeholders légitimes (Request("http://localhost") etc.).
+          # Le scan cible NEXT_PUBLIC_API_URL inliné dans le code USER.
+          if grep -rE "16\.58\.132\.68" .next/standalone/.next/ 2>/dev/null; then
+            echo "::error::IP 16.58.132.68 leaked into user bundle. Check NEXT_PUBLIC_API_URL."
             exit 1
+          fi
+          # Vérification positive : la bonne URL DOIT être présente
+          if ! grep -rqE "college\.klassci\.com/api-be" .next/standalone/.next/ 2>/dev/null; then
+            echo "::warning::college.klassci.com/api-be not found in bundle — vérifie NEXT_PUBLIC_API_URL build env."
           fi
 
       - name: Pack standalone artifact
