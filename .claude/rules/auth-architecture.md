@@ -117,30 +117,55 @@ KLASSCI College utilise un **système d'auth hybride** : Python (FastAPI) fait l
 
 **Vérification** : DevTools console → "Mixed Content: was loaded over HTTPS, but requested an insecure resource".
 
-## Fix — patron Next.js rewrites
+## Fix — pattern `/api-be/` via nginx (déployé 2026-04-26)
 
-Pour que les fetches client-side soient HTTPS same-origin **sans** rebuilder le BE et **sans** ajouter de locations nginx pour chaque router BE :
+Pour résoudre le conflit single-domain (FE pages `/admin/*` vs BE API `/admin/*`) sans refactor BE :
 
-```ts
-// next.config.ts
-async rewrites() {
-  return [
-    {
-      source: '/api-be/:path*',
-      destination: 'http://127.0.0.1:8000/:path*',
-    },
-  ]
-},
+**1. nginx ajoute un location `/api-be/` qui strip-prefix et proxy vers le BE** :
+
+```nginx
+location /api-be/ {
+    rewrite ^/api-be/(.*)$ /$1 break;
+    proxy_pass http://127.0.0.1:8000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 300s;
+}
 ```
 
-Plus :
-- `NEXT_PUBLIC_API_URL=https://college.klassci.com/api-be` (build-time)
-- nginx config inchangée (le `/api-be/` tombe dans `location /` → :3000 où le rewrite intercepte)
-- Browser fetche `https://college.klassci.com/api-be/auth/login` → Next.js rewrite proxy → BE :8000 ✅
+Précedence nginx (most-specific-first) :
+- `/api/auth/` → :3000 (NextAuth FE)
+- `/api-be/` → :8000 (BE proxy avec strip)
+- `/api/` → :8000 (legacy, peu utilisé)
+- `/static/` → static BE
+- `/` → :3000 (FE pages)
 
-### Alternative : prefix BE avec /api/
+**2. `NEXT_PUBLIC_API_URL=https://college.klassci.com/api-be`** dans `.env.local` (FE).
 
-Refactor BE pour préfixer tous les routers avec `/api/v1/` (en évitant `/api/auth/` qui est réservé NextAuth). Plus propre mais touche tous les `app.include_router()` + tous les contrats FE.
+Browser fetche `https://college.klassci.com/api-be/admin/students` → nginx strip → BE `/admin/students` → 200 ✅
+Server-side authorize() fetch idem (même URL absolue, même chemin nginx, légère latence par rapport à 127.0.0.1 mais OK car même machine).
+
+### Alternative non retenue : Next.js rewrites
+
+`async rewrites() { return [{ source: '/api-be/:path*', destination: 'http://127.0.0.1:8000/:path*' }] }` aurait fonctionné aussi, mais ajoute un hop :3000 inutile. La solution nginx est plus directe.
+
+### Alternative future : prefix BE avec /api/v1/
+
+Refactor BE pour préfixer tous les routers avec `/api/v1/` (en évitant `/api/auth/` réservé NextAuth). Plus propre architecturalement, mais touche tous les `app.include_router()` + tous les contrats FE. Reporté.
+
+## Cache-bust après changement de NEXT_PUBLIC_API_URL
+
+⚠️ **Si on change `NEXT_PUBLIC_API_URL` post-build via sed-patch des chunks** (cas du recovery 2026-04-26 où l'on ne pouvait pas rebuilder) :
+
+- Next.js sert les chunks JS avec `Cache-Control: public, max-age=31536000, immutable`
+- Browsers existants gardent les anciennes chunks pendant 1 an, AVEC l'ancienne URL inlinée
+- Real users qui ont déjà chargé le site **doivent faire un hard reload (Ctrl+Shift+R)** pour récupérer les nouvelles chunks
+- Pour la dev session : kill dev-browser daemon + rm -rf `~/.dev-browser/browsers/default/chromium-profile/Default/Cache`
+
+Ce piège disparaît avec un vrai rebuild (les filenames de chunks changent car content-hashes différents). En attendant la pipeline CI/CD, c'est la limitation de la sed-patch.
 
 ## Pièges connus
 
