@@ -1,0 +1,103 @@
+name: Security — Frontend
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, staging, main]
+  schedule:
+    # Scan hebdomadaire chaque lundi à 8h UTC
+    - cron: '0 8 * * 1'
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: pnpm audit — check for known vulnerabilities
+        run: |
+          pnpm audit --json > pnpm-audit-report.json 2>&1 || true
+          # Afficher le résumé lisible — ne pas bloquer sur les vulnérabilités transitives
+          pnpm audit || true
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pnpm-audit-report
+          path: pnpm-audit-report.json
+
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:javascript-typescript"
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog — scan for leaked secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          # Sur PR : diff entre base et head
+          # Sur push : diff entre le commit précédent et HEAD
+          # Sur schedule : scan complet du repo
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || (github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '') }}
+          head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'HEAD' }}
+          extra_args: --only-verified
+
+  next-security-headers:
+    name: Security Headers Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check next.config.ts has security headers
+        run: |
+          if grep -q "Content-Security-Policy\|X-Frame-Options\|X-Content-Type-Options" next.config.ts 2>/dev/null || \
+             grep -rq "Content-Security-Policy\|X-Frame-Options" app/ 2>/dev/null; then
+            echo "✅ Security headers found in config"
+          else
+            echo "⚠️  Warning: No security headers detected in next.config.ts"
+            echo "   Recommended: add Content-Security-Policy, X-Frame-Options, X-Content-Type-Options"
+            echo "   See: https://nextjs.org/docs/app/api-reference/config/next-config-js/headers"
+            # Warning only — headers not required at scaffold stage
+          fi

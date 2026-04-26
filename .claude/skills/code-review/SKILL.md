@@ -2,7 +2,6 @@
 name: code-review
 description: Review frontend Next.js/TypeScript code for bugs, accessibility, performance, and KLASSCI conventions. Use when asked to review code or before creating a PR.
 disable-model-invocation: true
-allowed-tools: Bash(git *), Read, Grep, Glob
 ---
 
 Perform a thorough code review of the KLASSCI frontend changes.

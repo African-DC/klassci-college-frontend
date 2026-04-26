@@ -1,0 +1,235 @@
+"use client"
+
+import { useState, useMemo, useCallback } from "react"
+import { Eye, Download, DownloadCloud, Send, ChevronLeft, ChevronRight } from "lucide-react"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { BulletinStatusBadge } from "./BulletinStatusBadge"
+import { BulletinPreviewModal } from "./BulletinPreviewModal"
+import { BulletinListSkeleton } from "./BulletinListSkeleton"
+import { useBulletins, usePublishBulletins } from "@/lib/hooks/useBulletins"
+import { bulletinsApi } from "@/lib/api/bulletins"
+import { getMentionColor, downloadBlob } from "@/lib/utils"
+import type { BulletinListParams, Bulletin } from "@/lib/contracts/bulletin"
+
+interface BulletinListProps {
+  params: BulletinListParams
+  onPageChange?: (page: number) => void
+}
+
+export function BulletinList({ params, onPageChange }: BulletinListProps) {
+  const { data, isLoading, isError } = useBulletins(params)
+  const { mutate: publish, isPending: isPublishing } = usePublishBulletins()
+  const [previewId, setPreviewId] = useState<number | null>(null)
+  const [downloadingId, setDownloadingId] = useState<number | null>(null)
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false)
+
+  const handleDownloadPdf = useCallback(async (bulletin: Bulletin) => {
+    setDownloadingId(bulletin.id)
+    try {
+      const blob = await bulletinsApi.downloadPdf(bulletin.id)
+      downloadBlob(blob, `bulletin-${bulletin.id}.pdf`)
+    } catch (err) {
+      toast.error("Erreur lors du téléchargement", {
+        description: err instanceof Error ? err.message : "Erreur inconnue",
+      })
+    } finally {
+      setDownloadingId(null)
+    }
+  }, [])
+
+  const bulletins = useMemo(() => data?.items ?? [], [data])
+  const hasDrafts = useMemo(
+    () => bulletins.some((b) => !b.is_published),
+    [bulletins],
+  )
+
+  const handleDownloadAll = useCallback(async () => {
+    if (bulletins.length === 0) return
+    setIsDownloadingAll(true)
+    let downloaded = 0
+    try {
+      for (const bulletin of bulletins) {
+        const blob = await bulletinsApi.downloadPdf(bulletin.id)
+        downloadBlob(blob, `bulletin-${bulletin.id}.pdf`)
+        downloaded++
+      }
+      toast.success(`${downloaded} bulletin(s) téléchargé(s)`)
+    } catch (err) {
+      toast.error("Erreur lors du téléchargement", {
+        description: err instanceof Error ? err.message : "Erreur inconnue",
+      })
+    } finally {
+      setIsDownloadingAll(false)
+    }
+  }, [bulletins])
+
+  if (isLoading) return <BulletinListSkeleton />
+
+  if (isError) {
+    return (
+      <div className="py-12 text-center text-sm text-muted-foreground">
+        Impossible de charger les bulletins.
+      </div>
+    )
+  }
+
+  if (bulletins.length === 0) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-sm text-muted-foreground">
+          Aucun bulletin trouvé pour les critères sélectionnés.
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Utilisez le bouton &quot;Générer les bulletins&quot; pour créer les bulletins.
+        </p>
+      </div>
+    )
+  }
+
+  function handlePublish() {
+    if (!params.class_id || !params.trimester) return
+    publish({ classId: params.class_id, trimester: String(params.trimester) })
+  }
+
+  return (
+    <div className="space-y-4">
+      {hasDrafts && params.class_id && params.trimester && (
+        <div className="flex items-center justify-between rounded-lg border border-accent/30 bg-accent/5 p-3">
+          <p className="text-sm">
+            Des bulletins sont en <strong>brouillon</strong>. Publiez-les pour les rendre visibles aux parents.
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handlePublish}
+            disabled={isPublishing}
+          >
+            <Send className="mr-2 h-3 w-3" />
+            {isPublishing ? "Publication..." : "Publier tout"}
+          </Button>
+        </div>
+      )}
+
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDownloadAll}
+          disabled={isDownloadingAll || bulletins.length === 0}
+        >
+          {isDownloadingAll ? (
+            <>
+              <Download className="mr-2 h-3 w-3 animate-spin" />
+              Téléchargement...
+            </>
+          ) : (
+            <>
+              <DownloadCloud className="mr-2 h-3 w-3" />
+              Télécharger tout
+            </>
+          )}
+        </Button>
+      </div>
+
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Élève</TableHead>
+              <TableHead>Classe</TableHead>
+              <TableHead className="text-center">Moyenne</TableHead>
+              <TableHead className="text-center">Rang</TableHead>
+              <TableHead>Mention</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {bulletins.map((bulletin: Bulletin) => (
+              <TableRow key={bulletin.id}>
+                <TableCell className="font-medium">#{bulletin.student_id}</TableCell>
+                <TableCell>#{bulletin.class_id}</TableCell>
+                <TableCell className="text-center font-semibold">
+                  {bulletin.average !== null ? Number(bulletin.average).toFixed(2) : "—"}
+                </TableCell>
+                <TableCell className="text-center">
+                  {bulletin.rank ?? "—"}
+                </TableCell>
+                <TableCell>
+                  <span className={`font-medium ${getMentionColor(bulletin.mention)}`}>
+                    {bulletin.mention ?? "—"}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <BulletinStatusBadge isPublished={bulletin.is_published} />
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setPreviewId(bulletin.id)}
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span className="sr-only">Voir le bulletin #{bulletin.id}</span>
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleDownloadPdf(bulletin)}
+                      disabled={downloadingId === bulletin.id}
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="sr-only">Télécharger le bulletin #{bulletin.id}</span>
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{data?.total ?? 0} bulletin(s)</span>
+        <div className="flex items-center gap-2">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            disabled={!data || data.page <= 1}
+            onClick={() => onPageChange?.(Math.max(1, (data?.page ?? 1) - 1))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="sr-only">Page précédente</span>
+          </Button>
+          <span>Page {data?.page ?? 1}/{data && data.size > 0 ? Math.ceil(data.total / data.size) : 1}</span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            disabled={!data || data.size <= 0 || data.page >= Math.ceil(data.total / data.size)}
+            onClick={() => onPageChange?.((data?.page ?? 1) + 1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+            <span className="sr-only">Page suivante</span>
+          </Button>
+        </div>
+      </div>
+
+      <BulletinPreviewModal
+        bulletinId={previewId}
+        onClose={() => setPreviewId(null)}
+      />
+    </div>
+  )
+}

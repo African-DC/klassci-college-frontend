@@ -2,7 +2,6 @@
 name: create-pr
 description: Create a pull request for the frontend. Use when the user asks to create a PR.
 disable-model-invocation: true
-allowed-tools: Bash(git *), Bash(gh *)
 ---
 
 Create a pull request for the KLASSCI frontend targeting `develop`.
