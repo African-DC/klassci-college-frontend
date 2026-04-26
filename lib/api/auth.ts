@@ -1,10 +1,11 @@
+import { z } from "zod"
 import {
   LoginResponseSchema,
   RefreshResponseSchema,
   type LoginResponse,
   type RefreshResponse,
 } from "@/lib/contracts/auth"
-import { safeValidate } from "./client"
+import { apiFetch, safeValidate } from "./client"
 
 function getBaseUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_URL
@@ -40,5 +41,10 @@ export const authApi = {
     }
     const data = await res.json()
     return safeValidate(RefreshResponseSchema, data, "/auth/refresh")
+  },
+
+  myPermissions: async (): Promise<string[]> => {
+    const data = await apiFetch<unknown>("/auth/me/permissions")
+    return safeValidate(z.array(z.string()), data, "/auth/me/permissions")
   },
 }
