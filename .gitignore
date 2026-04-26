@@ -10,3 +10,12 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 package-lock.json
+
+# Playwright
+playwright-report/
+test-results/
+.playwright/
+playwright/.cache/
+
+# Sentry
+.sentryclirc
