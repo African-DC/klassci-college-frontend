@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
@@ -17,4 +18,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap with Sentry — no-op at runtime if DSN not configured.
+// Source maps are uploaded only when SENTRY_AUTH_TOKEN is provided at build time.
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+});
