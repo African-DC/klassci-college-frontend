@@ -1,5 +1,7 @@
 import { auth } from "@/auth"
 import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+import { extractHostname, isHostAllowed } from "@/lib/utils/allowed-hosts"
 
 const PORTALS = ["admin", "teacher", "student", "parent"] as const
 type Portal = (typeof PORTALS)[number]
@@ -22,12 +24,12 @@ function getDefaultRedirect(role: string | undefined): string {
   return portal ? `/${portal}/dashboard` : "/admin/dashboard"
 }
 
-export default auth((req) => {
+// NextAuth wrapper qui gère les redirections d'auth + portails.
+const authMiddleware = auth((req) => {
   const { pathname } = req.nextUrl
   const session = req.auth
   const isLoggedIn = !!session?.user
 
-  // Refresh token expired — force re-login
   if (session?.error === "RefreshTokenError" && pathname !== "/login") {
     const url = req.nextUrl.clone()
     url.pathname = "/login"
@@ -38,9 +40,6 @@ export default auth((req) => {
   const portalFromPath = getPortalFromPath(pathname)
   const isProtectedRoute = portalFromPath !== null
 
-  // Not authenticated on protected route:
-  // In dev mode, let users browse freely (backend may be offline).
-  // In production, redirect to login.
   if (isProtectedRoute && !isLoggedIn) {
     if (process.env.NODE_ENV === "production") {
       const url = req.nextUrl.clone()
@@ -48,11 +47,9 @@ export default auth((req) => {
       url.searchParams.set("callbackUrl", pathname)
       return NextResponse.redirect(url)
     }
-    // Dev mode — let through without auth
     return NextResponse.next()
   }
 
-  // Authenticated on /login → redirect to their portal
   if (pathname === "/login" && isLoggedIn) {
     const dest = getDefaultRedirect(session.user.role)
     if (dest !== "/login") {
@@ -62,7 +59,6 @@ export default auth((req) => {
     }
   }
 
-  // Authenticated but wrong portal → redirect to correct one
   if (isProtectedRoute && isLoggedIn && session.user.role) {
     const expectedPortal = ROLE_TO_PORTAL[session.user.role]
     if (expectedPortal && portalFromPath !== expectedPortal) {
@@ -75,12 +71,34 @@ export default auth((req) => {
   return NextResponse.next()
 })
 
+/**
+ * Middleware composé :
+ *   1. Host allowlist (rejeté en 400 si Host non autorisé) — défense CSRF
+ *   2. NextAuth auth() (gestion session + redirections portail)
+ *
+ * Pourquoi le host check : avec AUTH_TRUST_HOST=true (nécessaire pour le
+ * multi-tenant subdomain en NextAuth v5), un attacker contrôlant un sous-domaine
+ * arbitraire pourrait minter des cookies d'auth si on ne valide pas l'origine.
+ */
+export default function middleware(req: NextRequest) {
+  const hostname = extractHostname(req.headers.get("host"))
+  if (!isHostAllowed(hostname)) {
+    return NextResponse.json(
+      { detail: "Invalid host", code: "HOST_NOT_ALLOWED" },
+      { status: 400 },
+    )
+  }
+
+  return (authMiddleware as unknown as (r: NextRequest) => Promise<NextResponse> | NextResponse)(req)
+}
+
 export const config = {
+  // Matche toutes les routes SAUF :
+  //   - /api/* (API routes Next.js)
+  //   - /_next/static, /_next/image (assets statiques)
+  //   - /favicon.ico, /robots.txt, /sitemap.xml
+  // Cela permet au host allowlist de tourner sur la racine et toutes les pages.
   matcher: [
-    "/login",
-    "/admin/:path*",
-    "/teacher/:path*",
-    "/student/:path*",
-    "/parent/:path*",
+    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
   ],
 }

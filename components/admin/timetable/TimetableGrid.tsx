@@ -106,7 +106,7 @@ export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
 
   function handleDrop(targetDay: string, targetHour: string, slotId: number) {
     import("@/lib/api/timetable").then(({ timetableApi }) => {
-      timetableApi.update(slotId, { day: targetDay as any, start_time: targetHour, end_time: addHour(targetHour) })
+      timetableApi.update(slotId, { day: targetDay as never, start_time: targetHour, end_time: addHour(targetHour) })
         .then(() => {
           toast.success("Créneau déplacé")
           queryClient.invalidateQueries({ queryKey: ["timetable"] })
