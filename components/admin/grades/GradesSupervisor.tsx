@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Edit3,
   Hourglass,
+  Info,
   TrendingUp,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -216,6 +217,19 @@ export function GradesSupervisor() {
           </Select>
         </div>
       </div>
+
+      {/* ─── Info contextuelle (création réservée aux profs) ─────── */}
+      {!noClassSelected && (
+        <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2 text-xs text-blue-900">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
+          <p>
+            Les évaluations sont créées par les enseignants depuis leur portail. Vous
+            pouvez saisir les notes au nom d&apos;un enseignant en cliquant{" "}
+            <span className="font-medium">«&nbsp;Saisir&nbsp;»</span> sur une évaluation
+            existante.
+          </p>
+        </div>
+      )}
 
       {/* ─── Tabs ──────────────────────────────────────────────────── */}
       {!noClassSelected && (
