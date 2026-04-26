@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import Link from "next/link"
+import type { Route } from "next"
 import {
   Save,
   Loader2,
@@ -10,6 +12,7 @@ import {
   CircleSlash,
   Cloud,
   CloudOff,
+  Mic,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -209,6 +212,18 @@ export function GradeEntryGrid({ evaluationId, classId }: GradeEntryGridProps) {
                 })}
               </p>
             </div>
+            {classId && (
+              <Button asChild size="sm" className="shrink-0 gap-2">
+                <Link
+                  href={
+                    `/teacher/grades/${classId}/${evaluationId}/dictee` as Route
+                  }
+                >
+                  <Mic className="h-4 w-4" />
+                  Mode dictée
+                </Link>
+              </Button>
+            )}
           </div>
 
           {/* Progression + Save indicator */}
