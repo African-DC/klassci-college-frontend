@@ -19,6 +19,9 @@ const eslintConfig = [
       'react/no-danger': 'error',
       // Préférer const
       'prefer-const': 'error',
+      // Désactivé : les apostrophes/guillemets français (L'année, "salut") sont
+      // ergonomiques en JSX et ne posent pas de risque sécurité (React échappe).
+      'react/no-unescaped-entities': 'off',
     },
   },
 ];
