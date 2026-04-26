@@ -2,7 +2,7 @@
 paths:
   - "components/**/*Form*.tsx"
   - "components/**/*form*.tsx"
-  - "lib/validators/**/*.ts"
+  - "lib/contracts/**/*.ts"
 ---
 
 # Règles Formulaires — KLASSCI Frontend
@@ -10,8 +10,8 @@ paths:
 ## Stack Obligatoire : React Hook Form + Zod
 
 ```tsx
-// 1. Définir le schéma Zod dans lib/validators/
-// lib/validators/enrollment.ts
+// 1. Définir le schéma Zod dans lib/contracts/
+// lib/contracts/enrollment.ts
 import { z } from "zod"
 
 export const enrollmentCreateSchema = z.object({
@@ -79,7 +79,7 @@ export function EnrollmentForm({ onSuccess }: { onSuccess: () => void }) {
 
 ## Règles
 
-- Schéma Zod dans `lib/validators/` — pas inline dans le composant
+- Schéma Zod dans `lib/contracts/` — pas inline dans le composant
 - Le schéma Zod doit **miroir** les règles de validation du backend Pydantic
 - Toujours utiliser `FormMessage` pour afficher les erreurs de validation
 - Toujours gérer l'état `isPending` pour désactiver le bouton submit

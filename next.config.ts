@@ -2,6 +2,7 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -9,6 +10,10 @@ const nextConfig: NextConfig = {
         hostname: '*.digitaloceanspaces.com',
       },
     ],
+  },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts'],
+    webpackMemoryOptimizations: true,
   },
 };
 

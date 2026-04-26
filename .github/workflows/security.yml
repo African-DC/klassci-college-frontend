@@ -16,26 +16,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
+          cache: "pnpm"
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
-      - name: npm audit — check for known vulnerabilities
+      - name: pnpm audit — check for known vulnerabilities
         run: |
-          npm audit --audit-level=moderate --json > npm-audit-report.json 2>&1 || true
+          pnpm audit --json > pnpm-audit-report.json 2>&1 || true
           # Afficher le résumé lisible — ne pas bloquer sur les vulnérabilités transitives
-          npm audit --audit-level=high || true
+          pnpm audit || true
 
       - name: Upload audit report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: npm-audit-report
-          path: npm-audit-report.json
+          name: pnpm-audit-report
+          path: pnpm-audit-report.json
 
   codeql:
     name: CodeQL Analysis
