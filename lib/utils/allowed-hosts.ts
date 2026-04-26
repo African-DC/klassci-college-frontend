@@ -9,8 +9,10 @@
  * Doit miroir la regex côté BE (app/core/middleware.py).
  */
 
-// Pattern par défaut : sous-domaines KLASSCI College (<tenant>.college.klassci.com)
-const DEFAULT_PATTERN = /^[a-z0-9][a-z0-9\-]{0,61}\.college\.klassci\.com$/
+// Pattern par défaut : single-domain college.klassci.com + sous-domaines rétrocompat.
+// Architecture single-domain (depuis 2026-04-26) : tous les tenants passent par
+// college.klassci.com, le tenant est résolu via JWT/header X-Tenant-Slug côté BE.
+const DEFAULT_PATTERN = /^(college\.klassci\.com|[a-z0-9][a-z0-9\-]{0,61}\.college\.klassci\.com)$/
 
 // Hôtes locaux acceptés en dev (toujours, indépendamment du pattern)
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", ""])
