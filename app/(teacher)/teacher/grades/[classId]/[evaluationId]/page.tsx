@@ -12,22 +12,20 @@ export default async function GradeEntryPage({ params }: GradeEntryPageProps) {
   const { classId, evaluationId } = await params
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild className="shrink-0">
-          <Link href={`/teacher/grades` as Route}>
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">Saisie des notes</h1>
-          <p className="text-sm text-muted-foreground">
-            Classe {classId} — Evaluation #{evaluationId}
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto max-w-3xl space-y-5 px-4 py-6">
+      <Button
+        variant="ghost"
+        size="sm"
+        asChild
+        className="-ml-2 h-8 self-start text-muted-foreground hover:text-foreground"
+      >
+        <Link href={`/teacher/grades` as Route}>
+          <ArrowLeft className="mr-1 h-4 w-4" />
+          Retour à mes évaluations
+        </Link>
+      </Button>
 
-      <GradeEntryGrid evaluationId={Number(evaluationId)} />
+      <GradeEntryGrid evaluationId={Number(evaluationId)} classId={Number(classId)} />
     </div>
   )
 }
