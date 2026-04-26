@@ -36,7 +36,10 @@ jobs:
           # CRITIQUE : NEXT_PUBLIC_* est inliné au BUILD time. Ces valeurs
           # doivent matcher la config nginx (cf rule auth-architecture.md).
           NEXT_PUBLIC_API_URL: https://college.klassci.com/api-be
-          NEXT_PUBLIC_EXTRA_ALLOWED_HOSTS: "local.16.58.132.68.nip.io,16.58.132.68"
+          # Plus besoin de l'IP en EXTRA_ALLOWED_HOSTS depuis que HTTPS
+          # college.klassci.com est live (le pattern par défaut couvre déjà
+          # *.college.klassci.com). Vide = aucun host supplémentaire autorisé.
+          NEXT_PUBLIC_EXTRA_ALLOWED_HOSTS: ""
           NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
           NEXT_PUBLIC_SENTRY_ENVIRONMENT: production
           NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE: "0.1"
@@ -47,19 +50,24 @@ jobs:
           NODE_OPTIONS: "--max-old-space-size=4096"
         run: pnpm build
 
-      - name: Sanity check — no IP leaked into user bundle
+      - name: Sanity check — no http://IP URL leaked into user bundle
         run: |
           # Scan uniquement les chunks USER (.next/server + .next/static),
-          # PAS node_modules/ qui contient du code interne Next.js avec des
-          # URL placeholders légitimes (Request("http://localhost") etc.).
-          # Le scan cible NEXT_PUBLIC_API_URL inliné dans le code USER.
-          if grep -rE "16\.58\.132\.68" .next/standalone/.next/ 2>/dev/null; then
-            echo "::error::IP 16.58.132.68 leaked into user bundle. Check NEXT_PUBLIC_API_URL."
+          # PAS node_modules/ (code interne Next.js avec URL placeholders
+          # http://localhost légitimes).
+          # On cible la forme URL dangereuse "http://16.58.132.68" (le sed-patch
+          # qu'on cherche à éliminer), PAS l'IP nue qui peut apparaître dans
+          # une allowlist d'hosts (légitime).
+          if grep -rqE "https?://16\.58\.132\.68" .next/standalone/.next/ 2>/dev/null; then
+            echo "::error::URL http://16.58.132.68 leaked into user bundle (sed-patch artifact)."
+            grep -rE "https?://16\.58\.132\.68" .next/standalone/.next/ 2>/dev/null | head -3
             exit 1
           fi
           # Vérification positive : la bonne URL DOIT être présente
           if ! grep -rqE "college\.klassci\.com/api-be" .next/standalone/.next/ 2>/dev/null; then
             echo "::warning::college.klassci.com/api-be not found in bundle — vérifie NEXT_PUBLIC_API_URL build env."
+          else
+            echo "✓ Bundle utilise college.klassci.com/api-be"
           fi
 
       - name: Pack standalone artifact
