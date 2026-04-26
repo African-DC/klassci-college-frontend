@@ -103,5 +103,6 @@ npm run test:e2e
 @rules/forms.md
 @rules/data-fetching.md
 @rules/auth-architecture.md
+@rules/ux-target-user-reality.md
 @rules/deploy.md
 @rules/git.md
