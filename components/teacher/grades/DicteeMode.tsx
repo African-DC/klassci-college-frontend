@@ -19,6 +19,16 @@ import { useGrades, useUpdateGrades, useEvaluations } from "@/lib/hooks/useGrade
 import { useSpeechRecognition } from "@/lib/hooks/useSpeechRecognition"
 import { parseSpokenGrade, detectCommand } from "@/lib/utils/voice-grade-parser"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 type EntryValue = number | null | undefined // undefined = pas saisi, null = absent, number = note
 
@@ -60,6 +70,7 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
   const [mode, setMode] = useState<"entering" | "recap">("entering")
   const [transcriptDisplay, setTranscriptDisplay] = useState("")
   const [feedback, setFeedback] = useState<"ok" | "error" | null>(null)
+  const [exitDialogOpen, setExitDialogOpen] = useState(false)
 
   // ─── Bootstrap depuis serveur ──────────────────────────────────────────
   useEffect(() => {
@@ -80,15 +91,34 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
   }, [grades])
 
   // ─── Beep audio (succès) ───────────────────────────────────────────────
+  // iOS Safari interdit la création d'AudioContext hors user-gesture chain.
+  // On l'instancie dans `ensureAudio()` (appelée depuis le bouton mic = user
+  // gesture). Si l'AudioContext devient "suspended" entre 2 beeps, on le
+  // resume — toujours dans le bon scope car `beep` est appelé dans la
+  // continuité d'un onResult vocal qui hérite du gesture initial.
   const audioCtxRef = useRef<AudioContext | null>(null)
-  const beep = useCallback(() => {
+  const ensureAudio = useCallback(() => {
+    if (audioCtxRef.current) return audioCtxRef.current
+    const Ctx =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext
+    if (!Ctx) return null
     try {
-      if (!audioCtxRef.current) {
-        const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-        if (!Ctx) return
-        audioCtxRef.current = new Ctx()
+      audioCtxRef.current = new Ctx()
+      return audioCtxRef.current
+    } catch {
+      return null
+    }
+  }, [])
+  const beep = useCallback(() => {
+    const ctx = audioCtxRef.current
+    if (!ctx) return
+    try {
+      if (ctx.state === "suspended") {
+        // Fire-and-forget — resume() returns a Promise we don't need to await.
+        void ctx.resume()
       }
-      const ctx = audioCtxRef.current
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.frequency.setValueAtTime(880, ctx.currentTime)
@@ -100,7 +130,7 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
       osc.start()
       osc.stop(ctx.currentTime + 0.12)
     } catch {
-      // Audio unavailable — silent fallback.
+      // Audio unavailable — silent fallback (non-critical UX feedback).
     }
   }, [])
 
@@ -189,9 +219,14 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
   })
 
   const toggleMic = useCallback(() => {
-    if (speech.listening) speech.stop()
-    else speech.start()
-  }, [speech])
+    if (speech.listening) {
+      speech.stop()
+    } else {
+      // Initialise l'AudioContext dans le user gesture du clic — iOS l'exige.
+      ensureAudio()
+      speech.start()
+    }
+  }, [speech, ensureAudio])
 
   // ─── Quitter avec garde sur dirty ──────────────────────────────────────
   const hasDirty = useMemo(() => {
@@ -204,16 +239,18 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
     return false
   }, [grades, entries])
 
-  const exitDictee = useCallback(() => {
-    if (hasDirty) {
-      const ok = confirm(
-        "Vous avez des notes non enregistrées. Quitter sans enregistrer ?",
-      )
-      if (!ok) return
-    }
+  const performExit = useCallback(() => {
     speech.stop()
     router.push(`/teacher/grades/${classId}/${evaluationId}`)
-  }, [hasDirty, speech, router, classId, evaluationId])
+  }, [speech, router, classId, evaluationId])
+
+  const requestExit = useCallback(() => {
+    if (hasDirty) {
+      setExitDialogOpen(true)
+    } else {
+      performExit()
+    }
+  }, [hasDirty, performExit])
 
   // ─── Save batch ────────────────────────────────────────────────────────
   const submitAll = useCallback(() => {
@@ -268,7 +305,7 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-slate-950 p-6 text-white">
         <p className="text-lg">Aucun élève dans cette classe.</p>
-        <Button onClick={exitDictee} variant="secondary">
+        <Button onClick={requestExit} variant="secondary">
           Retour
         </Button>
       </div>
@@ -287,7 +324,7 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
         <Button
           variant="ghost"
           size="icon"
-          onClick={exitDictee}
+          onClick={requestExit}
           className="h-10 w-10 text-white/80 hover:bg-white/10 hover:text-white"
           aria-label="Quitter le mode dictée"
         >
@@ -379,6 +416,16 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
           </div>
         )}
 
+        {speech.supported && speech.permissionDenied && (
+          <div className="flex items-center gap-2 rounded-lg border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-xs text-rose-200">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>
+              Accès au micro refusé. Autorisez-le dans les paramètres du navigateur
+              puis rechargez la page.
+            </span>
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-2">
           <Button
             variant="secondary"
@@ -421,7 +468,7 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
           </Button>
         </div>
 
-        {speech.supported && (
+        {speech.supported && !speech.permissionDenied && (
           <Button
             variant="ghost"
             size="lg"
@@ -447,6 +494,27 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
           </Button>
         )}
       </div>
+
+      <AlertDialog open={exitDialogOpen} onOpenChange={setExitDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quitter sans enregistrer ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous avez des notes saisies qui n&apos;ont pas encore été envoyées au
+              serveur. Quitter maintenant les perdra définitivement.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continuer la dictée</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={performExit}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Quitter sans enregistrer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -69,6 +69,9 @@ interface UseSpeechRecognitionReturn {
   start: () => void
   stop: () => void
   supported: boolean
+  /** True if the browser/user has denied microphone access. The button should
+   *  then be disabled — `start()` will keep failing silently otherwise. */
+  permissionDenied: boolean
   error: string | null
 }
 
@@ -81,6 +84,7 @@ export function useSpeechRecognition({
   const [interimTranscript, setInterimTranscript] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [supported, setSupported] = useState(false)
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
   const userStoppedRef = useRef(false)
@@ -129,8 +133,16 @@ export function useSpeechRecognition({
 
     recognition.onerror = (event) => {
       // "no-speech" et "aborted" sont normaux (silence ou stop volontaire).
-      // Les autres méritent un feedback à l'user.
       if (event.error === "no-speech" || event.error === "aborted") return
+      // "not-allowed" / "service-not-allowed" : permission refusée — sticky, ne plus retry.
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        setPermissionDenied(true)
+        userStoppedRef.current = true
+        const msg = "Accès au micro refusé. Autorisez-le dans les paramètres du navigateur."
+        setError(msg)
+        onErrorRef.current?.(msg)
+        return
+      }
       const msg = `Reconnaissance vocale : ${event.error}`
       setError(msg)
       onErrorRef.current?.(msg)
@@ -185,5 +197,5 @@ export function useSpeechRecognition({
     setInterimTranscript("")
   }, [])
 
-  return { listening, interimTranscript, start, stop, supported, error }
+  return { listening, interimTranscript, start, stop, supported, permissionDenied, error }
 }

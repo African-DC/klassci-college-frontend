@@ -183,8 +183,13 @@ export function PermissionMatrix({ permissions, selectedIds, onChange }: Permiss
           const someChecked = !allChecked && allIds.some((id) => selectedSet.has(id))
           const checkedCount = allIds.filter((id) => selectedSet.has(id)).length
 
+          // Default expanded only if (a) the domain has selected perms OR
+          // (b) a search term narrows the result. Otherwise collapse — 9
+          // domains × 5 entities × 4 actions = mur d'options sur mobile.
+          const expandedByDefault = checkedCount > 0 || search.trim().length > 0
+
           return (
-            <details key={domain} open className="group">
+            <details key={domain} open={expandedByDefault} className="group">
               <summary className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/50 [&::-webkit-details-marker]:hidden">
                 <Checkbox
                   checked={allChecked ? true : someChecked ? "indeterminate" : false}
