@@ -34,9 +34,22 @@ export const EvaluationCreateSchema = z.object({
   title: z.string({ required_error: "Le titre est requis" }).min(1, "Le titre est requis"),
   type: EvaluationTypeSchema,
   date: z.string({ required_error: "La date est requise" }).min(1, "La date est requise"),
-  coefficient: z.number({ required_error: "Le coefficient est requis" }).positive("Le coefficient doit être positif"),
+  coefficient: z
+    .number({ required_error: "Le coefficient est requis" })
+    .int("Le coefficient doit être entier")
+    .min(1, "Coefficient minimum 1")
+    .max(10, "Coefficient maximum 10"),
   subject_id: z.number({ required_error: "La matière est requise" }).positive(),
   class_id: z.number({ required_error: "La classe est requise" }).positive(),
+  academic_year_id: z.number({ required_error: "L'année scolaire est requise" }).positive(),
+  trimester: z
+    .number({ required_error: "Le trimestre est requis" })
+    .int()
+    .min(1)
+    .max(3),
+  // Optional — auto-resolved BE-side when an enseignant créé.
+  // Required when an admin/staff délégué créé pour un prof.
+  teacher_id: z.number().positive().nullish(),
 })
 
 export const GradeBatchUpdateSchema = z.object({

@@ -10,16 +10,19 @@ import {
   Edit3,
   Hourglass,
   Info,
+  Plus,
   TrendingUp,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useEvaluations } from "@/lib/hooks/useGrades"
 import { useClasses } from "@/lib/hooks/useClasses"
 import { useSubjects } from "@/lib/hooks/useSubjects"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import type { Evaluation } from "@/lib/contracts/grade"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { EvaluationCreateModal } from "./EvaluationCreateModal"
 import {
   Select,
   SelectContent,
@@ -61,10 +64,14 @@ export function GradesSupervisor() {
   const { data: subjectsData } = useSubjects({ size: 100 })
   const subjects = subjectsData?.items ?? []
 
+  const { has } = usePermissions()
+  const canCreate = has("grades:write")
+
   const [classId, setClassId] = useState<number | null>(null)
   const [subjectId, setSubjectId] = useState<number | null>(null)
   const [trimester, setTrimester] = useState<number | null>(null)
   const [tab, setTab] = useState<FilterTab>("all")
+  const [createOpen, setCreateOpen] = useState(false)
 
   const { data: evaluations, isLoading, error } = useEvaluations(classId ?? 0)
 
@@ -122,6 +129,12 @@ export function GradesSupervisor() {
               Suivez la progression des évaluations et saisissez au nom des enseignants si besoin.
             </p>
           </div>
+          {canCreate && (
+            <Button onClick={() => setCreateOpen(true)} className="shrink-0">
+              <Plus className="mr-2 h-4 w-4" />
+              Nouvelle évaluation
+            </Button>
+          )}
         </div>
 
         {!noClassSelected && (
@@ -218,8 +231,8 @@ export function GradesSupervisor() {
         </div>
       </div>
 
-      {/* ─── Info contextuelle (création réservée aux profs) ─────── */}
-      {!noClassSelected && (
+      {/* ─── Info contextuelle (uniquement si l'user ne peut pas créer) ── */}
+      {!noClassSelected && !canCreate && (
         <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2 text-xs text-blue-900">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
           <p>
@@ -392,6 +405,14 @@ export function GradesSupervisor() {
           </TableBody>
         </Table>
       </div>
+
+      {canCreate && (
+        <EvaluationCreateModal
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          defaultClassId={classId}
+        />
+      )}
     </div>
   )
 }
