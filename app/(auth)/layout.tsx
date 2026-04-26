@@ -4,18 +4,18 @@ import { BookOpen, Users, Shield } from "lucide-react"
 const features = [
   {
     icon: BookOpen,
-    title: "Gestion Academique",
-    description: "Notes, bulletins, emplois du temps centralises",
+    title: "Gestion académique",
+    description: "Notes, bulletins, emplois du temps centralisés",
   },
   {
     icon: Users,
-    title: "Suivi Personnalise",
-    description: "Portails dedies pour enseignants, eleves et parents",
+    title: "Suivi personnalisé",
+    description: "Portails dédiés pour enseignants, élèves et parents",
   },
   {
     icon: Shield,
-    title: "Securise & Fiable",
-    description: "Donnees protegees, acces controle par role",
+    title: "Sécurisé & fiable",
+    description: "Données protégées, accès contrôlé par rôle",
   },
 ]
 
@@ -71,8 +71,8 @@ export default function AuthLayout({
                 <span className="text-[#F58220]">de gestion scolaire</span>
               </h1>
               <p className="max-w-lg text-[15px] leading-relaxed text-white/65 font-light">
-                Une solution moderne et complete pour piloter votre etablissement
-                avec efficacite et transparence.
+                Une solution moderne et complète pour piloter votre établissement
+                avec efficacité et transparence.
               </p>
             </div>
 
@@ -97,7 +97,7 @@ export default function AuthLayout({
 
           {/* Footer */}
           <p className="text-[13px] text-white/30 font-light">
-            &copy; {new Date().getFullYear()} KLASSCI College. Tous droits reserves.
+            &copy; {new Date().getFullYear()} KLASSCI College. Tous droits réservés.
           </p>
         </div>
       </div>

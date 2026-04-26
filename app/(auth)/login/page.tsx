@@ -18,7 +18,7 @@ export default async function LoginPage() {
           Bienvenue
         </h1>
         <p className="text-[15px] text-muted-foreground font-light">
-          Connectez-vous pour acceder a votre espace
+          Connectez-vous pour accéder à votre espace
         </p>
       </div>
 
