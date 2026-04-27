@@ -106,3 +106,4 @@ npm run test:e2e
 @rules/ux-target-user-reality.md
 @rules/deploy.md
 @rules/git.md
+@rules/changelog.md

@@ -1,5 +1,11 @@
 name: E2E Tests
 
+# Bootstraps a real BE (FastAPI + MySQL + Redis) alongside the FE so that
+# Playwright can drive the full login → portal flow. The previous version
+# only started Next.js on :3000 — NextAuth's authorize() call to
+# `${NEXT_PUBLIC_API_URL}/auth/login` then hit a closed port and every
+# test that needed an authenticated session timed out at the URL assertion.
+
 on:
   pull_request:
     branches: [develop, staging, main]
@@ -7,30 +13,119 @@ on:
 
 jobs:
   e2e:
-    timeout-minutes: 20
+    timeout-minutes: 25
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: klassci_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     env:
+      # Browser-side base URL — Playwright drives http://localhost:3000.
+      E2E_BASE_URL: http://localhost:3000
+      E2E_NO_SERVER: 'true'
+      # FE → BE wiring. The Next.js webServer reads these at build time.
       NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: test-secret-only-for-ci
       AUTH_TRUST_HOST: 'true'
-      E2E_NO_SERVER: 'true'
+      # BE process env. `{tenant}` is interpolated by app.core.config.
+      DATABASE_URL: mysql+aiomysql://root:root@127.0.0.1:3306/{tenant}
+      REDIS_URL: redis://127.0.0.1:6379
+      SECRET_KEY: test-secret-key-for-ci-only-must-be-32-chars-or-more
+      APP_ENV: test
+      TENANT_ID: klassci_test
 
     steps:
-      - uses: actions/checkout@v6
+      # ─── Checkout FE + sibling BE ──────────────────────────────────────
+      - name: Checkout FE
+        uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - name: Checkout BE (sibling clone)
+        uses: actions/checkout@v6
         with:
-          version: 10
+          repository: African-DC/klassci-college-backend
+          ref: main
+          path: ../klassci-college-backend
+
+      # ─── Toolchains ────────────────────────────────────────────────────
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
 
       - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
+        with: { node-version: 22, cache: pnpm }
 
+      - uses: actions/setup-python@v6
+        with: { python-version: '3.12', cache: pip }
+
+      # ─── BE: install + migrate + seed + start ──────────────────────────
+      - name: Install BE dependencies
+        working-directory: ../klassci-college-backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Wait for MySQL service
+        run: |
+          for i in {1..20}; do
+            mysql -h 127.0.0.1 -uroot -proot -e "SELECT 1" && break
+            echo "MySQL not ready yet — retry $i"
+            sleep 2
+          done
+
+      - name: Run alembic migrations on klassci_test
+        working-directory: ../klassci-college-backend
+        run: alembic upgrade head
+
+      - name: Seed permissions and roles for the test tenant
+        working-directory: ../klassci-college-backend
+        run: |
+          python -c "
+          import asyncio
+          from app.services.tenant_service import seed_tenant_data
+          asyncio.run(seed_tenant_data(
+              'klassci_test',
+              school_name='KLASSCI E2E',
+              admin_email='admin@klassci.com',
+              admin_password='Admin@2026',
+          ))
+          " || echo "Tenant data may already be seeded — proceeding"
+
+      - name: Seed deterministic test users
+        working-directory: ../klassci-college-backend
+        run: python scripts/seed_test_users.py
+
+      - name: Start BE (FastAPI)
+        working-directory: ../klassci-college-backend
+        run: |
+          nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 \
+            > be.log 2>&1 &
+          echo $! > be.pid
+
+      - name: Wait for BE healthy
+        run: npx wait-on http://127.0.0.1:8000/health -t 60000
+
+      # ─── FE: build + start + Playwright ────────────────────────────────
       - run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright Browsers
+      - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Build Next.js
@@ -38,17 +133,28 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
-      - name: Start app
+      - name: Start FE
         run: |
-          pnpm start &
-          npx wait-on http://localhost:3000 -t 60000
+          nohup pnpm start > fe.log 2>&1 &
+          echo $! > fe.pid
         env:
           PORT: 3000
 
+      - name: Wait for FE
+        run: npx wait-on http://localhost:3000 -t 60000
+
       - name: Run Playwright tests
         run: pnpm test:e2e
-        env:
-          E2E_BASE_URL: http://localhost:3000
+
+      # ─── Diagnostics on failure ────────────────────────────────────────
+      - name: Tail BE log
+        if: failure()
+        working-directory: ../klassci-college-backend
+        run: tail -200 be.log || true
+
+      - name: Tail FE log
+        if: failure()
+        run: tail -200 fe.log || true
 
       - name: Upload Playwright report
         if: always()
