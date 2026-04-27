@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Promotion en masse de fin d'année : nouvelle page « Promotions » qui aide l'admin à transformer en quelques clics les inscriptions valides d'une année vers la suivante, avec aperçu des élèves promus, avertissements de capacité et rapport détaillé des exceptions *(admin)* (#133).
 - Mode dictée vocal plein écran pour saisir les notes sans regarder l'écran, optimisé Chrome Android et iOS Safari *(enseignant)* (#108).
 - Création d'évaluation déléguée : un admin ou un personnel administratif peut créer une évaluation au nom d'un enseignant, avec sélection explicite du titulaire *(admin)* (#108).
 - Matrice rôles × permissions enfin utilisable : groupement à deux niveaux, recherche, pastilles d'actions et libellés français *(admin)* (#108).

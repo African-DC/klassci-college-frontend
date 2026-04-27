@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  ArrowUpFromLine,
   LayoutDashboard,
   UserPlus,
   GraduationCap,
@@ -52,6 +53,7 @@ const navigation: NavSection[] = [
     title: "Scolarité",
     items: [
       { label: "Inscriptions", href: "/admin/enrollments", icon: UserPlus },
+      { label: "Promotions", href: "/admin/promotions" as Route, icon: ArrowUpFromLine },
       { label: "Élèves", href: "/admin/students", icon: GraduationCap },
       { label: "Enseignants", href: "/admin/teachers", icon: Users },
       { label: "Personnel", href: "/admin/staff", icon: UserCog },
