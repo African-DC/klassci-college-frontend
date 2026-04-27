@@ -1,0 +1,137 @@
+name: Deploy FE to EC2
+
+on:
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+# Empêche 2 deploys de se chevaucher (queue, ne cancel pas)
+concurrency:
+  group: deploy-fe-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    name: Build standalone + ship to EC2
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build standalone
+        env:
+          # CRITIQUE : NEXT_PUBLIC_* est inliné au BUILD time. Ces valeurs
+          # doivent matcher la config nginx (cf rule auth-architecture.md).
+          NEXT_PUBLIC_API_URL: https://college.klassci.com/api-be
+          # Plus besoin de l'IP en EXTRA_ALLOWED_HOSTS depuis que HTTPS
+          # college.klassci.com est live (le pattern par défaut couvre déjà
+          # *.college.klassci.com). Vide = aucun host supplémentaire autorisé.
+          NEXT_PUBLIC_EXTRA_ALLOWED_HOSTS: ""
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+          NEXT_PUBLIC_SENTRY_ENVIRONMENT: production
+          NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE: "0.1"
+          # Server-side env (pas inliné, lu par instrumentation.ts au runtime)
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SKIP_ENV_VALIDATION: "1"
+          NODE_OPTIONS: "--max-old-space-size=4096"
+        run: pnpm build
+
+      - name: Sanity check — no http://IP URL leaked into user bundle
+        run: |
+          # Scan uniquement les chunks USER (.next/server + .next/static),
+          # PAS node_modules/ (code interne Next.js avec URL placeholders
+          # http://localhost légitimes).
+          # On cible la forme URL dangereuse "http://16.58.132.68" (le sed-patch
+          # qu'on cherche à éliminer), PAS l'IP nue qui peut apparaître dans
+          # une allowlist d'hosts (légitime).
+          if grep -rqE "https?://16\.58\.132\.68" .next/standalone/.next/ 2>/dev/null; then
+            echo "::error::URL http://16.58.132.68 leaked into user bundle (sed-patch artifact)."
+            grep -rE "https?://16\.58\.132\.68" .next/standalone/.next/ 2>/dev/null | head -3
+            exit 1
+          fi
+          # Vérification positive : la bonne URL DOIT être présente
+          if ! grep -rqE "college\.klassci\.com/api-be" .next/standalone/.next/ 2>/dev/null; then
+            echo "::warning::college.klassci.com/api-be not found in bundle — vérifie NEXT_PUBLIC_API_URL build env."
+          else
+            echo "✓ Bundle utilise college.klassci.com/api-be"
+          fi
+
+      - name: Pack standalone artifact
+        run: |
+          # Next.js standalone output ne copie PAS public/ ni .next/static par défaut
+          cp -r public .next/standalone/
+          cp -r .next/static .next/standalone/.next/
+          tar czf standalone.tgz -C .next/standalone .
+          ls -lh standalone.tgz
+
+      - name: Setup SSH key
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Ship + atomic swap + health check + rollback
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          set -e
+          scp -i ~/.ssh/id_deploy standalone.tgz ubuntu@$HOST:/tmp/
+          ssh -i ~/.ssh/id_deploy ubuntu@$HOST 'bash -se' <<'REMOTE'
+          set -euo pipefail
+          APP=/home/ubuntu/klassci/klassci-frontend
+          STAGE=/tmp/standalone-new-$(date +%s)
+
+          mkdir -p "$STAGE"
+          tar xzf /tmp/standalone.tgz -C "$STAGE"
+
+          # CRITIQUE : préserver .env.local (NEXTAUTH_SECRET, NEXTAUTH_URL,
+          # SENTRY_DSN runtime). Sans ça, le FE redémarre sans session JWT.
+          if [ -f "$APP/.next/standalone/.env.local" ]; then
+            cp "$APP/.next/standalone/.env.local" "$STAGE/.env.local"
+          fi
+
+          # Atomic dir swap
+          sudo mv "$APP/.next/standalone" "$APP/.next/standalone.old"
+          sudo mv "$STAGE" "$APP/.next/standalone"
+          sudo systemctl restart klassci-frontend
+
+          # Health check retry (uvicorn/node init varies 2-8s)
+          for i in 1 2 3 4 5 6; do
+            sleep 3
+            if curl -fsS -o /dev/null http://localhost:3000/login; then
+              echo "Health check OK after attempt $i"
+              # Cleanup old standalone
+              sudo find "$APP/.next/standalone.old" -mindepth 1 -delete 2>/dev/null || true
+              sudo rmdir "$APP/.next/standalone.old" 2>/dev/null || true
+              exit 0
+            fi
+          done
+
+          echo "::error::Health check failed after 6 attempts. Rolling back."
+          sudo mv "$APP/.next/standalone" "$APP/.next/standalone.broken-$(date +%s)"
+          sudo mv "$APP/.next/standalone.old" "$APP/.next/standalone"
+          sudo systemctl restart klassci-frontend
+          exit 1
+          REMOTE
+
+      - name: Verify HTTPS endpoint
+        run: |
+          curl -fsS -o /dev/null -w "FE /login %{http_code} (%{time_total}s)\n" https://college.klassci.com/login
+          curl -fsS -o /dev/null -w "FE /api/auth/csrf %{http_code} (%{time_total}s)\n" https://college.klassci.com/api/auth/csrf
