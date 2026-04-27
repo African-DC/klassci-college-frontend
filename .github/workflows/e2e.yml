@@ -51,7 +51,13 @@ jobs:
       REDIS_URL: redis://127.0.0.1:6379
       SECRET_KEY: test-secret-key-for-ci-only-must-be-32-chars-or-more
       APP_ENV: test
+      # `TENANT_ID` is read by the seed scripts to pick the target DB.
+      # `LOCAL_TENANT_ID` is read by the BE TenantMiddleware as the fallback
+      # when no JWT / X-Tenant-Slug / subdomain identifies a tenant. Without
+      # it, requests against http://127.0.0.1 land on `local` and crash on
+      # `Unknown database 'local'` since we only created klassci_test.
       TENANT_ID: klassci_test
+      LOCAL_TENANT_ID: klassci_test
 
     steps:
       # ─── Checkout FE + sibling BE ──────────────────────────────────────
