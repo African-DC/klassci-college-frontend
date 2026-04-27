@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ShieldAlert } from "lucide-react"
 import { EvaluationCreateSchema, type EvaluationCreate } from "@/lib/contracts/grade"
@@ -60,12 +60,10 @@ export function EvaluationCreateModal({
   // BE caps `size` at 100 (admin.py: Query(le=100)) — passing 200 returns 422.
   // For MVP with ~50 teachers per école, 100 covers the case ; au-delà → paginer.
   const { data: classesData } = useClasses({ size: 100 })
-  const { data: subjectsData } = useSubjects({ size: 100 })
   const { data: teachersData, error: teachersError } = useTeachers({ size: 100 })
   const { data: yearsData } = useAcademicYears({ size: 20 })
 
   const classes = classesData?.items ?? []
-  const subjects = subjectsData?.items ?? []
   const teachers = useMemo(() => {
     const list = teachersData?.items ?? []
     return [...list].sort((a, b) => {
@@ -88,6 +86,19 @@ export function EvaluationCreateModal({
       academic_year_id: currentYear?.id,
     },
   })
+
+  // Cascade Class -> Subject : on filtre les matières par la classe choisie pour
+  // ne montrer que celles enseignées à son niveau (et série), au lieu du
+  // catalogue complet. Tant qu'aucune classe n'est choisie, le BE renvoie tout
+  // (cas modal ouvert sans classe pré-sélectionnée), mais on n'expose rien dans
+  // le Select Matière — il reste disabled avec un texte d'aide.
+  const watchedClassId = useWatch({ control: form.control, name: "class_id" })
+  const { data: subjectsData, isFetching: subjectsFetching } = useSubjects({
+    class_id: watchedClassId,
+    size: 100,
+  })
+  const subjects = subjectsData?.items ?? []
+  const subjectsEmpty = !!watchedClassId && !subjectsFetching && subjects.length === 0
 
   // Pre-fill academic_year_id once years arrive (form already initialized with possibly-undefined).
   useEffect(() => {
@@ -164,7 +175,13 @@ export function EvaluationCreateModal({
                     <FormLabel>Classe *</FormLabel>
                     <Select
                       value={field.value ? String(field.value) : ""}
-                      onValueChange={(v) => field.onChange(Number(v))}
+                      onValueChange={(v) => {
+                        field.onChange(Number(v))
+                        // Reset subject_id : la liste de matières change avec la classe.
+                        // On le fait ici (pas dans un useEffect) pour éviter les
+                        // false-fires au mount et garder le reset 100% user-driven.
+                        form.setValue("subject_id", undefined as unknown as number)
+                      }}
                     >
                       <FormControl>
                         <SelectTrigger className="h-11">
@@ -194,10 +211,21 @@ export function EvaluationCreateModal({
                     <Select
                       value={field.value ? String(field.value) : ""}
                       onValueChange={(v) => field.onChange(Number(v))}
+                      disabled={!watchedClassId || subjectsEmpty}
                     >
                       <FormControl>
                         <SelectTrigger className="h-11">
-                          <SelectValue placeholder="Choisir une matière" />
+                          <SelectValue
+                            placeholder={
+                              !watchedClassId
+                                ? "Choisir d'abord une classe"
+                                : subjectsFetching
+                                  ? "Chargement…"
+                                  : subjectsEmpty
+                                    ? "Aucune matière configurée"
+                                    : "Choisir une matière"
+                            }
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -208,6 +236,21 @@ export function EvaluationCreateModal({
                         ))}
                       </SelectContent>
                     </Select>
+                    {/*
+                      Texte d'aide visible (pas seulement le placeholder greyed) — sur
+                      Itel S661 en plein soleil, l'état disabled est quasi invisible.
+                      Mme Diallo lit le texte sous le champ, pas l'opacité du Select.
+                    */}
+                    {!watchedClassId && (
+                      <p className="text-xs text-muted-foreground">
+                        Choisissez d&apos;abord la classe pour voir les matières.
+                      </p>
+                    )}
+                    {subjectsEmpty && (
+                      <p className="text-xs text-muted-foreground">
+                        Aucune matière n&apos;est configurée pour cette classe.
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

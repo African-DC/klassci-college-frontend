@@ -20,6 +20,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ### Changed
 
 - Confirmation propre par dialogue (au lieu du dialogue système du navigateur) avant de quitter le mode dictée avec des saisies non enregistrées *(enseignant)* (#108).
+- Création d'évaluation : la liste des matières se filtre automatiquement selon la classe choisie, plus rapide à parcourir et impossible de se tromper de matière *(admin)* (#112).
 - Saisie des notes : sauvegarde déclenchée après une courte pause, avec retour visuel et statistiques en temps réel *(enseignant)* (#108).
 - Page de supervision des notes côté admin : hero card avec indicateurs clés, filtres classe/matière/trimestre, onglets de statut *(admin)* (#108).
 
