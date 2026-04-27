@@ -90,6 +90,25 @@ créer dans cet ordre canonique (sauter celles vides) :
    ```
 4. Tagger : `git tag vX.Y.Z` puis `git push --tags`.
 
+## Garde-fou CI
+
+Le workflow `.github/workflows/changelog-check.yml` tourne sur chaque pull
+request. Il :
+
+1. Détecte les commits `feat`/`fix`/`perf`/`breaking` depuis la base.
+2. **Échoue** si un de ces commits est présent ET que `CHANGELOG.md`
+   n'apparaît pas dans le diff de la PR.
+3. Affiche la liste des commits incriminés dans le job log.
+
+Pour contourner volontairement (changement vraiment interne, refactor pur,
+réorganisation docs, mise à jour deps non visible) : appliquer le label
+`skip-changelog` sur la PR. Le workflow se met alors en pass automatique.
+Reviewer peut le retirer pour forcer une mise à jour si besoin.
+
+**Comme avec toute règle automatique, ce check ne valide pas la qualité
+éditoriale** — il garantit qu'une ligne a été ajoutée, pas qu'elle est
+écrite du point de vue de Mme Diallo. Suivre les principes plus haut.
+
 ## Anti-patterns à bloquer en revue
 
 1. Entrée qui décrit l'implémentation : `Added DicteeMode component`
