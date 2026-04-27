@@ -1,6 +1,6 @@
 import { getSession } from "next-auth/react"
-import { StudentSchema } from "@/lib/contracts/student"
-import type { Student, StudentCreate, StudentUpdate } from "@/lib/contracts/student"
+import { StudentFiltersSchema, StudentSchema } from "@/lib/contracts/student"
+import type { Student, StudentCreate, StudentFilters, StudentUpdate } from "@/lib/contracts/student"
 import { createCrudApi } from "./createCrudApi"
 
 function getBaseUrl(): string {
@@ -39,6 +39,22 @@ export const studentsApi = {
       },
     })
     if (!res.ok) throw new Error("Erreur lors de la suppression de la photo")
+  },
+
+  getFilters: async (): Promise<StudentFilters> => {
+    const session = await getSession()
+    const res = await fetch(`${getBaseUrl()}/admin/students/filters`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
+      },
+    })
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
+      throw new Error(error.detail || "Impossible de charger les filtres")
+    }
+    const data = await res.json()
+    return StudentFiltersSchema.parse(data)
   },
 
   getEnrollmentFees: async (studentId: number): Promise<StudentEnrollmentFee[]> => {
