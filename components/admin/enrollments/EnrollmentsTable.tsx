@@ -115,12 +115,13 @@ export function EnrollmentsTable() {
   const [validateTarget, setValidateTarget] = useState<Enrollment | null>(null)
   const debouncedSearch = useDebounce(search)
 
-  // On charge tout d'un coup (size=200) pour dériver les counts client-side
-  // sans endpoint /filters dédié. Acceptable ≤200 enrollments par tenant — au
-  // delà, on ajoutera GET /admin/enrollments/filters (déféré).
+  // On charge tout d'un coup (size=100, max BE actuel) pour dériver les
+  // counts client-side sans endpoint /filters dédié. Acceptable ≤100
+  // enrollments par tenant — au delà, on ajoutera GET /admin/enrollments/filters
+  // (déféré). 100 est la limite Pydantic `Query(20, le=100)` côté BE.
   const params = useMemo(
     () => ({
-      size: 200,
+      size: 100,
       page: 1,
       ...(debouncedSearch ? { search: debouncedSearch } : {}),
     }),
