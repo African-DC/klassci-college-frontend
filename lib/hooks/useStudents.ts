@@ -33,3 +33,14 @@ export function useStudentFees(studentId: number) {
     staleTime: 1000 * 60 * 2,
   })
 }
+
+// Counts pour la barre de chips. staleTime aligné avec le cache BE Redis (60s
+// quand celui-ci sera ajouté en v1.2.1). Invalidate via studentKeys.all après
+// toute mutation student / enrollment.
+export function useStudentFilters() {
+  return useQuery({
+    queryKey: ["students", "filters"],
+    queryFn: () => studentsApi.getFilters(),
+    staleTime: 1000 * 60,
+  })
+}
