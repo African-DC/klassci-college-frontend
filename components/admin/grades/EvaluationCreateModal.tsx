@@ -57,9 +57,11 @@ export function EvaluationCreateModal({
   onClose,
   defaultClassId,
 }: EvaluationCreateModalProps) {
+  // BE caps `size` at 100 (admin.py: Query(le=100)) — passing 200 returns 422.
+  // For MVP with ~50 teachers per école, 100 covers the case ; au-delà → paginer.
   const { data: classesData } = useClasses({ size: 100 })
   const { data: subjectsData } = useSubjects({ size: 100 })
-  const { data: teachersData } = useTeachers({ size: 200 })
+  const { data: teachersData, error: teachersError } = useTeachers({ size: 100 })
   const { data: yearsData } = useAcademicYears({ size: 20 })
 
   const classes = classesData?.items ?? []
@@ -221,10 +223,19 @@ export function EvaluationCreateModal({
                   <Select
                     value={field.value ? String(field.value) : ""}
                     onValueChange={(v) => field.onChange(Number(v))}
+                    disabled={teachers.length === 0}
                   >
                     <FormControl>
                       <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Choisir l'enseignant titulaire" />
+                        <SelectValue
+                          placeholder={
+                            teachersError
+                              ? "Erreur de chargement"
+                              : teachers.length === 0
+                                ? "Aucun enseignant disponible"
+                                : "Choisir l'enseignant titulaire"
+                          }
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="max-h-[260px]">
@@ -235,6 +246,17 @@ export function EvaluationCreateModal({
                       ))}
                     </SelectContent>
                   </Select>
+                  {teachersError && (
+                    <p className="text-xs text-destructive">
+                      Impossible de charger les enseignants : {teachersError.message}
+                    </p>
+                  )}
+                  {!teachersError && teachers.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Aucun enseignant n&apos;a été créé. Ajoutez-en d&apos;abord
+                      depuis <span className="font-medium">/admin/teachers</span>.
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
