@@ -139,7 +139,7 @@ export function parseSpokenGrade(transcript: string): VoiceGradeResult | null {
   }
 
   // Forme verbalisée : "douze virgule cinq" / "douze et demi" / "douze"
-  let normalized = text
+  const normalized = text
     .replace(/\b(virgule|point)\b/g, ".")
     .replace(/\bet demi(e)?\b/g, ".5")
 
