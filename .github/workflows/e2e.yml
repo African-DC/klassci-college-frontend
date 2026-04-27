@@ -120,7 +120,9 @@ jobs:
           echo $! > be.pid
 
       - name: Wait for BE healthy
-        run: npx wait-on http://127.0.0.1:8000/health -t 60000
+        # `wait-on http://...` defaults to HEAD probes; FastAPI's @app.get("/health")
+        # responds 405 to HEAD. Force GET via the http-get:// scheme.
+        run: npx wait-on http-get://127.0.0.1:8000/health -t 60000
 
       # ─── FE: build + start + Playwright ────────────────────────────────
       - run: pnpm install --frozen-lockfile
