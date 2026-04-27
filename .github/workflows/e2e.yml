@@ -63,7 +63,7 @@ jobs:
         with:
           repository: African-DC/klassci-college-backend
           ref: main
-          path: ../klassci-college-backend
+          path: be-repo
 
       # ─── Toolchains ────────────────────────────────────────────────────
       - uses: pnpm/action-setup@v4
@@ -77,7 +77,7 @@ jobs:
 
       # ─── BE: install + migrate + seed + start ──────────────────────────
       - name: Install BE dependencies
-        working-directory: ../klassci-college-backend
+        working-directory: be-repo
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
@@ -91,11 +91,11 @@ jobs:
           done
 
       - name: Run alembic migrations on klassci_test
-        working-directory: ../klassci-college-backend
+        working-directory: be-repo
         run: alembic upgrade head
 
       - name: Seed permissions and roles for the test tenant
-        working-directory: ../klassci-college-backend
+        working-directory: be-repo
         run: |
           python -c "
           import asyncio
@@ -109,11 +109,11 @@ jobs:
           " || echo "Tenant data may already be seeded — proceeding"
 
       - name: Seed deterministic test users
-        working-directory: ../klassci-college-backend
+        working-directory: be-repo
         run: python scripts/seed_test_users.py
 
       - name: Start BE (FastAPI)
-        working-directory: ../klassci-college-backend
+        working-directory: be-repo
         run: |
           nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 \
             > be.log 2>&1 &
@@ -149,7 +149,7 @@ jobs:
       # ─── Diagnostics on failure ────────────────────────────────────────
       - name: Tail BE log
         if: failure()
-        working-directory: ../klassci-college-backend
+        working-directory: be-repo
         run: tail -200 be.log || true
 
       - name: Tail FE log
