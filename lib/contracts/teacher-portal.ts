@@ -29,6 +29,7 @@ export const TeacherUpcomingEvalSchema = z.object({
   title: z.string(),
   type: EvaluationTypeSchema,
   date: z.string(),
+  class_id: z.number(),
   class_name: z.string(),
   subject_name: z.string(),
   graded_students: z.number(),
