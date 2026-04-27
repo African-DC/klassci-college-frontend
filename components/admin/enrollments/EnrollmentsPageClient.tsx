@@ -1,59 +1,29 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { Plus, GraduationCap, Users, CheckCircle, Clock } from "lucide-react"
+import { GraduationCap, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { EnrollmentsTable } from "./EnrollmentsTable"
 import { EnrollmentCreateModal } from "./EnrollmentCreateModal"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
 
-function EnrollmentKpis() {
-  const { data } = useEnrollments({ size: 1 })
-  const { data: validated } = useEnrollments({ status: "valide", size: 1 })
-  const { data: pending } = useEnrollments({ status: "en_validation", size: 1 })
-
-  const total = data?.total ?? 0
-  const totalValidated = validated?.total ?? 0
-  const totalPending = pending?.total ?? 0
-
+// Subtitle informatif sans redondance avec les chips. Le total renseigne
+// l'admin sur la volumétrie de la queue ; les counts par statut sont sur
+// la chips bar juste en dessous.
+function EnrollmentsSubtitle() {
+  const { data, isLoading } = useEnrollments({ size: 1 })
+  if (isLoading || !data) {
+    return <p className="text-sm text-muted-foreground">Gérez les inscriptions des élèves</p>
+  }
+  const total = data.total ?? 0
+  if (total === 0) {
+    return <p className="text-sm text-muted-foreground">Aucune inscription pour le moment</p>
+  }
   return (
-    <div className="grid grid-cols-3 gap-4">
-      <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <Users className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Total</p>
-            <p className="text-xl font-bold">{total}</p>
-          </div>
-        </CardContent>
-      </Card>
-      <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100">
-            <CheckCircle className="h-4 w-4 text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Validées</p>
-            <p className="text-xl font-bold">{totalValidated}</p>
-          </div>
-        </CardContent>
-      </Card>
-      <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100">
-            <Clock className="h-4 w-4 text-amber-600" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">En validation</p>
-            <p className="text-xl font-bold">{totalPending}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <p className="text-sm text-muted-foreground">
+      {total} inscription{total > 1 ? "s" : ""} au total
+    </p>
   )
 }
 
@@ -76,9 +46,7 @@ export function EnrollmentsPageClient() {
           </div>
           <div>
             <h1 className="font-serif text-2xl tracking-tight">Inscriptions</h1>
-            <p className="text-sm text-muted-foreground">
-              Gérez les inscriptions des élèves
-            </p>
+            <EnrollmentsSubtitle />
           </div>
         </div>
         <Button onClick={() => setCreateOpen(true)} className="h-10">
@@ -87,14 +55,9 @@ export function EnrollmentsPageClient() {
         </Button>
       </div>
 
-      <EnrollmentKpis />
-
       <EnrollmentsTable />
 
-      <EnrollmentCreateModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-      />
+      <EnrollmentCreateModal open={createOpen} onClose={() => setCreateOpen(false)} />
     </div>
   )
 }
