@@ -15,6 +15,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Matrice rôles × permissions enfin utilisable : groupement à deux niveaux, recherche, pastilles d'actions et libellés français *(admin)* (#108).
 - Lien "Rôles & permissions" depuis les paramètres de l'établissement pour découvrir la matrice *(admin)* (#108).
 - Hooks de bootstrap E2E (workflow CI avec backend réel + base de données + comptes de test seedés) pour fiabiliser les tests qui passent par le login *(devops)*.
+- Page « Mes évaluations » côté portail enseignant : hero avec indicateurs clés, filtre par classe, onglets de statut (À saisir / En retard / Terminées) et bouton « Saisir » qui ouvre la grille de saisie ou le mode dictée *(enseignant)* (#111).
 
 ### Changed
 
@@ -27,6 +28,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Sélection de l'enseignant titulaire vide dans le formulaire de création d'évaluation côté admin *(admin)* (#109).
 - Initialisation du retour audio du mode dictée hors interaction utilisateur, qui empêchait silencieusement le bip de confirmation sur iPhone *(enseignant)* (#108).
 - Bouton micro restait actif après refus de l'autorisation, promettant un fonctionnement impossible *(enseignant)* (#108).
+- Tableau de bord enseignant et élève qui boucle sur « Connexion impossible » : alignés avec les nouveaux chemins backend *(enseignant, élève)* (#111).
+- Page « Mes notes » du portail enseignant qui était inaccessible (lien sidebar vers une page absente) *(enseignant)* (#111).
 
 ### Security
 
