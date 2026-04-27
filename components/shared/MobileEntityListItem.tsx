@@ -2,6 +2,7 @@
 
 import { ChevronRight } from "lucide-react"
 import Link from "next/link"
+import type { Route } from "next"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
@@ -34,7 +35,7 @@ export function MobileEntityListItem({
 }: MobileEntityListItemProps) {
   return (
     <Link
-      href={href}
+      href={href as Route}
       className={cn(
         "flex items-center gap-3 rounded-lg border bg-card px-3 py-3 transition-colors",
         "hover:bg-accent/40 active:bg-accent/60",

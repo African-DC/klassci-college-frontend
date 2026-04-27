@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import type { Route } from "next"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useDeleteStudent, useStudentFilters, useStudents } from "@/lib/hooks/useStudents"
 import type { Student } from "@/lib/contracts/student"
@@ -58,7 +59,7 @@ function StudentAvatar({ student, size = "md" }: { student: Student; size?: "sm"
 function ToInscribeBadge({ studentId }: { studentId: number }) {
   return (
     <Link
-      href={`/admin/enrollments?action=create&student_id=${studentId}`}
+      href={`/admin/enrollments?action=create&student_id=${studentId}` as Route}
       onClick={(e) => e.stopPropagation()}
       className="inline-flex h-6 items-center rounded-full border border-amber-300 bg-amber-50 px-2.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100"
     >
@@ -295,7 +296,7 @@ export function StudentsTable({
         {items.map((s) => (
           <MobileEntityListItem
             key={s.id}
-            href={`/admin/students/${s.id}`}
+            href={`/admin/students/${s.id}` as Route}
             avatar={<StudentAvatar student={s} size="sm" />}
             primary={
               <span className="flex items-center gap-1.5">
