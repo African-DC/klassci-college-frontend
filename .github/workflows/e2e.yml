@@ -155,6 +155,20 @@ jobs:
             || (echo "FATAL — /login HTML missing 'Adresse email' label" && \
                 curl -fsS http://localhost:3000/login | head -200 && exit 1)
 
+      - name: Verify BE accepts test admin credentials
+        # Validates the seed_test_users.py + BE /auth/login contract before
+        # Playwright. If the BE rejects the credentials, no Playwright
+        # debugging will help — fail fast with the exact response body.
+        run: |
+          STATUS=$(curl -sS -o /tmp/login.json -w '%{http_code}' \
+            -X POST http://127.0.0.1:8000/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"admin@klassci.com","password":"Admin@2026"}')
+          echo "BE /auth/login admin → HTTP $STATUS"
+          head -c 300 /tmp/login.json
+          echo ""
+          [ "$STATUS" = "200" ] || exit 1
+
       - name: Run Playwright tests
         run: pnpm test:e2e
 
