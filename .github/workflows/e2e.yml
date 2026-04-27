@@ -143,7 +143,17 @@ jobs:
           PORT: 3000
 
       - name: Wait for FE
-        run: npx wait-on http://localhost:3000 -t 60000
+        # Same HEAD/GET caveat as the BE health probe — force GET semantics.
+        run: npx wait-on http-get://localhost:3000/login -t 90000
+
+      - name: Sanity-check /login renders the form
+        # Quick contract assertion : the live page must contain the email
+        # input label that Playwright will fill. If this fails, the test
+        # timeout that follows would be impossible to debug.
+        run: |
+          curl -fsS http://localhost:3000/login | grep -q "Adresse email" \
+            || (echo "FATAL — /login HTML missing 'Adresse email' label" && \
+                curl -fsS http://localhost:3000/login | head -200 && exit 1)
 
       - name: Run Playwright tests
         run: pnpm test:e2e
