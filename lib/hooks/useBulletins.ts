@@ -33,7 +33,7 @@ export function useGenerateBulletins() {
   return useMutation({
     mutationFn: (data: BulletinGenerate) => bulletinsApi.generate(data),
     onSuccess: (result) => {
-      toast.success(`${result.count} bulletin(s) généré(s) avec succès`)
+      toast.success(`${result.generated} bulletin(s) généré(s) avec succès`)
       queryClient.invalidateQueries({ queryKey: bulletinKeys.all })
     },
     onError: (err) => {
@@ -45,8 +45,15 @@ export function useGenerateBulletins() {
 export function usePublishBulletins() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ classId, trimester }: { classId: number; trimester: string }) =>
-      bulletinsApi.publish(classId, trimester),
+    mutationFn: ({
+      classId,
+      trimester,
+      academicYearId,
+    }: {
+      classId: number
+      trimester: number
+      academicYearId: number
+    }) => bulletinsApi.publish(classId, trimester, academicYearId),
     onSuccess: (result) => {
       toast.success(`${result.count} bulletin(s) publié(s)`)
       queryClient.invalidateQueries({ queryKey: bulletinKeys.all })
