@@ -156,6 +156,67 @@ Voir `marcel-global-preferences.md`.
 
 ✅ « Choisir une classe », pas « Pick » ni « Choisir — une classe ». Apostrophes courbes typographiques pas obligatoires mais accents OUI tous corrects.
 
+### 13. AvatarImage 404-safe gating (shadcn `onLoadingStatusChange`)
+
+| ❌ | ✅ |
+|---|---|
+| `<img src={photoSrc}>` qui affiche l'`alt` text quand src 404 (UX cassée + 1-2 console errors / 404) | shadcn `<Avatar><AvatarImage onLoadingStatusChange={s => setPhotoLoaded(s === "loaded")} /><AvatarFallback>{initials}</AvatarFallback></Avatar>` |
+
+Et **gate les actions photo-related** sur `photoLoaded` :
+
+```tsx
+const [photoLoaded, setPhotoLoaded] = useState(false)
+
+<Avatar>
+  {photoSrc ? (
+    <AvatarImage
+      src={photoSrc}
+      alt={fullName}
+      onLoadingStatusChange={(s) => setPhotoLoaded(s === "loaded")}
+    />
+  ) : null}
+  <AvatarFallback>{initials}</AvatarFallback>
+</Avatar>
+
+{/* Disabled tant que l'image réelle n'a pas chargé */}
+<button onClick={() => photoLoaded && setPreviewOpen(true)} disabled={!photoLoaded}>
+  Voir la photo
+</button>
+
+{/* Item de menu seulement si l'image existe ET a chargé */}
+{photoSrc && photoLoaded && (
+  <DropdownMenuItem onClick={handleDeletePhoto}>Supprimer la photo</DropdownMenuItem>
+)}
+```
+
+**Why** : tester juste `photoSrc` (URL string truthy) ne suffit pas — la string peut pointer sur un fichier 404. AvatarFallback masque le bug visuellement mais les actions « Voir la photo » et « Supprimer la photo » restaient cliquables sur du néant.
+
+**Référence** : PR #143 fix(students): hide photo preview/delete actions when no photo loaded.
+
+### 14. Tri-état badge sémantique : ordre des conditions matters
+
+Pour les badges qui reflètent un état hybride (ex: compte utilisateur), **prioriser le state sémantique « jamais utilisé »** sur le state binaire `isActive` :
+
+| ❌ Mauvais ordre | ✅ Bon ordre |
+|---|---|
+| `if (!isActive) return "Désactivé"` (rouge) avant tout test sur `lastLogin` → un compte fraîchement créé jamais utilisé s'affiche **« Désactivé » rouge alarmant** alors qu'il attend juste sa 1re connexion | `if (!lastLogin) return "En attente"` (amber) **AVANT** `if (!isActive) return "Désactivé"`. « En attente » prend la priorité sémantique sur la binarité technique. |
+
+Pattern :
+
+```tsx
+function getAccountBadge({ isActive, lastLogin }: AccountState) {
+  if (!lastLogin) return { label: "En attente", className: "bg-amber-100 text-amber-700" }
+  if (!isActive) return { label: "Désactivé", variant: "destructive" }
+  return { label: "Actif", className: "bg-emerald-600 text-white" }
+}
+```
+
+**Why** : le BE peut retourner `is_active=false` pour un compte fraîchement créé (selon flow de seed). Le FE ne doit pas refléter ça brutalement avec du rouge alarmant. **L'utilisateur final lit la couleur avant le label** — un rouge sur un compte qui n'a jamais servi crée de la fausse anxiété.
+
+**Trade-off accepté** : un compte explicitement désactivé AVANT toute 1re connexion s'affichera « En attente » au lieu de « Désactivé ». Edge case low-impact, friendly default préféré.
+
+**Référence** : PR #145 fix(students): never-logged accounts show 'En attente' not 'Désactivé'.
+
 ---
 
 ## Architecture data — patterns
@@ -280,6 +341,20 @@ Post-deploy, real users ouvrent l'app avec ANCIEN bundle (Cache-Control: immutab
 
 Le visual-check valide le **render**, pas le **submit**. Pour modal/CTA/badge actionable, exercer le submit via `page.evaluate(fetch...)` et vérifier 2xx. Voir lesson session 2026-04-27 cascade subject.
 
+**Et /visual-check post-deploy mandatory, pas juste local.** Le code peut passer TS strict + tests + Build CI mais avoir un bug **sémantique** qui ne se voit qu'en prod sur des données réelles. Exemple : ProfileTab badge tri-état ordre des conditions — TS heureux, render heureux, mais sur prod admin voit « Désactivé » rouge alarmant au lieu de « En attente » amber pour un compte jamais utilisé. **Toujours** : merge → wait deploy success → /visual-check prod → fix any visual/semantic regression. Voir PR #145 fix follow-up à #143.
+
+### 6. Direct push develop discipline (CI/CD pipeline-aware)
+
+Le pipeline auto-deploy (`deploy-be.yml` + `deploy-fe.yml` qui fire sur push `develop` OU `main`) signifie qu'un push direct sur `develop` déclenche le même build+ship+restart qu'une PR mergée. **Pas de gain de temps**, juste perte de review/CI.
+
+| ❌ | ✅ |
+|---|---|
+| `git push origin develop` direct pour fixer 16 lignes corrélées avec PR juste mergée | `git checkout -b fix/N-description && git push && gh pr create` même pour 16 lignes — auto-deploy fire à la même vitesse au merge |
+
+**Exception unique tolérée** : 1× hotfix < 20 lignes immédiatement corrélé avec une PR juste mergée (typiquement le « j'ai oublié de faire X dans la PR précédente »). 2 fois de suite = mauvaise habitude — fail closed et ouvre une PR.
+
+**Référence** : commit `f99485e` (acceptable), aurait pu se reproduire sur le badge order fix → corrigé en ouvrant PR #145.
+
 ### 5. Pydantic dump + JSON column
 
 `data.model_dump()` → types Python (`date`, Enum). Audit JSON col attend strings → `TypeError` re-raised → 500 plain text. Toujours `model_dump(mode="json")` pour audit / JSON storage.
@@ -295,6 +370,7 @@ Le visual-check valide le **render**, pas le **submit**. Pour modal/CTA/badge ac
 | Permissions Matrix UI | FE #108 | Hierarchique groupé 2 niveaux, recherche, pastilles |
 | Students list redesign Persona | BE #82, FE #116 | Subtitle > KPI cards, chips bar, « À inscrire » badge actionable, MobileEntityListItem primitive, with_loader_criteria, drop noise |
 | Hotfix audit JSON mode | BE #80 | mode=json convention drift fix |
+| Student detail redesign persona-first | FE #140 + #143 + #145 | DropdownMenu kebab actions, mini-hero Wave-style, parents inline tel:, AvatarImage 404-safe (principe 13), tri-état badge sémantique (principe 14) |
 
 ---
 
