@@ -15,6 +15,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Fiche détail parent côté admin (`/admin/parents/[id]`) : un seul écran qui montre les enfants liés (en un tap on ouvre la fiche de l'enfant), le téléphone clickable pour appeler, l'email, la ville/commune, le statut du compte (En attente / Actif / Désactivé) *(admin)* (#157).
 - Onglet « Documents » fonctionnel sur la fiche élève admin : deux cartes pour télécharger le certificat de scolarité et l'attestation de fréquentation au format PDF officiel République de Côte d'Ivoire en un clic. Boutons mobile-friendly h-11 *(admin)* (#145).
 - Page « Documents » côté portail parent : `/parent/children/[id]/documents` permet au parent de télécharger lui-même le certificat de scolarité et l'attestation de fréquentation de son enfant depuis son téléphone. Layout Wave-style mobile-first *(parent)* (#145).
 - Bouton « Documents » ajouté à côté de « Notes » et « Frais » sur la liste des enfants côté parent *(parent)* (#145).
