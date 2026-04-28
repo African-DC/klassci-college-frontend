@@ -20,6 +20,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Fiche élève repensée pour le terrain : Vue d'ensemble centrée sur l'action (solde de paiements, parents avec téléphone clickable « Appeler »), bandeau bleu Wave-style pour le reste à payer, accès direct à la classe en un tap. Plus de doublon entre Vue d'ensemble et Profil *(admin)* (#139).
+- Fiche élève sur mobile : plus de débordement horizontal, photo réduite, onglets ré-ordonnés par usage (Vue, Paiements, Parents, Inscriptions...), boutons d'action regroupés dans un menu pour éviter les suppressions accidentelles *(admin)* (#139).
 - Création d'une classe simplifiée : plus de champ « année académique » à choisir. Les classes sont permanentes, l'année est portée par chaque inscription. Le formulaire de classe ne demande que nom, niveau, série, salle et capacité *(admin)* (#97).
 - Promotion de fin d'année simplifiée : un seul catalogue de classes pour la source et la cible, les doublons « 6ème A 2025-2026 / 6ème A 2026-2027 » disparaissent *(admin)* (#97).
 - Page Inscriptions repensée queue-first : on voit d'un coup d'œil la queue à valider, on valide une inscription en un tap depuis la liste avec confirmation, plus de cartes de KPI redondantes *(admin)* (#121).
@@ -33,6 +35,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 - En-tête des pages Inscriptions et Élèves qui débordait à droite sur mobile (le bouton « Nouvelle inscription » mangeait la place du titre) : on empile désormais titre et bouton sur petit écran et on ajuste la taille du titre *(admin)*.
 - En-tête de la page Classes qui débordait sur mobile (bouton « Nouvelle classe » coupé hors écran) : même empilement vertical mobile + boutons toggle Arbre/Table qui passent à la ligne si nécessaire *(admin)*.
+- Fiche élève qui affichait le nom alternatif de l'image quand la photo n'était pas disponible : on affiche désormais directement les initiales sur fond bleu *(admin)* (#139).
 - Liste des inscriptions qui restait en chargement infini après la refonte queue-first : la page demandait plus d'inscriptions à la fois que le serveur ne le permet *(admin)* (#131).
 - Sélection de l'enseignant titulaire vide dans le formulaire de création d'évaluation côté admin *(admin)* (#109).
 - Initialisation du retour audio du mode dictée hors interaction utilisateur, qui empêchait silencieusement le bip de confirmation sur iPhone *(enseignant)* (#108).
