@@ -117,14 +117,17 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-muted-foreground">Compte utilisateur</h3>
                 {(() => {
-                  // Tri-état : Actif (déjà connecté + actif), En attente (jamais
-                  // connecté → orange amber, neutre), Désactivé (déjà connecté
-                  // mais désactivé → rouge alarmant). Évite le « Inactif » rouge
-                  // alarmiste pour un compte simplement pas encore activé.
-                  if (isActive && lastLogin) {
+                  // Tri-état persona-first : on priorise « jamais connecté »
+                  // (état neutre amber) sur le « désactivé » alarmant (rouge).
+                  // Un compte fraîchement créé qui n'a jamais servi n'est pas
+                  // « désactivé » sémantiquement — il attend juste sa 1re
+                  // connexion. Édge case : un admin qui désactive avant 1re
+                  // connexion verra « En attente » au lieu de « Désactivé »,
+                  // trade-off accepté (low-impact, friendly default).
+                  if (!lastLogin) {
                     return (
-                      <Badge className="bg-emerald-600 hover:bg-emerald-600/80 text-[10px]">
-                        Actif
+                      <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100/80 dark:bg-amber-900/30 dark:text-amber-400 text-[10px]">
+                        En attente
                       </Badge>
                     )
                   }
@@ -132,8 +135,8 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
                     return <Badge variant="destructive" className="text-[10px]">Désactivé</Badge>
                   }
                   return (
-                    <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100/80 dark:bg-amber-900/30 dark:text-amber-400 text-[10px]">
-                      En attente
+                    <Badge className="bg-emerald-600 hover:bg-emerald-600/80 text-[10px]">
+                      Actif
                     </Badge>
                   )
                 })()}
