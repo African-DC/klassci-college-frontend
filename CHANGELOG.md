@@ -30,6 +30,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 - Fiche élève repensée pour le terrain : Vue d'ensemble centrée sur l'action (solde de paiements, parents avec téléphone clickable « Appeler »), bandeau bleu Wave-style pour le reste à payer, accès direct à la classe en un tap. Plus de doublon entre Vue d'ensemble et Profil *(admin)* (#139).
 - Fiche élève sur mobile : plus de débordement horizontal, photo réduite, onglets ré-ordonnés par usage (Vue, Paiements, Parents, Inscriptions...), boutons d'action regroupés dans un menu pour éviter les suppressions accidentelles *(admin)* (#139).
+- Fiches enseignant et personnel sur mobile : même traitement que la fiche élève — plus de débordement horizontal, photo réduite, onglets qui défilent latéralement, boutons d'action regroupés dans un menu, téléphone enseignant clickable pour appel direct *(admin)* (#149).
 - Onglet Paiements de la fiche élève : les boutons d'action « Régénérer les frais » et « Enregistrer un paiement » s'empilent verticalement sur mobile au lieu de déborder hors de l'écran *(admin)* (#141).
 - Onglet Profil allégé : le matricule, le genre et l'email apparaissent une seule fois (déjà visibles dans l'en-tête ou la section Compte) au lieu d'être répétés *(admin)* (#141).
 - Statut du compte utilisateur plus juste : « En attente » (orange) si l'élève n'a jamais ouvert le portail, « Désactivé » (rouge) seulement si le compte a été explicitement désactivé. Plus de « Inactif » rouge alarmant pour un simple compte non-encore-utilisé *(admin)* (#141).
