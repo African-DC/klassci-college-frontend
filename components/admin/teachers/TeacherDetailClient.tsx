@@ -287,7 +287,12 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
         </div>
 
         <TabsContent value="overview">
-          <TeacherOverviewTab teacherId={teacherId} teacher={teacher} fullData={fullData} />
+          <TeacherOverviewTab
+            teacherId={teacherId}
+            teacher={teacher}
+            fullData={fullData}
+            onTabChange={setActiveTab}
+          />
         </TabsContent>
 
         <TabsContent value="profil">
