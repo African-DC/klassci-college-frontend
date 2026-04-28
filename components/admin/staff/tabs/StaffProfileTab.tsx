@@ -1,6 +1,6 @@
 "use client"
 
-import { User, Briefcase, Phone, CalendarDays, Mail, ShieldCheck } from "lucide-react"
+import { User, Phone, CalendarDays, Mail, ShieldCheck } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { Staff } from "@/lib/contracts/staff"
@@ -63,10 +63,10 @@ export function StaffProfileTab({ staff, fullData }: StaffProfileTabProps) {
           <h3 className="text-sm font-medium text-muted-foreground mb-4">
             Informations personnelles
           </h3>
+          {/* Drop Poste (déjà sub-title header) — principe 1 redesign-premium */}
           <div className="grid gap-5 sm:grid-cols-3">
             <InfoField label="Nom" value={staff.last_name} icon={User} />
             <InfoField label="Prénom" value={staff.first_name} icon={User} />
-            <InfoField label="Poste" value={staff.position} icon={Briefcase} />
             <InfoField label="Téléphone" value={staff.phone} icon={Phone} />
             <InfoField label="Créé le" value={createdAt} icon={CalendarDays} />
           </div>
@@ -87,9 +87,24 @@ export function StaffProfileTab({ staff, fullData }: StaffProfileTabProps) {
                   <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />
                   <p className="text-xs font-medium text-muted-foreground">Statut</p>
                 </div>
-                <Badge variant={isActive ? "default" : "secondary"}>
-                  {isActive ? "Actif" : "Inactif"}
-                </Badge>
+                {/* Tri-état sémantique principe 14 redesign-premium */}
+                {(() => {
+                  if (!lastLogin) {
+                    return (
+                      <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100/80 dark:bg-amber-900/30 dark:text-amber-400 text-[10px]">
+                        En attente
+                      </Badge>
+                    )
+                  }
+                  if (isActive === false) {
+                    return <Badge variant="destructive" className="text-[10px]">Désactivé</Badge>
+                  }
+                  return (
+                    <Badge className="bg-emerald-600 hover:bg-emerald-600/80 text-[10px]">
+                      Actif
+                    </Badge>
+                  )
+                })()}
               </div>
               <InfoField label="Dernière connexion" value={lastLoginFormatted} icon={CalendarDays} />
             </div>

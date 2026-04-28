@@ -108,7 +108,7 @@ function ChildDetailCard({ child }: { child: ParentChild }) {
             Frais
           </Link>
           <Link
-            href={`/parent/children/${child.id}/documents`}
+            href={`/parent/children/${child.id}/documents` as never}
             className="flex items-center justify-center gap-1 rounded-md bg-primary/5 px-2 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
           >
             <FileText className="h-3.5 w-3.5" />
