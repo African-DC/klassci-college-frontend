@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import {
   ArrowLeft,
+  Pencil,
   Trash2,
   User,
   Users,
@@ -37,9 +38,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { DataError } from "@/components/shared/DataError"
 import { useParent, useDeleteParent } from "@/lib/hooks/useParents"
 import { parentsApi } from "@/lib/api/parents"
+import { ParentEditModal } from "./ParentEditModal"
 import type { Route } from "next"
 
 interface ParentDetailClientProps {
@@ -49,6 +52,7 @@ interface ParentDetailClientProps {
 export function ParentDetailClient({ parentId }: ParentDetailClientProps) {
   const router = useRouter()
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
 
   const { data: parent, isLoading, isError, refetch } = useParent(parentId)
   const { data: fullData } = useQuery({
@@ -126,8 +130,11 @@ export function ParentDetailClient({ parentId }: ParentDetailClientProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            {/* TODO: brancher un ParentEditModal standalone (existe seulement
-                inline dans ParentsTab côté student detail). Déféré. */}
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Modifier
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => setDeleteOpen(true)}
               className="text-destructive focus:text-destructive focus:bg-destructive/10"
@@ -212,6 +219,12 @@ export function ParentDetailClient({ parentId }: ParentDetailClientProps) {
           </div>
         </CardContent>
       </Card>
+
+      <ParentEditModal
+        parentId={parentId}
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+      />
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
