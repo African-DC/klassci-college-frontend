@@ -323,7 +323,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         </TabsContent>
 
         <TabsContent value="documents">
-          <DocumentsTab studentId={studentId} />
+          <DocumentsTab studentId={studentId} studentLastName={student.last_name} />
         </TabsContent>
       </Tabs>
 
