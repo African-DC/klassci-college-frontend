@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
@@ -17,15 +16,23 @@ import {
   Wallet,
   ClipboardCheck,
   BookOpen,
-  CalendarDays,
-  Clock,
   FileText,
+  MoreVertical,
+  Phone,
+  ChevronRight,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -46,10 +53,15 @@ import { EnrollmentTab } from "./tabs/EnrollmentTab"
 import { AttendanceTab } from "./tabs/AttendanceTab"
 import { ParentsTab } from "./tabs/ParentsTab"
 import { DocumentsTab } from "./tabs/DocumentsTab"
-import { useStudent, useDeleteStudent, studentKeys } from "@/lib/hooks/useStudents"
+import { useStudent, useDeleteStudent, studentKeys, useStudentFees } from "@/lib/hooks/useStudents"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
+import { useStudentParents } from "@/lib/hooks/useParents"
 import { studentsApi } from "@/lib/api/students"
 import { getUploadUrl } from "@/lib/utils"
+
+function formatFCFA(amount: number): string {
+  return `${amount.toLocaleString("fr-FR")} FCFA`
+}
 
 // ---------- Main component ----------
 interface StudentDetailClientProps {
@@ -115,82 +127,92 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
-          <Link
-            href="/admin/students"
-            aria-label="Retour à la liste des élèves"
-            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
+      {/* Header — mobile-first stack, no horizontal overflow */}
+      <div className="flex items-start gap-3">
+        <Link
+          href="/admin/students"
+          aria-label="Retour à la liste des élèves"
+          className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
 
-          {/* Photo — clic = agrandir, bouton camera = upload */}
-          <div className="relative shrink-0">
-            <div
-              className={`overflow-hidden rounded-2xl border-2 border-border ${photoSrc ? "cursor-pointer" : ""}`}
-              onClick={() => photoSrc && setPhotoPreview(true)}
-            >
-              {photoSrc ? (
-                <img
-                  src={photoSrc}
-                  alt={fullName}
-                  className="h-28 w-28 object-cover"
-                />
-              ) : (
-                <div className="flex h-28 w-28 items-center justify-center bg-primary/10">
-                  <span className="text-3xl font-semibold text-primary">{initials}</span>
-                </div>
-              )}
-            </div>
-            {/* Bouton camera en bas à droite */}
-            <button
-              type="button"
+        {/* Avatar shadcn — handles 404 via AvatarImage onError → AvatarFallback */}
+        <button
+          type="button"
+          onClick={() => photoSrc && setPhotoPreview(true)}
+          aria-label={photoSrc ? "Voir la photo en grand" : "Photo de l'élève"}
+          className="shrink-0 overflow-hidden rounded-2xl border-2 border-border focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-default"
+          disabled={!photoSrc}
+        >
+          <Avatar className="h-16 w-16 rounded-2xl sm:h-24 sm:w-24">
+            {photoSrc ? <AvatarImage src={photoSrc} alt={fullName} className="object-cover" /> : null}
+            <AvatarFallback className="rounded-2xl bg-primary/10 text-xl font-semibold text-primary sm:text-2xl">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+
+        {/* Name + matricule + sex — flex-1 prevents overflow */}
+        <div className="min-w-0 flex-1">
+          <h1 className="font-serif text-lg tracking-tight sm:text-2xl">{fullName}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {student.enrollment_number && (
+              <span className="font-mono text-xs">{student.enrollment_number}</span>
+            )}
+            {student.genre && (
+              <Badge variant="outline" className="text-[10px]">
+                {student.genre === "M" ? "Masculin" : "Féminin"}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Actions — kebab DropdownMenu protects against touch-error on mobile */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">Actions sur l&apos;élève</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Modifier les infos
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
             >
-              {uploading ? (
-                <Clock className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Camera className="h-3.5 w-3.5" />
-              )}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoUpload}
-            />
-          </div>
+              <Camera className="mr-2 h-4 w-4" />
+              {photoSrc ? "Changer la photo" : "Ajouter une photo"}
+            </DropdownMenuItem>
+            {photoSrc && (
+              <DropdownMenuItem onClick={handleDeletePhoto}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Supprimer la photo
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setDeleteOpen(true)}
+              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Supprimer l&apos;élève
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          <div className="min-w-0">
-            <h1 className="font-serif text-2xl tracking-tight">{fullName}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              {student.enrollment_number && (
-                <span className="font-mono text-xs">{student.enrollment_number}</span>
-              )}
-              {student.genre && (
-                <Badge variant="outline" className="text-[10px]">
-                  {student.genre === "M" ? "Masculin" : "Féminin"}
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-1.5 h-3.5 w-3.5" />
-            Modifier
-          </Button>
-          <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-            Supprimer
-          </Button>
-        </div>
+        {/* Hidden input for photo upload (triggered from DropdownMenu) */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoUpload}
+        />
       </div>
 
       {/* Photo preview dialog */}
@@ -232,61 +254,63 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         </Dialog>
       )}
 
-      {/* Tabs */}
+      {/* Tabs — reordered by usage frequency, scroll-x on mobile */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">
-            <BookOpen className="mr-1.5 h-3.5 w-3.5" />
-            Vue d&apos;ensemble
-          </TabsTrigger>
-          <TabsTrigger value="profil">
-            <User className="mr-1.5 h-3.5 w-3.5" />
-            Profil
-          </TabsTrigger>
-          <TabsTrigger value="inscription">
-            <GraduationCap className="mr-1.5 h-3.5 w-3.5" />
-            Inscriptions
-          </TabsTrigger>
-          <TabsTrigger value="paiements">
-            <Wallet className="mr-1.5 h-3.5 w-3.5" />
-            Paiements
-          </TabsTrigger>
-          <TabsTrigger value="presences">
-            <ClipboardCheck className="mr-1.5 h-3.5 w-3.5" />
-            Présences
-          </TabsTrigger>
-          <TabsTrigger value="parents">
-            <Users className="mr-1.5 h-3.5 w-3.5" />
-            Parents
-          </TabsTrigger>
-          <TabsTrigger value="documents">
-            <FileText className="mr-1.5 h-3.5 w-3.5" />
-            Documents
-          </TabsTrigger>
-        </TabsList>
+        <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+          <TabsList className="w-max">
+            <TabsTrigger value="overview">
+              <BookOpen className="mr-1.5 h-3.5 w-3.5" />
+              Vue d&apos;ensemble
+            </TabsTrigger>
+            <TabsTrigger value="paiements">
+              <Wallet className="mr-1.5 h-3.5 w-3.5" />
+              Paiements
+            </TabsTrigger>
+            <TabsTrigger value="parents">
+              <Users className="mr-1.5 h-3.5 w-3.5" />
+              Parents
+            </TabsTrigger>
+            <TabsTrigger value="inscription">
+              <GraduationCap className="mr-1.5 h-3.5 w-3.5" />
+              Inscriptions
+            </TabsTrigger>
+            <TabsTrigger value="profil">
+              <User className="mr-1.5 h-3.5 w-3.5" />
+              Profil
+            </TabsTrigger>
+            <TabsTrigger value="presences">
+              <ClipboardCheck className="mr-1.5 h-3.5 w-3.5" />
+              Présences
+            </TabsTrigger>
+            <TabsTrigger value="documents">
+              <FileText className="mr-1.5 h-3.5 w-3.5" />
+              Documents
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview">
           <OverviewTab studentId={studentId} student={student} />
-        </TabsContent>
-
-        <TabsContent value="profil">
-          <ProfileTab student={student} fullData={student as unknown as Record<string, unknown>} />
-        </TabsContent>
-
-        <TabsContent value="inscription">
-          <EnrollmentTab studentId={studentId} />
         </TabsContent>
 
         <TabsContent value="paiements">
           <PaymentsTab studentId={studentId} fullData={student as unknown as Record<string, unknown>} />
         </TabsContent>
 
-        <TabsContent value="presences">
-          <AttendanceTab studentId={studentId} />
-        </TabsContent>
-
         <TabsContent value="parents">
           <ParentsTab studentId={studentId} />
+        </TabsContent>
+
+        <TabsContent value="inscription">
+          <EnrollmentTab studentId={studentId} />
+        </TabsContent>
+
+        <TabsContent value="profil">
+          <ProfileTab student={student} fullData={student as unknown as Record<string, unknown>} />
+        </TabsContent>
+
+        <TabsContent value="presences">
+          <AttendanceTab studentId={studentId} />
         </TabsContent>
 
         <TabsContent value="documents">
@@ -318,105 +342,225 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
   )
 }
 
-// ---------- Overview tab ----------
-function OverviewTab({ studentId, student }: { studentId: number; student: { first_name: string; last_name: string; genre?: string | null; enrollment_number?: string | null; birth_date?: string | null } }) {
-  const { data: enrollmentsData, isLoading } = useEnrollments({ student_id: studentId })
-  const enrollments = enrollmentsData?.items ?? []
+// ---------- Overview tab — actionable, persona-first ----------
+function OverviewTab({
+  studentId,
+  student,
+}: {
+  studentId: number
+  student: {
+    first_name: string
+    last_name: string
+    genre?: string | null
+    enrollment_number?: string | null
+    birth_date?: string | null
+  }
+}) {
+  const { data: enrollmentsData, isLoading: enrollmentsLoading } = useEnrollments({
+    student_id: studentId,
+  })
+  const { data: fees, isLoading: feesLoading } = useStudentFees(studentId)
+  const { data: parents, isLoading: parentsLoading } = useStudentParents(studentId)
 
-  // Find the most recent enrollment (likely current year)
+  const enrollments = enrollmentsData?.items ?? []
   const current = enrollments[0] as Record<string, unknown> | undefined
 
-  if (isLoading) return <TabSkeleton />
+  const totalExpected = (fees ?? []).reduce((sum, f) => sum + f.amount, 0)
+  const totalPaid = (fees ?? []).reduce((sum, f) => sum + f.paid, 0)
+  const feesRemaining = Math.max(0, totalExpected - totalPaid)
+  const feesRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0
+
+  if (enrollmentsLoading) return <TabSkeleton />
+
+  const enrolledOn = current?.created_at
+    ? new Date(String(current.created_at)).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null
+
+  const statusLabel =
+    current?.status === "valide"
+      ? "Validé"
+      : current?.status === "en_validation"
+        ? "En validation"
+        : current?.status === "prospect"
+          ? "Prospect"
+          : current?.status
+            ? String(current.status)
+            : "—"
+
+  const statusVariant =
+    current?.status === "valide"
+      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+      : current?.status === "en_validation"
+        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+        : "bg-muted text-muted-foreground"
 
   return (
     <div className="space-y-4">
-      {/* KPI cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-0 shadow-sm ring-1 ring-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <GraduationCap className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Classe</p>
-                <p className="text-sm font-semibold">
-                  {current?.class_name ? String(current.class_name) : "Non inscrit"}
-                </p>
-              </div>
+      {/* Mini-hero Paiements — Wave Mobile Money style, 1-tap pour régler */}
+      {!feesLoading && totalExpected > 0 && (
+        <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-5 text-primary-foreground shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-wide opacity-80">Reste à payer</p>
+              <p className="mt-1 font-serif text-2xl sm:text-3xl">{formatFCFA(feesRemaining)}</p>
+              <p className="mt-1 text-xs opacity-80">
+                {formatFCFA(totalPaid)} payés sur {formatFCFA(totalExpected)}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <Link href={`/admin/students/${studentId}?tab=paiements` as never} scroll={false}>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-11 w-full gap-2 sm:h-9 sm:w-auto"
+              >
+                <Wallet className="h-4 w-4" />
+                Voir les paiements
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-primary-foreground/20">
+            <div
+              className="h-full rounded-full bg-primary-foreground transition-all"
+              style={{ width: `${feesRate}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 2 KPI cards seulement : Classe (lien) + Statut (badge) */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {current?.class_id ? (
+          <Link
+            href={`/admin/classes/${current.class_id as number}` as never}
+            className="group block"
+          >
+            <Card className="border-0 shadow-sm ring-1 ring-border transition-colors group-hover:ring-primary">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <GraduationCap className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground">Classe</p>
+                    <p className="truncate text-sm font-semibold">
+                      {String(current.class_name ?? "")}
+                    </p>
+                    {enrolledOn && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">Inscrit le {enrolledOn}</p>
+                    )}
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ) : (
+          <Card className="border-0 shadow-sm ring-1 ring-border">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                  <GraduationCap className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Classe</p>
+                  <p className="text-sm font-semibold text-muted-foreground">Non inscrit</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="border-0 shadow-sm ring-1 ring-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <CalendarDays className="h-5 w-5 text-primary" />
+              <div
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${statusVariant}`}
+              >
+                <ClipboardCheck className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Année scolaire</p>
-                <p className="text-sm font-semibold">
-                  {current?.academic_year_name ? String(current.academic_year_name) : "—"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm ring-1 ring-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                <ClipboardCheck className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Statut</p>
-                <p className="text-sm font-semibold">
-                  {current?.status === "valide" ? "Validé" : current?.status === "en_validation" ? "En validation" : current?.status === "prospect" ? "Prospect" : current?.status ? String(current.status) : "—"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm ring-1 ring-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <BookOpen className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Matricule</p>
-                <p className="text-sm font-semibold font-mono">
-                  {student.enrollment_number ?? "Non attribué"}
-                </p>
+                <p className="text-xs text-muted-foreground">Statut inscription</p>
+                <p className="text-sm font-semibold">{statusLabel}</p>
+                {current?.academic_year_name ? (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {String(current.academic_year_name)}
+                  </p>
+                ) : null}
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Personal info summary */}
+      {/* Parents inline — 1 ligne par parent avec téléphone clickable tel: */}
       <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-4">Informations personnelles</h3>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Nom complet</p>
-              <p className="text-sm font-medium">{student.last_name} {student.first_name}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Genre</p>
-              <p className="text-sm font-medium">{student.genre === "M" ? "Masculin" : student.genre === "F" ? "Féminin" : "Non renseigné"}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Date de naissance</p>
-              <p className="text-sm font-medium">
-                {student.birth_date ? new Date(student.birth_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "Non renseigné"}
-              </p>
-            </div>
+        <CardContent className="p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 text-sm font-medium">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              Parents
+            </h3>
+            {parents && parents.length > 2 && (
+              <span className="text-xs text-muted-foreground">{parents.length} liés</span>
+            )}
           </div>
+          {parentsLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-12 rounded-lg" />
+              <Skeleton className="h-12 rounded-lg" />
+            </div>
+          ) : !parents || parents.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aucun parent lié à cet élève.</p>
+          ) : (
+            <ul className="space-y-2">
+              {parents.slice(0, 2).map((p) => {
+                const parent = p as Record<string, unknown>
+                const fn = String(parent.first_name ?? "")
+                const ln = String(parent.last_name ?? "")
+                const phone = parent.phone as string | null | undefined
+                const rel = parent.relationship_type as string | null | undefined
+                const relLabel =
+                  rel === "father"
+                    ? "Père"
+                    : rel === "mother"
+                      ? "Mère"
+                      : rel === "guardian"
+                        ? "Tuteur"
+                        : ""
+                return (
+                  <li
+                    key={String(parent.id)}
+                    className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {ln} {fn}
+                      </p>
+                      {relLabel && (
+                        <p className="text-xs text-muted-foreground">{relLabel}</p>
+                      )}
+                    </div>
+                    {phone ? (
+                      <a
+                        href={`tel:${phone}`}
+                        className="flex h-9 shrink-0 items-center gap-1.5 rounded-md border bg-background px-3 text-sm font-medium text-primary hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <Phone className="h-3.5 w-3.5" />
+                        Appeler
+                      </a>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Pas de téléphone</span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </CardContent>
       </Card>
     </div>
