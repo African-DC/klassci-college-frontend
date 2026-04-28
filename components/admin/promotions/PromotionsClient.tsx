@@ -53,27 +53,16 @@ export function PromotionsClient() {
   const { data: yearsData } = useAcademicYears({ size: 50, page: 1 })
   const years = yearsData?.items ?? []
 
-  const { data: sourceClassesData } = useClasses(
-    sourceAyId ? { academic_year_id: sourceAyId, size: 100, page: 1 } : { size: 1, page: 1 },
+  // Refactor #97 : Class est universel. Le même catalogue de classes sert
+  // pour la source et la cible — la distinction se fait via les AY portées
+  // par Enrollment côté BE. Plus de filtrage local par academic_year_id.
+  const { data: classesData } = useClasses({ size: 100, page: 1 })
+  const allClasses = useMemo(
+    () => classesData?.items ?? [],
+    [classesData],
   )
-  const sourceClasses = useMemo(
-    () =>
-      sourceAyId
-        ? (sourceClassesData?.items ?? []).filter((c) => c.academic_year_id === sourceAyId)
-        : [],
-    [sourceAyId, sourceClassesData],
-  )
-
-  const { data: targetClassesData } = useClasses(
-    targetAyId ? { academic_year_id: targetAyId, size: 100, page: 1 } : { size: 1, page: 1 },
-  )
-  const targetClasses = useMemo(
-    () =>
-      targetAyId
-        ? (targetClassesData?.items ?? []).filter((c) => c.academic_year_id === targetAyId)
-        : [],
-    [targetAyId, targetClassesData],
-  )
+  const sourceClasses = sourceAyId !== null ? allClasses : []
+  const targetClasses = targetAyId !== null ? allClasses : []
 
   const previewMutation = usePromotionPreview()
   const executeMutation = usePromotionExecute()
@@ -280,7 +269,6 @@ export function PromotionsClient() {
 interface ClassRow {
   id: number
   name: string
-  academic_year_id: number
   max_students?: number | null | undefined
   enrolled_count?: number | undefined
 }
