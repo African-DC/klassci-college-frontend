@@ -6,49 +6,77 @@ import {
   type BulletinListParams,
   type BulletinGenerate,
 } from "@/lib/contracts/bulletin"
-import { PaginatedResponseSchema, type PaginatedResponse } from "@/lib/contracts"
 
-const PaginatedBulletinSchema = PaginatedResponseSchema(BulletinSchema)
 const BulletinArraySchema = z.array(BulletinSchema)
+const BulletinListResponseSchema = z.object({
+  items: BulletinArraySchema,
+  total: z.number(),
+})
+
+export interface BulletinListResult {
+  items: Bulletin[]
+  total: number
+  page: number
+  size: number
+}
+
+export interface BulletinGenerateResult {
+  message: string
+  generated: number
+  bulletins: Bulletin[]
+}
+
+export interface BulletinPublishResult {
+  message: string
+  count: number
+}
 
 export const bulletinsApi = {
-  list: async (params: BulletinListParams = {}): Promise<PaginatedResponse<Bulletin>> => {
+  list: async (params: BulletinListParams = {}): Promise<BulletinListResult> => {
     const query = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined)
         .map(([k, v]) => [k, String(v)]),
     ).toString()
-    const json = await apiFetch<PaginatedResponse<Bulletin> | Bulletin[]>(
-      `/bulletins${query ? `?${query}` : ""}`,
+    const json = await apiFetch<unknown>(
+      `/reports/bulletins${query ? `?${query}` : ""}`,
     )
-    if (Array.isArray(json)) {
-      const arr = safeValidate(BulletinArraySchema, json, "GET /bulletins")
-      return { items: arr, total: arr.length, page: 1, size: arr.length, total_pages: 1 }
+    const validated = safeValidate(BulletinListResponseSchema, json, "GET /reports/bulletins")
+    return {
+      ...validated,
+      page: 1,
+      size: validated.items.length || 1,
     }
-    return safeValidate(PaginatedBulletinSchema, json, "GET /bulletins") as PaginatedResponse<Bulletin>
   },
 
   getById: async (id: number): Promise<Bulletin> => {
-    const json = await apiFetch<{ data?: Bulletin } | Bulletin>(`/bulletins/${id}`)
-    const bulletin = (json as { data?: Bulletin }).data ?? (json as Bulletin)
-    return safeValidate(BulletinSchema, bulletin, `GET /bulletins/${id}`)
+    const json = await apiFetch<unknown>(`/reports/bulletins/${id}`)
+    return safeValidate(BulletinSchema, json, `GET /reports/bulletins/${id}`)
   },
 
-  generate: async (data: BulletinGenerate): Promise<{ message: string; count: number }> => {
-    return apiFetch("/bulletins/generate", {
+  generate: async (data: BulletinGenerate): Promise<BulletinGenerateResult> => {
+    return apiFetch("/reports/bulletins/generate", {
       method: "POST",
       body: JSON.stringify(data),
     })
   },
 
-  publish: async (classId: number, trimester: string): Promise<{ message: string; count: number }> => {
-    return apiFetch("/bulletins/publish", {
+  publish: async (
+    classId: number,
+    trimester: number,
+    academicYearId: number,
+  ): Promise<BulletinPublishResult> => {
+    const query = new URLSearchParams({
+      class_id: String(classId),
+      trimester: String(trimester),
+      academic_year_id: String(academicYearId),
+    }).toString()
+    return apiFetch(`/reports/bulletins/publish?${query}`, {
       method: "POST",
-      body: JSON.stringify({ class_id: classId, trimester }),
     })
   },
 
   downloadPdf: async (id: number): Promise<Blob> => {
-    return apiFetchBlob(`/bulletins/${id}/pdf`)
+    return apiFetchBlob(`/reports/bulletins/${id}/pdf`)
   },
 }
