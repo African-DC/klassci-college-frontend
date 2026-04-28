@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Users, GraduationCap, Wallet, AlertCircle, ChevronRight } from "lucide-react"
+import { Users, GraduationCap, Wallet, AlertCircle, ChevronRight, FileText } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -92,22 +92,27 @@ function ChildDetailCard({ child }: { child: ParentChild }) {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <Link
             href={`/parent/children/${child.id}/grades`}
-            className="flex flex-1 items-center justify-center gap-1 rounded-md bg-primary/5 px-3 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+            className="flex items-center justify-center gap-1 rounded-md bg-primary/5 px-2 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
           >
             <GraduationCap className="h-3.5 w-3.5" />
-            Voir les notes
-            <ChevronRight className="h-3 w-3" />
+            Notes
           </Link>
           <Link
             href={`/parent/children/${child.id}/fees`}
-            className="flex flex-1 items-center justify-center gap-1 rounded-md bg-primary/5 px-3 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+            className="flex items-center justify-center gap-1 rounded-md bg-primary/5 px-2 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
           >
             <Wallet className="h-3.5 w-3.5" />
-            Voir les frais
-            <ChevronRight className="h-3 w-3" />
+            Frais
+          </Link>
+          <Link
+            href={`/parent/children/${child.id}/documents`}
+            className="flex items-center justify-center gap-1 rounded-md bg-primary/5 px-2 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            Documents
           </Link>
         </div>
       </CardContent>
