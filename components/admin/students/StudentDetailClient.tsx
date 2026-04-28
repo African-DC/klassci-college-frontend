@@ -77,6 +77,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [photoPreview, setPhotoPreview] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [activeTab, setActiveTab] = useState("overview")
 
   const { data: student, isLoading, isError, refetch } = useStudent(studentId)
   const { mutate: deleteStudent, isPending: deleting } = useDeleteStudent()
@@ -254,8 +255,8 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         </Dialog>
       )}
 
-      {/* Tabs — reordered by usage frequency, scroll-x on mobile */}
-      <Tabs defaultValue="overview" className="space-y-4">
+      {/* Tabs — reordered by usage frequency, scroll-x on mobile, controlled for cross-tab links */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
           <TabsList className="w-max">
             <TabsTrigger value="overview">
@@ -290,7 +291,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         </div>
 
         <TabsContent value="overview">
-          <OverviewTab studentId={studentId} student={student} />
+          <OverviewTab studentId={studentId} student={student} onTabChange={setActiveTab} />
         </TabsContent>
 
         <TabsContent value="paiements">
@@ -346,6 +347,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
 function OverviewTab({
   studentId,
   student,
+  onTabChange,
 }: {
   studentId: number
   student: {
@@ -355,6 +357,7 @@ function OverviewTab({
     enrollment_number?: string | null
     birth_date?: string | null
   }
+  onTabChange?: (tab: string) => void
 }) {
   const { data: enrollmentsData, isLoading: enrollmentsLoading } = useEnrollments({
     student_id: studentId,
@@ -411,17 +414,16 @@ function OverviewTab({
                 {formatFCFA(totalPaid)} payés sur {formatFCFA(totalExpected)}
               </p>
             </div>
-            <Link href={`/admin/students/${studentId}?tab=paiements` as never} scroll={false}>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-11 w-full gap-2 sm:h-9 sm:w-auto"
-              >
-                <Wallet className="h-4 w-4" />
-                Voir les paiements
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </Link>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-11 w-full gap-2 sm:h-9 sm:w-auto"
+              onClick={() => onTabChange?.("paiements")}
+            >
+              <Wallet className="h-4 w-4" />
+              Voir les paiements
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
           <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-primary-foreground/20">
             <div
