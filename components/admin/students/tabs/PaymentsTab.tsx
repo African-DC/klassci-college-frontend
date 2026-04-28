@@ -123,15 +123,15 @@ export function PaymentsTab({ studentId }: PaymentsTabProps) {
             value={feesRate}
             className="h-3 bg-primary-foreground/20 [&>div]:bg-primary-foreground"
           />
-          <div className="mt-3 flex items-center justify-between">
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-primary-foreground/80">
               Reste à payer : <span className="font-semibold">{formatFCFA(feesRemaining as number)}</span>
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-xs text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10 border border-primary-foreground/30"
+                className="h-10 text-xs text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10 border border-primary-foreground/30 sm:h-9"
                 onClick={handleRegenerateFees}
                 disabled={regenerating}
               >
@@ -141,7 +141,7 @@ export function PaymentsTab({ studentId }: PaymentsTabProps) {
               <Button
                 size="sm"
                 variant="secondary"
-                className="text-xs"
+                className="h-10 text-xs sm:h-9"
                 onClick={() => setPaymentOpen(true)}
               >
                 <Plus className="mr-1.5 h-3.5 w-3.5" />
