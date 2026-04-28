@@ -78,6 +78,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
   const [photoPreview, setPhotoPreview] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
+  const [photoLoaded, setPhotoLoaded] = useState(false)
 
   const { data: student, isLoading, isError, refetch } = useStudent(studentId)
   const { mutate: deleteStudent, isPending: deleting } = useDeleteStudent()
@@ -141,13 +142,20 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         {/* Avatar shadcn — handles 404 via AvatarImage onError → AvatarFallback */}
         <button
           type="button"
-          onClick={() => photoSrc && setPhotoPreview(true)}
-          aria-label={photoSrc ? "Voir la photo en grand" : "Photo de l'élève"}
+          onClick={() => photoLoaded && setPhotoPreview(true)}
+          aria-label={photoLoaded ? "Voir la photo en grand" : "Photo de l'élève"}
           className="shrink-0 overflow-hidden rounded-2xl border-2 border-border focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-default"
-          disabled={!photoSrc}
+          disabled={!photoLoaded}
         >
           <Avatar className="h-16 w-16 rounded-2xl sm:h-24 sm:w-24">
-            {photoSrc ? <AvatarImage src={photoSrc} alt={fullName} className="object-cover" /> : null}
+            {photoSrc ? (
+              <AvatarImage
+                src={photoSrc}
+                alt={fullName}
+                className="object-cover"
+                onLoadingStatusChange={(status) => setPhotoLoaded(status === "loaded")}
+              />
+            ) : null}
             <AvatarFallback className="rounded-2xl bg-primary/10 text-xl font-semibold text-primary sm:text-2xl">
               {initials}
             </AvatarFallback>
@@ -189,7 +197,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
               <Camera className="mr-2 h-4 w-4" />
               {photoSrc ? "Changer la photo" : "Ajouter une photo"}
             </DropdownMenuItem>
-            {photoSrc && (
+            {photoSrc && photoLoaded && (
               <DropdownMenuItem onClick={handleDeletePhoto}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Supprimer la photo
