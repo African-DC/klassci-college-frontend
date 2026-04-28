@@ -50,7 +50,11 @@ const authMiddleware = auth((req) => {
     return NextResponse.next()
   }
 
-  if (pathname === "/login" && isLoggedIn) {
+  // A session in error state (RefreshTokenError) must be allowed to reach /login
+  // so the user can sign in again. Otherwise rule 1 above redirects /<portal> →
+  // /login while this rule redirects /login → /<portal>, producing an infinite
+  // ERR_TOO_MANY_REDIRECTS loop in the browser.
+  if (pathname === "/login" && isLoggedIn && !session.error) {
     const dest = getDefaultRedirect(session.user.role)
     if (dest !== "/login") {
       const url = req.nextUrl.clone()
