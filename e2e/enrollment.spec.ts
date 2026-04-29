@@ -29,4 +29,24 @@ test.describe('Enrollment list', () => {
     await expect(dialog.getByRole('heading', { name: /Inscription|Nouvelle/i }).first())
       .toBeVisible()
   })
+
+  test('escape closes the enrollment dialog without leaving the list', async ({ page }) => {
+    // Validates Dialog primitive behaviour : Escape closes, page state intact.
+    // The form itself is a 4-step wizard; testing field contracts requires
+    // wizard navigation + seeded classes/AY/fee variants (S2 work).
+    await page.goto('/admin/enrollments')
+    await page.getByRole('button', { name: /Nouvelle inscription/i }).first().click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible({ timeout: 5_000 })
+
+    await page.keyboard.press('Escape')
+    await expect(dialog).not.toBeVisible({ timeout: 5_000 })
+
+    // Page heading still visible — we didn't navigate away.
+    await expect(
+      page.getByRole('heading', { name: /Inscriptions/i }).first(),
+    ).toBeVisible()
+    await expect(page).toHaveURL(/\/admin\/enrollments/)
+  })
 })
