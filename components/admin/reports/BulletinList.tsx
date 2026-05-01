@@ -96,8 +96,12 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
   }
 
   function handlePublish() {
-    if (!params.class_id || !params.trimester) return
-    publish({ classId: params.class_id, trimester: String(params.trimester) })
+    if (!params.class_id || !params.trimester || !params.academic_year_id) return
+    publish({
+      classId: params.class_id,
+      trimester: params.trimester,
+      academicYearId: params.academic_year_id,
+    })
   }
 
   return (

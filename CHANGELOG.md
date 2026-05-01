@@ -8,8 +8,23 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Tableau de bord parent qui affichait toujours « Connexion au serveur impossible » depuis le ship du portail parent : on voit désormais pour chaque enfant la classe, la moyenne, le nombre d'absences et le solde restant à payer, en un coup d'œil dès la connexion *(parent)*.
+- Quand la session expire silencieusement, on n'affiche plus l'identité de l'ancien utilisateur sur la barre de navigation et la page d'accueil : la redirection vers la page de connexion se fait immédiatement, sans flicker de données périmées *(tous)* (#164).
+- Page de connexion qui boucle en `ERR_TOO_MANY_REDIRECTS` quand le jeton d'accès est expiré : avec `RefreshTokenError`, le middleware redirigeait `/login → /<portail> → /login` à l'infini car la session restait techniquement « connectée ». La page de connexion est désormais toujours accessible quand la session est en erreur, ce qui permet à l'utilisateur de se reconnecter *(tous)* (#151).
+- Bulletins côté admin : la liste, la prévisualisation, la génération, la publication et le téléchargement PDF étaient tous cassés en silence (404 ou réponse Celery vide) car ils visaient les anciens endpoints racine. Tout pointe désormais sur `/reports/bulletins/*` et la génération retourne immédiatement les bulletins créés *(admin)* (#142).
+
 ### Added
 
+- Liste des parents côté admin (`/admin/parents`) : entrée dans le menu Scolarité, recherche, pagination, et création/édition/suppression directement depuis la liste avec un compte de connexion optionnel *(admin)* (#161).
+- Bouton « Modifier » sur la fiche parent : on peut désormais corriger nom, prénom, téléphone, email, ville et commune sans passer par la fiche d'un élève *(admin)* (#161).
+- Fiche détail parent côté admin (`/admin/parents/[id]`) : un seul écran qui montre les enfants liés (en un tap on ouvre la fiche de l'enfant), le téléphone clickable pour appeler, l'email, la ville/commune, le statut du compte (En attente / Actif / Désactivé) *(admin)* (#157).
+- Onglet « Documents » fonctionnel sur la fiche élève admin : deux cartes pour télécharger le certificat de scolarité et l'attestation de fréquentation au format PDF officiel République de Côte d'Ivoire en un clic. Boutons mobile-friendly h-11 *(admin)* (#145).
+- Page « Documents » côté portail parent : `/parent/children/[id]/documents` permet au parent de télécharger lui-même le certificat de scolarité et l'attestation de fréquentation de son enfant depuis son téléphone. Layout Wave-style mobile-first *(parent)* (#145).
+- Bouton « Documents » ajouté à côté de « Notes » et « Frais » sur la liste des enfants côté parent *(parent)* (#145).
+- Champs « Nom du chef d'établissement » et « Titre / fonction » dans les paramètres de l'établissement, indispensables pour signer les documents officiels *(admin)* (#145).
+- Promotion en masse de fin d'année : nouvelle page « Promotions » qui aide l'admin à transformer en quelques clics les inscriptions valides d'une année vers la suivante, avec aperçu des élèves promus, avertissements de capacité et rapport détaillé des exceptions *(admin)* (#133).
 - Mode dictée vocal plein écran pour saisir les notes sans regarder l'écran, optimisé Chrome Android et iOS Safari *(enseignant)* (#108).
 - Création d'évaluation déléguée : un admin ou un personnel administratif peut créer une évaluation au nom d'un enseignant, avec sélection explicite du titulaire *(admin)* (#108).
 - Matrice rôles × permissions enfin utilisable : groupement à deux niveaux, recherche, pastilles d'actions et libellés français *(admin)* (#108).
@@ -19,6 +34,17 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Fiche élève repensée pour le terrain : Vue d'ensemble centrée sur l'action (solde de paiements, parents avec téléphone clickable « Appeler »), bandeau bleu Wave-style pour le reste à payer, accès direct à la classe en un tap. Plus de doublon entre Vue d'ensemble et Profil *(admin)* (#139).
+- Fiche élève sur mobile : plus de débordement horizontal, photo réduite, onglets ré-ordonnés par usage (Vue, Paiements, Parents, Inscriptions...), boutons d'action regroupés dans un menu pour éviter les suppressions accidentelles *(admin)* (#139).
+- Fiches enseignant et personnel sur mobile : même traitement que la fiche élève — plus de débordement horizontal, photo réduite, onglets qui défilent latéralement, boutons d'action regroupés dans un menu, téléphone enseignant clickable pour appel direct *(admin)* (#149).
+- Vue d'ensemble enseignant rendue actionnable : les 4 indicateurs (classes, élèves, heures, disponibilité) sont des cartes clickables qui ouvrent l'onglet correspondant en un tap, plus de doublon « Spécialité » avec l'en-tête, statut de compte plus juste (« En attente » au lieu de « Inactif » pour un compte jamais utilisé) *(admin)* (#151).
+- Onglet Profil personnel allégé : plus de doublon « Poste » avec l'en-tête, statut de compte avec le même tri-état que les autres fiches (« En attente » / « Désactivé » / « Actif ») *(admin)*.
+- Onglet Paiements de la fiche élève : les boutons d'action « Régénérer les frais » et « Enregistrer un paiement » s'empilent verticalement sur mobile au lieu de déborder hors de l'écran *(admin)* (#141).
+- Onglet Profil allégé : le matricule, le genre et l'email apparaissent une seule fois (déjà visibles dans l'en-tête ou la section Compte) au lieu d'être répétés *(admin)* (#141).
+- Statut du compte utilisateur plus juste : « En attente » (orange) si l'élève n'a jamais ouvert le portail, « Désactivé » (rouge) seulement si le compte a été explicitement désactivé. Plus de « Inactif » rouge alarmant pour un simple compte non-encore-utilisé *(admin)* (#141).
+- Création d'une classe simplifiée : plus de champ « année académique » à choisir. Les classes sont permanentes, l'année est portée par chaque inscription. Le formulaire de classe ne demande que nom, niveau, série, salle et capacité *(admin)* (#97).
+- Promotion de fin d'année simplifiée : un seul catalogue de classes pour la source et la cible, les doublons « 6ème A 2025-2026 / 6ème A 2026-2027 » disparaissent *(admin)* (#97).
+- Page Inscriptions repensée queue-first : on voit d'un coup d'œil la queue à valider, on valide une inscription en un tap depuis la liste avec confirmation, plus de cartes de KPI redondantes *(admin)* (#121).
 - Confirmation propre par dialogue (au lieu du dialogue système du navigateur) avant de quitter le mode dictée avec des saisies non enregistrées *(enseignant)* (#108).
 - Page Élèves repensée : on voit enfin la classe de chaque élève d'un coup d'œil, on filtre par classe ou « à inscrire » d'un tap, et la version mobile s'aligne sur le terrain *(admin)* (#116).
 - Création d'évaluation : la liste des matières se filtre automatiquement selon la classe choisie, plus rapide à parcourir et impossible de se tromper de matière *(admin)* (#112).
@@ -27,6 +53,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- En-tête des pages Inscriptions et Élèves qui débordait à droite sur mobile (le bouton « Nouvelle inscription » mangeait la place du titre) : on empile désormais titre et bouton sur petit écran et on ajuste la taille du titre *(admin)*.
+- En-tête de la page Classes qui débordait sur mobile (bouton « Nouvelle classe » coupé hors écran) : même empilement vertical mobile + boutons toggle Arbre/Table qui passent à la ligne si nécessaire *(admin)*.
+- Fiche élève qui affichait le nom alternatif de l'image quand la photo n'était pas disponible : on affiche désormais directement les initiales sur fond bleu *(admin)* (#139).
+- Liste des inscriptions qui restait en chargement infini après la refonte queue-first : la page demandait plus d'inscriptions à la fois que le serveur ne le permet *(admin)* (#131).
 - Sélection de l'enseignant titulaire vide dans le formulaire de création d'évaluation côté admin *(admin)* (#109).
 - Initialisation du retour audio du mode dictée hors interaction utilisateur, qui empêchait silencieusement le bip de confirmation sur iPhone *(enseignant)* (#108).
 - Bouton micro restait actif après refus de l'autorisation, promettant un fonctionnement impossible *(enseignant)* (#108).

@@ -62,3 +62,18 @@ export function useFeeVariants(classId: number | undefined) {
     enabled: !!classId,
   })
 }
+
+export function useValidateEnrollment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => enrollmentsApi.validate(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: enrollmentKeys.all })
+      queryClient.invalidateQueries({ queryKey: enrollmentKeys.detail(data.id) })
+      toast.success("Inscription validée")
+    },
+    onError: (error: Error) => {
+      toast.error("Validation impossible", { description: error.message })
+    },
+  })
+}

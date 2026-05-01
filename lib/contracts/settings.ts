@@ -19,6 +19,10 @@ export const SchoolSettingsSchema = z.object({
   email: z.string().nullable(),
   logo_url: z.string().nullable(),
   ministry_code: z.string().nullable().optional(),
+  // Official documents (PR #105)
+  signature_image_url: z.string().nullable().optional(),
+  head_master_name: z.string().nullable().optional(),
+  head_master_title: z.string().nullable().optional(),
   enrollment_number_pattern: z.string().nullable().optional(),
   enrollment_number_counter: z.number().optional().default(0),
   // --- UI-only fields (not yet in backend, optional with defaults) ---
@@ -37,6 +41,8 @@ export const SchoolInfoUpdateSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email("Email invalide").optional().or(z.literal("")),
   ministry_code: z.string().optional(),
+  head_master_name: z.string().optional(),
+  head_master_title: z.string().optional(),
 })
 
 export const TrimesterUpdateSchema = z.object({

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { User, CalendarDays, BookOpen, Mail, KeyRound, Shield, UserPlus, MapPin } from "lucide-react"
+import { User, CalendarDays, Mail, KeyRound, Shield, UserPlus, MapPin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -46,8 +46,6 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
         year: "numeric",
       })
     : null
-
-  const genre = student.genre === "M" ? "Masculin" : student.genre === "F" ? "Féminin" : null
 
   const userEmail = fullData.user_email ? String(fullData.user_email) : null
   const isActive = fullData.is_active === true
@@ -96,7 +94,8 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
 
   return (
     <div className="space-y-4">
-      {/* Informations personnelles */}
+      {/* Informations personnelles — drop Matricule + Genre (déjà dans header)
+          et Email (déduplique avec Compte utilisateur Email de connexion) */}
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardContent className="p-6">
           <h3 className="text-sm font-medium text-muted-foreground mb-4">Informations personnelles</h3>
@@ -104,9 +103,6 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
             <InfoField label="Nom" value={student.last_name} icon={User} />
             <InfoField label="Prénom" value={student.first_name} icon={User} />
             <InfoField label="Date de naissance" value={birthDate} icon={CalendarDays} />
-            <InfoField label="Genre" value={genre} icon={User} />
-            <InfoField label="Matricule" value={student.enrollment_number} icon={BookOpen} />
-            <InfoField label="Email" value={userEmail ?? (fullData.email ? String(fullData.email) : null)} icon={Mail} />
             <InfoField label="Ville" value={student.city} icon={MapPin} />
             <InfoField label="Commune" value={student.commune} icon={MapPin} />
           </div>
@@ -120,12 +116,30 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
             <>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-muted-foreground">Compte utilisateur</h3>
-                <Badge
-                  variant={isActive ? "default" : "destructive"}
-                  className={isActive ? "bg-emerald-600 hover:bg-emerald-600/80 text-[10px]" : "text-[10px]"}
-                >
-                  {isActive ? "Actif" : "Inactif"}
-                </Badge>
+                {(() => {
+                  // Tri-état persona-first : on priorise « jamais connecté »
+                  // (état neutre amber) sur le « désactivé » alarmant (rouge).
+                  // Un compte fraîchement créé qui n'a jamais servi n'est pas
+                  // « désactivé » sémantiquement — il attend juste sa 1re
+                  // connexion. Édge case : un admin qui désactive avant 1re
+                  // connexion verra « En attente » au lieu de « Désactivé »,
+                  // trade-off accepté (low-impact, friendly default).
+                  if (!lastLogin) {
+                    return (
+                      <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100/80 dark:bg-amber-900/30 dark:text-amber-400 text-[10px]">
+                        En attente
+                      </Badge>
+                    )
+                  }
+                  if (!isActive) {
+                    return <Badge variant="destructive" className="text-[10px]">Désactivé</Badge>
+                  }
+                  return (
+                    <Badge className="bg-emerald-600 hover:bg-emerald-600/80 text-[10px]">
+                      Actif
+                    </Badge>
+                  )
+                })()}
               </div>
               <div className="grid gap-5 sm:grid-cols-3">
                 <InfoField

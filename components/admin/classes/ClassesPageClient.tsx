@@ -14,17 +14,17 @@ export function ClassesPageClient() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
             <School className="h-5 w-5 text-primary" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Classes</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Classes</h1>
             <p className="text-sm text-muted-foreground">Gestion des classes par niveau et série</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* View toggle */}
           <div className="flex items-center rounded-lg border p-1">
             <Button
@@ -46,8 +46,8 @@ export function ClassesPageClient() {
               Table
             </Button>
           </div>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button onClick={() => setCreateOpen(true)} className="h-11 gap-2 sm:h-10">
+            <Plus className="h-4 w-4" />
             Nouvelle classe
           </Button>
         </div>
