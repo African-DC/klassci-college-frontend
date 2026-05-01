@@ -56,13 +56,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token
     },
     async session({ session, token }) {
+      // Always expose accessToken so client tooling can inspect it
+      // (debugging dashboards, network panel verification).
+      session.accessToken = token.accessToken
+
+      if (token.error) {
+        // Refresh token error : the access token is expired and no
+        // silent refresh is implemented yet (see auth-architecture.md
+        // pièges #2). Surface the error and DO NOT propagate the stale
+        // identity. Consumers using `session?.user?.X` will see
+        // undefined fields and either fall back gracefully or trigger
+        // their not-authenticated branch. The middleware redirects to
+        // /login on session.error before any protected route renders.
+        session.error = token.error
+        return session
+      }
+
       session.user.id = token.id
       session.user.email = token.email
       session.user.role = token.role
-      session.accessToken = token.accessToken
-      if (token.error) {
-        session.error = token.error
-      }
       return session
     },
   },
