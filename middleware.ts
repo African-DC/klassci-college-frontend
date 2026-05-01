@@ -28,7 +28,12 @@ function getDefaultRedirect(role: string | undefined): string {
 const authMiddleware = auth((req) => {
   const { pathname } = req.nextUrl
   const session = req.auth
-  const isLoggedIn = !!session?.user
+  // Check user.id (not just user truthy) : when token.error is set,
+  // auth.ts intentionally leaves user fields undefined to avoid
+  // propagating stale identity, but the user object itself stays as
+  // NextAuth's default empty {}. Truthy-on-{} would falsely report
+  // logged in. session.id is the canonical authenticated marker.
+  const isLoggedIn = !!session?.user?.id
 
   if (session?.error === "RefreshTokenError" && pathname !== "/login") {
     const url = req.nextUrl.clone()
