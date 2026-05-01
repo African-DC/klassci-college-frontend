@@ -10,14 +10,15 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Tableau de bord parent qui affichait toujours « Connexion au serveur impossible » depuis le ship du portail parent : on voit désormais pour chaque enfant la classe, la moyenne, le nombre d'absences et le solde restant à payer, en un coup d'œil dès la connexion *(parent)*.
 - Quand la session expire silencieusement, on n'affiche plus l'identité de l'ancien utilisateur sur la barre de navigation et la page d'accueil : la redirection vers la page de connexion se fait immédiatement, sans flicker de données périmées *(tous)* (#164).
 - Page de connexion qui boucle en `ERR_TOO_MANY_REDIRECTS` quand le jeton d'accès est expiré : avec `RefreshTokenError`, le middleware redirigeait `/login → /<portail> → /login` à l'infini car la session restait techniquement « connectée ». La page de connexion est désormais toujours accessible quand la session est en erreur, ce qui permet à l'utilisateur de se reconnecter *(tous)* (#151).
 - Bulletins côté admin : la liste, la prévisualisation, la génération, la publication et le téléchargement PDF étaient tous cassés en silence (404 ou réponse Celery vide) car ils visaient les anciens endpoints racine. Tout pointe désormais sur `/reports/bulletins/*` et la génération retourne immédiatement les bulletins créés *(admin)* (#142).
 
 ### Added
 
-- Liste des parents côté admin (`/admin/parents`) : entrée dans le menu Scolarité, recherche, pagination, et création/édition/suppression directement depuis la liste avec un compte de connexion optionnel *(admin)*.
-- Bouton « Modifier » sur la fiche parent : on peut désormais corriger nom, prénom, téléphone, email, ville et commune sans passer par la fiche d'un élève *(admin)*.
+- Liste des parents côté admin (`/admin/parents`) : entrée dans le menu Scolarité, recherche, pagination, et création/édition/suppression directement depuis la liste avec un compte de connexion optionnel *(admin)* (#161).
+- Bouton « Modifier » sur la fiche parent : on peut désormais corriger nom, prénom, téléphone, email, ville et commune sans passer par la fiche d'un élève *(admin)* (#161).
 - Fiche détail parent côté admin (`/admin/parents/[id]`) : un seul écran qui montre les enfants liés (en un tap on ouvre la fiche de l'enfant), le téléphone clickable pour appeler, l'email, la ville/commune, le statut du compte (En attente / Actif / Désactivé) *(admin)* (#157).
 - Onglet « Documents » fonctionnel sur la fiche élève admin : deux cartes pour télécharger le certificat de scolarité et l'attestation de fréquentation au format PDF officiel République de Côte d'Ivoire en un clic. Boutons mobile-friendly h-11 *(admin)* (#145).
 - Page « Documents » côté portail parent : `/parent/children/[id]/documents` permet au parent de télécharger lui-même le certificat de scolarité et l'attestation de fréquentation de son enfant depuis son téléphone. Layout Wave-style mobile-first *(parent)* (#145).
