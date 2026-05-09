@@ -8,6 +8,14 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Added
+
+- Section super-admin complète (`/super-admin/*`) : tableau de bord pour onboarder une école sans SSH ni terminal. Liste des tenants avec taille de base, formulaire de création en 3 étapes (nom + slug avec disponibilité vérifiée en direct, compte administrateur, détails optionnels) et progression visible des étapes pendant les 10-30 secondes du provisioning *(super-admin)* (#176).
+- Gestion des tokens d'accès personnels (`/super-admin/pats`) pour le CLI et les agents IA : création avec scopes, expiration en jours, copie en un clic du token clair (montré une seule fois), liste avec statut (actif / expiré / révoqué), révocation avec confirmation *(super-admin)* (#176).
+- Diagnostic plateforme (`/super-admin/diagnose`) : vue d'ensemble de l'état du backend, de la base, de Redis et de la configuration SMTP avec rafraîchissement automatique toutes les 30 secondes et un bouton de rafraîchissement manuel *(super-admin)* (#176).
+- Lecture des logs (`/super-admin/logs`) : viewer terminal noir, sélection du service (backend / frontend / celery / nginx), pause/reprise du tail, badges qui indiquent le nombre de secrets masqués et si la sortie est tronquée *(super-admin)* (#176).
+- Fiche détail d'un tenant (`/super-admin/tenants/[slug]`) : 6 statistiques (utilisateurs / élèves / enseignants / personnel / inscriptions / paiements), paramètres de l'établissement et version de migration en cours *(super-admin)* (#176).
+
 ### Fixed
 
 - Tableau de bord parent qui affichait toujours « Connexion au serveur impossible » depuis le ship du portail parent : on voit désormais pour chaque enfant la classe, la moyenne, le nombre d'absences et le solde restant à payer, en un coup d'œil dès la connexion *(parent)*.
