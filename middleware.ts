@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { extractHostname, isHostAllowed } from "@/lib/utils/allowed-hosts"
 
-const PORTALS = ["admin", "teacher", "student", "parent"] as const
+const PORTALS = ["admin", "teacher", "student", "parent", "super-admin"] as const
 type Portal = (typeof PORTALS)[number]
 
 const ROLE_TO_PORTAL: Record<string, Portal> = {
@@ -11,6 +11,7 @@ const ROLE_TO_PORTAL: Record<string, Portal> = {
   teacher: "teacher",
   student: "student",
   parent: "parent",
+  super_admin: "super-admin",
 }
 
 function getPortalFromPath(pathname: string): Portal | null {

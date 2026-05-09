@@ -1,7 +1,7 @@
 import "next-auth"
 import "next-auth/jwt"
 
-export type UserRole = "admin" | "teacher" | "student" | "parent"
+export type UserRole = "admin" | "teacher" | "student" | "parent" | "super_admin"
 
 declare module "next-auth" {
   interface User {
