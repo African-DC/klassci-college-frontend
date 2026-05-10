@@ -10,10 +10,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useTenantsList } from "@/lib/hooks/super-admin/useTenants"
 import { ExternalLink } from "lucide-react"
+
+function isSystemTenant(slug: string): boolean {
+  return slug === "local"
+}
+
+function tenantUrl(slug: string): string {
+  return isSystemTenant(slug)
+    ? "https://college.klassci.com"
+    : `https://${slug}.college.klassci.com`
+}
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -83,21 +94,28 @@ export function TenantsTable() {
               : data!.items.map((tenant) => (
                   <TableRow key={tenant.slug} className="hover:bg-muted/50">
                     <TableCell className="font-medium">
-                      <Link
-                        href={`/super-admin/tenants/${tenant.slug}` as Route}
-                        className="text-primary hover:underline"
-                      >
-                        {tenant.slug}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/super-admin/tenants/${tenant.slug}` as Route}
+                          className="text-primary hover:underline"
+                        >
+                          {tenant.slug}
+                        </Link>
+                        {isSystemTenant(tenant.slug) && (
+                          <Badge variant="secondary" className="text-[10px] uppercase">
+                            système
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       <a
-                        href={tenant.url}
+                        href={tenantUrl(tenant.slug)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
                       >
-                        {tenant.url}
+                        {tenantUrl(tenant.slug)}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     </TableCell>
