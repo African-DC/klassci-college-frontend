@@ -21,6 +21,7 @@ function getPortalFromPath(pathname: string): Portal | null {
 
 function getDefaultRedirect(role: string | undefined): string {
   if (!role) return "/admin/dashboard"
+  if (role === "super_admin") return "/super-admin/tenants"
   const portal = ROLE_TO_PORTAL[role]
   return portal ? `/${portal}/dashboard` : "/admin/dashboard"
 }
