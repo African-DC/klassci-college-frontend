@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import type { Route } from "next"
+import Image from "next/image"
 import Link from "next/link"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
@@ -31,9 +32,12 @@ export default async function SuperAdminLayout({ children }: { children: React.R
       <header className="border-b bg-card">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-6">
-            <Link href={"/super-admin/tenants" as Route} className="text-lg font-semibold tracking-tight">
-              KLASSCI
-              <span className="ml-2 rounded bg-primary px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
+            <Link href={"/super-admin/tenants" as Route} className="flex items-center gap-3">
+              <div className="flex flex-col items-center w-fit">
+                <Image src="/images/logo_klassci.png" alt="KLASSCI" width={90} height={24} priority />
+                <span className="font-serif text-[9px] -mt-1.5 text-muted-foreground">College</span>
+              </div>
+              <span className="rounded bg-primary px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
                 Super Admin
               </span>
             </Link>
