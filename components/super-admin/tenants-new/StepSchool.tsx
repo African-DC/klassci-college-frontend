@@ -45,9 +45,9 @@ export function StepSchool() {
 
       <div className="space-y-1.5">
         <Label htmlFor="tenant_slug">
-          Identifiant unique (slug) *
+          Identifiant technique unique *
           <span className="ml-2 text-xs font-normal text-muted-foreground">
-            sera utilisé dans l'URL
+            interne — base de données, API, audit
           </span>
         </Label>
         <div className="relative">
@@ -73,13 +73,21 @@ export function StepSchool() {
           <p className="text-xs text-destructive">{formState.errors.tenant_slug.message}</p>
         ) : showStatus && !isFetching && slugCheck && !slugCheck.available ? (
           <p className="text-xs text-destructive">{slugCheck.reason ?? "Slug indisponible"}</p>
-        ) : slug ? (
-          <p className="font-mono text-xs text-muted-foreground">
-            URL : https://{slug}.college.klassci.com
-          </p>
         ) : (
-          <p className="text-xs text-muted-foreground">2-63 car., minuscules + chiffres + tirets</p>
+          <p className="text-xs text-muted-foreground">
+            2-63 car., minuscules + chiffres + tirets. Stable, immuable après création.
+          </p>
         )}
+      </div>
+
+      <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
+        <p className="font-medium">Note : ce slug n'est pas une URL.</p>
+        <p className="mt-1">
+          Les utilisateurs de l'établissement se connectent via{" "}
+          <span className="font-mono">https://college.klassci.com/login</span> avec leur
+          email et mot de passe — le slug sert uniquement d'identifiant interne pour la
+          base, l'API super-admin et les opérations CLI.
+        </p>
       </div>
     </div>
   )
