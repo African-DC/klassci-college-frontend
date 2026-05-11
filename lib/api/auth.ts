@@ -16,10 +16,26 @@ function getBaseUrl(): string {
 export type { LoginResponse, RefreshResponse }
 
 export const authApi = {
-  login: async (email: string, password: string): Promise<LoginResponse> => {
+  /**
+   * Authenticate against the BE.
+   *
+   * ``tenantSlug`` is forwarded as ``X-Tenant-Slug`` header so the BE
+   * TenantMiddleware knows which tenant DB to query for the user
+   * (the JWT does not exist yet at this stage). Without it, the BE
+   * falls back to LOCAL_TENANT_ID — fine for super-admin login on
+   * ``college.klassci.com``, but client tenant login MUST pass it.
+   */
+  login: async (
+    email: string,
+    password: string,
+    tenantSlug?: string,
+  ): Promise<LoginResponse> => {
+    const headers: Record<string, string> = { "Content-Type": "application/json" }
+    if (tenantSlug) headers["X-Tenant-Slug"] = tenantSlug
+
     const res = await fetch(`${getBaseUrl()}/auth/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ email, password }),
     })
     if (!res.ok) {

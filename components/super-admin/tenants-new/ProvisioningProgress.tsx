@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Check, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { tenantUrl } from "@/lib/super-admin/tenant-display"
 
 const STAGES = [
   { label: "Création de la base de données", ms: 2500 },
@@ -20,7 +21,7 @@ export function ProvisioningProgress({
   errorMessage,
 }: {
   status: "pending" | "success" | "error"
-  result?: { tenant_slug: string; url: string } | undefined
+  result?: { tenant_slug: string } | undefined
   errorMessage?: string
 }) {
   const [reached, setReached] = useState(0)
@@ -97,7 +98,7 @@ export function ProvisioningProgress({
             </Link>
           </Button>
           <a
-            href={result.url}
+            href={tenantUrl(result.tenant_slug)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-primary hover:underline"

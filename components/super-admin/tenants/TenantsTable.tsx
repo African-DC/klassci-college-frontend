@@ -14,17 +14,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useTenantsList } from "@/lib/hooks/super-admin/useTenants"
+import { isSystemTenant, tenantUrl } from "@/lib/super-admin/tenant-display"
 import { ExternalLink } from "lucide-react"
-
-function isSystemTenant(slug: string): boolean {
-  return slug === "local"
-}
-
-function tenantUrl(slug: string): string {
-  return isSystemTenant(slug)
-    ? "https://college.klassci.com"
-    : `https://${slug}.college.klassci.com`
-}
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`

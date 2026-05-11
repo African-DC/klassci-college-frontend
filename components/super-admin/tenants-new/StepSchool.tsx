@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Check, Loader2, X } from "lucide-react"
 import { useSlugCheck } from "@/lib/hooks/super-admin/useTenants"
+import { tenantUrl } from "@/lib/super-admin/tenant-display"
 import type { WizardData } from "./WizardSteps"
 
 function useDebouncedValue<T>(value: T, delay: number): T {
@@ -75,20 +76,23 @@ export function StepSchool() {
           <p className="text-xs text-destructive">{slugCheck.reason ?? "Slug indisponible"}</p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            2-63 car., minuscules + chiffres + tirets. Stable, immuable après création.
+            2-63 car., minuscules + chiffres + tirets. Conseil : court et mémorable
+            (ex. <span className="font-mono">lmab</span>, <span className="font-mono">cca-2026</span>).
+            Immuable après création.
           </p>
         )}
       </div>
 
-      <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
-        <p className="font-medium">Note : ce slug n'est pas une URL.</p>
-        <p className="mt-1">
-          Les utilisateurs de l'établissement se connectent via{" "}
-          <span className="font-mono">https://college.klassci.com/login</span> avec leur
-          email et mot de passe — le slug sert uniquement d'identifiant interne pour la
-          base, l'API super-admin et les opérations CLI.
-        </p>
-      </div>
+      {showStatus && isAvailable && debouncedSlug.length >= 2 && (
+        <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
+          <p className="font-medium">Lien de connexion qui sera envoyé à l'admin :</p>
+          <p className="mt-1 font-mono break-all">{tenantUrl(debouncedSlug)}</p>
+          <p className="mt-2 text-blue-700 dark:text-blue-300">
+            Les utilisateurs cliquent ce lien (WhatsApp, email) et arrivent directement
+            sur la page de connexion de leur établissement.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
