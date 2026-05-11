@@ -10,6 +10,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Connexion multi-tenant : un utilisateur d'établissement arrive sur `college.klassci.com/login?c=<slug>` (lien WhatsApp, email d'invitation), l'établissement s'affiche au-dessus du formulaire et reste mémorisé pour les visites suivantes *(admin, enseignant, parent, élève)* (#183).
+- Aperçu du lien de connexion généré dans le formulaire de création de tenant, avec conseil de choisir un slug court et mémorable (ex : `lmab`, `cca-2026`) — l'admin du super-admin sait exactement ce que recevra le nouvel établissement *(super-admin)* (#183).
 - Section super-admin complète (`/super-admin/*`) : tableau de bord pour onboarder une école sans SSH ni terminal. Liste des tenants avec taille de base, formulaire de création en 3 étapes (nom + slug avec disponibilité vérifiée en direct, compte administrateur, détails optionnels) et progression visible des étapes pendant les 10-30 secondes du provisioning *(super-admin)* (#176).
 - Gestion des tokens d'accès personnels (`/super-admin/pats`) pour le CLI et les agents IA : création avec scopes, expiration en jours, copie en un clic du token clair (montré une seule fois), liste avec statut (actif / expiré / révoqué), révocation avec confirmation *(super-admin)* (#176).
 - Diagnostic plateforme (`/super-admin/diagnose`) : vue d'ensemble de l'état du backend, de la base, de Redis et de la configuration SMTP avec rafraîchissement automatique toutes les 30 secondes et un bouton de rafraîchissement manuel *(super-admin)* (#176).

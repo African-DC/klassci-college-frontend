@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import type { Route } from "next"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
@@ -19,6 +19,36 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 
+// Cookie used to remember the tenant slug between visits (so the user
+// who first arrived via a WhatsApp link doesn't need the ?c= every time).
+// Not HttpOnly: the slug is non-sensitive (also visible in the URL) and
+// must be readable from client JS to pre-fill the signIn call.
+const TENANT_CODE_COOKIE = "tenant_code"
+// RFC 1123 slug : 2-63 lowercase alnum + hyphen, no leading/trailing hyphen.
+// Mirror of the BE regex in app/core/slug.py.
+const TENANT_SLUG_REGEX = /^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/
+
+function isValidTenantSlug(value: string): boolean {
+  return TENANT_SLUG_REGEX.test(value)
+}
+
+function readTenantCookie(): string | null {
+  if (typeof document === "undefined") return null
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${TENANT_CODE_COOKIE}=`))
+  if (!match) return null
+  const value = decodeURIComponent(match.slice(TENANT_CODE_COOKIE.length + 1))
+  return isValidTenantSlug(value) ? value : null
+}
+
+function writeTenantCookie(slug: string): void {
+  if (typeof document === "undefined") return
+  if (!isValidTenantSlug(slug)) return
+  const secure = window.location.protocol === "https:" ? "; Secure" : ""
+  document.cookie = `${TENANT_CODE_COOKIE}=${encodeURIComponent(slug)}; path=/; max-age=31536000; SameSite=Lax${secure}`
+}
+
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -26,6 +56,16 @@ export function LoginForm() {
   const callbackUrl = rawCallback.startsWith("/") && !rawCallback.startsWith("//") ? rawCallback : "/"
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [tenantCode, setTenantCode] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("c")
+    if (fromUrl && isValidTenantSlug(fromUrl)) {
+      setTenantCode(fromUrl)
+      return
+    }
+    setTenantCode(readTenantCookie())
+  }, [searchParams])
 
   const form = useForm<LoginRequest>({
     resolver: zodResolver(LoginRequestSchema),
@@ -42,6 +82,7 @@ export function LoginForm() {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
+        tenant_code: tenantCode ?? "",
         redirect: false,
       })
 
@@ -49,6 +90,8 @@ export function LoginForm() {
         setError("Email ou mot de passe incorrect")
         return
       }
+
+      if (tenantCode) writeTenantCookie(tenantCode)
 
       router.push(callbackUrl as Route)
       router.refresh()
@@ -60,6 +103,13 @@ export function LoginForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        {tenantCode && (
+          <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
+            <span className="text-muted-foreground">Établissement : </span>
+            <span className="font-mono font-medium text-primary">{tenantCode}</span>
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="email"

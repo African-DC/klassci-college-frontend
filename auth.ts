@@ -12,15 +12,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: {},
         password: {},
+        tenant_code: {},
       },
       async authorize(credentials) {
         const email = credentials.email as string
         const password = credentials.password as string
+        // ``tenant_code`` is the user-facing tenant slug, sourced by the
+        // LoginForm from the URL query (?c=<slug>) or the persisted
+        // cookie. Forwarded to the BE via X-Tenant-Slug so the
+        // TenantMiddleware can resolve the correct tenant DB before
+        // checking credentials. Empty/undefined → BE falls back to
+        // LOCAL_TENANT_ID (super-admin login pattern).
+        const tenantCode = (credentials.tenant_code as string | undefined) || undefined
 
         if (!email || !password) return null
 
         try {
-          const data = await authApi.login(email, password)
+          const data = await authApi.login(email, password, tenantCode)
           return {
             id: String(data.user.id),
             email: data.user.email,
