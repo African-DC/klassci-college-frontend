@@ -51,7 +51,7 @@ export function WizardShell() {
     return (
       <ProvisioningProgress
         status={mutation.isPending ? "pending" : mutation.isSuccess ? "success" : "error"}
-        result={mutation.data ? { tenant_slug: mutation.data.tenant_slug, url: mutation.data.url } : undefined}
+        result={mutation.data ? { tenant_slug: mutation.data.tenant_slug } : undefined}
         errorMessage={mutation.isError ? (mutation.error as Error).message : undefined}
       />
     )

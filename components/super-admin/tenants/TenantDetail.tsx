@@ -1,10 +1,12 @@
 "use client"
 
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
 import { useTenant } from "@/lib/hooks/super-admin/useTenants"
+import { isSystemTenant, tenantUrl } from "@/lib/super-admin/tenant-display"
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -55,18 +57,23 @@ export function TenantDetail({ slug }: { slug: string }) {
             {data.school_settings?.school_name ?? data.slug}
           </h1>
           <a
-            href={data.url}
+            href={tenantUrl(data.slug)}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground hover:underline"
           >
-            {data.url}
+            {tenantUrl(data.slug)}
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
         <div className="text-right text-xs text-muted-foreground">
-          <p>
+          <p className="flex items-center justify-end gap-2">
             Slug : <span className="font-mono">{data.slug}</span>
+            {isSystemTenant(data.slug) && (
+              <Badge variant="secondary" className="text-[10px] uppercase">
+                système
+              </Badge>
+            )}
           </p>
           <p>
             Migration : <span className="font-mono">{data.alembic_head ?? "—"}</span>
