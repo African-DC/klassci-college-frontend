@@ -9,6 +9,7 @@ import { useSettings } from "@/lib/hooks/useSettings"
 import { SchoolInfoSection } from "./SchoolInfoSection"
 import { TrimesterSection } from "./TrimesterSection"
 import { NotificationSection } from "./NotificationSection"
+import { PdfIdentitySection } from "./PdfIdentitySection"
 
 export function SettingsPageClient() {
   const { data: settings, isLoading, isError, refetch } = useSettings()
@@ -37,12 +38,17 @@ export function SettingsPageClient() {
         <Tabs defaultValue="school" className="space-y-6">
           <TabsList>
             <TabsTrigger value="school">Établissement</TabsTrigger>
+            <TabsTrigger value="identity">Identité visuelle</TabsTrigger>
             <TabsTrigger value="trimesters">Trimestres</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="school">
             <SchoolInfoSection settings={settings} />
+          </TabsContent>
+
+          <TabsContent value="identity">
+            <PdfIdentitySection settings={settings} isLoading={isLoading} />
           </TabsContent>
 
           <TabsContent value="trimesters">
