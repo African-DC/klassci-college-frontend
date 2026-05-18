@@ -74,11 +74,10 @@ export function TeacherOverviewTab({ teacher, fullData, onTabChange }: TeacherOv
         </KpiCard>
 
         <KpiCard onClick={() => onTabChange?.("disponibilites")}>
-          <CircularProgress
-            value={availabilityRate}
-            label={`${Math.round(availabilityRate)}%`}
-            sublabel="Disponibilité"
-            icon={<CalendarCheck className="h-4 w-4 text-muted-foreground/60" />}
+          <AvailabilityKpi
+            rate={availabilityRate}
+            source={(fullData?.availability_source as string | undefined) ?? "none"}
+            classesCount={classesCount}
           />
         </KpiCard>
       </div>
@@ -133,6 +132,56 @@ export function TeacherOverviewTab({ teacher, fullData, onTabChange }: TeacherOv
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+/**
+ * KPI Disponibilité tri-sémantique selon `availability_source` :
+ *  - "configured" : saisie explicite → afficher le pourcentage réel
+ *  - "implicit"   : pas de saisie mais slots EDT existants → afficher "Estimée"
+ *                   plutôt qu'un faux pourcentage (3% pour 2 slots/66 sème la
+ *                   confusion ; mieux vaut un libellé honnête + CTA implicite
+ *                   via la sub-line)
+ *  - "none"       : ni saisie ni slots → "—" neutre
+ */
+function AvailabilityKpi({
+  rate,
+  source,
+  classesCount,
+}: {
+  rate: number
+  source: string
+  classesCount: number
+}) {
+  if (source === "configured") {
+    return (
+      <CircularProgress
+        value={rate}
+        label={`${Math.round(rate)}%`}
+        sublabel="Disponibilité saisie"
+        icon={<CalendarCheck className="h-4 w-4 text-muted-foreground/60" />}
+      />
+    )
+  }
+  if (source === "implicit") {
+    return (
+      <CircularProgress
+        value={Math.max(15, rate)}
+        label="Estimée"
+        sublabel={`${classesCount} classe${classesCount > 1 ? "s" : ""} via l'EDT`}
+        color="#f59e0b"
+        icon={<CalendarCheck className="h-4 w-4 text-muted-foreground/60" />}
+      />
+    )
+  }
+  return (
+    <CircularProgress
+      value={0}
+      label="—"
+      sublabel="Non renseignée"
+      color="#94a3b8"
+      icon={<CalendarCheck className="h-4 w-4 text-muted-foreground/60" />}
+    />
   )
 }
 

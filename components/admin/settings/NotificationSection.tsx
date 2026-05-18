@@ -33,6 +33,8 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
       notify_grades: settings.notify_grades,
       notify_absences: settings.notify_absences,
       notify_payments: settings.notify_payments,
+      notify_enrollment: settings.notify_enrollment,
+      notify_reenrollment: settings.notify_reenrollment,
     },
   })
 
@@ -143,6 +145,40 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
                       <FormLabel className="text-sm">Paiements</FormLabel>
                       <FormDescription className="text-xs">
                         Notifier lors de la réception d&apos;un paiement
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="notify_enrollment"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm">Inscriptions</FormLabel>
+                      <FormDescription className="text-xs">
+                        Notifier les parents à la validation de l&apos;inscription d&apos;un nouvel élève
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="notify_reenrollment"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm">Réinscriptions</FormLabel>
+                      <FormDescription className="text-xs">
+                        Notifier les parents à la confirmation de réinscription pour la nouvelle année scolaire
                       </FormDescription>
                     </div>
                     <FormControl>

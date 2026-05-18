@@ -20,6 +20,7 @@ import {
   MoreVertical,
   Phone,
   ChevronRight,
+  Sparkles,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -47,6 +48,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
 import { StudentEditModal } from "./StudentEditModal"
+import { StudentJourneyTimeline } from "./StudentJourneyTimeline"
+import { StudentAcademicCharts } from "./StudentAcademicCharts"
+import { StatusPill } from "./tabs/_primitives"
 import { ProfileTab } from "./tabs/ProfileTab"
 import { PaymentsTab } from "./tabs/PaymentsTab"
 import { EnrollmentTab } from "./tabs/EnrollmentTab"
@@ -77,7 +81,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [photoPreview, setPhotoPreview] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [activeTab, setActiveTab] = useState("overview")
+  const [activeTab, setActiveTab] = useState("parcours")
   const [photoLoaded, setPhotoLoaded] = useState(false)
 
   const { data: student, isLoading, isError, refetch } = useStudent(studentId)
@@ -267,6 +271,10 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
           <TabsList className="w-max">
+            <TabsTrigger value="parcours">
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+              Parcours
+            </TabsTrigger>
             <TabsTrigger value="overview">
               <BookOpen className="mr-1.5 h-3.5 w-3.5" />
               Vue d&apos;ensemble
@@ -297,6 +305,11 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
             </TabsTrigger>
           </TabsList>
         </div>
+
+        <TabsContent value="parcours" className="space-y-4">
+          <StudentJourneyTimeline studentId={studentId} studentName={fullName} />
+          <StudentAcademicCharts studentId={studentId} />
+        </TabsContent>
 
         <TabsContent value="overview">
           <OverviewTab studentId={studentId} student={student} onTabChange={setActiveTab} />
@@ -371,7 +384,12 @@ function OverviewTab({
     student_id: studentId,
   })
   const { data: fees, isLoading: feesLoading } = useStudentFees(studentId)
-  const { data: parents, isLoading: parentsLoading } = useStudentParents(studentId)
+  const {
+    data: parents,
+    isLoading: parentsLoading,
+    isError: parentsError,
+    refetch: refetchParents,
+  } = useStudentParents(studentId)
 
   const enrollments = enrollmentsData?.items ?? []
   const current = enrollments[0] as Record<string, unknown> | undefined
@@ -493,39 +511,124 @@ function OverviewTab({
               >
                 <ClipboardCheck className="h-5 w-5" />
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Statut inscription</p>
-                <p className="text-sm font-semibold">{statusLabel}</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-muted-foreground">Statut</p>
+                  <StatusPill
+                    tone={
+                      current?.status === "valide"
+                        ? "success"
+                        : current?.status === "en_validation"
+                          ? "warning"
+                          : current?.status
+                            ? "neutral"
+                            : "neutral"
+                    }
+                  >
+                    {statusLabel}
+                  </StatusPill>
+                </div>
                 {current?.academic_year_name ? (
-                  <p className="mt-0.5 text-xs text-muted-foreground">
+                  <p className="mt-1 text-xs font-medium">
                     {String(current.academic_year_name)}
                   </p>
-                ) : null}
+                ) : (
+                  <p className="mt-1 text-xs text-muted-foreground">Aucune inscription</p>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Mini-progress des frais — visible même sans hero (élève sans frais configurés) */}
+      {!feesLoading && totalExpected > 0 && (
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                  <Wallet className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Taux de paiement</p>
+                  <p className="text-sm font-semibold">{feesRate}%</p>
+                </div>
+              </div>
+              <StatusPill
+                tone={feesRate >= 100 ? "success" : feesRate >= 50 ? "warning" : "danger"}
+              >
+                {feesRate >= 100 ? "Soldé" : feesRate >= 50 ? "En cours" : "À régler"}
+              </StatusPill>
+            </div>
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${Math.min(100, feesRate)}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Parents inline — 1 ligne par parent avec téléphone clickable tel: */}
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardContent className="p-4">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex items-center justify-between gap-3">
             <h3 className="flex items-center gap-2 text-sm font-medium">
               <Users className="h-4 w-4 text-muted-foreground" />
               Parents
+              {parents && parents.length > 0 && (
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                  {parents.length}
+                </span>
+              )}
             </h3>
-            {parents && parents.length > 2 && (
-              <span className="text-xs text-muted-foreground">{parents.length} liés</span>
-            )}
+            <button
+              type="button"
+              onClick={() => onTabChange?.("parents")}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              Gérer →
+            </button>
           </div>
           {parentsLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-12 rounded-lg" />
               <Skeleton className="h-12 rounded-lg" />
             </div>
+          ) : parentsError ? (
+            <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/30 px-4 py-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Impossible de charger les parents.
+              </p>
+              <button
+                type="button"
+                onClick={() => refetchParents()}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Réessayer
+              </button>
+            </div>
           ) : !parents || parents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucun parent lié à cet élève.</p>
+            <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/20 px-4 py-6 text-center">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background text-muted-foreground ring-1 ring-border">
+                <Users className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Aucun parent lié</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Ajoutez le père, la mère ou le tuteur pour activer les notifications
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onTabChange?.("parents")}
+                className="mt-1 inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Lier un parent →
+              </button>
+            </div>
           ) : (
             <ul className="space-y-2">
               {parents.slice(0, 2).map((p) => {
@@ -542,23 +645,37 @@ function OverviewTab({
                       : rel === "guardian"
                         ? "Tuteur"
                         : ""
+                const relTone =
+                  rel === "father"
+                    ? "bg-primary/10 text-primary"
+                    : rel === "mother"
+                      ? "bg-[rgba(245,130,32,0.12)] text-[#F58220]"
+                      : "bg-muted text-muted-foreground"
+                const initials = `${ln[0] ?? ""}${fn[0] ?? ""}`.toUpperCase() || "?"
                 return (
                   <li
                     key={String(parent.id)}
-                    className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card p-3"
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {ln} {fn}
-                      </p>
-                      {relLabel && (
-                        <p className="text-xs text-muted-foreground">{relLabel}</p>
-                      )}
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold ${relTone}`}>
+                        {initials}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">
+                          {ln} {fn}
+                        </p>
+                        {relLabel && (
+                          <span className={`mt-0.5 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${relTone}`}>
+                            {relLabel}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {phone ? (
                       <a
                         href={`tel:${phone}`}
-                        className="flex h-9 shrink-0 items-center gap-1.5 rounded-md border bg-background px-3 text-sm font-medium text-primary hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="flex h-11 shrink-0 items-center gap-1.5 rounded-md border bg-background px-3 text-sm font-medium text-primary hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary sm:h-9"
                       >
                         <Phone className="h-3.5 w-3.5" />
                         Appeler

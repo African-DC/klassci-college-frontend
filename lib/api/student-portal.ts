@@ -42,11 +42,47 @@ export const studentPortalApi = {
     return safeValidate(StudentGradesResponseSchema, unwrapResponse(res), "GET /student/grades")
   },
 
-  // Emploi du temps de la classe de l'élève
+  // Emploi du temps de la classe de l'élève. Le BE renvoie une enveloppe
+  // {class_name, slots: [...]} dont chaque slot omet certains champs
+  // (subject_id/teacher_id/class_id/academic_year_id). On normalise ici
+  // vers le contrat `TimetableSlot` partagé pour réutiliser le rendu existant.
   getTimetable: async (): Promise<TimetableSlot[]> => {
     const res = await apiFetch<unknown>("/student/timetable")
-    const arr = Array.isArray(res) ? res : unwrapResponse<TimetableSlot[]>(res)
-    return safeValidate(TimetableSlotArraySchema, arr, "GET /student/timetable")
+    let rawSlots: unknown[]
+    if (Array.isArray(res)) {
+      rawSlots = res
+    } else if (res !== null && typeof res === "object" && Array.isArray((res as Record<string, unknown>).slots)) {
+      rawSlots = (res as { slots: unknown[] }).slots
+    } else {
+      rawSlots = []
+    }
+    const EN_TO_FR: Record<string, string> = {
+      monday: "lundi", tuesday: "mardi", wednesday: "mercredi",
+      thursday: "jeudi", friday: "vendredi", saturday: "samedi",
+    }
+    const mapped = rawSlots.map((raw) => {
+      const s = raw as Record<string, unknown>
+      const start = String(s.start_time ?? "").slice(0, 5)
+      const end = String(s.end_time ?? "").slice(0, 5)
+      const id = Number(s.id ?? 0)
+      const day = String(s.day ?? "")
+      return {
+        id,
+        class_id: Number(s.class_id ?? 0),
+        class_name: String(s.class_name ?? ""),
+        teacher_id: Number(s.teacher_id ?? 0),
+        teacher_name: String(s.teacher_name ?? ""),
+        subject_id: Number(s.subject_id ?? id),
+        subject_name: String(s.subject_name ?? ""),
+        subject_color: (s.subject_color as string | null | undefined) ?? null,
+        academic_year_id: Number(s.academic_year_id ?? 0),
+        day: EN_TO_FR[day] ?? day,
+        start_time: start,
+        end_time: end,
+        room: ((s.room ?? s.room_name) as string | null | undefined) ?? null,
+      }
+    })
+    return safeValidate(TimetableSlotArraySchema, mapped, "GET /student/timetable")
   },
 
   // Frais et paiements

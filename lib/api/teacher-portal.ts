@@ -14,10 +14,12 @@ import {
 const TeacherClassArraySchema = z.array(TeacherClassSchema)
 const TeacherEvalsArraySchema = z.array(TeacherUpcomingEvalSchema)
 
-// Extrait l'item de la réponse API, qu'elle soit { data: T } ou T directement
+// Extrait l'item de la réponse API, qu'elle soit { data: T }, { items: T }, ou T directement
 function unwrapResponse<T>(res: unknown): T {
-  if (res !== null && typeof res === "object" && "data" in res && (res as Record<string, unknown>).data !== undefined) {
-    return (res as Record<string, unknown>).data as T
+  if (res !== null && typeof res === "object") {
+    const obj = res as Record<string, unknown>
+    if (obj.data !== undefined) return obj.data as T
+    if (obj.items !== undefined) return obj.items as T
   }
   return res as T
 }

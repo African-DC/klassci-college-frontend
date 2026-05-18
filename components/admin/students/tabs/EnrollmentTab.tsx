@@ -1,67 +1,53 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import Link from "next/link"
-import { GraduationCap } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
+import type { Route } from "next"
+import { GraduationCap, Plus, Calendar, ChevronRight, Sparkles } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { DataError } from "@/components/shared/DataError"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
+import { SectionCard, StatusPill, EmptyState } from "./_primitives"
 
 interface EnrollmentTabProps {
   studentId: number
 }
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className?: string }> = {
-  prospect: { label: "Prospect", variant: "outline" },
-  en_validation: { label: "En validation", variant: "secondary", className: "bg-amber-500 text-white hover:bg-amber-500/80" },
-  valide: { label: "Valide", variant: "default", className: "bg-emerald-600 hover:bg-emerald-600/80" },
-  rejete: { label: "Rejete", variant: "destructive" },
-  annule: { label: "Annule", variant: "destructive" },
+function statusTone(s: string): "success" | "warning" | "danger" | "neutral" | "primary" {
+  if (s === "valide") return "success"
+  if (s === "en_validation") return "warning"
+  if (s === "prospect") return "primary"
+  if (s === "rejete" || s === "annule") return "danger"
+  return "neutral"
+}
+
+function statusLabel(s: string): string {
+  if (s === "valide") return "Validé"
+  if (s === "en_validation") return "En validation"
+  if (s === "prospect") return "Prospect"
+  if (s === "rejete") return "Rejeté"
+  if (s === "annule") return "Annulé"
+  return s
 }
 
 export function EnrollmentTab({ studentId }: EnrollmentTabProps) {
   const { data, isLoading, isError, refetch } = useEnrollments({ student_id: studentId })
-  const [yearFilter, setYearFilter] = useState<string>("all")
 
-  const enrollments = data?.items ?? []
-
-  // Extract unique academic years for the filter
-  const years = useMemo(() => {
-    const yearSet = new Map<string, string>()
-    for (const e of enrollments) {
-      const raw = e as Record<string, unknown>
-      const yearName = raw.academic_year_name ? String(raw.academic_year_name) : null
-      const yearId = raw.academic_year_id ? String(raw.academic_year_id) : null
-      if (yearName && yearId) {
-        yearSet.set(yearId, yearName)
-      }
-    }
-    return Array.from(yearSet.entries()).map(([id, name]) => ({ id, name }))
-  }, [enrollments])
-
-  const filtered = useMemo(() => {
-    if (yearFilter === "all") return enrollments
-    return enrollments.filter((e) => {
-      const raw = e as Record<string, unknown>
-      return String(raw.academic_year_id) === yearFilter
+  const enrollments = useMemo(() => {
+    const items = data?.items ?? []
+    return [...items].sort((a, b) => {
+      const ya = String((a as Record<string, unknown>).academic_year_name ?? "")
+      const yb = String((b as Record<string, unknown>).academic_year_name ?? "")
+      return yb.localeCompare(ya) // descendant : année courante en haut
     })
-  }, [enrollments, yearFilter])
+  }, [data])
 
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-9 w-48 rounded-md" />
-        <Skeleton className="h-16 rounded-lg" />
-        <Skeleton className="h-16 rounded-lg" />
+        <Skeleton className="h-32 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
       </div>
     )
   }
@@ -70,81 +56,134 @@ export function EnrollmentTab({ studentId }: EnrollmentTabProps) {
 
   if (enrollments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted mb-3">
-          <GraduationCap className="h-6 w-6 text-muted-foreground" />
-        </div>
-        <p className="text-sm text-muted-foreground">Aucune inscription enregistree.</p>
-      </div>
+      <SectionCard
+        icon={<GraduationCap className="h-4 w-4" />}
+        title="Inscriptions"
+        description="Aucune année scolaire encore enregistrée"
+      >
+        <EmptyState
+          icon={<GraduationCap className="h-5 w-5" />}
+          title="Pas encore d'inscription"
+          message="Inscrivez cet élève dans une classe pour démarrer son parcours scolaire."
+          cta={
+            <Link
+              href={`/admin/enrollments?action=create&student_id=${studentId}` as Route}
+              className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              Inscrire maintenant
+            </Link>
+          }
+        />
+      </SectionCard>
     )
   }
 
+  const current = enrollments[0] as Record<string, unknown>
+  const history = enrollments.slice(1)
+
   return (
     <div className="space-y-4">
-      {/* Year filter */}
-      {years.length > 1 && (
-        <div className="flex items-center gap-2">
-          <Select value={yearFilter} onValueChange={setYearFilter}>
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Toutes les annees" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les annees</SelectItem>
-              {years.map((y) => (
-                <SelectItem key={y.id} value={y.id}>
-                  {y.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Inscription courante — hero */}
+      <SectionCard
+        icon={<Sparkles className="h-4 w-4" />}
+        title="Inscription courante"
+        description="Année scolaire en cours"
+        action={
+          <StatusPill tone={statusTone(String(current.status ?? ""))}>
+            {statusLabel(String(current.status ?? ""))}
+          </StatusPill>
+        }
+      >
+        <Link
+          href={`/admin/enrollments/${String(current.id)}` as Route}
+          className="group block"
+        >
+          <div className="flex items-start gap-4 rounded-xl border-2 border-primary/20 bg-primary/5 p-4 transition-all group-hover:border-primary/40 group-hover:shadow-sm">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <GraduationCap className="h-6 w-6" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-serif text-lg leading-tight">
+                {current.class_name ? String(current.class_name) : `Classe #${current.class_id}`}
+              </p>
+              <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                <Calendar className="h-3.5 w-3.5" />
+                {current.academic_year_name ? String(current.academic_year_name) : "Année non précisée"}
+              </p>
+              {Boolean(current.created_at) && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Inscrit le{" "}
+                  {new Date(String(current.created_at)).toLocaleDateString("fr-FR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+              )}
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 self-center text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+          </div>
+        </Link>
+
+        <div className="mt-3 flex gap-2">
+          <Link
+            href={`/admin/enrollments?action=create&student_id=${studentId}` as Route}
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border bg-background px-3 text-sm font-medium hover:bg-muted sm:h-9"
+          >
+            <Plus className="h-4 w-4" />
+            Nouvelle inscription
+          </Link>
         </div>
-      )}
+      </SectionCard>
 
-      {/* Enrollment cards */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        {filtered.map((enrollment) => {
-          const e = enrollment as Record<string, unknown>
-          const status = String(e.status ?? "")
-          const sc = STATUS_CONFIG[status] ?? { label: status, variant: "outline" as const }
-          const createdAt = e.created_at
-            ? new Date(String(e.created_at)).toLocaleDateString("fr-FR", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })
-            : null
-
-          return (
-            <Link key={enrollment.id} href={`/admin/enrollments/${enrollment.id}`}>
-              <Card className="border-0 shadow-sm ring-1 ring-border cursor-pointer hover:ring-primary/40 hover:shadow-md transition-all h-full">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1.5 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <GraduationCap className="h-4 w-4 text-primary shrink-0" />
-                        <p className="text-sm font-semibold truncate">
-                          {e.class_name ? String(e.class_name) : `Classe #${e.class_id ?? "?"}`}
-                        </p>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {e.academic_year_name ? String(e.academic_year_name) : `Année #${e.academic_year_id ?? "?"}`}
-                      </p>
-                      {createdAt && (
-                        <p className="text-[10px] text-muted-foreground/70">
-                          Inscrit le {createdAt}
-                        </p>
-                      )}
+      {/* Historique des inscriptions */}
+      {history.length > 0 && (
+        <SectionCard
+          icon={<Calendar className="h-4 w-4" />}
+          title="Historique scolaire"
+          description={`${history.length} année${history.length > 1 ? "s" : ""} précédente${history.length > 1 ? "s" : ""}`}
+        >
+          <ul className="space-y-2">
+            {history.map((enrollment) => {
+              const e = enrollment as Record<string, unknown>
+              const status = String(e.status ?? "")
+              const createdAt = e.created_at
+                ? new Date(String(e.created_at)).toLocaleDateString("fr-FR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : null
+              return (
+                <li key={String(e.id)}>
+                  <Link
+                    href={`/admin/enrollments/${String(e.id)}` as Route}
+                    className="group flex items-center gap-3 rounded-lg border border-border/60 bg-card p-3 transition-colors hover:border-primary/40"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                      <GraduationCap className="h-4 w-4" />
                     </div>
-                    <Badge variant={sc.variant} className={`text-[10px] shrink-0 ${sc.className ?? ""}`}>
-                      {sc.label}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          )
-        })}
-      </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-medium">
+                          {e.class_name ? String(e.class_name) : `Classe #${e.class_id}`}
+                        </p>
+                        <StatusPill tone={statusTone(status)}>{statusLabel(status)}</StatusPill>
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {e.academic_year_name ? String(e.academic_year_name) : "—"}
+                        {createdAt && ` · Inscrit le ${createdAt}`}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </SectionCard>
+      )}
     </div>
   )
 }

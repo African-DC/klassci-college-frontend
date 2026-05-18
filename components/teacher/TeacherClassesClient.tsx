@@ -42,9 +42,9 @@ export function TeacherClassesClient() {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {classes.map((cls) => (
-            <ClassCard key={cls.id} cls={cls} />
+            <ClassCard key={cls.class_id} cls={cls} />
           ))}
         </div>
       )}
@@ -53,17 +53,19 @@ export function TeacherClassesClient() {
 }
 
 function ClassCard({ cls }: { cls: TeacherClass }) {
+  const average = cls.general_average ?? null
+  const totalEvals = cls.total_evaluations ?? 0
   return (
     <Card className="border-0 shadow-sm ring-1 ring-border">
       <CardContent className="p-4 space-y-3">
         {/* En-tête */}
         <div className="flex items-start justify-between">
           <div>
-            <p className="font-semibold text-sm">{cls.name}</p>
+            <p className="font-semibold text-sm">{cls.class_name}</p>
             <p className="text-xs text-muted-foreground">{cls.subject_name}</p>
           </div>
           <Badge variant="secondary" className="text-[10px]">
-            {cls.level}
+            {cls.level_name}
           </Badge>
         </div>
 
@@ -78,29 +80,27 @@ function ClassCard({ cls }: { cls: TeacherClass }) {
             <GraduationCap className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
             <p
               className={`text-sm font-bold ${
-                cls.general_average === null
+                average === null
                   ? "text-muted-foreground"
-                  : cls.general_average >= 10
+                  : average >= 10
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-destructive"
               }`}
             >
-              {cls.general_average !== null
-                ? cls.general_average.toFixed(2)
-                : "—"}
+              {average !== null ? average.toFixed(2) : "—"}
             </p>
             <p className="text-[10px] text-muted-foreground">Moyenne</p>
           </div>
           <div className="rounded-lg bg-muted/50 p-2 text-center">
             <ClipboardList className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
-            <p className="text-sm font-bold">{cls.total_evaluations}</p>
+            <p className="text-sm font-bold">{totalEvals}</p>
             <p className="text-[10px] text-muted-foreground">Évals</p>
           </div>
         </div>
 
         {/* Action */}
         <Link
-          href={`/teacher/grades/${cls.id}` as Route}
+          href={`/teacher/grades/${cls.class_id}` as Route}
           className="flex items-center justify-center gap-1 rounded-md border px-3 py-2 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
         >
           Gérer les notes <ChevronRight className="h-3 w-3" />

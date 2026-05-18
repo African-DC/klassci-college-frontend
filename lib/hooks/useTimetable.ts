@@ -16,6 +16,7 @@ export const timetableKeys = {
   byClass: (classId: number, weekOffset?: number) =>
     ["timetable", "class", classId, weekOffset ?? 0] as const,
   byTeacher: (teacherId: number) => ["timetable", "teacher", teacherId] as const,
+  mine: () => ["timetable", "mine"] as const,
   availabilities: (teacherId: number) =>
     ["timetable", "availabilities", teacherId] as const,
 }
@@ -34,6 +35,14 @@ export function useTeacherTimetable(teacherId: number) {
     queryKey: timetableKeys.byTeacher(teacherId),
     queryFn: () => timetableApi.listByTeacher(teacherId),
     enabled: !!teacherId,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useMyTimetable() {
+  return useQuery({
+    queryKey: timetableKeys.mine(),
+    queryFn: () => timetableApi.myTimetable(),
     staleTime: 1000 * 60 * 5,
   })
 }

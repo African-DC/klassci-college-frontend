@@ -65,14 +65,14 @@ const METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: "Espèces",
   mobile_money: "Mobile Money",
   bank_transfer: "Virement",
-  check: "Chèque",
+  cheque: "Chèque",
 }
 
 const METHOD_ICON_MAP: Record<PaymentMethod, React.ComponentType<{ className?: string }>> = {
   cash: Coins,
   mobile_money: Smartphone,
   bank_transfer: Building2,
-  check: FileText,
+  cheque: FileText,
 }
 
 export function PaymentsPageClient() {
@@ -282,7 +282,7 @@ export function PaymentsPageClient() {
                 <SelectItem value="cash">Espèces</SelectItem>
                 <SelectItem value="mobile_money">Mobile Money</SelectItem>
                 <SelectItem value="bank_transfer">Virement</SelectItem>
-                <SelectItem value="check">Chèque</SelectItem>
+                <SelectItem value="cheque">Chèque</SelectItem>
               </SelectContent>
             </Select>
 

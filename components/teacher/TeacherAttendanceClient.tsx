@@ -58,8 +58,8 @@ export function TeacherAttendanceClient() {
               </SelectTrigger>
               <SelectContent>
                 {classes?.map((c) => (
-                  <SelectItem key={c.id} value={c.id.toString()}>
-                    {c.name} — {c.subject_name}
+                  <SelectItem key={c.class_id} value={c.class_id.toString()}>
+                    {c.class_name} — {c.subject_name}
                   </SelectItem>
                 ))}
               </SelectContent>

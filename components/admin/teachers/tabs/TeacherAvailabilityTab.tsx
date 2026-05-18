@@ -1,248 +1,204 @@
 "use client"
 
-import { useCallback, useMemo } from "react"
-import { Clock, Loader2 } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { useCallback, useMemo, useState } from "react"
+import { toast } from "sonner"
+import { useQueryClient } from "@tanstack/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
+import { timetableApi } from "@/lib/api/timetable"
+import { timetableKeys, useTeacherAvailabilities } from "@/lib/hooks/useTimetable"
+import type { DayOfWeek } from "@/lib/contracts/timetable"
 import {
-  useTeacherAvailabilities,
-  useCreateAvailability,
-  useUpdateAvailability,
-  useDeleteAvailability,
-} from "@/lib/hooks/useTimetable"
-import type { DayOfWeek, TeacherAvailability } from "@/lib/contracts/timetable"
+  AvailabilityGrid,
+} from "@/components/admin/teachers/availability/AvailabilityGrid"
+import {
+  AvailabilityLegend,
+  AvailabilityToolbar,
+} from "@/components/admin/teachers/availability/AvailabilityToolbar"
+import {
+  CellState,
+  DAYS,
+  HOURS,
+  NEXT_STATE,
+  PendingChange,
+  buildSavedMap,
+  cellKey,
+} from "@/components/admin/teachers/availability/availability-helpers"
 
 interface TeacherAvailabilityTabProps {
   teacherId: number
 }
 
-const DAYS: { key: DayOfWeek; label: string }[] = [
-  { key: "monday", label: "Lundi" },
-  { key: "tuesday", label: "Mardi" },
-  { key: "wednesday", label: "Mercredi" },
-  { key: "thursday", label: "Jeudi" },
-  { key: "friday", label: "Vendredi" },
-  { key: "saturday", label: "Samedi" },
-]
+export function TeacherAvailabilityTab({ teacherId }: TeacherAvailabilityTabProps) {
+  const queryClient = useQueryClient()
+  const { data: availabilities, isLoading } = useTeacherAvailabilities(teacherId)
 
-// 07:00 to 18:00 (11 slots)
-const HOURS = Array.from({ length: 11 }, (_, i) => {
-  const h = 7 + i
-  return {
-    start: `${String(h).padStart(2, "0")}:00`,
-    end: `${String(h + 1).padStart(2, "0")}:00`,
-    label: `${String(h).padStart(2, "0")}h`,
-  }
-})
+  const [editMode, setEditMode] = useState(false)
+  const [pending, setPending] = useState<Map<string, PendingChange>>(new Map())
+  const [saving, setSaving] = useState(false)
 
-// 3 states: unavailable (default), available, preferred
-type CellState = "unavailable" | "available" | "preferred"
+  const savedMap = useMemo(() => buildSavedMap(availabilities ?? []), [availabilities])
 
-function buildAvailabilityMap(
-  availabilities: TeacherAvailability[],
-): Map<string, { id: number; available: boolean; preferred: boolean }> {
-  const map = new Map<string, { id: number; available: boolean; preferred: boolean }>()
-  for (const av of availabilities) {
-    map.set(`${av.day}|${av.start_time}|${av.end_time}`, {
-      id: av.id,
-      available: av.available,
-      preferred: av.preferred ?? false,
-    })
-  }
-  return map
-}
-
-function cellKey(day: DayOfWeek, start: string, end: string) {
-  return `${day}|${start}|${end}`
-}
-
-const STATE_STYLES: Record<CellState, string> = {
-  unavailable:
-    "bg-rose-500/15 text-rose-600 ring-1 ring-rose-300/40 hover:bg-rose-500/25",
-  available:
-    "bg-emerald-500/20 text-emerald-700 ring-1 ring-emerald-500/30 hover:bg-emerald-500/30",
-  preferred:
-    "bg-primary/15 text-primary ring-1 ring-primary/30 hover:bg-primary/25",
-}
-
-const STATE_LABELS: Record<CellState, string> = {
-  unavailable: "",
-  available: "Dispo",
-  preferred: "Préféré",
-}
-
-export function TeacherAvailabilityTab({
-  teacherId,
-}: TeacherAvailabilityTabProps) {
-  const { data: availabilities, isLoading } =
-    useTeacherAvailabilities(teacherId)
-  const { mutate: createAvailability, isPending: creating } =
-    useCreateAvailability(teacherId)
-  const { mutate: updateAvailability, isPending: updating } =
-    useUpdateAvailability(teacherId)
-  const { mutate: deleteAvailability, isPending: deleting } =
-    useDeleteAvailability(teacherId)
-
-  const isMutating = creating || updating || deleting
-
-  const availabilityMap = useMemo(
-    () => buildAvailabilityMap(availabilities ?? []),
-    [availabilities],
+  const getDisplayState = useCallback(
+    (day: DayOfWeek, start: string, end: string): CellState => {
+      const key = cellKey(day, start, end)
+      const p = pending.get(key)
+      if (p) return p.target
+      const s = savedMap.get(key)
+      return s?.state ?? "unavailable"
+    },
+    [pending, savedMap],
   )
 
-  function getCellState(day: DayOfWeek, start: string, end: string): CellState {
-    const entry = availabilityMap.get(cellKey(day, start, end))
-    if (!entry) return "unavailable"
-    if (entry.preferred) return "preferred"
-    if (entry.available) return "available"
-    return "unavailable"
-  }
+  const isPendingCell = useCallback(
+    (day: DayOfWeek, start: string, end: string) =>
+      pending.has(cellKey(day, start, end)),
+    [pending],
+  )
 
-  // Cycle: unavailable → available → preferred → unavailable (delete)
   const handleToggle = useCallback(
     (day: DayOfWeek, start: string, end: string) => {
-      if (isMutating) return
+      if (!editMode || saving) return
       const key = cellKey(day, start, end)
-      const existing = availabilityMap.get(key)
+      const current = getDisplayState(day, start, end)
+      const next = NEXT_STATE[current]
+      const saved = savedMap.get(key)
 
-      if (!existing) {
-        // unavailable → available: create entry
-        createAvailability({ day, start_time: start, end_time: end, available: true, preferred: false })
-      } else if (existing.available && !existing.preferred) {
-        // available → preferred: update
-        updateAvailability({ id: existing.id, data: { preferred: true } })
-      } else {
-        // preferred → unavailable: delete
-        deleteAvailability(existing.id)
-      }
+      setPending((prev) => {
+        const m = new Map(prev)
+        if (saved && next === saved.state) {
+          m.delete(key)
+          return m
+        }
+        if (!saved && next === "unavailable") {
+          m.delete(key)
+          return m
+        }
+        let change: PendingChange
+        if (!saved) {
+          change = {
+            kind: "create",
+            target: next as Exclude<CellState, "unavailable">,
+          }
+        } else if (next === "unavailable") {
+          change = { kind: "delete", existingId: saved.id, target: "unavailable" }
+        } else {
+          change = { kind: "update", existingId: saved.id, target: next }
+        }
+        m.set(key, change)
+        return m
+      })
     },
-    [isMutating, availabilityMap, createAvailability, updateAvailability, deleteAvailability],
+    [editMode, saving, getDisplayState, savedMap],
   )
 
+  const handleCancel = useCallback(() => {
+    setPending(new Map())
+    setEditMode(false)
+  }, [])
+
+  const handleSave = useCallback(async () => {
+    if (pending.size === 0) {
+      setEditMode(false)
+      return
+    }
+    setSaving(true)
+
+    const operations: Promise<unknown>[] = []
+    for (const [key, change] of pending) {
+      const [day, start, end] = key.split("|") as [DayOfWeek, string, string]
+      if (change.kind === "create") {
+        operations.push(
+          timetableApi.createAvailability(teacherId, {
+            day,
+            start_time: start,
+            end_time: end,
+            available: true,
+            preferred: change.target === "preferred",
+          }),
+        )
+      } else if (change.kind === "delete") {
+        operations.push(timetableApi.deleteAvailability(change.existingId))
+      } else {
+        operations.push(
+          timetableApi.updateAvailability(change.existingId, {
+            available: true,
+            preferred: change.target === "preferred",
+          }),
+        )
+      }
+    }
+
+    const results = await Promise.allSettled(operations)
+    const fulfilled = results.filter((r) => r.status === "fulfilled").length
+    const rejected = results.length - fulfilled
+
+    if (rejected === 0) {
+      toast.success(
+        `${fulfilled} disponibilité${fulfilled > 1 ? "s" : ""} enregistrée${
+          fulfilled > 1 ? "s" : ""
+        }`,
+      )
+      setPending(new Map())
+      setEditMode(false)
+    } else if (fulfilled === 0) {
+      toast.error(`Échec de l'enregistrement (${rejected} erreur${rejected > 1 ? "s" : ""})`)
+    } else {
+      toast.warning(
+        `${fulfilled} enregistrée${fulfilled > 1 ? "s" : ""}, ${rejected} erreur${
+          rejected > 1 ? "s" : ""
+        }`,
+      )
+    }
+
+    await queryClient.invalidateQueries({
+      queryKey: timetableKeys.availabilities(teacherId),
+    })
+    await queryClient.invalidateQueries({
+      queryKey: ["teachers", teacherId, "full"],
+    })
+
+    setSaving(false)
+  }, [pending, teacherId, queryClient])
+
   if (isLoading) {
-    return <AvailabilitySkeleton />
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-16 rounded-lg" />
+        <Skeleton className="h-[450px] rounded-lg" />
+      </div>
+    )
   }
 
-  const totalAvailable = Array.from(availabilityMap.values()).filter(
-    (v) => v.available,
+  const totalAvailable = Array.from(savedMap.values()).filter(
+    (v) => v.state !== "unavailable",
   ).length
-  const totalPreferred = Array.from(availabilityMap.values()).filter(
-    (v) => v.preferred,
+  const totalPreferred = Array.from(savedMap.values()).filter(
+    (v) => v.state === "preferred",
   ).length
   const maxSlots = DAYS.length * HOURS.length
 
   return (
     <div className="space-y-4">
-      {/* Summary */}
-      <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Disponibilités</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge variant="secondary" className="text-xs">
-                {totalAvailable}/{maxSlots} créneaux disponibles
-              </Badge>
-              {totalPreferred > 0 && (
-                <Badge variant="outline" className="text-xs text-primary">
-                  {totalPreferred} préférés
-                </Badge>
-              )}
-              {isMutating && (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-              )}
-            </div>
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Cliquez pour basculer : indisponible → disponible → préféré → indisponible.
-          </p>
-        </CardContent>
-      </Card>
+      <AvailabilityToolbar
+        editMode={editMode}
+        saving={saving}
+        totalAvailable={totalAvailable}
+        totalPreferred={totalPreferred}
+        maxSlots={maxSlots}
+        pendingCount={pending.size}
+        onEnterEdit={() => setEditMode(true)}
+        onCancel={handleCancel}
+        onSave={handleSave}
+      />
 
-      {/* Grid */}
-      <Card className="border-0 shadow-sm ring-1 ring-border overflow-hidden">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
-              <thead>
-                <tr>
-                  <th className="sticky left-0 z-10 bg-muted/50 p-2 text-left font-medium text-muted-foreground min-w-[60px]">
-                    Heure
-                  </th>
-                  {DAYS.map((d) => (
-                    <th
-                      key={d.key}
-                      className="p-2 text-center font-medium text-muted-foreground min-w-[80px]"
-                    >
-                      {d.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {HOURS.map((hour) => (
-                  <tr key={hour.start} className="border-t border-border/50">
-                    <td className="sticky left-0 z-10 bg-muted/50 p-2 font-medium text-muted-foreground tabular-nums">
-                      {hour.label}
-                    </td>
-                    {DAYS.map((day) => {
-                      const state = getCellState(day.key, hour.start, hour.end)
-                      return (
-                        <td key={cellKey(day.key, hour.start, hour.end)} className="p-1">
-                          <button
-                            type="button"
-                            disabled={isMutating}
-                            onClick={() =>
-                              handleToggle(day.key, hour.start, hour.end)
-                            }
-                            className={`
-                              w-full h-9 rounded-md text-[10px] font-medium transition-colors
-                              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
-                              disabled:pointer-events-none disabled:opacity-50
-                              ${STATE_STYLES[state]}
-                            `}
-                            aria-label={`${day.label} ${hour.start}-${hour.end}: ${state}`}
-                          >
-                            {STATE_LABELS[state]}
-                          </button>
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <AvailabilityGrid
+        getDisplayState={getDisplayState}
+        isPendingCell={isPendingCell}
+        interactive={editMode && !saving}
+        onToggle={handleToggle}
+      />
 
-      {/* Legend */}
-      <div className="flex items-center gap-5 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <div className="h-3 w-5 rounded-sm bg-emerald-500/20 ring-1 ring-emerald-500/30" />
-          <span>Disponible</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="h-3 w-5 rounded-sm bg-primary/15 ring-1 ring-primary/30" />
-          <span>Créneaux préférés</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="h-3 w-5 rounded-sm bg-rose-500/15 ring-1 ring-rose-300/40" />
-          <span>Indisponible</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function AvailabilitySkeleton() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-16 rounded-lg" />
-      <Skeleton className="h-[450px] rounded-lg" />
+      <AvailabilityLegend pendingCount={pending.size} />
     </div>
   )
 }

@@ -64,6 +64,42 @@ export const timetableApi = {
     return slotsToFr(safeValidate(TimetableSlotArraySchema, arr, `/timetable?teacher_id=${teacherId}`))
   },
 
+  // GET /teacher/schedule (BE) resolves the teacher from the JWT, so the FE
+  // never needs to know the teacher_profile.id. Used for /teacher/timetable
+  // (the teacher viewing their own schedule). The shape from BE omits a few
+  // fields that TimetableSlotSchema requires (teacher_id / teacher_name /
+  // class_id / academic_year_id / subject_id) — we map to a synthesized
+  // record that satisfies the Zod contract used by the grid component.
+  myTimetable: async (): Promise<TimetableSlot[]> => {
+    const json = await apiFetch<{ items?: unknown[] } | unknown[]>(`/teacher/schedule`)
+    const arr: unknown[] = Array.isArray(json) ? json : json.items ?? []
+    const mapped = arr.map((raw) => {
+      const s = raw as Record<string, unknown>
+      const start = String(s.start_time ?? "").slice(0, 5)
+      const end = String(s.end_time ?? "").slice(0, 5)
+      const id = Number(s.id ?? 0)
+      return {
+        id,
+        class_id: Number(s.class_id ?? 0),
+        teacher_id: Number(s.teacher_id ?? 0),
+        // subject_id drives the color hue in TeacherScheduleView. /teacher/schedule
+        // doesn't expose it, so we fall back to the slot id which is unique enough
+        // to spread colors across slots of the same teacher.
+        subject_id: Number(s.subject_id ?? id),
+        academic_year_id: Number(s.academic_year_id ?? 0),
+        day: String(s.day ?? ""),
+        start_time: start,
+        end_time: end,
+        class_name: String(s.class_name ?? ""),
+        teacher_name: String(s.teacher_name ?? ""),
+        subject_name: String(s.subject_name ?? ""),
+        subject_color: (s.subject_color as string | null | undefined) ?? null,
+        room: ((s.room ?? s.room_name) as string | null | undefined) ?? null,
+      }
+    })
+    return slotsToFr(safeValidate(TimetableSlotArraySchema, mapped, `/teacher/schedule`))
+  },
+
   create: async (data: TimetableSlotCreate): Promise<TimetableSlot> => {
     const payload = { ...data, day: dayToEn(data.day) }
     const json = await apiFetch<{ data?: TimetableSlot } | TimetableSlot>(

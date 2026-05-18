@@ -30,7 +30,7 @@ interface TrimesterSectionProps {
 export function TrimesterSection({ settings }: TrimesterSectionProps) {
   const { mutate, isPending } = useUpdateTrimesters()
 
-  const trimesters = settings.trimesters.length === 3
+  const trimesters = settings.trimesters?.length === 3
     ? settings.trimesters
     : DEFAULT_TRIMESTERS
 

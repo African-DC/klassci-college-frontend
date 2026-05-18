@@ -25,14 +25,22 @@ export const SchoolSettingsSchema = z.object({
   head_master_title: z.string().nullable().optional(),
   enrollment_number_pattern: z.string().nullable().optional(),
   enrollment_number_counter: z.number().optional().default(0),
-  // --- UI-only fields (not yet in backend, optional with defaults) ---
+  // Personnalisation PDF par école (migration BE 0029)
+  primary_color: z.string().nullable().optional(),
+  accent_color: z.string().nullable().optional(),
+  website: z.string().nullable().optional(),
+  motto: z.string().nullable().optional(),
+  // --- UI-only fields ---
   active_academic_year: z.string().nullable().optional().default(null),
   trimesters: z.array(TrimesterConfigSchema).optional().default([]),
+  // Notification preferences (now backed by BE columns on school_settings — see migration 0027)
   notify_by_email: z.boolean().optional().default(false),
   notify_by_sms: z.boolean().optional().default(false),
   notify_grades: z.boolean().optional().default(false),
   notify_absences: z.boolean().optional().default(false),
   notify_payments: z.boolean().optional().default(false),
+  notify_enrollment: z.boolean().optional().default(false),
+  notify_reenrollment: z.boolean().optional().default(false),
 })
 
 export const SchoolInfoUpdateSchema = z.object({
@@ -43,6 +51,10 @@ export const SchoolInfoUpdateSchema = z.object({
   ministry_code: z.string().optional(),
   head_master_name: z.string().optional(),
   head_master_title: z.string().optional(),
+  primary_color: z.string().nullable().optional(),
+  accent_color: z.string().nullable().optional(),
+  website: z.string().nullable().optional(),
+  motto: z.string().nullable().optional(),
 })
 
 export const TrimesterUpdateSchema = z.object({
@@ -55,6 +67,8 @@ export const NotificationUpdateSchema = z.object({
   notify_grades: z.boolean(),
   notify_absences: z.boolean(),
   notify_payments: z.boolean(),
+  notify_enrollment: z.boolean(),
+  notify_reenrollment: z.boolean(),
 })
 
 export type TrimesterConfig = z.infer<typeof TrimesterConfigSchema>
