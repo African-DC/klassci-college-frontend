@@ -31,26 +31,6 @@ interface AbsencePoint {
   nonJustifiees: number
 }
 
-// Placeholder data — sera remplacé par appel BE quand /admin/students/{id}/full
-// inclura les bulletins archivés et la breakdown par trimestre.
-function buildPlaceholderTrimesters(hasEnrollment: boolean): TrimesterPoint[] {
-  if (!hasEnrollment) return []
-  return [
-    { trimester: "T1", general: null, best: null, worst: null },
-    { trimester: "T2", general: null, best: null, worst: null },
-    { trimester: "T3", general: null, best: null, worst: null },
-  ]
-}
-
-function buildPlaceholderAbsences(hasEnrollment: boolean): AbsencePoint[] {
-  if (!hasEnrollment) return []
-  return [
-    { trimester: "T1", justifiees: 0, nonJustifiees: 0 },
-    { trimester: "T2", justifiees: 0, nonJustifiees: 0 },
-    { trimester: "T3", justifiees: 0, nonJustifiees: 0 },
-  ]
-}
-
 interface StudentAcademicChartsProps {
   studentId: number
 }
@@ -60,10 +40,13 @@ export function StudentAcademicCharts({ studentId }: StudentAcademicChartsProps)
 
   const hasEnrollment = (enrollmentsData?.items?.length ?? 0) > 0
 
-  const trimesterData = useMemo(() => buildPlaceholderTrimesters(hasEnrollment), [hasEnrollment])
-  const absenceData = useMemo(() => buildPlaceholderAbsences(hasEnrollment), [hasEnrollment])
-  const hasGrades = trimesterData.some((p) => p.general !== null)
-  const hasAbsences = absenceData.some((p) => p.justifiees + p.nonJustifiees > 0)
+  // Series vides tant que /admin/students/{id}/full n'expose pas la
+  // breakdown par trimestre. L'empty state propre est rendu en dessous,
+  // évite le faux signal "3 dots null + 3 bars zéro" (no-mvp rule).
+  const trimesterData: TrimesterPoint[] = useMemo(() => [], [])
+  const absenceData: AbsencePoint[] = useMemo(() => [], [])
+  const hasGrades = trimesterData.length > 0 && trimesterData.some((p) => p.general !== null)
+  const hasAbsences = absenceData.length > 0 && absenceData.some((p) => p.justifiees + p.nonJustifiees > 0)
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
