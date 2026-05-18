@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff } from "lucide-react"
+import { Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff, Clock } from "lucide-react"
 import { LoginRequestSchema, type LoginRequest } from "@/lib/contracts/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -54,6 +54,7 @@ export function LoginForm() {
   const searchParams = useSearchParams()
   const rawCallback = searchParams.get("callbackUrl") ?? "/"
   const callbackUrl = rawCallback.startsWith("/") && !rawCallback.startsWith("//") ? rawCallback : "/"
+  const sessionExpired = searchParams.get("expired") === "1"
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [tenantCode, setTenantCode] = useState<string | null>(null)
@@ -103,6 +104,23 @@ export function LoginForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        {sessionExpired && !error && (
+          <div
+            role="alert"
+            className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 dark:border-amber-900/40 dark:bg-amber-950/30"
+          >
+            <Clock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                Session expirée
+              </p>
+              <p className="text-xs text-amber-800 dark:text-amber-200">
+                Pour des raisons de sécurité, reconnectez-vous pour continuer.
+              </p>
+            </div>
+          </div>
+        )}
+
         {tenantCode && (
           <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
             <span className="text-muted-foreground">Établissement : </span>

@@ -30,9 +30,15 @@ function EnrollmentsSubtitle() {
 export function EnrollmentsPageClient() {
   const searchParams = useSearchParams()
   const [createOpen, setCreateOpen] = useState(false)
+  const [preselectedStudentId, setPreselectedStudentId] = useState<number | undefined>(undefined)
 
   useEffect(() => {
     if (searchParams.get("action") === "create") {
+      // Bug #22 : si le badge "À inscrire" passe student_id en query,
+      // on l'extrait et on le file au modal pour pré-remplissage + skip step.
+      const sid = searchParams.get("student_id")
+      const parsed = sid ? parseInt(sid, 10) : NaN
+      setPreselectedStudentId(Number.isFinite(parsed) && parsed > 0 ? parsed : undefined)
       setCreateOpen(true)
     }
   }, [searchParams])
@@ -57,7 +63,14 @@ export function EnrollmentsPageClient() {
 
       <EnrollmentsTable />
 
-      <EnrollmentCreateModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      <EnrollmentCreateModal
+        open={createOpen}
+        onClose={() => {
+          setCreateOpen(false)
+          setPreselectedStudentId(undefined)
+        }}
+        preselectedStudentId={preselectedStudentId}
+      />
     </div>
   )
 }

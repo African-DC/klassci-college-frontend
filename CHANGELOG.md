@@ -10,6 +10,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Personnalisation de l'identité visuelle des PDFs depuis les paramètres de l'établissement : nouvel onglet « Identité visuelle » avec sélecteurs de couleur principale et d'accent, devise de l'école et site web, avec un aperçu en direct du reçu qui se met à jour à chaque modification. Touch targets h-11 mobile *(admin)*.
+- L'aperçu en direct reproduit fidèlement le rendu du reçu avec bandeau République de Côte d'Ivoire, logo, code MENA, devise en italique, montant gradient, tableau d'allocation avec pastilles colorées et pied de page personnalisé *(admin)*.
+- Bouton « Aperçu PDF » qui télécharge un bordereau du jour pour vérifier l'identité visuelle appliquée *(admin)*.
+- Versement caissier Wave-style : 3 champs seulement (montant, méthode, référence), l'allocation aux frais impayés se fait automatiquement par priorité avec un aperçu en direct qui montre où va chaque XOF avant de valider *(admin)*.
+- Aperçu d'allocation interactif dans le formulaire de versement : pastilles vertes/oranges/grises indiquent quels frais seront soldés ou complétés, et un encart amber prévient si le montant dépasse la dette restante *(admin)*.
 - Connexion multi-tenant : un utilisateur d'établissement arrive sur `college.klassci.com/login?c=<slug>` (lien WhatsApp, email d'invitation), l'établissement s'affiche au-dessus du formulaire et reste mémorisé pour les visites suivantes *(admin, enseignant, parent, élève)* (#183).
 - Aperçu du lien de connexion généré dans le formulaire de création de tenant, avec conseil de choisir un slug court et mémorable (ex : `lmab`, `cca-2026`) — l'admin du super-admin sait exactement ce que recevra le nouvel établissement *(super-admin)* (#183).
 - Section super-admin complète (`/super-admin/*`) : tableau de bord pour onboarder une école sans SSH ni terminal. Liste des tenants avec taille de base, formulaire de création en 3 étapes (nom + slug avec disponibilité vérifiée en direct, compte administrateur, détails optionnels) et progression visible des étapes pendant les 10-30 secondes du provisioning *(super-admin)* (#176).

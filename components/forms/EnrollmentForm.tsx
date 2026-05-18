@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
@@ -74,12 +74,18 @@ const RELATIONSHIP_TYPES = [
 
 interface EnrollmentFormProps {
   onSuccess: () => void
+  /**
+   * Élève pré-sélectionné (depuis ex. badge "À inscrire" sur /admin/students).
+   * Quand fourni : le type est forcé à "re-enrollment", student_id est rempli
+   * et le wizard saute directement à l'étape Classe — bug #22.
+   */
+  preselectedStudentId?: number
 }
 
 // Unified type for the discriminated form
 type EnrollmentFormData = NewEnrollment | ReEnrollment
 
-export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
+export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFormProps) {
   const [step, setStep] = useState(0)
   const [enrollmentType, setEnrollmentType] = useState<EnrollmentType | null>(null)
   const [showParentFields, setShowParentFields] = useState(false)
@@ -160,6 +166,19 @@ export function EnrollmentForm({ onSuccess }: EnrollmentFormProps) {
   )
 
   const isPending = createWithStudent.isPending || reEnroll.isPending
+
+  // Bug #22 : Quand un student_id arrive via query (?student_id=X), on
+  // pré-remplit le formulaire re-enrollment et on saute directement à la
+  // sélection de classe. Évite à l'admin de re-chercher l'élève qu'il
+  // vient justement de cliquer dans la liste.
+  useEffect(() => {
+    if (preselectedStudentId && enrollmentType === null) {
+      setEnrollmentType("re-enrollment")
+      reForm.setValue("student_id", preselectedStudentId)
+      setStep(2)
+      setMaxReachedStep(2)
+    }
+  }, [preselectedStudentId, enrollmentType, reForm])
 
   function goToStep(target: number) {
     setStep(target)

@@ -17,6 +17,7 @@ export const ParentDashboardSchema = z.object({
   parent_name: z.string(),
   total_children: z.number(),
   children: z.array(ParentChildSchema),
+  current_academic_year: z.string().nullish(),
 })
 
 // Notes d'un enfant — même structure que les notes élève

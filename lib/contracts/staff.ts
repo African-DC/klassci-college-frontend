@@ -11,14 +11,25 @@ export const StaffSchema = z.object({
   updated_at: z.string().optional(),
 }).passthrough()
 
+// Aligné sur TeacherCreate : un staff a aussi un compte user pour se
+// connecter au portail (admin secondaire / secrétaire pédagogique).
+// Le BE crée User + user_roles + StaffProfile en transaction.
 export const StaffCreateSchema = z.object({
   first_name: z.string({ required_error: "Le prénom est requis" }).min(1, "Le prénom est requis"),
   last_name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
+  email: z.string({ required_error: "L'email est requis" }).email("Email invalide"),
+  password: z.string({ required_error: "Le mot de passe est requis" }).min(8, "8 caractères minimum"),
   position: z.string().optional(),
   phone: z.string().optional(),
 })
 
-export const StaffUpdateSchema = StaffCreateSchema.partial()
+// L'update n'envoie jamais email/password (changement compte = endpoint dédié)
+export const StaffUpdateSchema = z.object({
+  first_name: z.string().min(1).optional(),
+  last_name: z.string().min(1).optional(),
+  position: z.string().optional(),
+  phone: z.string().optional(),
+})
 
 export const StaffListParamsSchema = z.object({
   page: z.number().optional(),
