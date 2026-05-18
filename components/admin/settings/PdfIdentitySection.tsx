@@ -65,13 +65,18 @@ export function PdfIdentitySection({ settings, isLoading }: PdfIdentitySectionPr
   const { mutate, isPending } = useMutation({
     mutationFn: () =>
       settingsApi.updateSchoolInfo({
-        ...(settings ?? { school_name: "" }),
         school_name: settings?.school_name ?? "",
+        address: settings?.address ?? undefined,
+        phone: settings?.phone ?? undefined,
+        email: settings?.email ?? undefined,
+        ministry_code: settings?.ministry_code ?? undefined,
+        head_master_name: settings?.head_master_name ?? undefined,
+        head_master_title: settings?.head_master_title ?? undefined,
         primary_color: values.primary_color || null,
         accent_color: values.accent_color || null,
         website: values.website || null,
         motto: values.motto || null,
-      } as never),
+      }),
     onSuccess: () => {
       toast.success("Identité visuelle enregistrée", {
         description: "Les prochains PDF utiliseront ces couleurs et cette devise.",

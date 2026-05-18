@@ -51,6 +51,10 @@ export const SchoolInfoUpdateSchema = z.object({
   ministry_code: z.string().optional(),
   head_master_name: z.string().optional(),
   head_master_title: z.string().optional(),
+  primary_color: z.string().nullable().optional(),
+  accent_color: z.string().nullable().optional(),
+  website: z.string().nullable().optional(),
+  motto: z.string().nullable().optional(),
 })
 
 export const TrimesterUpdateSchema = z.object({
