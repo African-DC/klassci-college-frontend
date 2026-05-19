@@ -27,11 +27,10 @@ import {
   useValidateTeacherAttendance,
 } from "@/lib/hooks/useTeacherAttendance"
 import type { TeacherAttendanceResponse } from "@/lib/contracts/teacher-attendance"
+import { AttendanceStatusChip } from "./AttendanceStatusChip"
 import {
-  STATUS_CHIP_CLASS,
-  STATUS_LABEL,
+  cleanNotes,
   formatLongFrenchDate,
-  formatLateMinutes,
 } from "./teacher-attendance-helpers"
 
 interface PendingValidationSectionProps {
@@ -43,9 +42,8 @@ export function PendingValidationSection({
   teacherId,
   academicYearId,
 }: PendingValidationSectionProps) {
-  // Fetch all unvalidated items: BE filter is_validated=false n'est pas exposé
-  // directement, mais le contrat list renvoie tout, on filtre côté FE pour
-  // le panel "En attente" (volume modéré : < 50 items typiques).
+  // BE filter is_validated=false n'est pas exposé directement, donc on récupère
+  // tout et filtre côté FE (volume modéré : < 50 items typiques).
   const { data, isLoading } = useTeacherAttendanceList(
     teacherId,
     {
@@ -95,31 +93,16 @@ function PendingRow({ item }: { item: TeacherAttendanceResponse }) {
   const [adminNotes, setAdminNotes] = useState("")
   const { mutate: validate, isPending } = useValidateTeacherAttendance()
 
-  const onApprove = () => {
+  function submit(approved: boolean, close: () => void) {
     validate(
       {
         attendanceId: item.id,
-        data: { approved: true, admin_notes: adminNotes.trim() || null },
+        data: { approved, admin_notes: cleanNotes(adminNotes) },
       },
       {
         onSuccess: () => {
           setAdminNotes("")
-          setApproveOpen(false)
-        },
-      },
-    )
-  }
-
-  const onReject = () => {
-    validate(
-      {
-        attendanceId: item.id,
-        data: { approved: false, admin_notes: adminNotes.trim() || null },
-      },
-      {
-        onSuccess: () => {
-          setAdminNotes("")
-          setRejectOpen(false)
+          close()
         },
       },
     )
@@ -130,16 +113,10 @@ function PendingRow({ item }: { item: TeacherAttendanceResponse }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${STATUS_CHIP_CLASS[item.status]}`}
-            >
-              {STATUS_LABEL[item.status]}
-              {item.status === "late" && item.late_minutes > 0 && (
-                <span className="ml-1 font-semibold">
-                  · {formatLateMinutes(item.late_minutes)}
-                </span>
-              )}
-            </span>
+            <AttendanceStatusChip
+              status={item.status}
+              lateMinutes={item.late_minutes}
+            />
             <span className="text-sm font-medium">
               {formatLongFrenchDate(item.date)}
             </span>
@@ -198,7 +175,11 @@ function PendingRow({ item }: { item: TeacherAttendanceResponse }) {
             <Button variant="outline" onClick={() => setApproveOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={onApprove} disabled={isPending} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button
+              onClick={() => submit(true, () => setApproveOpen(false))}
+              disabled={isPending}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
               {isPending ? "Validation..." : "Valider"}
             </Button>
           </DialogFooter>
@@ -223,7 +204,7 @@ function PendingRow({ item }: { item: TeacherAttendanceResponse }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
-              onClick={onReject}
+              onClick={() => submit(false, () => setRejectOpen(false))}
               disabled={isPending}
               className="bg-rose-600 hover:bg-rose-700"
             >

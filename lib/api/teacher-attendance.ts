@@ -1,3 +1,4 @@
+import { z } from "zod"
 import { apiFetch, safeValidate } from "./client"
 import {
   TeacherAttendanceListResponseSchema,
@@ -19,6 +20,16 @@ function unwrap(json: unknown): unknown {
   return json
 }
 
+async function fetchAndValidate<T>(
+  schema: z.ZodType<T>,
+  path: string,
+  context: string,
+  init?: { method?: string; body?: string },
+): Promise<T> {
+  const json = await apiFetch<unknown>(path, init)
+  return safeValidate(schema, unwrap(json), context)
+}
+
 export interface TeacherAttendanceListParams {
   academic_year_id?: number
   status?: string
@@ -38,64 +49,43 @@ function toQueryString(params: TeacherAttendanceListParams): string {
 }
 
 export const teacherAttendanceApi = {
-  list: async (
+  list: (
     teacherId: number,
     params: TeacherAttendanceListParams = {},
   ): Promise<TeacherAttendanceListResponse> => {
-    const json = await apiFetch<unknown>(
-      `/admin/teachers/${teacherId}/attendance${toQueryString(params)}`,
-    )
-    return safeValidate(
-      TeacherAttendanceListResponseSchema,
-      unwrap(json),
-      `GET /admin/teachers/${teacherId}/attendance`,
-    )
+    const path = `/admin/teachers/${teacherId}/attendance${toQueryString(params)}`
+    return fetchAndValidate(TeacherAttendanceListResponseSchema, path, `GET ${path}`)
   },
 
-  stats: async (
+  stats: (
     teacherId: number,
     academicYearId?: number,
   ): Promise<TeacherAttendanceStats> => {
-    const qs =
-      academicYearId !== undefined ? `?academic_year_id=${academicYearId}` : ""
-    const json = await apiFetch<unknown>(
-      `/admin/teachers/${teacherId}/attendance/stats${qs}`,
-    )
-    return safeValidate(
-      TeacherAttendanceStatsSchema,
-      unwrap(json),
-      `GET /admin/teachers/${teacherId}/attendance/stats`,
-    )
+    const qs = academicYearId !== undefined ? `?academic_year_id=${academicYearId}` : ""
+    const path = `/admin/teachers/${teacherId}/attendance/stats${qs}`
+    return fetchAndValidate(TeacherAttendanceStatsSchema, path, `GET ${path}`)
   },
 
-  recordAsAdmin: async (
+  recordAsAdmin: (
     teacherId: number,
     data: TeacherAttendanceCreate,
   ): Promise<TeacherAttendanceResponse> => {
-    const json = await apiFetch<unknown>(
-      `/admin/teachers/${teacherId}/attendance`,
-      { method: "POST", body: JSON.stringify(data) },
-    )
-    return safeValidate(
-      TeacherAttendanceResponseSchema,
-      unwrap(json),
-      `POST /admin/teachers/${teacherId}/attendance`,
-    )
+    const path = `/admin/teachers/${teacherId}/attendance`
+    return fetchAndValidate(TeacherAttendanceResponseSchema, path, `POST ${path}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
   },
 
-  validate: async (
+  validate: (
     attendanceId: number,
     data: TeacherAttendanceValidateInput,
   ): Promise<TeacherAttendanceResponse> => {
-    const json = await apiFetch<unknown>(
-      `/admin/teacher-attendance/${attendanceId}/validate`,
-      { method: "PATCH", body: JSON.stringify(data) },
-    )
-    return safeValidate(
-      TeacherAttendanceResponseSchema,
-      unwrap(json),
-      `PATCH /admin/teacher-attendance/${attendanceId}/validate`,
-    )
+    const path = `/admin/teacher-attendance/${attendanceId}/validate`
+    return fetchAndValidate(TeacherAttendanceResponseSchema, path, `PATCH ${path}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    })
   },
 
   delete: async (attendanceId: number): Promise<void> => {
@@ -104,17 +94,13 @@ export const teacherAttendanceApi = {
     })
   },
 
-  selfDeclare: async (
+  selfDeclare: (
     data: TeacherSelfDeclareCreate,
   ): Promise<TeacherAttendanceResponse> => {
-    const json = await apiFetch<unknown>("/teacher/attendance/self-declare", {
+    const path = "/teacher/attendance/self-declare"
+    return fetchAndValidate(TeacherAttendanceResponseSchema, path, `POST ${path}`, {
       method: "POST",
       body: JSON.stringify(data),
     })
-    return safeValidate(
-      TeacherAttendanceResponseSchema,
-      unwrap(json),
-      "POST /teacher/attendance/self-declare",
-    )
   },
 }

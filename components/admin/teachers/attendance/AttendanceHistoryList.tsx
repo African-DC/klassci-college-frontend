@@ -36,10 +36,9 @@ import type {
   TeacherAttendanceResponse,
   TeacherAttendanceStatus,
 } from "@/lib/contracts/teacher-attendance"
+import { AttendanceStatusChip } from "./AttendanceStatusChip"
 import {
-  STATUS_CHIP_CLASS,
   STATUS_LABEL,
-  formatLateMinutes,
   formatLongFrenchDate,
 } from "./teacher-attendance-helpers"
 
@@ -49,6 +48,13 @@ interface AttendanceHistoryListProps {
 }
 
 type StatusFilter = TeacherAttendanceStatus | "all"
+
+const STATUS_FILTER_OPTIONS: TeacherAttendanceStatus[] = [
+  "absent_unexcused",
+  "absent_excused",
+  "late",
+  "present",
+]
 
 export function AttendanceHistoryList({
   teacherId,
@@ -84,14 +90,11 @@ export function AttendanceHistoryList({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="absent_unexcused">
-                {STATUS_LABEL.absent_unexcused}
-              </SelectItem>
-              <SelectItem value="absent_excused">
-                {STATUS_LABEL.absent_excused}
-              </SelectItem>
-              <SelectItem value="late">{STATUS_LABEL.late}</SelectItem>
-              <SelectItem value="present">{STATUS_LABEL.present}</SelectItem>
+              {STATUS_FILTER_OPTIONS.map((opt) => (
+                <SelectItem key={opt} value={opt}>
+                  {STATUS_LABEL[opt]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -128,16 +131,10 @@ function AttendanceRow({ item }: { item: TeacherAttendanceResponse }) {
     <li className="flex items-start justify-between gap-3 rounded-lg border bg-card p-3">
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${STATUS_CHIP_CLASS[item.status]}`}
-          >
-            {STATUS_LABEL[item.status]}
-            {item.status === "late" && item.late_minutes > 0 && (
-              <span className="ml-1 font-semibold">
-                · {formatLateMinutes(item.late_minutes)}
-              </span>
-            )}
-          </span>
+          <AttendanceStatusChip
+            status={item.status}
+            lateMinutes={item.late_minutes}
+          />
           <span className="text-sm font-medium">
             {formatLongFrenchDate(item.date)}
           </span>

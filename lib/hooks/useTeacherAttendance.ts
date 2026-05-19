@@ -20,6 +20,8 @@ export const teacherAttendanceKeys = {
     ["teacher-attendance", "stats", teacherId, academicYearId] as const,
 }
 
+const STALE_TIME = 1000 * 60 // 1 minute
+
 export function useTeacherAttendanceList(
   teacherId: number,
   params: TeacherAttendanceListParams,
@@ -29,7 +31,7 @@ export function useTeacherAttendanceList(
     queryKey: teacherAttendanceKeys.list(teacherId, params),
     queryFn: () => teacherAttendanceApi.list(teacherId, params),
     enabled: options.enabled !== false && teacherId > 0,
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: STALE_TIME,
   })
 }
 
@@ -41,8 +43,13 @@ export function useTeacherAttendanceStats(
     queryKey: teacherAttendanceKeys.stats(teacherId, academicYearId),
     queryFn: () => teacherAttendanceApi.stats(teacherId, academicYearId),
     enabled: teacherId > 0,
-    staleTime: 1000 * 60,
+    staleTime: STALE_TIME,
   })
+}
+
+/** Shared error toast for mutations: BE message si présent, fallback générique. */
+function errorToast(fallback: string) {
+  return (err: Error) => toast.error(err.message || fallback)
 }
 
 export function useRecordTeacherAttendance(teacherId: number) {
@@ -54,9 +61,7 @@ export function useRecordTeacherAttendance(teacherId: number) {
       queryClient.invalidateQueries({ queryKey: teacherAttendanceKeys.all })
       toast.success("Pointage enregistré")
     },
-    onError: (err: Error) => {
-      toast.error(err.message || "Erreur lors de l'enregistrement")
-    },
+    onError: errorToast("Erreur lors de l'enregistrement"),
   })
 }
 
@@ -69,15 +74,10 @@ export function useValidateTeacherAttendance() {
     }) => teacherAttendanceApi.validate(params.attendanceId, params.data),
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: teacherAttendanceKeys.all })
-      toast.success(
-        vars.data.approved === false
-          ? "Déclaration rejetée"
-          : "Déclaration validée",
-      )
+      const approved = vars.data.approved !== false
+      toast.success(approved ? "Déclaration validée" : "Déclaration rejetée")
     },
-    onError: (err: Error) => {
-      toast.error(err.message || "Erreur lors de la validation")
-    },
+    onError: errorToast("Erreur lors de la validation"),
   })
 }
 
@@ -90,9 +90,7 @@ export function useDeleteTeacherAttendance() {
       queryClient.invalidateQueries({ queryKey: teacherAttendanceKeys.all })
       toast.success("Pointage annulé")
     },
-    onError: (err: Error) => {
-      toast.error(err.message || "Erreur lors de l'annulation")
-    },
+    onError: errorToast("Erreur lors de l'annulation"),
   })
 }
 
@@ -107,8 +105,6 @@ export function useSelfDeclareAttendance() {
         description: "En attente de validation par l'administration.",
       })
     },
-    onError: (err: Error) => {
-      toast.error(err.message || "Erreur lors de la déclaration")
-    },
+    onError: errorToast("Erreur lors de la déclaration"),
   })
 }

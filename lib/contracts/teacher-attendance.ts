@@ -59,28 +59,59 @@ export const TeacherAttendanceStatsSchema = z.object({
 
 // ---------- Input schemas (forms) ----------
 
+const LATE_MINUTES_FIELD = z
+  .number({ invalid_type_error: "Minutes en chiffres" })
+  .int()
+  .min(0, "Doit être >= 0")
+  .max(480, "Maximum 8h (480 minutes)")
+  .default(0)
+
+const NOTES_FIELD = z
+  .string()
+  .max(1000, "1000 caractères maximum")
+  .nullable()
+  .optional()
+
+const LATE_MINUTES_RULE = {
+  message:
+    "Les minutes de retard ne s'appliquent qu'au statut 'En retard' et doivent être > 0",
+  path: ["late_minutes"],
+}
+
+function lateMinutesMatchStatus<T extends { status: string; late_minutes: number }>(
+  data: T,
+): boolean {
+  return data.status === "late" ? data.late_minutes > 0 : data.late_minutes === 0
+}
+
 export const TeacherAttendanceCreateSchema = z
   .object({
     slot_id: z.number().int().positive().nullable().optional(),
     date: z.string().min(1, "La date est requise"),
     status: TeacherAttendanceStatusSchema,
-    late_minutes: z
-      .number({ invalid_type_error: "Minutes en chiffres" })
-      .int()
-      .min(0, "Doit être >= 0")
-      .max(480, "Maximum 8h (480 minutes)")
-      .default(0),
-    notes: z.string().max(1000, "1000 caractères maximum").nullable().optional(),
+    late_minutes: LATE_MINUTES_FIELD,
+    notes: NOTES_FIELD,
   })
-  .refine(
-    (data) => data.status === "late" || data.late_minutes === 0,
-    {
-      message: "Les minutes de retard ne s'appliquent qu'au statut 'En retard'",
-      path: ["late_minutes"],
-    },
-  )
+  .refine(lateMinutesMatchStatus, LATE_MINUTES_RULE)
 
-export const TeacherSelfDeclareCreateSchema = TeacherAttendanceCreateSchema
+// Self-declare narrows the status enum: a teacher cannot declare themselves
+// "present" via this endpoint (use the regular attendance flow for that).
+// Mirrors the BE business rule even though the BE accepts the wider enum.
+export const TeacherSelfDeclareStatusSchema = z.enum([
+  "absent_excused",
+  "absent_unexcused",
+  "late",
+])
+
+export const TeacherSelfDeclareCreateSchema = z
+  .object({
+    slot_id: z.number().int().positive().nullable().optional(),
+    date: z.string().min(1, "La date est requise"),
+    status: TeacherSelfDeclareStatusSchema,
+    late_minutes: LATE_MINUTES_FIELD,
+    notes: NOTES_FIELD,
+  })
+  .refine(lateMinutesMatchStatus, LATE_MINUTES_RULE)
 
 export const TeacherAttendanceValidateSchema = z.object({
   approved: z.boolean().default(true),

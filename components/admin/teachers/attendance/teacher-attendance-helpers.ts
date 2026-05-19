@@ -1,3 +1,4 @@
+import type { TimetableSlot } from "@/lib/contracts/timetable"
 import type { TeacherAttendanceStatus } from "@/lib/contracts/teacher-attendance"
 
 export const STATUS_LABEL: Record<TeacherAttendanceStatus, string> = {
@@ -21,6 +22,33 @@ export const STATUS_CHIP_CLASS: Record<TeacherAttendanceStatus, string> = {
   absent_excused: "bg-amber-50 text-amber-700 border-amber-200",
   absent_unexcused: "bg-rose-50 text-rose-700 border-rose-200",
   late: "bg-blue-50 text-blue-700 border-blue-200",
+}
+
+export const TONE_CLASSES: Record<Tone, { text: string; bg: string; ring: string }> = {
+  emerald: { text: "text-emerald-700", bg: "bg-emerald-50", ring: "ring-emerald-100" },
+  rose: { text: "text-rose-700", bg: "bg-rose-50", ring: "ring-rose-100" },
+  blue: { text: "text-blue-700", bg: "bg-blue-50", ring: "ring-blue-100" },
+  amber: { text: "text-amber-700", bg: "bg-amber-50", ring: "ring-amber-100" },
+  neutral: {
+    text: "text-muted-foreground",
+    bg: "bg-muted/40",
+    ring: "ring-muted-foreground/10",
+  },
+}
+
+export const FRENCH_DAY_LABEL: Record<string, string> = {
+  lundi: "Lundi",
+  mardi: "Mardi",
+  mercredi: "Mercredi",
+  jeudi: "Jeudi",
+  vendredi: "Vendredi",
+  samedi: "Samedi",
+  monday: "Lundi",
+  tuesday: "Mardi",
+  wednesday: "Mercredi",
+  thursday: "Jeudi",
+  friday: "Vendredi",
+  saturday: "Samedi",
 }
 
 const FRENCH_MONTHS = [
@@ -91,4 +119,15 @@ export function formatLateMinutes(minutes: number): string {
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
   return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`
+}
+
+/** Builds the option label for a timetable slot select item. */
+export function formatSlotOption(slot: TimetableSlot): string {
+  const dayLabel = FRENCH_DAY_LABEL[slot.day] ?? slot.day
+  return `${dayLabel} ${slot.start_time}–${slot.end_time} · ${slot.subject_name} · ${slot.class_name}`
+}
+
+/** Trims notes and returns null if empty (BE expects null over empty string). */
+export function cleanNotes(notes: string | null | undefined): string | null {
+  return notes?.trim() || null
 }
