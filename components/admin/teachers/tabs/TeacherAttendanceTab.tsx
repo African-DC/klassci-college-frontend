@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,20 +23,8 @@ interface TeacherAttendanceTabProps {
 
 export function TeacherAttendanceTab({ teacherId }: TeacherAttendanceTabProps) {
   const { data: yearsData } = useAcademicYears({ page: 1, size: 50 })
-  const years = useMemo(() => {
-    const raw = yearsData
-    if (!raw) return []
-    if (Array.isArray(raw)) return raw
-    if (typeof raw === "object" && raw !== null && "data" in raw) {
-      const d = (raw as { data?: unknown }).data
-      if (Array.isArray(d)) return d
-    }
-    return []
-  }, [yearsData])
-
-  const currentYear = years.find(
-    (y) => (y as { is_current?: boolean }).is_current === true,
-  ) as { id: number; name: string } | undefined
+  const years = yearsData?.items ?? []
+  const currentYear = years.find((y) => y.is_current)
 
   const [selectedYearId, setSelectedYearId] = useState<number | undefined>(
     undefined,
@@ -62,19 +50,12 @@ export function TeacherAttendanceTab({ teacherId }: TeacherAttendanceTabProps) {
               <SelectValue placeholder="Année scolaire" />
             </SelectTrigger>
             <SelectContent>
-              {years.map((y) => {
-                const yy = y as {
-                  id: number
-                  name: string
-                  is_current?: boolean
-                }
-                return (
-                  <SelectItem key={yy.id} value={String(yy.id)}>
-                    {yy.name}
-                    {yy.is_current ? " · en cours" : ""}
-                  </SelectItem>
-                )
-              })}
+              {years.map((y) => (
+                <SelectItem key={y.id} value={String(y.id)}>
+                  {y.name}
+                  {y.is_current ? " · en cours" : ""}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
