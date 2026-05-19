@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import {
   CalendarDays,
@@ -8,17 +9,21 @@ import {
   ClipboardList,
   ChevronRight,
   AlertTriangle,
+  CalendarX,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { AcademicYearBanner } from "@/components/shared/AcademicYearBanner"
 import { useTeacherDashboard } from "@/lib/hooks/useTeacherPortal"
 import type { TeacherUpcomingEval } from "@/lib/contracts/teacher-portal"
+import { SelfDeclareAbsenceModal } from "./SelfDeclareAbsenceModal"
 
 export function TeacherDashboardClient() {
   const { data, isLoading, isError, refetch } = useTeacherDashboard()
+  const [selfDeclareOpen, setSelfDeclareOpen] = useState(false)
 
   if (isLoading) return <DashboardSkeleton />
 
@@ -53,6 +58,19 @@ export function TeacherDashboardClient() {
         currentYear={data.current_academic_year}
         role="teacher"
       />
+
+      {/* Action rapide — déclaration d'absence */}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setSelfDeclareOpen(true)}
+          className="h-11 border-amber-200 bg-amber-50 font-medium text-amber-900 hover:bg-amber-100 sm:h-9"
+        >
+          <CalendarX className="mr-1.5 h-4 w-4" />
+          Me déclarer absent
+        </Button>
+      </div>
 
       {/* Prochain cours */}
       <Card className="border-primary/20 bg-primary/5">
@@ -133,6 +151,11 @@ export function TeacherDashboardClient() {
           </div>
         )}
       </div>
+
+      <SelfDeclareAbsenceModal
+        open={selfDeclareOpen}
+        onClose={() => setSelfDeclareOpen(false)}
+      />
     </div>
   )
 }

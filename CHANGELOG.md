@@ -10,6 +10,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Suivi des présences enseignant sur la fiche `/admin/teachers/[id]` : nouvel onglet « Présences » avec taux de présence, absences, retards cumulés en minutes et compteur d'auto-déclarations à valider. L'admin saisit en un clic absence ou retard en choisissant la date, le créneau EDT concerné et un motif *(admin)*.
+- Auto-déclaration côté enseignant : bouton « Me déclarer absent » sur le tableau de bord prof pour signaler une absence ou un retard. La déclaration arrive en attente de validation côté admin avec un encart d'avertissement amber pour rappeler le contact secrétariat si urgent *(enseignant)*.
+- Validation en deux clics côté admin : panel amber « Auto-déclarations en attente » sur la fiche enseignant, boutons Valider (vert) et Rejeter (rose) avec un champ de notes administratives optionnel et un dialog de confirmation pour le rejet *(admin)*.
 - Personnalisation de l'identité visuelle des PDFs depuis les paramètres de l'établissement : nouvel onglet « Identité visuelle » avec sélecteurs de couleur principale et d'accent, devise de l'école et site web, avec un aperçu en direct du reçu qui se met à jour à chaque modification. Touch targets h-11 mobile *(admin)*.
 - L'aperçu en direct reproduit fidèlement le rendu du reçu avec bandeau République de Côte d'Ivoire, logo, code MENA, devise en italique, montant gradient, tableau d'allocation avec pastilles colorées et pied de page personnalisé *(admin)*.
 - Bouton « Aperçu PDF » qui télécharge un bordereau du jour pour vérifier l'identité visuelle appliquée *(admin)*.
