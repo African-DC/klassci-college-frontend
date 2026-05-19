@@ -5,10 +5,17 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { ArrowLeft, Camera, Clock, Pencil, Trash2, User } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ArrowLeft, Camera, Pencil, Trash2, User, MoreVertical } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -42,6 +49,7 @@ export function StaffDetailClient({ staffId }: StaffDetailClientProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [photoPreview, setPhotoPreview] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [photoLoaded, setPhotoLoaded] = useState(false)
 
   const { data: staff, isLoading, isError, refetch } = useStaffMember(staffId)
   const { data: fullData } = useStaffFull(staffId)
@@ -100,79 +108,88 @@ export function StaffDetailClient({ staffId }: StaffDetailClientProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
-          <Link
-            href="/admin/staff"
-            aria-label="Retour à la liste du personnel"
-            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
+      {/* Header — pattern cristallisé redesign-premium principes 13 + 14 */}
+      <div className="flex items-start gap-3">
+        <Link
+          href="/admin/staff"
+          aria-label="Retour à la liste du personnel"
+          className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
 
-          {/* Photo — clic = agrandir, bouton camera = upload */}
-          <div className="relative shrink-0">
-            <div
-              className={`overflow-hidden rounded-2xl border-2 border-border ${photoSrc ? "cursor-pointer" : ""}`}
-              onClick={() => photoSrc && setPhotoPreview(true)}
-            >
-              {photoSrc ? (
-                <img
-                  src={photoSrc}
-                  alt={fullName}
-                  className="h-28 w-28 object-cover"
-                />
-              ) : (
-                <div className="flex h-28 w-28 items-center justify-center bg-primary/10">
-                  <span className="text-3xl font-semibold text-primary">{initials}</span>
-                </div>
-              )}
-            </div>
-            {/* Bouton camera en bas à droite */}
-            <button
-              type="button"
+        <button
+          type="button"
+          onClick={() => photoLoaded && setPhotoPreview(true)}
+          aria-label={photoLoaded ? "Voir la photo en grand" : "Photo du personnel"}
+          className="shrink-0 overflow-hidden rounded-2xl border-2 border-border focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-default"
+          disabled={!photoLoaded}
+        >
+          <Avatar className="h-16 w-16 rounded-2xl sm:h-24 sm:w-24">
+            {photoSrc ? (
+              <AvatarImage
+                src={photoSrc}
+                alt={fullName}
+                className="object-cover"
+                onLoadingStatusChange={(status) => setPhotoLoaded(status === "loaded")}
+              />
+            ) : null}
+            <AvatarFallback className="rounded-2xl bg-primary/10 text-xl font-semibold text-primary sm:text-2xl">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+
+        <div className="min-w-0 flex-1">
+          <h1 className="font-serif text-lg tracking-tight sm:text-2xl">{fullName}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {staff.position ?? "Personnel"}
+          </p>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">Actions sur le membre du personnel</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Modifier les infos
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
             >
-              {uploading ? (
-                <Clock className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Camera className="h-3.5 w-3.5" />
-              )}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoUpload}
-            />
-          </div>
+              <Camera className="mr-2 h-4 w-4" />
+              {photoSrc ? "Changer la photo" : "Ajouter une photo"}
+            </DropdownMenuItem>
+            {photoSrc && photoLoaded && (
+              <DropdownMenuItem onClick={handleDeletePhoto}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Supprimer la photo
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setDeleteOpen(true)}
+              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Supprimer le personnel
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          <div className="min-w-0">
-            <h1 className="font-serif text-2xl tracking-tight">{fullName}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {staff.position ?? "Personnel"}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-1.5 h-3.5 w-3.5" />
-            Modifier
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-            Supprimer
-          </Button>
-        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoUpload}
+        />
       </div>
 
       {/* Photo preview dialog */}

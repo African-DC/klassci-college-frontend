@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import type { Route } from "next"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff } from "lucide-react"
+import { Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff, Clock } from "lucide-react"
 import { LoginRequestSchema, type LoginRequest } from "@/lib/contracts/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,13 +19,54 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 
+// Cookie used to remember the tenant slug between visits (so the user
+// who first arrived via a WhatsApp link doesn't need the ?c= every time).
+// Not HttpOnly: the slug is non-sensitive (also visible in the URL) and
+// must be readable from client JS to pre-fill the signIn call.
+const TENANT_CODE_COOKIE = "tenant_code"
+// RFC 1123 slug : 2-63 lowercase alnum + hyphen, no leading/trailing hyphen.
+// Mirror of the BE regex in app/core/slug.py.
+const TENANT_SLUG_REGEX = /^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/
+
+function isValidTenantSlug(value: string): boolean {
+  return TENANT_SLUG_REGEX.test(value)
+}
+
+function readTenantCookie(): string | null {
+  if (typeof document === "undefined") return null
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${TENANT_CODE_COOKIE}=`))
+  if (!match) return null
+  const value = decodeURIComponent(match.slice(TENANT_CODE_COOKIE.length + 1))
+  return isValidTenantSlug(value) ? value : null
+}
+
+function writeTenantCookie(slug: string): void {
+  if (typeof document === "undefined") return
+  if (!isValidTenantSlug(slug)) return
+  const secure = window.location.protocol === "https:" ? "; Secure" : ""
+  document.cookie = `${TENANT_CODE_COOKIE}=${encodeURIComponent(slug)}; path=/; max-age=31536000; SameSite=Lax${secure}`
+}
+
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const rawCallback = searchParams.get("callbackUrl") ?? "/"
   const callbackUrl = rawCallback.startsWith("/") && !rawCallback.startsWith("//") ? rawCallback : "/"
+  const sessionExpired = searchParams.get("expired") === "1"
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [tenantCode, setTenantCode] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("c")
+    if (fromUrl && isValidTenantSlug(fromUrl)) {
+      setTenantCode(fromUrl)
+      return
+    }
+    setTenantCode(readTenantCookie())
+  }, [searchParams])
 
   const form = useForm<LoginRequest>({
     resolver: zodResolver(LoginRequestSchema),
@@ -42,6 +83,7 @@ export function LoginForm() {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
+        tenant_code: tenantCode ?? "",
         redirect: false,
       })
 
@@ -49,6 +91,8 @@ export function LoginForm() {
         setError("Email ou mot de passe incorrect")
         return
       }
+
+      if (tenantCode) writeTenantCookie(tenantCode)
 
       router.push(callbackUrl as Route)
       router.refresh()
@@ -60,6 +104,30 @@ export function LoginForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        {sessionExpired && !error && (
+          <div
+            role="alert"
+            className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 dark:border-amber-900/40 dark:bg-amber-950/30"
+          >
+            <Clock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                Session expirée
+              </p>
+              <p className="text-xs text-amber-800 dark:text-amber-200">
+                Pour des raisons de sécurité, reconnectez-vous pour continuer.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {tenantCode && (
+          <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
+            <span className="text-muted-foreground">Établissement : </span>
+            <span className="font-mono font-medium text-primary">{tenantCode}</span>
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="email"

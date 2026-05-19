@@ -1,16 +1,16 @@
 import { z } from "zod"
 
+// Refactor #97 : Class est universel, pas d'academic_year_id sur le modèle.
+// L'année est portée par Enrollment, et la capacité « occupée » dépend de l'AY.
 export const ClassSchema = z.object({
   id: z.number(),
   name: z.string(),
   level_id: z.number(),
   series_id: z.number().nullable(),
-  academic_year_id: z.number(),
   room_id: z.number().nullable(),
   max_students: z.number().nullish(),
   level_name: z.string().optional(),
   series_name: z.string().nullable().optional(),
-  academic_year_name: z.string().optional(),
   enrolled_count: z.number().optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
@@ -20,7 +20,6 @@ export const ClassCreateSchema = z.object({
   name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
   level_id: z.number({ required_error: "Le niveau est requis" }).positive("Le niveau est requis"),
   series_id: z.number().nullable().optional(),
-  academic_year_id: z.number().positive().optional(),
   room_id: z.number().nullable().optional(),
   max_students: z.number().positive("La capacité doit être positive").optional(),
 })

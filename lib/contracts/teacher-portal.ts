@@ -12,15 +12,18 @@ export const TeacherNextCourseSchema = z.object({
   room: z.string().nullish(),
 })
 
-// Classe assignée à l'enseignant
+// Classe assignée à l'enseignant — aligné sur TeacherClassResponse (BE).
+// `general_average` et `total_evaluations` sont optionnels : le BE ne les
+// expose pas actuellement (les colonnes seront ajoutées si besoin pour la
+// vue Mes Classes).
 export const TeacherClassSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  level: z.string(),
+  class_id: z.number(),
+  class_name: z.string(),
+  level_name: z.string(),
   student_count: z.number(),
   subject_name: z.string(),
-  general_average: z.number().nullable(),
-  total_evaluations: z.number(),
+  general_average: z.number().nullish(),
+  total_evaluations: z.number().nullish(),
 })
 
 // Évaluation à venir
@@ -43,6 +46,7 @@ export const TeacherDashboardSchema = z.object({
   total_classes: z.number(),
   next_course: TeacherNextCourseSchema.nullable(),
   upcoming_evaluations: z.array(TeacherUpcomingEvalSchema),
+  current_academic_year: z.string().nullish(),
 })
 
 // Stats de présence par classe

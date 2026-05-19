@@ -3,7 +3,10 @@
 import { CalendarDays, ClipboardList, Wallet, AlertCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { AcademicYearBanner } from "@/components/shared/AcademicYearBanner"
+import { NotEnrolledBanner } from "@/components/shared/NotEnrolledBanner"
 import { useStudentDashboard } from "@/lib/hooks/useStudentPortal"
+import { isEnrolledFromClassName } from "@/lib/utils/enrollment-status"
 
 export function StudentDashboardClient() {
   const { data, isLoading, isError } = useStudentDashboard()
@@ -24,6 +27,12 @@ export function StudentDashboardClient() {
     )
   }
 
+  const isEnrolled = isEnrolledFromClassName(data.class_name)
+  // Quand l'élève n'est pas (encore) inscrit, le BE renvoie `class_name: "—"`.
+  // On ne montre PAS ce placeholder dans le sous-titre : il dégrade en
+  // mention temporelle simple, et le banner explique la situation en clair.
+  const subtitle = isEnrolled ? `${data.class_name} — Votre résumé du jour` : "Votre espace personnel"
+
   return (
     <div className="space-y-6">
       {/* En-tête */}
@@ -31,8 +40,17 @@ export function StudentDashboardClient() {
         <h1 className="font-serif text-xl tracking-tight">
           Bonjour, {data.student_name.split(" ")[0]}
         </h1>
-        <p className="text-sm text-muted-foreground">{data.class_name} — Votre résumé du jour</p>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
+
+      <AcademicYearBanner
+        currentYear={data.current_academic_year}
+        role="student"
+      />
+
+      {!isEnrolled && (
+        <NotEnrolledBanner audience="student" academicYear={data.current_academic_year} />
+      )}
 
       {/* Prochain cours */}
       <Card className="border-primary/20 bg-primary/5">
@@ -58,25 +76,45 @@ export function StudentDashboardClient() {
         </CardContent>
       </Card>
 
-      {/* KPIs */}
+      {/* KPIs — colorés seulement si vraiment applicables. Sinon `—` muted
+          pour éviter le faux signal "0 FCFA vert = tout payé" quand en fait
+          l'élève n'a juste pas encore de frais affectés. */}
       <div className="grid grid-cols-3 gap-3">
         <KpiCard
           icon={ClipboardList}
           label="Moyenne"
           value={data.general_average !== null ? `${data.general_average.toFixed(2)}/20` : "—"}
-          className={data.general_average !== null && data.general_average >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600"}
+          className={
+            data.general_average === null
+              ? "text-muted-foreground"
+              : data.general_average >= 10
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-amber-600"
+          }
         />
         <KpiCard
           icon={Wallet}
           label="Frais restants"
-          value={`${data.fees_remaining.toLocaleString("fr-FR")} FCFA`}
-          className={data.fees_remaining === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-accent"}
+          value={isEnrolled ? `${data.fees_remaining.toLocaleString("fr-FR")} FCFA` : "—"}
+          className={
+            !isEnrolled
+              ? "text-muted-foreground"
+              : data.fees_remaining === 0
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-accent"
+          }
         />
         <KpiCard
           icon={AlertCircle}
           label="Absences"
-          value={String(data.total_absences)}
-          className={data.total_absences > 5 ? "text-destructive" : "text-muted-foreground"}
+          value={isEnrolled ? String(data.total_absences) : "—"}
+          className={
+            !isEnrolled
+              ? "text-muted-foreground"
+              : data.total_absences > 5
+                ? "text-destructive"
+                : "text-muted-foreground"
+          }
         />
       </div>
     </div>

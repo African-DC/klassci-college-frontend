@@ -1,55 +1,56 @@
 import { apiFetch } from "./client"
-import type { SchoolSettings, SchoolInfoUpdate, TrimesterUpdate, NotificationUpdate } from "@/lib/contracts/settings"
+import {
+  SchoolSettingsSchema,
+  type SchoolSettings,
+  type SchoolInfoUpdate,
+  type TrimesterUpdate,
+  type NotificationUpdate,
+} from "@/lib/contracts/settings"
 
-const DEFAULT_SETTINGS: SchoolSettings = {
-  school_name: "",
-  address: null,
-  phone: null,
-  email: null,
-  logo_url: null,
-  ministry_code: null,
-  enrollment_number_pattern: null,
-  enrollment_number_counter: 0,
-  active_academic_year: null,
-  trimesters: [],
-  notify_by_email: false,
-  notify_by_sms: false,
-  notify_grades: false,
-  notify_absences: false,
-  notify_payments: false,
+function unwrap(json: unknown): unknown {
+  if (json !== null && typeof json === "object" && "data" in json) {
+    const data = (json as { data?: unknown }).data
+    if (data !== undefined) return data
+  }
+  return json
+}
+
+function parseSettings(json: unknown, context: string): SchoolSettings {
+  const parsed = SchoolSettingsSchema.safeParse(unwrap(json))
+  if (!parsed.success) {
+    console.error(`[API] Validation failed for ${context}:`, parsed.error.issues)
+    throw new Error(`Réponse inattendue du serveur pour ${context}`)
+  }
+  return parsed.data
 }
 
 export const settingsApi = {
-  // Récupérer les paramètres de l'école
   get: async (): Promise<SchoolSettings> => {
-    const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/admin/settings")
-    return (json as { data?: SchoolSettings }).data ?? (json as SchoolSettings)
+    const json = await apiFetch<unknown>("/admin/settings")
+    return parseSettings(json, "GET /admin/settings")
   },
 
-  // Mettre à jour les informations de l'école
   updateSchoolInfo: async (data: SchoolInfoUpdate): Promise<SchoolSettings> => {
-    const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/admin/settings/school-info", {
+    const json = await apiFetch<unknown>("/admin/settings/school-info", {
       method: "PUT",
       body: JSON.stringify(data),
     })
-    return (json as { data?: SchoolSettings }).data ?? (json as SchoolSettings)
+    return parseSettings(json, "PUT /admin/settings/school-info")
   },
 
-  // Mettre à jour la configuration des trimestres
   updateTrimesters: async (data: TrimesterUpdate): Promise<SchoolSettings> => {
-    const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/admin/settings/trimesters", {
+    const json = await apiFetch<unknown>("/admin/settings/trimesters", {
       method: "PUT",
       body: JSON.stringify(data),
     })
-    return (json as { data?: SchoolSettings }).data ?? (json as SchoolSettings)
+    return parseSettings(json, "PUT /admin/settings/trimesters")
   },
 
-  // Mettre à jour les paramètres de notification
   updateNotifications: async (data: NotificationUpdate): Promise<SchoolSettings> => {
-    const json = await apiFetch<{ data?: SchoolSettings } | SchoolSettings>("/admin/settings/notifications", {
+    const json = await apiFetch<unknown>("/admin/settings/notifications", {
       method: "PUT",
       body: JSON.stringify(data),
     })
-    return (json as { data?: SchoolSettings }).data ?? (json as SchoolSettings)
+    return parseSettings(json, "PUT /admin/settings/notifications")
   },
 }

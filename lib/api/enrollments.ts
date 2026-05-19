@@ -28,4 +28,8 @@ export const enrollmentsApi = {
   getFeeVariants: async (classId: number) => {
     return apiFetch<FeeVariantOption[]>(`/enrollments/fee-variants?class_id=${classId}`)
   },
+
+  validate: async (id: number) => {
+    return apiFetch<Enrollment>(`/enrollments/${id}/validate`, { method: "POST" })
+  },
 }

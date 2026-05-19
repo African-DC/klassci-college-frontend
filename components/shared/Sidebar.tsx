@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  ArrowUpFromLine,
   LayoutDashboard,
   UserPlus,
   GraduationCap,
@@ -19,6 +20,7 @@ import {
   CalendarDays,
   CalendarRange,
   ClipboardList,
+  HeartHandshake,
   UserCheck,
   FileText,
   Bell,
@@ -52,7 +54,9 @@ const navigation: NavSection[] = [
     title: "Scolarité",
     items: [
       { label: "Inscriptions", href: "/admin/enrollments", icon: UserPlus },
+      { label: "Promotions", href: "/admin/promotions" as Route, icon: ArrowUpFromLine },
       { label: "Élèves", href: "/admin/students", icon: GraduationCap },
+      { label: "Parents", href: "/admin/parents" as Route, icon: HeartHandshake },
       { label: "Enseignants", href: "/admin/teachers", icon: Users },
       { label: "Personnel", href: "/admin/staff", icon: UserCog },
     ],

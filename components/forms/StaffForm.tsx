@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Eye, EyeOff, KeyRound } from "lucide-react"
 import { StaffCreateSchema, type StaffCreate } from "@/lib/contracts/staff"
 import { useCreateStaff } from "@/lib/hooks/useStaff"
 import { Button } from "@/components/ui/button"
@@ -9,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -20,11 +23,14 @@ interface StaffFormProps {
 }
 
 export function StaffForm({ onSuccess }: StaffFormProps) {
+  const [showPassword, setShowPassword] = useState(false)
   const form = useForm<StaffCreate>({
     resolver: zodResolver(StaffCreateSchema),
     defaultValues: {
       first_name: "",
       last_name: "",
+      email: "",
+      password: "",
       position: "",
       phone: "",
     },
@@ -52,7 +58,7 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
               <FormItem>
                 <FormLabel>Nom *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex : Mbala" className="h-11" {...field} />
+                  <Input placeholder="Ex : Yao" className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -66,7 +72,7 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
               <FormItem>
                 <FormLabel>Prénom *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex : Jean" className="h-11" {...field} />
+                  <Input placeholder="Ex : Sophie" className="h-11" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -82,7 +88,7 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
               <FormItem>
                 <FormLabel>Poste</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex : Comptable" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : Secrétaire pédagogique" className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -96,8 +102,74 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
               <FormItem>
                 <FormLabel>Téléphone</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ex : +243 812 345 678" className="h-11" {...field} value={field.value ?? ""} />
+                  <Input placeholder="Ex : +225 07 12 34 56 78" className="h-11 font-mono" {...field} value={field.value ?? ""} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Compte de connexion — toujours obligatoire pour le staff
+            (admin secondaire, secrétaire, comptable... doit accéder à un portail). */}
+        <div className="rounded-xl border border-border/60 bg-muted/20 p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-4 w-4 text-primary" />
+            <p className="text-sm font-medium">Compte de connexion</p>
+          </div>
+
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email *</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="sophie@etablissement.ci"
+                    className="h-11"
+                    autoComplete="email"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription className="text-xs">
+                  Servira d&apos;identifiant pour se connecter à KLASSCI.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mot de passe initial *</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="8 caractères minimum"
+                      className="h-11 pr-10"
+                      autoComplete="new-password"
+                      {...field}
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </FormControl>
+                <FormDescription className="text-xs">
+                  Communiquez-le au membre du personnel ; il pourra le changer lors de sa première connexion.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

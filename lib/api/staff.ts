@@ -1,14 +1,17 @@
 import { getSession } from "next-auth/react"
+import { z } from "zod"
 import { StaffSchema } from "@/lib/contracts/staff"
 import type { Staff, StaffCreate, StaffUpdate } from "@/lib/contracts/staff"
 import { createCrudApi } from "./createCrudApi"
-import { apiFetch } from "./client"
+import { apiFetch, handleExpiredSession, safeValidate } from "./client"
 
 function getBaseUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_URL
   if (!url) throw new Error("NEXT_PUBLIC_API_URL is not defined")
   return url
 }
+
+const PhotoUploadResponseSchema = z.object({ photo_url: z.string() })
 
 export const staffApi = {
   ...createCrudApi<Staff, StaffCreate, StaffUpdate>(
@@ -31,18 +34,16 @@ export const staffApi = {
       },
       body: formData,
     })
+    if (res.status === 401) {
+      if (session?.accessToken) await handleExpiredSession()
+      throw new Error("Session expirée")
+    }
     if (!res.ok) throw new Error("Upload failed")
-    return res.json()
+    const data = await res.json()
+    return safeValidate(PhotoUploadResponseSchema, data, "POST /admin/staff/:id/photo")
   },
 
   deletePhoto: async (staffId: number): Promise<void> => {
-    const session = await getSession()
-    const res = await fetch(`${getBaseUrl()}/admin/staff/${staffId}/photo`, {
-      method: "DELETE",
-      headers: {
-        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
-      },
-    })
-    if (!res.ok) throw new Error("Erreur lors de la suppression de la photo")
+    await apiFetch<void>(`/admin/staff/${staffId}/photo`, { method: "DELETE" })
   },
 }

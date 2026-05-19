@@ -2,7 +2,7 @@ import { z } from "zod"
 
 // Miroir de app/schemas/auth.py (backend)
 
-export const UserRoleSchema = z.enum(["admin", "teacher", "student", "parent"])
+export const UserRoleSchema = z.enum(["admin", "teacher", "student", "parent", "super_admin"])
 
 export const LoginRequestSchema = z.object({
   email: z

@@ -12,15 +12,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: {},
         password: {},
+        tenant_code: {},
       },
       async authorize(credentials) {
         const email = credentials.email as string
         const password = credentials.password as string
+        // ``tenant_code`` is the user-facing tenant slug, sourced by the
+        // LoginForm from the URL query (?c=<slug>) or the persisted
+        // cookie. Forwarded to the BE via X-Tenant-Slug so the
+        // TenantMiddleware can resolve the correct tenant DB before
+        // checking credentials. Empty/undefined → BE falls back to
+        // LOCAL_TENANT_ID (super-admin login pattern).
+        const tenantCode = (credentials.tenant_code as string | undefined) || undefined
 
         if (!email || !password) return null
 
         try {
-          const data = await authApi.login(email, password)
+          const data = await authApi.login(email, password, tenantCode)
           return {
             id: String(data.user.id),
             email: data.user.email,
@@ -56,13 +64,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token
     },
     async session({ session, token }) {
+      // Always expose accessToken so client tooling can inspect it
+      // (debugging dashboards, network panel verification).
+      session.accessToken = token.accessToken
+
+      if (token.error) {
+        // Refresh token error : the access token is expired and no
+        // silent refresh is implemented yet (see auth-architecture.md
+        // pièges #2). Surface the error and DO NOT propagate the stale
+        // identity. Consumers using `session?.user?.X` will see
+        // undefined fields and either fall back gracefully or trigger
+        // their not-authenticated branch. The middleware redirects to
+        // /login on session.error before any protected route renders.
+        session.error = token.error
+        return session
+      }
+
       session.user.id = token.id
       session.user.email = token.email
       session.user.role = token.role
-      session.accessToken = token.accessToken
-      if (token.error) {
-        session.error = token.error
-      }
       return session
     },
   },

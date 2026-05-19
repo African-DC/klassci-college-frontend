@@ -18,6 +18,7 @@ export const StudentDashboardSchema = z.object({
   general_average: z.number().nullable(),
   fees_remaining: z.number(),
   total_absences: z.number(),
+  current_academic_year: z.string().nullish(),
 })
 
 // Notes par matière

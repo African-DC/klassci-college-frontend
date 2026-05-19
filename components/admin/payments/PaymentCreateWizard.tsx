@@ -42,7 +42,7 @@ const STEP_LABELS = [
 
 const METHOD_OPTIONS: { value: PaymentMethod; label: string }[] = [
   { value: "cash", label: "Especes" },
-  { value: "check", label: "Cheque" },
+  { value: "cheque", label: "Cheque" },
   { value: "bank_transfer", label: "Virement bancaire" },
   { value: "mobile_money", label: "Mobile Money" },
 ]

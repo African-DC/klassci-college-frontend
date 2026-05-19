@@ -1,15 +1,24 @@
 "use client"
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { paymentsApi } from "@/lib/api/payments"
-import type { Payment, PaymentCreate, PaymentListParams } from "@/lib/contracts/payment"
+import type {
+  EnrollmentPaymentCreate,
+  Payment,
+  PaymentCreate,
+  PaymentListParams,
+} from "@/lib/contracts/payment"
 import type { PaginatedResponse } from "@/lib/contracts"
 
 export const paymentKeys = {
   all: ["payments"] as const,
   list: (params: PaymentListParams) => ["payments", "list", params] as const,
   summary: (academicYearId?: number) => ["payments", "summary", academicYearId] as const,
+  byEnrollment: (enrollmentId: number) =>
+    ["payments", "enrollment", enrollmentId] as const,
+  preview: (enrollmentId: number, amount: number) =>
+    ["payments", "preview", enrollmentId, amount] as const,
 }
 
 export function usePayments(params: PaymentListParams = {}) {
@@ -37,6 +46,64 @@ export function useCreatePayment() {
       queryClient.invalidateQueries({ queryKey: paymentKeys.all })
     },
     onError: (err) => toast.error("Erreur", { description: err.message }),
+  })
+}
+
+/** Historique des paiements d'une inscription (nouveau path REST nested) */
+export function useEnrollmentPayments(enrollmentId: number | null) {
+  return useQuery({
+    queryKey: paymentKeys.byEnrollment(enrollmentId ?? 0),
+    queryFn: () => paymentsApi.listByEnrollment(enrollmentId as number),
+    enabled: Number.isFinite(enrollmentId) && (enrollmentId ?? 0) > 0,
+    staleTime: 1000 * 30,
+  })
+}
+
+/** Preview d'allocation (debounce côté composant pour éviter le spam BE) */
+export function useAllocationPreview(
+  enrollmentId: number | null,
+  amount: number | null,
+) {
+  return useQuery({
+    queryKey: paymentKeys.preview(enrollmentId ?? 0, amount ?? 0),
+    queryFn: () =>
+      paymentsApi.previewAllocation(enrollmentId as number, amount as number),
+    enabled:
+      Number.isFinite(enrollmentId) &&
+      (enrollmentId ?? 0) > 0 &&
+      Number.isFinite(amount) &&
+      (amount ?? 0) > 0,
+    staleTime: 1000 * 10,
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** Versement caissier auto-alloué (flow cible) */
+export function useRecordEnrollmentPayment(enrollmentId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: EnrollmentPaymentCreate) =>
+      paymentsApi.recordOnEnrollment(enrollmentId, data),
+    onSuccess: (payment) => {
+      const allocCount = payment.allocations?.length ?? 0
+      const breakdown =
+        allocCount > 0
+          ? ` (${allocCount} frais alloué${allocCount > 1 ? "s" : ""})`
+          : ""
+      toast.success("Versement enregistré", {
+        description: `${Number(payment.amount).toLocaleString("fr-FR")} XOF${breakdown}`,
+      })
+      queryClient.invalidateQueries({ queryKey: paymentKeys.all })
+      queryClient.invalidateQueries({
+        queryKey: paymentKeys.byEnrollment(enrollmentId),
+      })
+      // Les frais et le résumé étudiant changent aussi
+      queryClient.invalidateQueries({ queryKey: ["enrollments"] })
+      queryClient.invalidateQueries({ queryKey: ["students"] })
+      queryClient.invalidateQueries({ queryKey: ["fees"] })
+    },
+    onError: (err) =>
+      toast.error("Versement refusé", { description: err.message }),
   })
 }
 

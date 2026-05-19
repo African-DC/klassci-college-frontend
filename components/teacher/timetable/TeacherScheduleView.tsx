@@ -1,7 +1,8 @@
 "use client"
 
+import { CalendarOff } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useTeacherTimetable } from "@/lib/hooks/useTimetable"
+import { useMyTimetable, useTeacherTimetable } from "@/lib/hooks/useTimetable"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -36,11 +37,23 @@ function timeToMinutes(t: string): number {
 }
 
 interface TeacherScheduleViewProps {
-  teacherId: number
+  /**
+   * Optional. When provided (admin viewing a specific teacher's schedule),
+   * fetch via /timetable?teacher_id=. When omitted (the teacher viewing
+   * their own schedule from /teacher/timetable), fetch via /teacher/schedule
+   * which resolves the teacher from the JWT (no user_id↔teacher_id mapping
+   * needed client-side).
+   */
+  teacherId?: number
 }
 
 export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
-  const { data: slots, isLoading, error } = useTeacherTimetable(teacherId)
+  const ownQuery = useMyTimetable()
+  const adminQuery = useTeacherTimetable(teacherId ?? 0)
+  const useOwn = teacherId === undefined
+  const slots = useOwn ? ownQuery.data : adminQuery.data
+  const isLoading = useOwn ? ownQuery.isLoading : adminQuery.isLoading
+  const error = useOwn ? ownQuery.error : adminQuery.error
 
   if (error) {
     return (
@@ -78,6 +91,28 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
   }
 
   const totalHeight = (END_HOUR - START_HOUR) * PX_PER_HOUR
+
+  // Bug #37 : empty state explicite quand aucun créneau n'est encore
+  // programmé pour cet enseignant. Sans ça, Mme Diallo voit une grille
+  // hebdomadaire vide et pense que l'app est cassée. Tone informatif
+  // (pas admin) — elle ne peut pas créer ses propres créneaux.
+  const hasSlots = (slots ?? []).length > 0
+  if (!hasSlots) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card px-6 py-16 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20">
+          <CalendarOff className="h-7 w-7" />
+        </div>
+        <div className="max-w-md space-y-1">
+          <p className="font-serif text-base">Aucun cours programmé</p>
+          <p className="text-sm text-muted-foreground">
+            Vos créneaux n&apos;ont pas encore été affectés pour cette année.
+            Contactez l&apos;administration pour vérifier votre planning.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   // Group slots by day
   const slotsByDay: Record<string, TimetableSlot[]> = {}

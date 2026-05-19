@@ -7,6 +7,16 @@ test.describe('Login flow', () => {
     await expect(page).toHaveURL(/\/admin\/dashboard/)
   })
 
+  test('teacher login redirects to /teacher/dashboard', async ({ page }) => {
+    await loginAs(page, TEST_USERS.teacher.email, TEST_USERS.teacher.password)
+    await expect(page).toHaveURL(/\/teacher\/dashboard/)
+  })
+
+  test('student login redirects to /student/dashboard', async ({ page }) => {
+    await loginAs(page, TEST_USERS.student.email, TEST_USERS.student.password)
+    await expect(page).toHaveURL(/\/student\/dashboard/)
+  })
+
   test('invalid credentials show inline error', async ({ page }) => {
     await page.goto('/login')
     await page.getByPlaceholder('nom@etablissement.cd').fill('nope@klassci.com')

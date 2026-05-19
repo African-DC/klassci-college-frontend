@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { extractHostname, isHostAllowed } from "@/lib/utils/allowed-hosts"
 
-const PORTALS = ["admin", "teacher", "student", "parent"] as const
+const PORTALS = ["admin", "teacher", "student", "parent", "super-admin"] as const
 type Portal = (typeof PORTALS)[number]
 
 const ROLE_TO_PORTAL: Record<string, Portal> = {
@@ -11,6 +11,7 @@ const ROLE_TO_PORTAL: Record<string, Portal> = {
   teacher: "teacher",
   student: "student",
   parent: "parent",
+  super_admin: "super-admin",
 }
 
 function getPortalFromPath(pathname: string): Portal | null {
@@ -20,6 +21,7 @@ function getPortalFromPath(pathname: string): Portal | null {
 
 function getDefaultRedirect(role: string | undefined): string {
   if (!role) return "/admin/dashboard"
+  if (role === "super_admin") return "/super-admin/tenants"
   const portal = ROLE_TO_PORTAL[role]
   return portal ? `/${portal}/dashboard` : "/admin/dashboard"
 }
@@ -28,7 +30,12 @@ function getDefaultRedirect(role: string | undefined): string {
 const authMiddleware = auth((req) => {
   const { pathname } = req.nextUrl
   const session = req.auth
-  const isLoggedIn = !!session?.user
+  // Check user.id (not just user truthy) : when token.error is set,
+  // auth.ts intentionally leaves user fields undefined to avoid
+  // propagating stale identity, but the user object itself stays as
+  // NextAuth's default empty {}. Truthy-on-{} would falsely report
+  // logged in. session.id is the canonical authenticated marker.
+  const isLoggedIn = !!session?.user?.id
 
   if (session?.error === "RefreshTokenError" && pathname !== "/login") {
     const url = req.nextUrl.clone()
@@ -50,7 +57,11 @@ const authMiddleware = auth((req) => {
     return NextResponse.next()
   }
 
-  if (pathname === "/login" && isLoggedIn) {
+  // A session in error state (RefreshTokenError) must be allowed to reach /login
+  // so the user can sign in again. Otherwise rule 1 above redirects /<portal> →
+  // /login while this rule redirects /login → /<portal>, producing an infinite
+  // ERR_TOO_MANY_REDIRECTS loop in the browser.
+  if (pathname === "/login" && isLoggedIn && !session.error) {
     const dest = getDefaultRedirect(session.user.role)
     if (dest !== "/login") {
       const url = req.nextUrl.clone()

@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
+import { AcademicYearBanner } from "@/components/shared/AcademicYearBanner"
 import { useTeacherDashboard } from "@/lib/hooks/useTeacherPortal"
 import type { TeacherUpcomingEval } from "@/lib/contracts/teacher-portal"
 
@@ -48,6 +49,11 @@ export function TeacherDashboardClient() {
     <div className="space-y-6">
       <DashboardHeader name={data.teacher_name} />
 
+      <AcademicYearBanner
+        currentYear={data.current_academic_year}
+        role="teacher"
+      />
+
       {/* Prochain cours */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="flex items-center gap-4 p-4">
@@ -79,7 +85,7 @@ export function TeacherDashboardClient() {
       </Card>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Card className="border-0 shadow-sm ring-1 ring-border">
           <CardContent className="flex items-center gap-3 p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -187,7 +193,7 @@ function DashboardSkeleton() {
         <Skeleton className="h-4 w-64" />
       </div>
       <Skeleton className="h-20 rounded-xl" />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Skeleton className="h-20 rounded-lg" />
         <Skeleton className="h-20 rounded-lg" />
       </div>

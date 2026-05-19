@@ -17,11 +17,19 @@ import {
   FileText,
   CalendarDays,
   Clock,
+  MoreVertical,
 } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -59,6 +67,8 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [photoPreview, setPhotoPreview] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [activeTab, setActiveTab] = useState("overview")
+  const [photoLoaded, setPhotoLoaded] = useState(false)
 
   const { data: teacher, isLoading, isError, refetch } = useTeacher(teacherId)
   const { data: fullData } = useTeacherFull(teacherId)
@@ -110,83 +120,100 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
-          <Link
-            href="/admin/teachers"
-            aria-label="Retour à la liste des enseignants"
-            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
+      {/* Header — mobile-first stack, AvatarImage gating, kebab actions
+          Pattern cristallisé dans redesign-premium.md principes 13 + 14 */}
+      <div className="flex items-start gap-3">
+        <Link
+          href="/admin/teachers"
+          aria-label="Retour à la liste des enseignants"
+          className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
 
-          {/* Photo — clic = agrandir, bouton camera = upload */}
-          <div className="relative shrink-0">
-            <div
-              className={`overflow-hidden rounded-2xl border-2 border-border ${photoSrc ? "cursor-pointer" : ""}`}
-              onClick={() => photoSrc && setPhotoPreview(true)}
-            >
-              {photoSrc ? (
-                <img
-                  src={photoSrc}
-                  alt={fullName}
-                  className="h-28 w-28 object-cover"
-                />
-              ) : (
-                <div className="flex h-28 w-28 items-center justify-center bg-primary/10">
-                  <span className="text-3xl font-semibold text-primary">{initials}</span>
-                </div>
-              )}
+        <button
+          type="button"
+          onClick={() => photoLoaded && setPhotoPreview(true)}
+          aria-label={photoLoaded ? "Voir la photo en grand" : "Photo de l'enseignant"}
+          className="shrink-0 overflow-hidden rounded-2xl border-2 border-border focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-default"
+          disabled={!photoLoaded}
+        >
+          <Avatar className="h-16 w-16 rounded-2xl sm:h-24 sm:w-24">
+            {photoSrc ? (
+              <AvatarImage
+                src={photoSrc}
+                alt={fullName}
+                className="object-cover"
+                onLoadingStatusChange={(status) => setPhotoLoaded(status === "loaded")}
+              />
+            ) : null}
+            <AvatarFallback className="rounded-2xl bg-primary/10 text-xl font-semibold text-primary sm:text-2xl">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+
+        <div className="min-w-0 flex-1">
+          <h1 className="font-serif text-lg tracking-tight sm:text-2xl">{fullName}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {teacher.speciality ?? "Enseignant"}
+          </p>
+          {teacher.phone && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <a
+                href={`tel:${teacher.phone}`}
+                className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/5"
+              >
+                <Phone className="h-3 w-3" />
+                {teacher.phone}
+              </a>
             </div>
-            {/* Bouton camera en bas à droite */}
-            <button
-              type="button"
+          )}
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">Actions sur l&apos;enseignant</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Modifier les infos
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
             >
-              {uploading ? (
-                <Clock className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Camera className="h-3.5 w-3.5" />
-              )}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoUpload}
-            />
-          </div>
-
-          <div className="min-w-0">
-            <h1 className="font-serif text-2xl tracking-tight">{fullName}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {teacher.speciality ?? "Enseignant"}
-            </p>
-            {teacher.phone && (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Badge variant="outline" className="text-[10px]">
-                  <Phone className="mr-1 h-3 w-3" />
-                  {teacher.phone}
-                </Badge>
-              </div>
+              <Camera className="mr-2 h-4 w-4" />
+              {photoSrc ? "Changer la photo" : "Ajouter une photo"}
+            </DropdownMenuItem>
+            {photoSrc && photoLoaded && (
+              <DropdownMenuItem onClick={handleDeletePhoto}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Supprimer la photo
+              </DropdownMenuItem>
             )}
-          </div>
-        </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setDeleteOpen(true)}
+              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Supprimer l&apos;enseignant
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-1.5 h-3.5 w-3.5" />
-            Modifier
-          </Button>
-          <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-            Supprimer
-          </Button>
-        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoUpload}
+        />
       </div>
 
       {/* Photo preview dialog */}
@@ -228,9 +255,10 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
         </Dialog>
       )}
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
+      {/* Tabs — controlled + scroll-x mobile (pattern principe 13/14) */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+        <TabsList className="w-max">
           <TabsTrigger value="overview">
             <BookOpen className="mr-1.5 h-3.5 w-3.5" />
             Vue d&apos;ensemble
@@ -256,9 +284,15 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
             Disponibilités
           </TabsTrigger>
         </TabsList>
+        </div>
 
         <TabsContent value="overview">
-          <TeacherOverviewTab teacherId={teacherId} teacher={teacher} fullData={fullData} />
+          <TeacherOverviewTab
+            teacherId={teacherId}
+            teacher={teacher}
+            fullData={fullData}
+            onTabChange={setActiveTab}
+          />
         </TabsContent>
 
         <TabsContent value="profil">

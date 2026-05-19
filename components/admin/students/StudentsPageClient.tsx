@@ -30,12 +30,12 @@ export function StudentsPageClient() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
             <Users className="h-5 w-5 text-primary" />
           </div>
-          <div>
-            <h1 className="font-serif text-2xl tracking-tight">Élèves</h1>
+          <div className="min-w-0">
+            <h1 className="font-serif text-xl tracking-tight sm:text-2xl">Élèves</h1>
             <p className="text-sm text-muted-foreground">
               {total} {total > 1 ? "élèves au total" : "élève au total"}
               {noCurrent > 0 && (

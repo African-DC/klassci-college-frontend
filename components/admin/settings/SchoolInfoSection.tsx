@@ -32,6 +32,8 @@ export function SchoolInfoSection({ settings }: SchoolInfoSectionProps) {
       phone: settings.phone ?? "",
       email: settings.email ?? "",
       ministry_code: settings.ministry_code ?? "",
+      head_master_name: settings.head_master_name ?? "",
+      head_master_title: settings.head_master_title ?? "",
     },
   })
 
@@ -106,7 +108,7 @@ export function SchoolInfoSection({ settings }: SchoolInfoSectionProps) {
                   <FormItem>
                     <FormLabel>Téléphone</FormLabel>
                     <FormControl>
-                      <Input placeholder="+243 ..." {...field} />
+                      <Input placeholder="+225 ..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -119,12 +121,47 @@ export function SchoolInfoSection({ settings }: SchoolInfoSectionProps) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="contact@ecole.cd" {...field} />
+                      <Input type="email" placeholder="contact@ecole.ci" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
+              <p className="text-sm font-medium">Documents officiels</p>
+              <p className="text-xs text-muted-foreground -mt-2">
+                Apparaît sur les certificats, attestations et bulletins signés.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="head_master_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom du chef d&apos;établissement</FormLabel>
+                      <FormControl>
+                        <Input placeholder="M. Konan Kouamé" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="head_master_title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Titre / fonction</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Directeur" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end pt-2">

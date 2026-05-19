@@ -7,7 +7,6 @@ import { ClassCreateSchema, type ClassCreate } from "@/lib/contracts/class"
 import { useCreateClass } from "@/lib/hooks/useClasses"
 import { useLevels } from "@/lib/hooks/useLevels"
 import { useSeriesList } from "@/lib/hooks/useSeries"
-import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { useRooms } from "@/lib/hooks/useRooms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,9 +45,6 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
   const { data: levelsData } = useLevels({ size: 100 })
   const levels = levelsData?.items
 
-  const { data: academicYearsData } = useAcademicYears()
-  const currentYear = academicYearsData?.items?.find((y) => y.is_current)
-
   const { data: roomsData } = useRooms({ size: 100 })
   const rooms = roomsData?.items
 
@@ -66,10 +62,9 @@ export function ClassForm({ onSuccess }: ClassFormProps) {
   const { mutate, isPending, error } = useCreateClass()
 
   function onSubmit(data: ClassCreate) {
-    // Auto-assign current academic year
+    // Refactor #97 : Class est universel, pas de academic_year_id à propager.
     const payload = {
       ...data,
-      academic_year_id: currentYear?.id ?? data.academic_year_id,
       series_id: data.series_id || null,
       room_id: data.room_id || null,
     }
