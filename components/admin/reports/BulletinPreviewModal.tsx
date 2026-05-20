@@ -1,7 +1,7 @@
 "use client"
 
 import { Award, GraduationCap, Trophy, User } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BulletinStatusBadge } from "./BulletinStatusBadge"
@@ -31,6 +31,9 @@ export function BulletinPreviewModal({ bulletinId, onClose }: BulletinPreviewMod
       <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto p-0">
         <DialogHeader className="sr-only">
           <DialogTitle>Bulletin scolaire</DialogTitle>
+          <DialogDescription>
+            Aperçu détaillé du bulletin de notes avec moyenne, rang, mention et détail par matière.
+          </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
