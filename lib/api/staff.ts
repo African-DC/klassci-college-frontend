@@ -25,17 +25,23 @@ export const staffApi = {
 
   uploadPhoto: async (staffId: number, file: File): Promise<{ photo_url: string }> => {
     const session = await getSession()
+    if (session?.error === "RefreshTokenError") {
+      void handleExpiredSession()
+      throw new Error("Session expirée")
+    }
     const formData = new FormData()
     formData.append("file", file)
+    const headers: Record<string, string> = session?.accessToken
+      ? { Authorization: `Bearer ${session.accessToken}` }
+      : {}
+    const hadToken = "Authorization" in headers
     const res = await fetch(`${getBaseUrl()}/admin/staff/${staffId}/photo`, {
       method: "POST",
-      headers: {
-        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
-      },
+      headers,
       body: formData,
     })
     if (res.status === 401) {
-      if (session?.accessToken) await handleExpiredSession()
+      if (hadToken) void handleExpiredSession()
       throw new Error("Session expirée")
     }
     if (!res.ok) throw new Error("Upload failed")

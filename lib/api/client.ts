@@ -30,10 +30,22 @@ export async function handleExpiredSession(): Promise<void> {
   } catch {
     // ignore
   }
-  // Clear the NextAuth cookie. redirect:false because we trigger a full
-  // navigation ourselves to also reset TanStack Query / Zustand state.
-  await signOut({ redirect: false }).catch(() => {})
-  window.location.href = "/login?expired=1"
+  // Belt-and-suspenders: even if signOut hangs or rejects, the redirect
+  // must fire — otherwise we get the zombie state observed 2026-05-20
+  // (28×401 with the session-token cookie still set, no redirect, UI
+  // stays mounted on /admin/*).
+  const redirect = () => {
+    window.location.href = "/login?expired=1"
+  }
+  const fallback = window.setTimeout(redirect, 1500)
+  try {
+    await signOut({ redirect: false })
+  } catch {
+    // ignore — we redirect regardless
+  } finally {
+    window.clearTimeout(fallback)
+    redirect()
+  }
 }
 
 interface RequestOptions extends Omit<RequestInit, "headers"> {
@@ -74,6 +86,15 @@ async function getCachedSession(): Promise<Session | null> {
 async function authHeaders(): Promise<Record<string, string>> {
   const session = await getCachedSession()
   const headers: Record<string, string> = { "Content-Type": "application/json" }
+  // auth.ts sets session.error = "RefreshTokenError" when isTokenExpired() is
+  // truthy on the next jwt() pass, but it still exposes session.accessToken
+  // (the stale JWT). Don't send that to the BE: bail out and trigger the
+  // signOut/redirect flow immediately. Middleware would catch it on the next
+  // server navigation, but client-side fetches need their own handler.
+  if (session?.error === "RefreshTokenError") {
+    void handleExpiredSession()
+    throw new Error("Session expirée")
+  }
   if (session?.accessToken) {
     headers["Authorization"] = `Bearer ${session.accessToken}`
   }
@@ -84,11 +105,16 @@ async function authHeaders(): Promise<Record<string, string>> {
 export async function apiFetchBlob(path: string): Promise<Blob> {
   const headers = await authHeaders()
   delete headers["Content-Type"]
+  const hadToken = "Authorization" in headers
   const res = await fetch(`${getBaseUrl()}${path}`, { headers })
   if (res.status === 401) {
-    const session = await getCachedSession()
-    if (session?.accessToken) {
-      await handleExpiredSession()
+    // We sent a Bearer that the BE rejected → JWT expired or revoked.
+    // Gate on the header we actually sent (not a re-read of the session)
+    // so the post-login race — cookie set but getSession() not yet primed,
+    // so no Authorization header in the first fetch — doesn't trigger an
+    // immediate signOut right after login.
+    if (hadToken) {
+      void handleExpiredSession()
     }
     throw new Error("Session expirée")
   }
@@ -108,18 +134,20 @@ export async function apiFetchBlob(path: string): Promise<Blob> {
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { schema, ...fetchOptions } = options
   const headers = { ...(await authHeaders()), ...fetchOptions.headers }
+  const hadToken = "Authorization" in headers
   const res = await fetch(`${getBaseUrl()}${path}`, { ...fetchOptions, headers })
 
   // 401: the JWT carried in the Authorization header is missing or expired.
-  // We only trigger signOut+redirect if we actually had a session — otherwise
-  // we'd race with the login flow (cookies set but not yet readable by
-  // getSession() on the first post-login fetch). When there's no session,
-  // throwing a plain error is enough: the middleware will redirect on the
+  // Gate on the header we actually sent (not a re-read of the session)
+  // — the session cache may report `accessToken` truthy even when the BE
+  // is rejecting that very token, and re-reading it before deciding can
+  // race with handleExpiredSession() clearing the cache. The post-login
+  // race (cookie set but no Authorization header yet) is handled by
+  // hadToken=false: throwing is enough, the middleware redirects on the
   // next navigation.
   if (res.status === 401) {
-    const session = await getCachedSession()
-    if (session?.accessToken) {
-      await handleExpiredSession()
+    if (hadToken) {
+      void handleExpiredSession()
     }
     throw new Error("Session expirée")
   }

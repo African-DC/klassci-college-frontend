@@ -32,6 +32,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Session zombie après expiration du jeton : la barre de navigation et les listes affichaient parfois 28 erreurs 401 en silence sans rediriger vers la page de connexion. Le redirect vers `/login?expired=1` se déclenche désormais dès qu'une requête authentifiée échoue, avec un secours qui force la redirection même si la déconnexion bloque *(tous)*.
 - Liste des bulletins refondue : nom complet de l'élève, matricule et avatar à initiales s'affichent désormais au lieu d'identifiants techniques `#3`. La fenêtre de détail montre l'élève, sa classe, la moyenne générale, le rang `1/3`, la mention complète et le détail par matière avec coefficient *(admin)*.
 - Page DREN qui ne chargeait plus depuis l'ajout du champ moyenne par classe : le tableau de bord des statistiques affiche désormais correctement l'effectif, la répartition garçons/filles, le taux de réussite et le détail par niveau *(admin)*.
 - Téléchargement d'un PDF en erreur : un toast d'erreur clair apparaît désormais avec le message du serveur (ex : bibliothèque PDF manquante), au lieu d'un silence trompeur où l'admin ne savait pas ce qui se passait *(admin, parent, enseignant)*.
