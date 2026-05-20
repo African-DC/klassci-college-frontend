@@ -8,6 +8,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Mode « Réviser » d'une évaluation : les notes déjà saisies sont désormais pré-remplies dans les champs au lieu de s'afficher vides. L'enseignant ou l'admin peut donc relire et modifier en place les notes existantes au lieu de tout ressaisir *(enseignant, admin)*.
+
 ### Changed
 
 - Vue Table de la page Matières refondue avec groupage par catalogue : chaque matière apparaît une seule fois (au lieu de 5 lignes dupliquées par niveau), avec un chevron pour déplier les instances et voir coefficient, heures et enseignant pour chaque niveau. Filtres « par niveau » et « avec/sans enseignant » et bandeau de stats : matières uniques, instances totales, heures cumulées *(admin)*.
