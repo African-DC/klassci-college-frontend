@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -57,12 +58,12 @@ export function BulletinGenerateButton({
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Générer les bulletins</DialogTitle>
+            <DialogDescription>
+              Cette action va générer les bulletins pour le{" "}
+              <strong>{trimester ? trimesterFullLabel(trimester) : ""}</strong>.
+              Les bulletins existants en brouillon seront recalculés.
+            </DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Cette action va générer les bulletins pour le{" "}
-            <strong>{trimester ? trimesterFullLabel(trimester) : ""}</strong>.
-            Les bulletins existants en brouillon seront recalculés.
-          </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>
               Annuler
