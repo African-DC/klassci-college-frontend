@@ -34,6 +34,17 @@ export function useStudentFees(studentId: number) {
   })
 }
 
+// Vue enrichie /admin/students/{id}/full : KPIs annuels + breakdowns trimestre.
+// Utilisé par OverviewTab, ProfileTab (account info) et StudentAcademicCharts.
+export function useStudentFull(studentId: number) {
+  return useQuery({
+    queryKey: ["students", studentId, "full"],
+    queryFn: () => studentsApi.getFull(studentId),
+    enabled: !!studentId,
+    staleTime: 1000 * 60 * 2,
+  })
+}
+
 // Counts pour la barre de chips. staleTime aligné avec le cache BE Redis (60s
 // quand celui-ci sera ajouté en v1.2.1). Invalidate via studentKeys.all après
 // toute mutation student / enrollment.

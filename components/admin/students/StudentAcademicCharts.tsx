@@ -7,7 +7,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Legend,
   ResponsiveContainer,
   Tooltip,
@@ -16,7 +15,8 @@ import {
 } from "recharts"
 import { LineChart as LineChartIcon, BarChart3, TrendingUp, Trophy } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useEnrollments } from "@/lib/hooks/useEnrollments"
+import { useStudentFull } from "@/lib/hooks/useStudents"
+import { TRIMESTER_FULL_LABEL, trimesterShortLabel, type TrimesterNumber } from "@/lib/utils/trimester"
 
 interface TrimesterPoint {
   trimester: string
@@ -28,7 +28,7 @@ interface TrimesterPoint {
 interface AbsencePoint {
   trimester: string
   justifiees: number
-  nonJustifiees: number
+  non_justifiees: number
 }
 
 interface StudentAcademicChartsProps {
@@ -36,17 +36,31 @@ interface StudentAcademicChartsProps {
 }
 
 export function StudentAcademicCharts({ studentId }: StudentAcademicChartsProps) {
-  const { data: enrollmentsData } = useEnrollments({ student_id: studentId })
+  const { data: full } = useStudentFull(studentId)
 
-  const hasEnrollment = (enrollmentsData?.items?.length ?? 0) > 0
+  const hasEnrollment = full?.current_enrollment_id != null
 
-  // Series vides tant que /admin/students/{id}/full n'expose pas la
-  // breakdown par trimestre. L'empty state propre est rendu en dessous,
-  // évite le faux signal "3 dots null + 3 bars zéro" (no-mvp rule).
-  const trimesterData: TrimesterPoint[] = useMemo(() => [], [])
-  const absenceData: AbsencePoint[] = useMemo(() => [], [])
-  const hasGrades = trimesterData.length > 0 && trimesterData.some((p) => p.general !== null)
-  const hasAbsences = absenceData.length > 0 && absenceData.some((p) => p.justifiees + p.nonJustifiees > 0)
+  const trimesterData: TrimesterPoint[] = useMemo(() => {
+    if (!full?.trimester_grades?.length) return []
+    return full.trimester_grades.map((t) => ({
+      trimester: trimesterShortLabel(t.trimester),
+      general: t.general,
+      best: t.best,
+      worst: t.worst,
+    }))
+  }, [full?.trimester_grades])
+
+  const absenceData: AbsencePoint[] = useMemo(() => {
+    if (!full?.trimester_absences?.length) return []
+    return full.trimester_absences.map((t) => ({
+      trimester: trimesterShortLabel(t.trimester),
+      justifiees: t.justifiees,
+      non_justifiees: t.non_justifiees,
+    }))
+  }, [full?.trimester_absences])
+
+  const hasGrades = trimesterData.some((p) => p.general !== null)
+  const hasAbsences = absenceData.some((p) => p.justifiees + p.non_justifiees > 0)
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -132,11 +146,7 @@ export function StudentAcademicCharts({ studentId }: StudentAcademicChartsProps)
                 <Tooltip content={<AbsenceTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
                 <Bar dataKey="justifiees" name="Justifiées" stackId="abs" fill="#0F3F8C" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="nonJustifiees" name="Non justifiées" stackId="abs" fill="#F58220" radius={[4, 4, 0, 0]}>
-                  {absenceData.map((_, i) => (
-                    <Cell key={i} />
-                  ))}
-                </Bar>
+                <Bar dataKey="non_justifiees" name="Non justifiées" stackId="abs" fill="#F58220" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -176,6 +186,12 @@ function ChartEmptyState({
   )
 }
 
+function tooltipTitle(shortLabel: string | undefined): string {
+  if (!shortLabel) return ""
+  const n = Number(shortLabel.replace("T", "")) as TrimesterNumber
+  return TRIMESTER_FULL_LABEL[n] ?? shortLabel
+}
+
 function MoyenneTooltip({ active, payload, label }: {
   active?: boolean
   payload?: Array<{ value: number | null; name: string; color: string }>
@@ -184,7 +200,7 @@ function MoyenneTooltip({ active, payload, label }: {
   if (!active || !payload?.length) return null
   return (
     <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-md">
-      <p className="font-semibold">{label === "T1" ? "1er trimestre" : label === "T2" ? "2e trimestre" : "3e trimestre"}</p>
+      <p className="font-semibold">{tooltipTitle(label)}</p>
       {payload.map((p, i) => (
         <p key={i} className="flex items-center gap-2 text-muted-foreground">
           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
@@ -204,7 +220,7 @@ function AbsenceTooltip({ active, payload, label }: {
   const total = payload.reduce((sum, p) => sum + (p.value ?? 0), 0)
   return (
     <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-md">
-      <p className="font-semibold">{label === "T1" ? "1er trimestre" : label === "T2" ? "2e trimestre" : "3e trimestre"}</p>
+      <p className="font-semibold">{tooltipTitle(label)}</p>
       {payload.map((p, i) => (
         <p key={i} className="flex items-center gap-2 text-muted-foreground">
           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
