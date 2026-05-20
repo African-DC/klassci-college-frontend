@@ -302,17 +302,32 @@ export function GradeEntryGrid({ evaluationId, classId }: GradeEntryGridProps) {
       {/* ─── Grade entries ──────────────────────────────────────────── */}
       <div className="overflow-hidden rounded-xl border bg-card">
         <div className="divide-y">
-          {grades.map((grade, index) => (
-            <GradeRow
-              key={grade.student_id}
-              index={index}
-              studentName={grade.student_name ?? `Élève #${grade.student_id}`}
-              value={localGrades.get(grade.student_id) ?? null}
-              status={cellStatus.get(grade.student_id) ?? "idle"}
-              originalStatus={grade.status}
-              onChange={(rawValue) => handleGradeChange(grade.student_id, rawValue)}
-            />
-          ))}
+          {grades.map((grade, index) => {
+            // `initialValue` est la valeur côté serveur — connue dès le mount
+            // de GradeRow (qui ne se monte qu'après que `grades` ait été
+            // récupéré). C'est elle qui pré-remplit l'input en mode "Réviser".
+            // `localGrades.get(...)` reste la source de vérité pour la
+            // catégorisation (couleur de cellule) qui suit les frappes en cours.
+            const serverValue =
+              grade.value !== null && grade.value !== undefined
+                ? Number(grade.value)
+                : null
+            const liveValue = localGrades.has(grade.student_id)
+              ? localGrades.get(grade.student_id) ?? null
+              : serverValue
+            return (
+              <GradeRow
+                key={grade.student_id}
+                index={index}
+                studentName={grade.student_name ?? `Élève #${grade.student_id}`}
+                initialValue={serverValue}
+                value={liveValue}
+                status={cellStatus.get(grade.student_id) ?? "idle"}
+                originalStatus={grade.status}
+                onChange={(rawValue) => handleGradeChange(grade.student_id, rawValue)}
+              />
+            )
+          })}
         </div>
       </div>
     </div>
@@ -354,21 +369,33 @@ function KpiTile({ label, value, tone, icon: Icon }: KpiTileProps) {
 interface GradeRowProps {
   index: number
   studentName: string
+  /** Valeur côté serveur — sert UNIQUEMENT à l'init de l'input (mode "Réviser"). */
+  initialValue: number | null
+  /** Valeur courante (serveur OU frappe locale en cours) — pour la catégorisation. */
   value: number | null
   status: CellStatus
   originalStatus: string
   onChange: (rawValue: string) => void
 }
 
-function GradeRow({ index, studentName, value, status, originalStatus, onChange }: GradeRowProps) {
+function GradeRow({
+  index,
+  studentName,
+  initialValue,
+  value,
+  status,
+  originalStatus,
+  onChange,
+}: GradeRowProps) {
   // rawInput est la source de vérité pour ce que l'utilisateur tape (incluant
   // les états transitoires comme "12," avant complétion). On l'initialise UNE
-  // SEULE FOIS depuis la prop, puis le user contrôle. Pas de useEffect [value]
-  // qui écraserait sa frappe (ex: "12," → parser → 12 → reset à "12" sans virgule).
-  // Trade-off : si le serveur refetch avec une valeur différente, le row reste
-  // sur la valeur tapée. Acceptable — single editor at a time.
+  // SEULE FOIS depuis `initialValue` (côté serveur), puis le user contrôle.
+  // Pas de useEffect [value] qui écraserait sa frappe (ex: "12," → parser → 12
+  // → reset à "12" sans virgule). Trade-off : si le serveur refetch avec une
+  // valeur différente, le row reste sur la valeur tapée. Acceptable — single
+  // editor at a time.
   const [rawInput, setRawInput] = useState<string>(
-    value !== null ? String(value).replace(".", ",") : "",
+    initialValue !== null ? String(initialValue).replace(".", ",") : "",
   )
 
   const category = categorizeGrade(value, originalStatus)
