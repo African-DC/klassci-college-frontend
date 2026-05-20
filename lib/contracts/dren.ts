@@ -9,7 +9,7 @@ export const ClassStatsSchema = z.object({
   total_students: z.number(),
   male_count: z.number(),
   female_count: z.number(),
-  average: z.number().nullable().optional(),
+  average: z.coerce.number().nullable().optional(),
 })
 
 export const LevelStatsSchema = z.object({

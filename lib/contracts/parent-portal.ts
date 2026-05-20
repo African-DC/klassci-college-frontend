@@ -20,22 +20,24 @@ export const ParentDashboardSchema = z.object({
   current_academic_year: z.string().nullish(),
 })
 
-// Notes d'un enfant — même structure que les notes élève
+// Notes d'un enfant — même structure que les notes élève.
+// `value`, `average`, montants → `z.coerce.number()` car le BE sérialise
+// les Decimal Pydantic en string JSON par défaut.
 export const ParentChildGradeEntrySchema = z.object({
   id: z.number(),
   title: z.string(),
   type: z.enum(["devoir", "interro", "examen", "composition"]),
   date: z.string(),
   coefficient: z.number(),
-  value: z.number().nullable(),
-  out_of: z.number(),
+  value: z.coerce.number().nullable(),
+  out_of: z.coerce.number(),
 })
 
 export const ParentChildSubjectGradesSchema = z.object({
   subject_id: z.number(),
   subject_name: z.string(),
   coefficient: z.number(),
-  average: z.number().nullable(),
+  average: z.coerce.number().nullable(),
   grades: z.array(ParentChildGradeEntrySchema),
 })
 
@@ -43,7 +45,7 @@ export const ParentChildGradesResponseSchema = z.object({
   child_name: z.string(),
   class_name: z.string(),
   trimester: z.string().nullable(),
-  general_average: z.number().nullable(),
+  general_average: z.coerce.number().nullable(),
   rank: z.number().nullable(),
   total_students: z.number(),
   subjects: z.array(ParentChildSubjectGradesSchema),
@@ -53,9 +55,9 @@ export const ParentChildGradesResponseSchema = z.object({
 export const ParentChildFeeItemSchema = z.object({
   id: z.number(),
   category_name: z.string(),
-  total_amount: z.number(),
-  paid_amount: z.number(),
-  remaining: z.number(),
+  total_amount: z.coerce.number(),
+  paid_amount: z.coerce.number(),
+  remaining: z.coerce.number(),
   status: z.enum(["paye", "partiel", "impaye"]),
   last_payment_date: z.string().nullish(),
 })
@@ -64,9 +66,9 @@ export const ParentChildFeesResponseSchema = z.object({
   child_name: z.string(),
   class_name: z.string(),
   academic_year: z.string(),
-  total_expected: z.number(),
-  total_paid: z.number(),
-  total_remaining: z.number(),
+  total_expected: z.coerce.number(),
+  total_paid: z.coerce.number(),
+  total_remaining: z.coerce.number(),
   fees: z.array(ParentChildFeeItemSchema),
 })
 
@@ -74,7 +76,7 @@ export const ParentChildFeesResponseSchema = z.object({
 export const ParentChildBulletinSchema = z.object({
   id: z.number(),
   trimester: z.number(),
-  average: z.number().nullable(),
+  average: z.coerce.number().nullable(),
   rank: z.number().nullable(),
   mention: z.string().nullable(),
   class_name: z.string(),

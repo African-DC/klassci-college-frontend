@@ -10,6 +10,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Suivi des présences enseignant sur la fiche `/admin/teachers/[id]` : nouvel onglet « Présences » avec taux de présence, absences, retards cumulés en minutes et compteur d'auto-déclarations à valider. L'admin saisit en un clic absence ou retard en choisissant la date, le créneau EDT concerné et un motif *(admin)*.
+- Auto-déclaration côté enseignant : bouton « Me déclarer absent » sur le tableau de bord prof pour signaler une absence ou un retard. La déclaration arrive en attente de validation côté admin avec un encart d'avertissement amber pour rappeler le contact secrétariat si urgent *(enseignant)*.
+- Validation en deux clics côté admin : panel amber « Auto-déclarations en attente » sur la fiche enseignant, boutons Valider (vert) et Rejeter (rose) avec un champ de notes administratives optionnel et un dialog de confirmation pour le rejet *(admin)*.
 - Personnalisation de l'identité visuelle des PDFs depuis les paramètres de l'établissement : nouvel onglet « Identité visuelle » avec sélecteurs de couleur principale et d'accent, devise de l'école et site web, avec un aperçu en direct du reçu qui se met à jour à chaque modification. Touch targets h-11 mobile *(admin)*.
 - L'aperçu en direct reproduit fidèlement le rendu du reçu avec bandeau République de Côte d'Ivoire, logo, code MENA, devise en italique, montant gradient, tableau d'allocation avec pastilles colorées et pied de page personnalisé *(admin)*.
 - Bouton « Aperçu PDF » qui télécharge un bordereau du jour pour vérifier l'identité visuelle appliquée *(admin)*.
@@ -25,6 +28,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Liste des bulletins refondue : nom complet de l'élève, matricule et avatar à initiales s'affichent désormais au lieu d'identifiants techniques `#3`. La fenêtre de détail montre l'élève, sa classe, la moyenne générale, le rang `1/3`, la mention complète et le détail par matière avec coefficient *(admin)*.
+- Page DREN qui ne chargeait plus depuis l'ajout du champ moyenne par classe : le tableau de bord des statistiques affiche désormais correctement l'effectif, la répartition garçons/filles, le taux de réussite et le détail par niveau *(admin)*.
+- Téléchargement d'un PDF en erreur : un toast d'erreur clair apparaît désormais avec le message du serveur (ex : bibliothèque PDF manquante), au lieu d'un silence trompeur où l'admin ne savait pas ce qui se passait *(admin, parent, enseignant)*.
+- Fiche élève / onglet « Parcours » : les graphes Moyennes et Absences par trimestre affichent désormais les vraies données du bulletin et non plus un faux message « Pas encore de notes » alors que les bulletins existent *(admin)*.
 - Tableau de bord parent qui affichait toujours « Connexion au serveur impossible » depuis le ship du portail parent : on voit désormais pour chaque enfant la classe, la moyenne, le nombre d'absences et le solde restant à payer, en un coup d'œil dès la connexion *(parent)*.
 - Quand la session expire silencieusement, on n'affiche plus l'identité de l'ancien utilisateur sur la barre de navigation et la page d'accueil : la redirection vers la page de connexion se fait immédiatement, sans flicker de données périmées *(tous)* (#164).
 - Page de connexion qui boucle en `ERR_TOO_MANY_REDIRECTS` quand le jeton d'accès est expiré : avec `RefreshTokenError`, le middleware redirigeait `/login → /<portail> → /login` à l'infini car la session restait techniquement « connectée ». La page de connexion est désormais toujours accessible quand la session est en erreur, ce qui permet à l'utilisateur de se reconnecter *(tous)* (#151).

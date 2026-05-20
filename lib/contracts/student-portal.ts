@@ -21,28 +21,29 @@ export const StudentDashboardSchema = z.object({
   current_academic_year: z.string().nullish(),
 })
 
-// Notes par matière
+// Notes par matière — `value`/`average`/montants en `z.coerce.number()`
+// car le BE sérialise les Decimal Pydantic en string JSON.
 export const StudentGradeEntrySchema = z.object({
   id: z.number(),
   title: z.string(),
   type: z.enum(["devoir", "interro", "examen", "composition"]),
   date: z.string(),
   coefficient: z.number(),
-  value: z.number().nullable(),
-  out_of: z.number(),
+  value: z.coerce.number().nullable(),
+  out_of: z.coerce.number(),
 })
 
 export const StudentSubjectGradesSchema = z.object({
   subject_id: z.number(),
   subject_name: z.string(),
   coefficient: z.number(),
-  average: z.number().nullable(),
+  average: z.coerce.number().nullable(),
   grades: z.array(StudentGradeEntrySchema),
 })
 
 export const StudentGradesResponseSchema = z.object({
   trimester: z.string(),
-  general_average: z.number().nullable(),
+  general_average: z.coerce.number().nullable(),
   rank: z.number().nullable(),
   total_students: z.number(),
   subjects: z.array(StudentSubjectGradesSchema),
@@ -52,18 +53,18 @@ export const StudentGradesResponseSchema = z.object({
 export const StudentFeeItemSchema = z.object({
   id: z.number(),
   category_name: z.string(),
-  total_amount: z.number(),
-  paid_amount: z.number(),
-  remaining: z.number(),
+  total_amount: z.coerce.number(),
+  paid_amount: z.coerce.number(),
+  remaining: z.coerce.number(),
   status: z.enum(["paye", "partiel", "impaye"]),
   last_payment_date: z.string().nullish(),
 })
 
 export const StudentFeesResponseSchema = z.object({
   academic_year: z.string(),
-  total_expected: z.number(),
-  total_paid: z.number(),
-  total_remaining: z.number(),
+  total_expected: z.coerce.number(),
+  total_paid: z.coerce.number(),
+  total_remaining: z.coerce.number(),
   fees: z.array(StudentFeeItemSchema),
 })
 
@@ -72,7 +73,7 @@ export const StudentBulletinSchema = z.object({
   id: z.number(),
   trimester: z.string(),
   academic_year: z.string(),
-  general_average: z.number().nullable(),
+  general_average: z.coerce.number().nullable(),
   rank: z.number().nullable(),
   total_students: z.number(),
   status: z.enum(["brouillon", "publie"]),

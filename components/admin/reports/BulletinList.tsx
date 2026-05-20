@@ -17,8 +17,40 @@ import { BulletinPreviewModal } from "./BulletinPreviewModal"
 import { BulletinListSkeleton } from "./BulletinListSkeleton"
 import { useBulletins, usePublishBulletins } from "@/lib/hooks/useBulletins"
 import { bulletinsApi } from "@/lib/api/bulletins"
-import { getMentionColor, downloadBlob } from "@/lib/utils"
+import { cn, downloadBlob, getUploadUrl } from "@/lib/utils"
+import { getMentionBadgeClass } from "./mention"
 import type { BulletinListParams, Bulletin } from "@/lib/contracts/bulletin"
+
+function StudentInitialsAvatar({
+  name,
+  photoUrl,
+}: {
+  name: string
+  photoUrl?: string | null
+}) {
+  const initials =
+    name
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((s) => s[0]?.toUpperCase() ?? "")
+      .join("") || "?"
+  const photoSrc = getUploadUrl(photoUrl ?? undefined)
+  if (photoSrc) {
+    return (
+      <img
+        src={photoSrc}
+        alt={name}
+        className="h-9 w-9 shrink-0 rounded-lg border border-border object-cover"
+      />
+    )
+  }
+  return (
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-primary/10">
+      <span className="text-xs font-semibold text-primary">{initials}</span>
+    </div>
+  )
+}
 
 interface BulletinListProps {
   params: BulletinListParams
@@ -144,12 +176,11 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
         </Button>
       </div>
 
-      <div className="rounded-lg border">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Élève</TableHead>
-              <TableHead>Classe</TableHead>
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableHead className="py-3">Élève</TableHead>
               <TableHead className="text-center">Moyenne</TableHead>
               <TableHead className="text-center">Rang</TableHead>
               <TableHead>Mention</TableHead>
@@ -158,47 +189,102 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {bulletins.map((bulletin: Bulletin) => (
-              <TableRow key={bulletin.id}>
-                <TableCell className="font-medium">#{bulletin.student_id}</TableCell>
-                <TableCell>#{bulletin.class_id}</TableCell>
-                <TableCell className="text-center font-semibold">
-                  {bulletin.average !== null ? Number(bulletin.average).toFixed(2) : "—"}
-                </TableCell>
-                <TableCell className="text-center">
-                  {bulletin.rank ?? "—"}
-                </TableCell>
-                <TableCell>
-                  <span className={`font-medium ${getMentionColor(bulletin.mention)}`}>
-                    {bulletin.mention ?? "—"}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <BulletinStatusBadge isPublished={bulletin.is_published} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => setPreviewId(bulletin.id)}
+            {bulletins.map((bulletin: Bulletin) => {
+              const avg =
+                bulletin.average !== null ? Number(bulletin.average).toFixed(2) : null
+              const rankLabel =
+                bulletin.rank !== null && bulletin.total_students > 0
+                  ? `${bulletin.rank} / ${bulletin.total_students}`
+                  : bulletin.rank !== null
+                    ? String(bulletin.rank)
+                    : "—"
+              return (
+                <TableRow
+                  key={bulletin.id}
+                  className="cursor-pointer transition-colors hover:bg-muted/30"
+                  onClick={() => setPreviewId(bulletin.id)}
+                >
+                  <TableCell className="py-3">
+                    <div className="flex items-center gap-3">
+                      <StudentInitialsAvatar
+                        name={bulletin.student_name}
+                        photoUrl={bulletin.student_photo_url}
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {bulletin.student_name || "—"}
+                        </p>
+                        {bulletin.student_enrollment_number && (
+                          <p className="truncate text-xs text-muted-foreground">
+                            {bulletin.student_enrollment_number}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {avg !== null ? (
+                      <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
+                        {avg}
+                        <span className="ml-0.5 text-xs font-normal text-muted-foreground">
+                          /20
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span
+                      className={cn(
+                        "font-mono text-sm tabular-nums",
+                        bulletin.rank === 1 && "font-semibold text-emerald-700",
+                      )}
                     >
-                      <Eye className="h-4 w-4" />
-                      <span className="sr-only">Voir le bulletin #{bulletin.id}</span>
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleDownloadPdf(bulletin)}
-                      disabled={downloadingId === bulletin.id}
-                    >
-                      <Download className="h-4 w-4" />
-                      <span className="sr-only">Télécharger le bulletin #{bulletin.id}</span>
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                      {rankLabel}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={getMentionBadgeClass(bulletin.mention)}>
+                      {bulletin.mention ?? "—"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <BulletinStatusBadge isPublished={bulletin.is_published} />
+                  </TableCell>
+                  <TableCell
+                    className="text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setPreviewId(bulletin.id)}
+                        title="Voir le détail"
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only">
+                          Voir le bulletin de {bulletin.student_name}
+                        </span>
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleDownloadPdf(bulletin)}
+                        disabled={downloadingId === bulletin.id}
+                        title="Télécharger le PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span className="sr-only">
+                          Télécharger le bulletin de {bulletin.student_name}
+                        </span>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       </div>

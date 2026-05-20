@@ -16,6 +16,7 @@ import {
   Phone,
   FileText,
   CalendarDays,
+  CalendarCheck,
   Clock,
   MoreVertical,
 } from "lucide-react"
@@ -50,6 +51,7 @@ import { TeacherClassesTab } from "./tabs/TeacherClassesTab"
 import { TeacherEvaluationsTab } from "./tabs/TeacherEvaluationsTab"
 import { TeacherTimetableTab } from "./tabs/TeacherTimetableTab"
 import { TeacherAvailabilityTab } from "./tabs/TeacherAvailabilityTab"
+import { TeacherAttendanceTab } from "./tabs/TeacherAttendanceTab"
 import { useTeacher, useTeacherFull, useDeleteTeacher, teacherKeys } from "@/lib/hooks/useTeachers"
 import { teachersApi } from "@/lib/api/teachers"
 import { getUploadUrl } from "@/lib/utils"
@@ -283,6 +285,10 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
             <Clock className="mr-1.5 h-3.5 w-3.5" />
             Disponibilités
           </TabsTrigger>
+          <TabsTrigger value="presences">
+            <CalendarCheck className="mr-1.5 h-3.5 w-3.5" />
+            Présences
+          </TabsTrigger>
         </TabsList>
         </div>
 
@@ -313,6 +319,10 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
 
         <TabsContent value="disponibilites">
           <TeacherAvailabilityTab teacherId={teacherId} />
+        </TabsContent>
+
+        <TabsContent value="presences">
+          <TeacherAttendanceTab teacherId={teacherId} />
         </TabsContent>
       </Tabs>
 

@@ -70,6 +70,54 @@ export const StudentListParamsSchema = z.object({
   unenrolled_only: z.boolean().optional(),
 })
 
+// /admin/students/{id}/full — vue enrichie pour la fiche détail.
+export const StudentTrimesterGradesSchema = z.object({
+  trimester: z.number(), // 1, 2 ou 3
+  general: z.number().nullable(),
+  best: z.number().nullable(),
+  worst: z.number().nullable(),
+})
+
+export const StudentTrimesterAbsencesSchema = z.object({
+  trimester: z.number(),
+  justifiees: z.number(),
+  non_justifiees: z.number(),
+})
+
+export const StudentFullSchema = z.object({
+  id: z.number(),
+  first_name: z.string(),
+  last_name: z.string(),
+  birth_date: z.string().nullish(),
+  genre: z.string().nullish(),
+  enrollment_number: z.string().nullish(),
+  photo_url: z.string().nullish(),
+  city: z.string().nullish(),
+  commune: z.string().nullish(),
+  user_id: z.number().nullable(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+  user_email: z.string().nullish(),
+  user_is_active: z.boolean().nullish(),
+  user_last_login: z.string().nullish(),
+  user_created_at: z.string().nullish(),
+  current_class_name: z.string().nullish(),
+  current_academic_year: z.string().nullish(),
+  current_enrollment_status: z.string().nullish(),
+  current_enrollment_id: z.number().nullish(),
+  attendance_total: z.number(),
+  attendance_present: z.number(),
+  attendance_absent: z.number(),
+  attendance_late: z.number(),
+  attendance_rate: z.number(),
+  fees_expected: z.number(),
+  fees_paid: z.number(),
+  fees_remaining: z.number(),
+  fees_rate: z.number(),
+  trimester_grades: z.array(StudentTrimesterGradesSchema),
+  trimester_absences: z.array(StudentTrimesterAbsencesSchema),
+})
+
 export type CurrentEnrollmentInfo = z.infer<typeof CurrentEnrollmentInfoSchema>
 export type StudentClassFilterCount = z.infer<typeof StudentClassFilterCountSchema>
 export type StudentFilters = z.infer<typeof StudentFiltersSchema>
@@ -77,3 +125,6 @@ export type Student = z.infer<typeof StudentSchema>
 export type StudentCreate = z.infer<typeof StudentCreateSchema>
 export type StudentUpdate = z.infer<typeof StudentUpdateSchema>
 export type StudentListParams = z.infer<typeof StudentListParamsSchema>
+export type StudentFull = z.infer<typeof StudentFullSchema>
+export type StudentTrimesterGrades = z.infer<typeof StudentTrimesterGradesSchema>
+export type StudentTrimesterAbsences = z.infer<typeof StudentTrimesterAbsencesSchema>
