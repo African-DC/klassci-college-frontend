@@ -28,6 +28,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Liste des bulletins refondue : nom complet de l'élève, matricule et avatar à initiales s'affichent désormais au lieu d'identifiants techniques `#3`. La fenêtre de détail montre l'élève, sa classe, la moyenne générale, le rang `1/3`, la mention complète et le détail par matière avec coefficient *(admin)*.
+- Page DREN qui ne chargeait plus depuis l'ajout du champ moyenne par classe : le tableau de bord des statistiques affiche désormais correctement l'effectif, la répartition garçons/filles, le taux de réussite et le détail par niveau *(admin)*.
+- Téléchargement d'un PDF en erreur : un toast d'erreur clair apparaît désormais avec le message du serveur (ex : bibliothèque PDF manquante), au lieu d'un silence trompeur où l'admin ne savait pas ce qui se passait *(admin, parent, enseignant)*.
+- Fiche élève / onglet « Parcours » : les graphes Moyennes et Absences par trimestre affichent désormais les vraies données du bulletin et non plus un faux message « Pas encore de notes » alors que les bulletins existent *(admin)*.
 - Tableau de bord parent qui affichait toujours « Connexion au serveur impossible » depuis le ship du portail parent : on voit désormais pour chaque enfant la classe, la moyenne, le nombre d'absences et le solde restant à payer, en un coup d'œil dès la connexion *(parent)*.
 - Quand la session expire silencieusement, on n'affiche plus l'identité de l'ancien utilisateur sur la barre de navigation et la page d'accueil : la redirection vers la page de connexion se fait immédiatement, sans flicker de données périmées *(tous)* (#164).
 - Page de connexion qui boucle en `ERR_TOO_MANY_REDIRECTS` quand le jeton d'accès est expiré : avec `RefreshTokenError`, le middleware redirigeait `/login → /<portail> → /login` à l'infini car la session restait techniquement « connectée ». La page de connexion est désormais toujours accessible quand la session est en erreur, ce qui permet à l'utilisateur de se reconnecter *(tous)* (#151).

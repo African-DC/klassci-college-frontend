@@ -57,7 +57,7 @@ import { EnrollmentTab } from "./tabs/EnrollmentTab"
 import { AttendanceTab } from "./tabs/AttendanceTab"
 import { ParentsTab } from "./tabs/ParentsTab"
 import { DocumentsTab } from "./tabs/DocumentsTab"
-import { useStudent, useDeleteStudent, studentKeys, useStudentFees } from "@/lib/hooks/useStudents"
+import { useStudent, useDeleteStudent, studentKeys, useStudentFees, useStudentFull } from "@/lib/hooks/useStudents"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
 import { useStudentParents } from "@/lib/hooks/useParents"
 import { studentsApi } from "@/lib/api/students"
@@ -85,6 +85,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
   const [photoLoaded, setPhotoLoaded] = useState(false)
 
   const { data: student, isLoading, isError, refetch } = useStudent(studentId)
+  const { data: full } = useStudentFull(studentId)
   const { mutate: deleteStudent, isPending: deleting } = useDeleteStudent()
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -316,7 +317,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         </TabsContent>
 
         <TabsContent value="paiements">
-          <PaymentsTab studentId={studentId} fullData={student as unknown as Record<string, unknown>} />
+          <PaymentsTab studentId={studentId} fullData={full ?? undefined} />
         </TabsContent>
 
         <TabsContent value="parents">
@@ -328,7 +329,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         </TabsContent>
 
         <TabsContent value="profil">
-          <ProfileTab student={student} fullData={student as unknown as Record<string, unknown>} />
+          <ProfileTab student={student} fullData={full ?? undefined} />
         </TabsContent>
 
         <TabsContent value="presences">

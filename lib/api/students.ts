@@ -1,6 +1,6 @@
 import { getSession } from "next-auth/react"
-import { StudentFiltersSchema, StudentSchema } from "@/lib/contracts/student"
-import type { Student, StudentCreate, StudentFilters, StudentUpdate } from "@/lib/contracts/student"
+import { StudentFiltersSchema, StudentFullSchema, StudentSchema } from "@/lib/contracts/student"
+import type { Student, StudentCreate, StudentFilters, StudentFull, StudentUpdate } from "@/lib/contracts/student"
 import { createCrudApi } from "./createCrudApi"
 import { apiFetch, handleExpiredSession, safeValidate } from "./client"
 import { z } from "zod"
@@ -74,6 +74,11 @@ export const studentsApi = {
   getEnrollmentFees: async (studentId: number): Promise<StudentEnrollmentFee[]> => {
     const data = await apiFetch<unknown>(`/admin/students/${studentId}/fees`)
     return safeValidate(StudentEnrollmentFeeListSchema, unwrapItems(data), `GET /admin/students/${studentId}/fees`)
+  },
+
+  getFull: async (studentId: number): Promise<StudentFull> => {
+    const data = await apiFetch<unknown>(`/admin/students/${studentId}/full`)
+    return safeValidate(StudentFullSchema, data, `GET /admin/students/${studentId}/full`)
   },
 }
 
