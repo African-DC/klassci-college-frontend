@@ -8,6 +8,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Changed
+
+- Vue Table de la page Matières refondue avec groupage par catalogue : chaque matière apparaît une seule fois (au lieu de 5 lignes dupliquées par niveau), avec un chevron pour déplier les instances et voir coefficient, heures et enseignant pour chaque niveau. Filtres « par niveau » et « avec/sans enseignant » et bandeau de stats : matières uniques, instances totales, heures cumulées *(admin)*.
+
 ### Added
 
 - Suivi des présences enseignant sur la fiche `/admin/teachers/[id]` : nouvel onglet « Présences » avec taux de présence, absences, retards cumulés en minutes et compteur d'auto-déclarations à valider. L'admin saisit en un clic absence ou retard en choisissant la date, le créneau EDT concerné et un motif *(admin)*.
