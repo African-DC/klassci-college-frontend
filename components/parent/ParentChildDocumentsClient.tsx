@@ -1,12 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowLeft, Award, FileCheck2, Loader2 } from "lucide-react"
+import { ArrowLeft, Award, FileCheck2, Loader2, Clock } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { studentDocumentsApi } from "@/lib/api/student-documents"
 import { downloadBlob } from "@/lib/utils"
+import { useParentChildren } from "@/lib/hooks/useParentPortal"
+import { isEnrolledFromClassName } from "@/lib/utils/enrollment-status"
 
 interface ParentChildDocumentsClientProps {
   childId: number
@@ -46,6 +49,16 @@ export function ParentChildDocumentsClient({
   childId,
 }: ParentChildDocumentsClientProps) {
   const [downloading, setDownloading] = useState<DocKind | null>(null)
+  const { data: children } = useParentChildren()
+  const child = children?.find((c) => c.id === childId)
+  // Documents officiels (certificat/attestation) ne sont émis que pour les
+  // élèves dont l'inscription est validée pour l'année courante. Si on tente
+  // de télécharger sur un enfant pas inscrit, le BE répond une erreur peu
+  // exploitable. On affiche un guard explicite pour Mme Aïcha avant le clic.
+  const isEnrolled = child ? isEnrolledFromClassName(child.class_name) : true
+  // isEnrolled est initialisé à `true` tant que children n'est pas chargé
+  // pour ne pas masquer l'UI pendant le fetch initial — le guard apparaît
+  // une fois la donnée arrivée si pertinent.
 
   async function handleDownload(doc: (typeof DOCS)[number]) {
     setDownloading(doc.kind)
@@ -81,10 +94,30 @@ export function ParentChildDocumentsClient({
         </div>
       </div>
 
+      {!isEnrolled && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="flex items-start gap-3 py-4">
+            <Clock aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-amber-900">
+                Documents indisponibles pour le moment
+              </p>
+              <p className="text-xs text-amber-800">
+                Les documents officiels (certificat de scolarité, attestation de
+                fréquentation) sont délivrés uniquement pour les élèves dont
+                l&apos;inscription est validée pour l&apos;année courante. Contactez le
+                secrétariat pour finaliser le dossier.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="space-y-3">
         {DOCS.map((doc) => {
           const Icon = doc.icon
           const isDownloading = downloading === doc.kind
+          const disabled = isDownloading || !isEnrolled
           return (
             <div
               key={doc.kind}
@@ -92,7 +125,7 @@ export function ParentChildDocumentsClient({
             >
               <div className="flex items-start gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Icon className="h-6 w-6" />
+                  <Icon aria-hidden="true" className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-medium">{doc.title}</p>
@@ -104,14 +137,17 @@ export function ParentChildDocumentsClient({
               <Button
                 size="lg"
                 onClick={() => handleDownload(doc)}
-                disabled={isDownloading}
+                disabled={disabled}
+                aria-disabled={disabled}
                 className="h-11 w-full"
               >
                 {isDownloading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
                     Génération...
                   </>
+                ) : !isEnrolled ? (
+                  "Disponible après inscription"
                 ) : (
                   "Télécharger PDF"
                 )}

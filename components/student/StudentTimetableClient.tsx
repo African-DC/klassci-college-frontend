@@ -7,13 +7,13 @@ import { useStudentTimetable } from "@/lib/hooks/useStudentPortal"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
-const DAY_LABELS: Record<string, string> = {
-  lundi: "Lun",
-  mardi: "Mar",
-  mercredi: "Mer",
-  jeudi: "Jeu",
-  vendredi: "Ven",
-  samedi: "Sam",
+const DAY_FULL: Record<string, string> = {
+  lundi: "Lundi",
+  mardi: "Mardi",
+  mercredi: "Mercredi",
+  jeudi: "Jeudi",
+  vendredi: "Vendredi",
+  samedi: "Samedi",
 }
 
 // Couleurs par matière pour différencier visuellement
@@ -65,8 +65,8 @@ export function StudentTimetableClient() {
             if (daySlots.length === 0) return null
             return (
               <div key={day}>
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                  {DAY_LABELS[day]}
+                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  {DAY_FULL[day]}
                 </h2>
                 <div className="space-y-2">
                   {daySlots.map((slot) => (
