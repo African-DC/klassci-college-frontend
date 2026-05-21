@@ -10,6 +10,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Portail élève — historique de présence sur mobile : la table 4 colonnes est remplacée par des cartes verticales avec jour en clair, heure d'arrivée, notes éventuelles et badge statut coloré. Les boutons de pagination passent à h-11 et reçoivent un aria-label *(élève)*.
+- Portail élève — bulletins : empty state plus rassurant qui explique « Vos bulletins apparaîtront ici après publication par l'administration » au lieu d'une phrase opaque. Bouton PDF passe à h-11 mobile + toast succès au téléchargement *(élève)*.
+- Portail parent — bulletins : flèche retour passe à h-11 mobile (touch target Itel S661), boutons PDF h-11 mobile avec aria-label explicite. Empty state explique quand les bulletins apparaîtront *(parent)*.
+- Portail parent — pages Notes et Frais : flèche retour passe à h-11 mobile pour une meilleure ergonomie sur petit écran *(parent)*.
+
 - Section Bulletins : navigation entre les trois types de rapports (Bulletins, Conseil de classe, Statistiques DREN) désormais visible en onglets cliquables au sommet de chaque page au lieu d'être cachée dans le menu latéral *(admin)*.
 - Section Rôles &amp; Permissions : la colonne Permissions du tableau affiche désormais les groupes de permissions accordées au rôle sous forme de pastilles colorées (« Élèves 3, Paiements 2, Notes 4… ») au lieu d'un simple compteur opaque *(admin)*.
 

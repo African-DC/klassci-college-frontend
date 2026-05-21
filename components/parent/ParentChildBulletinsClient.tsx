@@ -44,13 +44,14 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
       <div className="flex items-center gap-3">
         <Link
           href="/parent/children"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-muted"
+          aria-label="Retour à la liste des enfants"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border transition-colors hover:bg-muted sm:h-9 sm:w-9"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
         </Link>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <FileText className="h-5 w-5 text-primary" />
+            <FileText aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="font-serif text-2xl tracking-tight">Bulletins</h1>
@@ -97,7 +98,7 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
                 </div>
                 {bulletin.mention && (
                   <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-amber-500" />
+                    <Award aria-hidden="true" className="h-4 w-4 text-amber-500" />
                     <span className="text-sm font-medium">{bulletin.mention}</span>
                   </div>
                 )}
@@ -105,14 +106,15 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
                   <Button
                     size="sm"
                     variant="outline"
-                    className="w-full"
                     onClick={() => handleDownload(bulletin.id)}
                     disabled={downloadingId === bulletin.id}
+                    aria-label={`Télécharger le bulletin du trimestre ${bulletin.trimester} en PDF`}
+                    className="h-11 w-full sm:h-9"
                   >
                     {downloadingId === bulletin.id ? (
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      <Loader2 aria-hidden="true" className="mr-1.5 h-4 w-4 animate-spin" />
                     ) : (
-                      <Download className="mr-1 h-3 w-3" />
+                      <Download aria-hidden="true" className="mr-1.5 h-4 w-4" />
                     )}
                     Télécharger PDF
                   </Button>
@@ -124,8 +126,12 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
       ) : (
         <Card className="border-0 shadow-sm ring-1 ring-border">
           <CardContent className="py-12 text-center">
-            <FileText className="mx-auto h-10 w-10 text-muted-foreground/50" />
+            <FileText aria-hidden="true" className="mx-auto h-10 w-10 text-muted-foreground/50" />
             <p className="mt-3 text-sm text-muted-foreground">Aucun bulletin disponible.</p>
+            <p className="mt-1 text-xs text-muted-foreground/80">
+              Les bulletins apparaîtront ici à la fin de chaque trimestre, une fois
+              publiés par l&apos;administration.
+            </p>
           </CardContent>
         </Card>
       )}
