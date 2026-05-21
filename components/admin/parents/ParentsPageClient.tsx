@@ -17,7 +17,7 @@ export function ParentsPageClient() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <HeartHandshake className="h-5 w-5 text-primary" />
+            <HeartHandshake aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0">
             <h1 className="font-serif text-xl tracking-tight sm:text-2xl">Parents</h1>

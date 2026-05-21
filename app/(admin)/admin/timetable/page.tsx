@@ -144,26 +144,27 @@ export default function TimetablePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Calendar className="h-5 w-5 text-primary" />
+            <Calendar aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Emploi du temps</h1>
             <p className="text-sm text-muted-foreground">Gérez les créneaux horaires par classe</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             onClick={handleExportPdf}
             disabled={!selectedClassId || exportingPdf}
+            className="h-11 sm:h-10"
           >
             {exportingPdf ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <FileDown className="mr-2 h-4 w-4" />
+              <FileDown aria-hidden="true" className="mr-2 h-4 w-4" />
             )}
             Exporter PDF
           </Button>
@@ -171,11 +172,12 @@ export default function TimetablePage() {
             variant="outline"
             onClick={handleGenerateClick}
             disabled={!selectedClassId || isGenerating}
+            className="h-11 sm:h-10"
           >
             {isGenerating ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Wand2 className="mr-2 h-4 w-4" />
+              <Wand2 aria-hidden="true" className="mr-2 h-4 w-4" />
             )}
             Générer automatiquement
           </Button>
@@ -192,7 +194,10 @@ export default function TimetablePage() {
             value={selectedClassId?.toString() ?? ""}
             onValueChange={(v) => setSelectedClassId(v ? Number(v) : null)}
           >
-            <SelectTrigger className="h-10 w-56">
+            <SelectTrigger
+              aria-label="Sélectionner une classe"
+              className="h-11 w-full sm:h-10 sm:w-56"
+            >
               <SelectValue placeholder="Sélectionner une classe" />
             </SelectTrigger>
             <SelectContent>
@@ -206,14 +211,32 @@ export default function TimetablePage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-9 w-9" onClick={prevWeek}>
-            <ChevronLeft className="h-4 w-4" />
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Semaine précédente"
+            className="h-11 w-11 sm:h-9 sm:w-9"
+            onClick={prevWeek}
+          >
+            <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={resetWeek} className="text-sm min-w-[120px]">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={resetWeek}
+            aria-label="Revenir à cette semaine"
+            className="h-11 text-sm min-w-[120px] sm:h-9"
+          >
             {weekOffset === 0 ? "Cette semaine" : `Semaine ${weekOffset > 0 ? "+" : ""}${weekOffset}`}
           </Button>
-          <Button variant="outline" size="icon" className="h-9 w-9" onClick={nextWeek}>
-            <ChevronRight className="h-4 w-4" />
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Semaine suivante"
+            className="h-11 w-11 sm:h-9 sm:w-9"
+            onClick={nextWeek}
+          >
+            <ChevronRight aria-hidden="true" className="h-4 w-4" />
           </Button>
         </div>
       </div>

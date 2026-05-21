@@ -19,7 +19,7 @@ export function SettingsPageClient() {
       {/* En-tête */}
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <Settings className="h-5 w-5 text-primary" />
+          <Settings aria-hidden="true" className="h-5 w-5 text-primary" />
         </div>
         <div>
           <h1 className="font-serif text-2xl tracking-tight">Paramètres</h1>
@@ -64,10 +64,11 @@ export function SettingsPageClient() {
       {/* Discoverability link to roles & permissions */}
       <Link
         href="/admin/roles"
+        aria-label="Accéder à la gestion des rôles et permissions"
         className="group flex items-center gap-4 rounded-xl border bg-card p-5 transition-colors hover:border-primary/30 hover:bg-primary/[0.02]"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Shield className="h-5 w-5 text-primary" />
+          <Shield aria-hidden="true" className="h-5 w-5 text-primary" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-medium">Rôles &amp; permissions</p>
@@ -76,7 +77,7 @@ export function SettingsPageClient() {
             évaluations, valider les paiements, gérer les inscriptions…).
           </p>
         </div>
-        <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        <ArrowRight aria-hidden="true" className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
       </Link>
     </div>
   )
