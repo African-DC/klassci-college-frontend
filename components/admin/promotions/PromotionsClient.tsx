@@ -120,7 +120,7 @@ export function PromotionsClient() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <ArrowUpFromLine className="h-5 w-5 text-primary" />
+            <ArrowUpFromLine aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0">
             <h1 className="font-serif text-xl tracking-tight sm:text-2xl">Promotions</h1>
@@ -130,8 +130,8 @@ export function PromotionsClient() {
           </div>
         </div>
         {step === "preview" && (
-          <Button variant="outline" onClick={reset} className="h-10 gap-2">
-            <RotateCcw className="h-4 w-4" />
+          <Button variant="outline" onClick={reset} className="h-11 gap-2 sm:h-10">
+            <RotateCcw aria-hidden="true" className="h-4 w-4" />
             Recommencer
           </Button>
         )}
