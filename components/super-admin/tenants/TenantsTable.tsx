@@ -34,7 +34,7 @@ export function TenantsTable() {
 
   if (isError) {
     return (
-      <div className="rounded-md border border-destructive/30 bg-destructive/5 p-6 text-sm">
+      <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-6 text-sm">
         <p className="font-medium text-destructive">Erreur de chargement</p>
         <p className="mt-1 text-muted-foreground">{(error as Error).message}</p>
         <Button onClick={() => refetch()} variant="outline" size="sm" className="mt-3">
@@ -104,10 +104,11 @@ export function TenantsTable() {
                         href={tenantUrl(tenant.slug)}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label={`Ouvrir ${tenant.slug} dans un nouvel onglet`}
                         className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
                       >
                         {tenantUrl(tenant.slug)}
-                        <ExternalLink className="h-3 w-3" />
+                        <ExternalLink aria-hidden="true" className="h-3 w-3" />
                       </a>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
