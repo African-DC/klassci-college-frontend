@@ -10,6 +10,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Fiches détail Élève, Enseignant, Personnel, Parent, Classe, Inscription : la flèche de retour passe à h-11 sur mobile (touch target Itel S661) au lieu de h-8/h-9 trop petit. Aria-label rendu explicite « Retour à la liste des inscriptions » au lieu de « Retour » seul *(admin)*.
+- Page Promotions admin : icône d'en-tête masquée aux lecteurs d'écran, bouton « Recommencer » passe à h-11 sur mobile *(admin)*.
+- Portail enseignant — fiche « Mes classes » : empty state plus chaleureux « Aucune classe assignée pour le moment » + invite à contacter l'administration. Bouton « Gérer les notes » passe à h-11 sur mobile avec aria-label explicite incluant la classe et la matière, pour mieux distinguer plusieurs cartes côte à côte *(enseignant)*.
+
 - Page Matières admin : la vue Kanban est désormais réservée au mode bureau (drag-drop impossible sous 320 px), la vue mobile bascule automatiquement en table. Le sélecteur Kanban/Table est masqué sur mobile pour éviter la confusion *(admin)*.
 - Page Emploi du temps admin : boutons navigation semaine et sélecteur de classe avec aria-label, touch targets h-11 mobile sur Itel S661, boutons d'export PDF et de génération en flex-wrap mobile *(admin)*.
 - Portail élève — empty state Notes plus rassurant qui explique « Vos résultats apparaîtront ici dès que vos enseignants saisiront les notes » au lieu d'une phrase opaque *(élève)*.

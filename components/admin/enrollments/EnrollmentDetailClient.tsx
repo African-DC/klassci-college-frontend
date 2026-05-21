@@ -83,9 +83,9 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
           <Link
             href="/admin/enrollments"
             aria-label="Retour à la liste des inscriptions"
-            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
+            className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition-colors hover:bg-muted sm:h-9 sm:w-9"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
           </Link>
 
           <Avatar className="h-20 w-20 text-2xl shrink-0">

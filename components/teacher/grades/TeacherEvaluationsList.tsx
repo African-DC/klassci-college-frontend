@@ -102,7 +102,7 @@ export function TeacherEvaluationsList() {
       <div className="rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-5">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <ClipboardList className="h-5 w-5 text-primary" />
+            <ClipboardList aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
@@ -219,7 +219,7 @@ export function TeacherEvaluationsList() {
               <TableRow>
                 <TableCell colSpan={8} className="h-32 text-center">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <BookOpen className="h-8 w-8 opacity-40" />
+                    <BookOpen aria-hidden="true" className="h-8 w-8 opacity-40" />
                     <p className="text-sm">
                       {evaluations.length === 0
                         ? "Aucune évaluation pour le moment. Demandez à un admin d'en créer une au besoin."

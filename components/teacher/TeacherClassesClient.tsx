@@ -35,10 +35,13 @@ export function TeacherClassesClient() {
           onRetry={() => refetch()}
         />
       ) : !classes || classes.length === 0 ? (
-        <div className="py-12 text-center">
-          <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+        <div className="rounded-lg border bg-muted/30 py-12 text-center">
+          <Users aria-hidden="true" className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
           <p className="text-sm text-muted-foreground">
-            Aucune classe assignée.
+            Aucune classe assignée pour le moment.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/80">
+            Contactez l&apos;administration pour vérifier votre planning.
           </p>
         </div>
       ) : (
@@ -72,14 +75,14 @@ function ClassCard({ cls }: { cls: TeacherClass }) {
         {/* Indicateurs */}
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-lg bg-muted/50 p-2 text-center">
-            <Users className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
-            <p className="text-sm font-bold">{cls.student_count}</p>
+            <Users aria-hidden="true" className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
+            <p className="text-sm font-bold tabular-nums">{cls.student_count}</p>
             <p className="text-[10px] text-muted-foreground">Élèves</p>
           </div>
           <div className="rounded-lg bg-muted/50 p-2 text-center">
-            <GraduationCap className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
+            <GraduationCap aria-hidden="true" className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
             <p
-              className={`text-sm font-bold ${
+              className={`text-sm font-bold tabular-nums ${
                 average === null
                   ? "text-muted-foreground"
                   : average >= 10
@@ -92,18 +95,20 @@ function ClassCard({ cls }: { cls: TeacherClass }) {
             <p className="text-[10px] text-muted-foreground">Moyenne</p>
           </div>
           <div className="rounded-lg bg-muted/50 p-2 text-center">
-            <ClipboardList className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
-            <p className="text-sm font-bold">{totalEvals}</p>
+            <ClipboardList aria-hidden="true" className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
+            <p className="text-sm font-bold tabular-nums">{totalEvals}</p>
             <p className="text-[10px] text-muted-foreground">Évals</p>
           </div>
         </div>
 
-        {/* Action */}
+        {/* Action — touch target h-11 mobile pour la fonction la plus utilisée
+            (la prof gère les notes en plein soleil sur Itel S661). */}
         <Link
           href={`/teacher/grades/${cls.class_id}` as Route}
-          className="flex items-center justify-center gap-1 rounded-md border px-3 py-2 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+          aria-label={`Gérer les notes de ${cls.class_name} en ${cls.subject_name}`}
+          className="flex h-11 items-center justify-center gap-1 rounded-md border px-3 text-sm font-medium text-primary transition-colors hover:bg-primary/5 sm:h-10 sm:text-xs"
         >
-          Gérer les notes <ChevronRight className="h-3 w-3" />
+          Gérer les notes <ChevronRight aria-hidden="true" className="h-3 w-3" />
         </Link>
       </CardContent>
     </Card>

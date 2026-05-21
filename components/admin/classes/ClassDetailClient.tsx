@@ -56,8 +56,14 @@ export function ClassDetailClient({ classId }: ClassDetailClientProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/admin/classes")}>
-            <ArrowLeft className="h-5 w-5" />
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Retour à la liste des classes"
+            className="h-11 w-11 sm:h-10 sm:w-10"
+            onClick={() => router.push("/admin/classes")}
+          >
+            <ArrowLeft aria-hidden="true" className="h-5 w-5" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold">{classData.name}</h1>
