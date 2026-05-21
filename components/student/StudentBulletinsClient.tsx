@@ -28,10 +28,13 @@ export function StudentBulletinsClient() {
       ) : isError ? (
         <DataError message="Impossible de charger les bulletins." onRetry={() => refetch()} />
       ) : !bulletins || bulletins.length === 0 ? (
-        <div className="py-12 text-center">
-          <FileText className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+        <div className="rounded-lg border bg-muted/30 py-12 text-center">
+          <FileText aria-hidden="true" className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
           <p className="text-sm text-muted-foreground">
             Aucun bulletin publié pour le moment.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/80">
+            Vos bulletins apparaîtront ici après publication par l&apos;administration.
           </p>
         </div>
       ) : (
@@ -53,6 +56,7 @@ function BulletinCard({ bulletin }: { bulletin: StudentBulletin }) {
     try {
       const blob = await studentPortalApi.downloadBulletin(bulletin.id)
       downloadBlob(blob, `bulletin-${bulletin.trimester}-${bulletin.academic_year}.pdf`)
+      toast.success("Bulletin téléchargé")
     } catch (err) {
       console.error("[StudentBulletins] Download failed:", err)
       toast.error(err instanceof Error ? err.message : "Impossible de télécharger le bulletin")
@@ -65,30 +69,30 @@ function BulletinCard({ bulletin }: { bulletin: StudentBulletin }) {
 
   return (
     <Card className="border-0 shadow-sm ring-1 ring-border">
-      <CardContent className="flex items-center justify-between p-4">
-        <div className="flex items-center gap-3">
+      <CardContent className="flex items-center justify-between gap-3 p-4">
+        <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <FileText className="h-5 w-5 text-primary" />
+            <FileText aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
-          <div>
-            <p className="text-sm font-semibold">{bulletin.trimester}</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">{bulletin.trimester}</p>
             <p className="text-xs text-muted-foreground">{bulletin.academic_year}</p>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
               {bulletin.general_average !== null && (
-                <span className={`text-xs font-medium ${bulletin.general_average >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                <span className={`text-xs font-medium tabular-nums ${bulletin.general_average >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
                   Moy. {bulletin.general_average.toFixed(2)}/20
                 </span>
               )}
               {bulletin.rank !== null && (
-                <span className="text-xs text-muted-foreground">
-                  Rang : {bulletin.rank}/{bulletin.total_students}
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  Rang {bulletin.rank}/{bulletin.total_students}
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {!isPublished && (
             <Badge variant="secondary" className="text-[10px]">Brouillon</Badge>
           )}
@@ -98,11 +102,13 @@ function BulletinCard({ bulletin }: { bulletin: StudentBulletin }) {
               variant="outline"
               onClick={handleDownload}
               disabled={isDownloading}
+              aria-label={`Télécharger le bulletin ${bulletin.trimester} en PDF`}
+              className="h-11 sm:h-9"
             >
               {isDownloading ? (
-                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                <Loader2 aria-hidden="true" className="mr-1 h-4 w-4 animate-spin sm:h-3 sm:w-3" />
               ) : (
-                <Download className="mr-1 h-3 w-3" />
+                <Download aria-hidden="true" className="mr-1 h-4 w-4 sm:h-3 sm:w-3" />
               )}
               PDF
             </Button>
