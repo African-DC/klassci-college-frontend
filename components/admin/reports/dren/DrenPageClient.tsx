@@ -25,6 +25,7 @@ const SuccessRateChart = dynamic(() => import("./SuccessRateChart").then(m => m.
   loading: () => <Skeleton className="h-64 w-full" />,
 })
 import { LevelStatsTable } from "./LevelStatsTable"
+import { ReportsNav } from "../ReportsNav"
 import { useDrenStats } from "@/lib/hooks/useDrenStats"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { drenApi } from "@/lib/api/dren"
@@ -57,10 +58,10 @@ export function DrenPageClient() {
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Building className="h-5 w-5 text-primary" />
+            <Building aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="font-serif text-2xl tracking-tight">Statistiques DREN</h1>
@@ -80,6 +81,8 @@ export function DrenPageClient() {
           </Button>
         </div>
       </div>
+
+      <ReportsNav current="dren" />
 
       {/* Filtre année */}
       <Select

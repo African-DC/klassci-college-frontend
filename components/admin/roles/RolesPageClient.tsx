@@ -11,18 +11,18 @@ export function RolesPageClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Shield className="h-5 w-5 text-primary" />
+            <Shield aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="font-serif text-2xl tracking-tight">Rôles & Permissions</h1>
+            <h1 className="font-serif text-2xl tracking-tight">Rôles &amp; Permissions</h1>
             <p className="text-sm text-muted-foreground">Gérez les rôles et leurs permissions d&apos;accès</p>
           </div>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button onClick={() => setCreateOpen(true)} className="h-11 gap-2 sm:h-10">
+          <Plus aria-hidden="true" className="h-4 w-4" />
           Nouveau rôle
         </Button>
       </div>
