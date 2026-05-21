@@ -10,6 +10,12 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Page Matières admin : la vue Kanban est désormais réservée au mode bureau (drag-drop impossible sous 320 px), la vue mobile bascule automatiquement en table. Le sélecteur Kanban/Table est masqué sur mobile pour éviter la confusion *(admin)*.
+- Page Emploi du temps admin : boutons navigation semaine et sélecteur de classe avec aria-label, touch targets h-11 mobile sur Itel S661, boutons d'export PDF et de génération en flex-wrap mobile *(admin)*.
+- Portail élève — empty state Notes plus rassurant qui explique « Vos résultats apparaîtront ici dès que vos enseignants saisiront les notes » au lieu d'une phrase opaque *(élève)*.
+- Portail élève — empty state Frais désambigué : message guide à contacter le secrétariat si aucun frais n'apparaît malgré inscription validée. Indicateurs « Payé » et « Restant » désormais neutralisés en gris quand aucun frais (au lieu de signal vert trompeur) *(élève)*.
+- Icônes décoratives des en-têtes admin enfin masquées aux lecteurs d'écran (aria-hidden) sur les pages Académique, Salles, Notifications, Élèves, Parents, Personnel, Niveaux, Frais, Inscriptions, Matières, Paramètres, Emploi du temps *(tous)*.
+
 - Portail élève — historique de présence sur mobile : la table 4 colonnes est remplacée par des cartes verticales avec jour en clair, heure d'arrivée, notes éventuelles et badge statut coloré. Les boutons de pagination passent à h-11 et reçoivent un aria-label *(élève)*.
 - Portail élève — bulletins : empty state plus rassurant qui explique « Vos bulletins apparaîtront ici après publication par l'administration » au lieu d'une phrase opaque. Bouton PDF passe à h-11 mobile + toast succès au téléchargement *(élève)*.
 - Portail parent — bulletins : flèche retour passe à h-11 mobile (touch target Itel S661), boutons PDF h-11 mobile avec aria-label explicite. Empty state explique quand les bulletins apparaîtront *(parent)*.

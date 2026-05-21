@@ -16,7 +16,7 @@ function StaffKpis() {
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardContent className="p-4 flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <Users className="h-4 w-4 text-primary" />
+            <Users aria-hidden="true" className="h-4 w-4 text-primary" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Personnel</p>

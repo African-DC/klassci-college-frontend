@@ -37,12 +37,17 @@ export function StudentFeesClient() {
       ) : isError ? (
         <DataError message="Impossible de charger les frais scolaires." onRetry={() => refetch()} />
       ) : !data ? (
-        <div className="py-12 text-center text-sm text-muted-foreground">
-          Aucune information de frais disponible.
+        <div className="rounded-lg border bg-muted/30 py-12 text-center">
+          <p className="text-sm text-muted-foreground">Aucune information de frais disponible.</p>
+          <p className="mt-1 text-xs text-muted-foreground/80">
+            Si votre inscription est validée et qu&apos;aucun frais n&apos;apparaît, contactez le secrétariat.
+          </p>
         </div>
       ) : (
         <>
-          {/* Résumé financier */}
+          {/* Résumé financier — Wave-style 3 KPIs amount-first.
+              Neutralisé en gris si total_expected=0 (signal vert "—FCFA payé"
+              quand rien à payer = faux signal — cf. rule not-enrolled-empty-state). */}
           <div className="grid grid-cols-3 gap-3">
             <SummaryCard
               label="Total"
@@ -51,12 +56,18 @@ export function StudentFeesClient() {
             <SummaryCard
               label="Payé"
               value={`${data.total_paid.toLocaleString("fr-FR")} FCFA`}
-              className="text-emerald-600 dark:text-emerald-400"
+              className={data.total_expected > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}
             />
             <SummaryCard
               label="Restant"
               value={`${data.total_remaining.toLocaleString("fr-FR")} FCFA`}
-              className={data.total_remaining === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-accent"}
+              className={
+                data.total_expected === 0
+                  ? "text-muted-foreground"
+                  : data.total_remaining === 0
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-accent"
+              }
             />
           </div>
 
