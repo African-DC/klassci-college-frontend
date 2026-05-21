@@ -11,11 +11,15 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ### Added
 
 - Page Enseignants : boutons d'action inline « Appeler », « WhatsApp » et « Email » à côté du téléphone permettent de joindre un enseignant en un tap, sans passer par sa fiche. Pattern Wave Mobile Money, touch targets adaptés au mobile *(admin)*.
+- Pages Parents et Personnel : mêmes boutons d'action inline « Appeler », « WhatsApp » et « Email » en plus de l'ancien lien téléphone. Le tap ouvre l'application native sans recharger la page *(admin)*.
+- Page Parents : pastille verte « Compte actif » sur les cartes parents qui ont déjà un compte connecté, pour distinguer en un coup d'œil ceux qui peuvent se connecter au portail *(admin)*.
 
 ### Changed
 
 - Page Paiements sur mobile : la liste des paiements adopte un affichage cartes verticales (montant prominent, statut coloré, méthode, date) au lieu d'une table illisible en scroll horizontal sur Itel S661. Le tap sur une carte ouvre l'aperçu du reçu *(admin)*.
 - Page Enseignants sur mobile : la liste adopte le même format compact que la page Élèves (avatar + nom + spécialité + chevron), au lieu de la table desktop scrollable. Tap = ouvre la fiche *(admin)*.
+- Pages Classes, Parents et Personnel sur mobile : même format compact avec avatar + nom + sous-titre + chevron, au lieu de la table desktop scrollable. Une pastille colorée d'occupation (vert / amber / rouge) s'affiche à droite de chaque classe pour signaler les classes pleines en un coup d'œil *(admin)*.
+- Page Classes : le sélecteur de vue Arbre / Table est désormais caché sur mobile (l'arbre n'était pas lisible sur petit écran). La vue cartes mobile est affichée automatiquement *(admin)*.
 - Formulaire de connexion plus accessible : boutons d'affichage du mot de passe annoncés aux lecteurs d'écran, messages d'alerte (session expirée, erreur d'identifiants) annoncés en temps réel, icônes décoratives masquées aux lecteurs d'écran *(tous)*.
 - Indicateurs du tableau de bord admin annoncés en temps réel aux lecteurs d'écran : chaque carte expose son intitulé + sa valeur (« Élèves inscrits : 42 ») au lieu d'un chiffre orphelin *(admin)*.
 
