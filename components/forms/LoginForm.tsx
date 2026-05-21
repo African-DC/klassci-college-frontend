@@ -107,9 +107,10 @@ export function LoginForm() {
         {sessionExpired && !error && (
           <div
             role="alert"
+            aria-live="polite"
             className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 dark:border-amber-900/40 dark:bg-amber-950/30"
           >
-            <Clock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <div className="space-y-0.5">
               <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
                 Session expirée
@@ -136,11 +137,13 @@ export function LoginForm() {
               <FormLabel className="text-sm font-medium">Adresse email</FormLabel>
               <FormControl>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Mail aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="email"
                     placeholder="nom@etablissement.cd"
                     autoComplete="email"
+                    inputMode="email"
+                    aria-required="true"
                     className="h-11 pl-10"
                     {...field}
                   />
@@ -156,33 +159,26 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel className="text-sm font-medium">Mot de passe</FormLabel>
-                <button
-                  type="button"
-                  className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-                  tabIndex={-1}
-                >
-                  Mot de passe oublié ?
-                </button>
-              </div>
+              <FormLabel className="text-sm font-medium">Mot de passe</FormLabel>
               <FormControl>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Lock aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="Entrez votre mot de passe"
                     autoComplete="current-password"
-                    className="h-11 pl-10 pr-10"
+                    aria-required="true"
+                    className="h-11 pl-10 pr-11"
                     {...field}
                   />
                   <button
                     type="button"
-                    tabIndex={-1}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    aria-pressed={showPassword}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
                     onClick={() => setShowPassword((v) => !v)}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
                   </button>
                 </div>
               </FormControl>
@@ -192,8 +188,12 @@ export function LoginForm() {
         />
 
         {error && (
-          <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
-            <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
+          <div
+            role="alert"
+            aria-live="polite"
+            className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3"
+          >
+            <AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0 text-destructive" />
             <p className="text-sm text-destructive">{error}</p>
           </div>
         )}
@@ -209,7 +209,7 @@ export function LoginForm() {
           ) : (
             <>
               Se connecter
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" />
             </>
           )}
         </Button>

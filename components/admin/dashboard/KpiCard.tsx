@@ -50,8 +50,20 @@ export function KpiCard({
 }: KpiCardProps) {
   const styles = variantStyles[variant]
 
+  // aria-label fournit un nom accessible complet à la card (titre + valeur)
+  // pour les lecteurs d'écran, car la valeur seule (ex: "42") sans contexte
+  // n'a pas de sens. role=group + aria-live=polite permet d'annoncer les
+  // mises a jour TanStack Query auto-revalidate sans interrompre l'utilisateur.
+  const valueText = typeof value === "string" || typeof value === "number" ? String(value) : ""
+  const accessibleLabel = valueText ? `${title} : ${valueText}` : title
   return (
-    <Card className={cn("relative overflow-hidden border-0 shadow-sm ring-1", styles.ring, className)}>
+    <Card
+      role="group"
+      aria-label={accessibleLabel}
+      aria-live="polite"
+      aria-atomic="true"
+      className={cn("relative overflow-hidden border-0 shadow-sm ring-1", styles.ring, className)}
+    >
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
@@ -72,7 +84,7 @@ export function KpiCard({
             )}
           </div>
           <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl", styles.bg)}>
-            <Icon className={cn("h-6 w-6", styles.icon)} />
+            <Icon aria-hidden="true" className={cn("h-6 w-6", styles.icon)} />
           </div>
         </div>
       </CardContent>
