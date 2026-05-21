@@ -121,7 +121,9 @@ export function PatsPanel() {
                     setTimeout(() => setCopied(false), 2000)
                   }}
                 >
-                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  {copied
+                    ? <Check aria-hidden="true" className="h-3 w-3" />
+                    : <Copy aria-hidden="true" className="h-3 w-3" />}
                 </Button>
               </div>
               <Button
@@ -174,9 +176,10 @@ export function PatsPanel() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setRevokeId(pat.id)}
-                      aria-label="Révoquer"
+                      aria-label={`Révoquer le token ${pat.name}`}
+                      className="h-11 w-11 sm:h-10 sm:w-10"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 aria-hidden="true" className="h-4 w-4" />
                     </Button>
                   )}
                 </div>

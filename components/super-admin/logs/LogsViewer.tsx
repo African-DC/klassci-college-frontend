@@ -63,12 +63,26 @@ export function LogsViewer() {
           />
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setPaused((p) => !p)}>
-            {paused ? <Play className="mr-1.5 h-3.5 w-3.5" /> : <Pause className="mr-1.5 h-3.5 w-3.5" />}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPaused((p) => !p)}
+            aria-pressed={paused}
+            aria-label={paused ? "Reprendre l'auto-rafraîchissement" : "Mettre en pause l'auto-rafraîchissement"}
+          >
+            {paused
+              ? <Play aria-hidden="true" className="mr-1.5 h-3.5 w-3.5" />
+              : <Pause aria-hidden="true" className="mr-1.5 h-3.5 w-3.5" />}
             {paused ? "Reprendre" : "Pause"}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            aria-label="Rafraîchir les logs manuellement"
+          >
+            <RefreshCw aria-hidden="true" className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
