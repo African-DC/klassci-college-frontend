@@ -4,10 +4,46 @@ import { useMemo, useState } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { ShieldCheck } from "lucide-react"
 import { useRoles, useDeleteRole } from "@/lib/hooks/useRoles"
-import type { Role } from "@/lib/contracts/role"
+import type { Role, Permission } from "@/lib/contracts/role"
 import { Badge } from "@/components/ui/badge"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { RoleEditModal } from "./RoleEditModal"
+
+// Labels FR pour les groupes de permissions (préfixe de slug avant ":")
+const PERMISSION_GROUP_LABELS: Record<string, string> = {
+  students: "Élèves",
+  teachers: "Enseignants",
+  staff: "Personnel",
+  parents: "Parents",
+  classes: "Classes",
+  rooms: "Salles",
+  subjects: "Matières",
+  enrollments: "Inscriptions",
+  payments: "Paiements",
+  fees: "Frais",
+  grades: "Notes",
+  attendance: "Présences",
+  reports: "Bulletins",
+  notifications: "Notifications",
+  settings: "Paramètres",
+  roles: "Rôles",
+  admin: "Administration",
+  council: "Conseil",
+  promotions: "Promotions",
+  timetable: "Emploi du temps",
+}
+
+function groupPermissions(permissions: Permission[] | undefined): { label: string; count: number }[] {
+  if (!permissions) return []
+  const groups = new Map<string, number>()
+  for (const p of permissions) {
+    const prefix = p.slug.split(":")[0]
+    groups.set(prefix, (groups.get(prefix) ?? 0) + 1)
+  }
+  return Array.from(groups.entries())
+    .map(([prefix, count]) => ({ label: PERMISSION_GROUP_LABELS[prefix] ?? prefix, count }))
+    .sort((a, b) => b.count - a.count)
+}
 
 export function RolesTable() {
   const [page, setPage] = useState(1)
@@ -20,7 +56,7 @@ export function RolesTable() {
       header: "Nom",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-primary" />
+          <ShieldCheck aria-hidden="true" className="h-4 w-4 text-primary" />
           <span className="font-medium">{row.original.name}</span>
           {row.original.is_system && (
             <Badge variant="outline" className="text-[10px]">Système</Badge>
@@ -41,11 +77,34 @@ export function RolesTable() {
       accessorKey: "permissions",
       header: "Permissions",
       cell: ({ row }) => {
+        const groups = groupPermissions(row.original.permissions)
         const count = row.original.permissions?.length ?? 0
+        const visible = groups.slice(0, 4)
+        const hiddenCount = groups.length - visible.length
+        if (count === 0) {
+          return <span className="text-xs text-muted-foreground">Aucune permission</span>
+        }
         return (
-          <Badge variant="secondary" className="font-mono">
-            {count}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {visible.map((g) => (
+              <Badge
+                key={g.label}
+                variant="secondary"
+                className="h-6 gap-1 px-2 text-[11px] font-normal"
+              >
+                {g.label}
+                <span className="font-mono tabular-nums text-muted-foreground">{g.count}</span>
+              </Badge>
+            ))}
+            {hiddenCount > 0 && (
+              <Badge variant="outline" className="h-6 px-2 text-[11px] font-normal">
+                +{hiddenCount} autres
+              </Badge>
+            )}
+            <span className="ml-1 text-[11px] text-muted-foreground tabular-nums">
+              ({count} au total)
+            </span>
+          </div>
         )
       },
     },

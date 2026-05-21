@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { CouncilDeliberationTable } from "./CouncilDeliberationTable"
+import { ReportsNav } from "../ReportsNav"
 import { useCouncilMinutes } from "@/lib/hooks/useCouncil"
 import type { CouncilMinutes } from "@/lib/contracts/council"
 import { useClasses } from "@/lib/hooks/useClasses"
@@ -78,7 +79,7 @@ export function CouncilPageClient() {
       {/* En-tête */}
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <Scale className="h-5 w-5 text-primary" />
+          <Scale aria-hidden="true" className="h-5 w-5 text-primary" />
         </div>
         <div>
           <h1 className="font-serif text-2xl tracking-tight">Conseil de classe</h1>
@@ -87,6 +88,8 @@ export function CouncilPageClient() {
           </p>
         </div>
       </div>
+
+      <ReportsNav current="council" />
 
       {/* Filtres */}
       <div className="flex flex-wrap items-center gap-3">
