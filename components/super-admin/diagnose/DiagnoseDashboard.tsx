@@ -29,7 +29,7 @@ export function DiagnoseDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Diagnose</h1>
           <p className="text-sm text-muted-foreground">
@@ -39,14 +39,23 @@ export function DiagnoseDashboard() {
             )}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-          <RefreshCw className={`mr-1.5 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          aria-label="Rafraîchir l'état de la plateforme"
+          className="h-11 sm:h-9"
+        >
+          <RefreshCw aria-hidden="true" className={`mr-1.5 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
           Rafraîchir
         </Button>
       </div>
 
       {data && (
         <div
+          role="status"
+          aria-live="polite"
           className={`rounded-md border p-4 ${
             data.overall === "ok"
               ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950"
