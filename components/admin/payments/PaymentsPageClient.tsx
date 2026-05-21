@@ -363,6 +363,9 @@ export function PaymentsPageClient() {
               </p>
             </div>
           ) : (
+            <>
+            {/* Desktop : table dense. Mobile : cards persona-first */}
+            <div className="hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
@@ -480,6 +483,63 @@ export function PaymentsPageClient() {
                 })}
               </TableBody>
             </Table>
+            </div>
+
+            {/* Mobile : cards verticales, Wave-style amount-first + status colored */}
+            <div className="space-y-2 p-3 md:hidden">
+              {payments.map((payment: Payment) => {
+                const statusCfg = STATUS_CONFIG[payment.status]
+                const MethodIcon = METHOD_ICON_MAP[payment.method]
+                const initials = payment.student_name
+                  ? payment.student_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
+                  : "?"
+                return (
+                  <button
+                    key={payment.id}
+                    type="button"
+                    onClick={() => handlePreviewReceipt(payment)}
+                    className="w-full rounded-lg border bg-card p-3 text-left transition-colors hover:bg-accent/40 active:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <div className="flex items-start gap-3">
+                      <StudentAvatar photoUrl={payment.student_photo_url} initials={initials} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="truncate text-sm font-medium leading-tight">
+                            {payment.student_name ?? `Paiement #${payment.id}`}
+                          </p>
+                          <p className="shrink-0 text-base font-semibold tabular-nums leading-tight">
+                            {Number(payment.amount).toLocaleString("fr-FR")}
+                            <span className="ml-0.5 text-[10px] font-normal text-muted-foreground">FCFA</span>
+                          </p>
+                        </div>
+                        <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <MethodIcon className="h-3 w-3" aria-hidden="true" />
+                            {METHOD_LABELS[payment.method]}
+                          </span>
+                          <span className="tabular-nums">
+                            {new Date(payment.created_at).toLocaleDateString("fr-FR", {
+                              day: "2-digit",
+                              month: "short",
+                            })}
+                          </span>
+                          <span className="ml-auto inline-flex items-center gap-1">
+                            <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} aria-hidden="true" />
+                            <span className="font-medium">{statusCfg.label}</span>
+                          </span>
+                        </div>
+                        {payment.fee_name && (
+                          <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                            {payment.fee_name}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+            </>
           )}
         </CardContent>
       </Card>

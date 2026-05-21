@@ -8,6 +8,17 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Added
+
+- Page Enseignants : boutons d'action inline « Appeler », « WhatsApp » et « Email » à côté du téléphone permettent de joindre un enseignant en un tap, sans passer par sa fiche. Pattern Wave Mobile Money, touch targets adaptés au mobile *(admin)*.
+
+### Changed
+
+- Page Paiements sur mobile : la liste des paiements adopte un affichage cartes verticales (montant prominent, statut coloré, méthode, date) au lieu d'une table illisible en scroll horizontal sur Itel S661. Le tap sur une carte ouvre l'aperçu du reçu *(admin)*.
+- Page Enseignants sur mobile : la liste adopte le même format compact que la page Élèves (avatar + nom + spécialité + chevron), au lieu de la table desktop scrollable. Tap = ouvre la fiche *(admin)*.
+- Formulaire de connexion plus accessible : boutons d'affichage du mot de passe annoncés aux lecteurs d'écran, messages d'alerte (session expirée, erreur d'identifiants) annoncés en temps réel, icônes décoratives masquées aux lecteurs d'écran *(tous)*.
+- Indicateurs du tableau de bord admin annoncés en temps réel aux lecteurs d'écran : chaque carte expose son intitulé + sa valeur (« Élèves inscrits : 42 ») au lieu d'un chiffre orphelin *(admin)*.
+
 ### Fixed
 
 - Page Paiements : indicateurs "Collecté", "Attendu" et "Taux de recouvrement" affichent désormais une couleur neutre (gris) quand la valeur vaut zéro, au lieu d'un vert success trompeur qui suggérait à tort « tout est payé » alors qu'il n'y a juste aucun paiement enregistré *(admin)*.
