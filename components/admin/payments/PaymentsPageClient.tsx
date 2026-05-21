@@ -580,6 +580,7 @@ const KPI_COLORS = {
   emerald: { bg: "bg-emerald-50", icon: "text-emerald-600 bg-emerald-100", ring: "ring-emerald-200/60" },
   amber: { bg: "bg-amber-50", icon: "text-amber-600 bg-amber-100", ring: "ring-amber-200/60" },
   rose: { bg: "bg-rose-50", icon: "text-rose-600 bg-rose-100", ring: "ring-rose-200/60" },
+  neutral: { bg: "bg-slate-50", icon: "text-slate-500 bg-slate-100", ring: "ring-slate-200/60" },
 }
 
 function KpiCard({
@@ -597,7 +598,11 @@ function KpiCard({
   isPercent?: boolean
   subtext?: string
 }) {
-  const c = KPI_COLORS[color]
+  // Empty-state guard : value=0 doit etre neutre, pas un faux signal vert/amber.
+  // Cf. rule `not-enrolled-empty-state.md` : "0 FCFA Collecté" en vert suggère
+  // a tort "tout paye !" alors qu'il n'y a juste aucun paiement enregistre.
+  const effectiveColor: keyof typeof KPI_COLORS = value === 0 ? "neutral" : color
+  const c = KPI_COLORS[effectiveColor]
   return (
     <Card className={`border-0 shadow-sm ring-1 ${c.ring} overflow-hidden`}>
       <CardContent className="p-4">
