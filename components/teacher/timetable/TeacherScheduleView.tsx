@@ -126,7 +126,48 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
   const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
 
   return (
-    <div className="rounded-lg border bg-card overflow-x-auto">
+    <>
+    {/* Mobile : liste jour-par-jour, plus lisible sur Itel S661 que la grille
+        7 colonnes 900px qui necessite un scroll horizontal invisible. */}
+    <div className="space-y-4 md:hidden">
+      {DAYS.map((day) => {
+        const daySlots = slotsByDay[day]
+        if (!daySlots || daySlots.length === 0) return null
+        return (
+          <div key={day}>
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              {DAY_LABELS[day]}
+            </h2>
+            <div className="space-y-2">
+              {daySlots.map((slot) => (
+                <div
+                  key={slot.id}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg border p-3",
+                    SLOT_COLORS[slot.subject_id % SLOT_COLORS.length],
+                  )}
+                >
+                  <div className="min-w-[58px] text-center">
+                    <p className="text-xs font-bold tabular-nums">{slot.start_time}</p>
+                    <p className="text-[10px] opacity-70 tabular-nums">{slot.end_time}</p>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{slot.subject_name}</p>
+                    <p className="truncate text-[11px] opacity-75">
+                      {slot.class_name}
+                      {slot.room && ` • ${slot.room}`}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+
+    {/* Desktop : grille hebdo absolue 7 colonnes (900px). */}
+    <div className="hidden rounded-lg border bg-card overflow-x-auto md:block">
       <div className="min-w-[900px]">
         {/* Header */}
         <div className="grid grid-cols-7 border-b bg-muted/30">
@@ -208,5 +249,6 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
         </div>
       </div>
     </div>
+    </>
   )
 }

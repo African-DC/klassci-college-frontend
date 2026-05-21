@@ -10,6 +10,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Portail parent — fiche « Mes enfants » : pour chaque enfant non encore inscrit cette année, un encart amber clair explique qu'un enfant est en attente d'inscription, et les boutons Notes/Frais/Emploi du temps sont désactivés avec une infobulle « Disponible après validation de l'inscription ». Les indicateurs Moyenne/Absences/Restant affichent « — » au lieu de chiffres trompeurs *(parent)*.
+- Portail parent — lien Documents officiels : nouveau bouton vers les certificats et attestations d'un enfant *(parent)*.
+- Portail enseignant — vue Emploi du temps adaptée mobile : liste jour par jour avec couleur par matière au lieu de la grille hebdomadaire 7 colonnes qui n'était pas lisible sur Itel S661 *(enseignant)*.
+- Portail enseignant — vue Présences adaptée mobile : cartes par élève avec taux prominent et compteurs présent/absent/retard/excusé en ligne secondaire, au lieu de la table 6 colonnes illisible sous 320 px *(enseignant)*.
+
 - Page Enseignants : boutons d'action inline « Appeler », « WhatsApp » et « Email » à côté du téléphone permettent de joindre un enseignant en un tap, sans passer par sa fiche. Pattern Wave Mobile Money, touch targets adaptés au mobile *(admin)*.
 - Pages Parents et Personnel : mêmes boutons d'action inline « Appeler », « WhatsApp » et « Email » en plus de l'ancien lien téléphone. Le tap ouvre l'application native sans recharger la page *(admin)*.
 - Page Parents : pastille verte « Compte actif » sur les cartes parents qui ont déjà un compte connecté, pour distinguer en un coup d'œil ceux qui peuvent se connecter au portail *(admin)*.
@@ -20,6 +25,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Enseignants sur mobile : la liste adopte le même format compact que la page Élèves (avatar + nom + spécialité + chevron), au lieu de la table desktop scrollable. Tap = ouvre la fiche *(admin)*.
 - Pages Classes, Parents et Personnel sur mobile : même format compact avec avatar + nom + sous-titre + chevron, au lieu de la table desktop scrollable. Une pastille colorée d'occupation (vert / amber / rouge) s'affiche à droite de chaque classe pour signaler les classes pleines en un coup d'œil *(admin)*.
 - Page Classes : le sélecteur de vue Arbre / Table est désormais caché sur mobile (l'arbre n'était pas lisible sur petit écran). La vue cartes mobile est affichée automatiquement *(admin)*.
+- Portail parent — page Documents officiels : si l'enfant n'est pas encore inscrit pour l'année courante, un encart amber prévient que les documents ne pourront pas être délivrés tant que l'inscription n'est pas validée, et les boutons de téléchargement affichent « Disponible après inscription » au lieu de générer une erreur 500 *(parent)*.
+- Portail parent — empty state Emploi du temps désambigué : distingue clairement « inscription en attente » (encart amber rassurant) de « pas encore publié par l'administration » (encart neutre) *(parent)*.
+- Portail élève — jours de la semaine de l'emploi du temps affichés en toutes lettres (Lundi, Mardi, …) au lieu d'abréviations à 3 lettres difficiles à lire en plein soleil *(élève)*.
+- Sélecteur de classe sur l'écran Présences enseignant : pleine largeur sur mobile et touch target h-11 (au lieu de h-10 largeur fixe 256 px) *(enseignant)*.
+
 - Formulaire de connexion plus accessible : boutons d'affichage du mot de passe annoncés aux lecteurs d'écran, messages d'alerte (session expirée, erreur d'identifiants) annoncés en temps réel, icônes décoratives masquées aux lecteurs d'écran *(tous)*.
 - Indicateurs du tableau de bord admin annoncés en temps réel aux lecteurs d'écran : chaque carte expose son intitulé + sa valeur (« Élèves inscrits : 42 ») au lieu d'un chiffre orphelin *(admin)*.
 
