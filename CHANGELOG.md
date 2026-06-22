@@ -58,6 +58,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Paiements : indicateurs "Collecté", "Attendu" et "Taux de recouvrement" affichent désormais une couleur neutre (gris) quand la valeur vaut zéro, au lieu d'un vert success trompeur qui suggérait à tort « tout est payé » alors qu'il n'y a juste aucun paiement enregistré *(admin)*.
 - Aperçu et confirmation des bulletins compatibles lecteur d'écran : les boîtes de dialogue décrivent désormais leur contenu aux lecteurs d'écran (« Aperçu détaillé du bulletin de notes avec moyenne, rang, mention et détail par matière », résumé de la génération de bulletins) *(tous)*.
 - Mode « Réviser » d'une évaluation : les notes déjà saisies sont désormais pré-remplies dans les champs au lieu de s'afficher vides. L'enseignant ou l'admin peut donc relire et modifier en place les notes existantes au lieu de tout ressaisir *(enseignant, admin)*.
+- Paramètres, onglet Identité visuelle : le bouton « Aperçu PDF (bordereau du jour) » génère et ouvre maintenant le document de démonstration au lieu d'afficher l'erreur « Not authenticated » *(admin)*.
 
 ### Changed
 
