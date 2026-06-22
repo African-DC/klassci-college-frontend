@@ -3,6 +3,14 @@ import type { Session } from "next-auth"
 import type { z } from "zod"
 
 function getBaseUrl(): string {
+  // Server-side (route handlers / RSC): call the backend directly so auth and
+  // server fetches never depend on the public host's DNS/TLS (no hairpin,
+  // no host-pinning). Falls back to the internal address.
+  if (typeof window === "undefined") {
+    return process.env.INTERNAL_API_URL ?? "http://127.0.0.1:8000"
+  }
+  // Client-side: same-origin relative base → works on whatever host the app is
+  // served from (https domain, raw IP in http, …). No mixed-content, no CORS.
   const url = process.env.NEXT_PUBLIC_API_URL
   if (!url) throw new Error("NEXT_PUBLIC_API_URL is not defined — check your .env file")
   return url

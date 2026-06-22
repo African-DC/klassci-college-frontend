@@ -8,6 +8,12 @@ import {
 import { apiFetch, safeValidate } from "./client"
 
 function getBaseUrl(): string {
+  // Server-side (NextAuth authorize() runs in Node): hit the backend directly
+  // via the internal address — avoids depending on the public host's DNS/TLS.
+  if (typeof window === "undefined") {
+    return process.env.INTERNAL_API_URL ?? "http://127.0.0.1:8000"
+  }
+  // Client-side (e.g. authApi.myPermissions): same-origin relative base.
   const url = process.env.NEXT_PUBLIC_API_URL
   if (!url) throw new Error("NEXT_PUBLIC_API_URL is not defined — check your .env file")
   return url
