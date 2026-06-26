@@ -39,6 +39,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Tableaux de bord redessinés sur les portails Administration, Enseignant, Élève et Parent : présentation plus claire et épurée, en-tête sobre sans dégradé, indicateurs lisibles d'un coup d'œil et une seule couleur d'accent. Plus lisible en plein soleil sur petit écran *(tous)*.
 - Page Paiements sur mobile : la liste des paiements adopte un affichage cartes verticales (montant prominent, statut coloré, méthode, date) au lieu d'une table illisible en scroll horizontal sur Itel S661. Le tap sur une carte ouvre l'aperçu du reçu *(admin)*.
 - Page Enseignants sur mobile : la liste adopte le même format compact que la page Élèves (avatar + nom + spécialité + chevron), au lieu de la table desktop scrollable. Tap = ouvre la fiche *(admin)*.
 - Pages Classes, Parents et Personnel sur mobile : même format compact avec avatar + nom + sous-titre + chevron, au lieu de la table desktop scrollable. Une pastille colorée d'occupation (vert / amber / rouge) s'affiche à droite de chaque classe pour signaler les classes pleines en un coup d'œil *(admin)*.

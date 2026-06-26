@@ -8,12 +8,13 @@ import {
   BookOpen,
   ClipboardList,
   ChevronRight,
-  AlertTriangle,
   CalendarX,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
+import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { AcademicYearBanner } from "@/components/shared/AcademicYearBanner"
@@ -52,95 +53,72 @@ export function TeacherDashboardClient() {
 
   return (
     <div className="space-y-6">
-      <DashboardHeader name={data.teacher_name} />
-
-      <AcademicYearBanner
-        currentYear={data.current_academic_year}
-        role="teacher"
-      />
-
-      {/* Action rapide — déclaration d'absence */}
-      <div className="flex justify-end">
+      <DashboardHeader name={data.teacher_name}>
         <Button
           variant="outline"
           size="sm"
           onClick={() => setSelfDeclareOpen(true)}
-          className="h-11 border-amber-200 bg-amber-50 font-medium text-amber-900 hover:bg-amber-100 sm:h-9"
+          className="h-11 sm:h-9"
         >
-          <CalendarX className="mr-1.5 h-4 w-4" />
+          <CalendarX className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Me déclarer absent
         </Button>
-      </div>
+      </DashboardHeader>
 
-      {/* Prochain cours */}
-      <Card className="border-primary/20 bg-primary/5">
+      <AcademicYearBanner currentYear={data.current_academic_year} role="teacher" />
+
+      {/* Prochain cours — seul accent primary (mise en valeur) */}
+      <Card className="border-primary/30 bg-primary/5 shadow-sm">
         <CardContent className="flex items-center gap-4 p-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <CalendarDays className="h-6 w-6" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <CalendarDays className="h-6 w-6" aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-primary uppercase tracking-wider">
+            <p className="text-xs font-medium uppercase tracking-wider text-primary">
               Prochain cours
             </p>
             {data.next_course ? (
               <div className="mt-1">
-                <p className="text-sm font-semibold">
-                  {data.next_course.subject_name}
-                </p>
+                <p className="text-sm font-semibold">{data.next_course.subject_name}</p>
                 <p className="text-xs text-muted-foreground">
                   {data.next_course.start_time} - {data.next_course.end_time}
-                  {" • "}{data.next_course.class_name}
-                  {data.next_course.room && ` • Salle ${data.next_course.room}`}
+                  {" · "}
+                  {data.next_course.class_name}
+                  {data.next_course.room && ` · Salle ${data.next_course.room}`}
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground mt-1">
-                Aucun cours programmé
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">Aucun cours programmé</p>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Card className="border-0 shadow-sm ring-1 ring-border">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-              <Users className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{data.total_students}</p>
-              <p className="text-[10px] text-muted-foreground">Élèves</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Link href="/teacher/classes">
-          <Card className="border-0 shadow-sm ring-1 ring-border hover:ring-primary/50 transition-colors">
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <BookOpen className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="text-2xl font-bold">{data.total_classes}</p>
-                <p className="text-[10px] text-muted-foreground">Classes</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </CardContent>
-          </Card>
+      {/* KPIs — Card neutres shadcn */}
+      <div className="grid grid-cols-2 gap-3">
+        <StatCard icon={Users} value={data.total_students} label="Élèves" />
+        <Link href="/teacher/classes" className="group">
+          <StatCard
+            icon={BookOpen}
+            value={data.total_classes}
+            label="Classes"
+            className="transition-colors group-hover:border-primary/40"
+            trailing={<ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />}
+          />
         </Link>
       </div>
 
       {/* Évaluations à venir */}
-      <div>
-        <h2 className="text-sm font-semibold mb-3">Évaluations à venir</h2>
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold">Évaluations à venir</h2>
         {data.upcoming_evaluations.length === 0 ? (
-          <Card className="border-0 shadow-sm ring-1 ring-border">
+          <Card className="shadow-sm">
             <CardContent className="py-8 text-center">
-              <ClipboardList className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">
-                Aucune évaluation programmée.
-              </p>
+              <ClipboardList
+                className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50"
+                aria-hidden="true"
+              />
+              <p className="text-sm text-muted-foreground">Aucune évaluation programmée.</p>
             </CardContent>
           </Card>
         ) : (
@@ -150,7 +128,7 @@ export function TeacherDashboardClient() {
             ))}
           </div>
         )}
-      </div>
+      </section>
 
       <SelfDeclareAbsenceModal
         open={selfDeclareOpen}
@@ -160,16 +138,55 @@ export function TeacherDashboardClient() {
   )
 }
 
-function DashboardHeader({ name }: { name: string | null }) {
+function DashboardHeader({
+  name,
+  children,
+}: {
+  name: string | null
+  children?: React.ReactNode
+}) {
   return (
-    <div>
-      <h1 className="font-serif text-xl tracking-tight">
-        {name ? `Bonjour, ${name.split(" ")[0]}` : "Espace Enseignant"}
-      </h1>
-      <p className="text-sm text-muted-foreground">
-        Votre journée en un coup d&apos;œil
-      </p>
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h1 className="font-serif text-2xl tracking-tight">
+            {name ? `Bonjour, ${name.split(" ")[0]}` : "Espace Enseignant"}
+          </h1>
+          <p className="text-sm text-muted-foreground">Votre journée en un coup d&apos;œil</p>
+        </div>
+        {children}
+      </div>
+      <Separator />
     </div>
+  )
+}
+
+function StatCard({
+  icon: Icon,
+  value,
+  label,
+  className,
+  trailing,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  value: React.ReactNode
+  label: string
+  className?: string
+  trailing?: React.ReactNode
+}) {
+  return (
+    <Card className={`shadow-sm ${className ?? ""}`}>
+      <CardContent className="flex items-center gap-3 p-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+          <Icon className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div className="flex-1">
+          <p className="text-2xl font-bold tabular-nums">{value}</p>
+          <p className="text-xs text-muted-foreground">{label}</p>
+        </div>
+        {trailing}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -181,27 +198,33 @@ function EvaluationCard({ evaluation }: { evaluation: TeacherUpcomingEval }) {
   const needsGrading = evaluation.graded_students < evaluation.total_students
 
   return (
-    <Card className="border-0 shadow-sm ring-1 ring-border">
-      <CardContent className="p-3">
+    <Card className="shadow-sm">
+      <CardContent className="space-y-2 p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-sm font-semibold truncate">{evaluation.title}</p>
+            <p className="truncate text-sm font-semibold">{evaluation.title}</p>
             <p className="text-xs text-muted-foreground">
-              {evaluation.class_name} • {evaluation.subject_name}
+              {evaluation.class_name} · {evaluation.subject_name}
             </p>
             <p className="text-xs text-muted-foreground">{evaluation.date}</p>
           </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            <Badge variant="secondary" className="text-[10px]">
-              {evaluation.type}
-            </Badge>
-            {needsGrading && (
-              <span className="flex items-center gap-1 text-[10px] text-accent">
-                <AlertTriangle className="h-3 w-3" />
-                {gradedPercent}% noté
-              </span>
-            )}
-          </div>
+          <Badge variant="secondary" className="shrink-0 text-[10px] capitalize">
+            {evaluation.type}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <Progress
+            value={gradedPercent}
+            className="h-1.5"
+            aria-label={`${gradedPercent}% des copies notées`}
+          />
+          <span
+            className={`shrink-0 text-[10px] font-medium tabular-nums ${
+              needsGrading ? "text-accent" : "text-muted-foreground"
+            }`}
+          >
+            {gradedPercent}% noté
+          </span>
         </div>
       </CardContent>
     </Card>
@@ -216,7 +239,7 @@ function DashboardSkeleton() {
         <Skeleton className="h-4 w-64" />
       </div>
       <Skeleton className="h-20 rounded-xl" />
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3">
         <Skeleton className="h-20 rounded-lg" />
         <Skeleton className="h-20 rounded-lg" />
       </div>

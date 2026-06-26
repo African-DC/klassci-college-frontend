@@ -33,6 +33,9 @@ export function DashboardKpis() {
     )
   }
 
+  const pendingPayments = data?.pending_payments ?? 0
+  const alerts = data?.alerts ?? 0
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <KpiCard
@@ -41,42 +44,42 @@ export function DashboardKpis() {
         description={
           <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5">
             <span className="inline-flex items-center gap-1">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
               {data?.enrollment_validated ?? 0} validées
             </span>
             <span className="inline-flex items-center gap-1">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500" />
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
               {data?.enrollment_prospect ?? 0} prospects
             </span>
             <span className="inline-flex items-center gap-1">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
               {data?.enrollment_pending ?? 0} en attente
             </span>
           </span>
         }
         icon={GraduationCap}
-        variant="blue"
+        tone="primary"
       />
       <KpiCard
         title="Paiements en attente"
-        value={data?.pending_payments ?? 0}
+        value={pendingPayments}
         description="À traiter"
         icon={Wallet}
-        variant="orange"
+        tone={pendingPayments > 0 ? "accent" : "default"}
       />
       <KpiCard
         title="Cours du jour"
         value={data?.courses_today ?? 0}
         description="Programmés aujourd'hui"
         icon={CalendarDays}
-        variant="emerald"
+        tone="default"
       />
       <KpiCard
         title="Alertes"
-        value={data?.alerts ?? 0}
+        value={alerts}
         description="Évaluations sans notes"
         icon={AlertTriangle}
-        variant="rose"
+        tone={alerts > 0 ? "destructive" : "default"}
       />
     </div>
   )

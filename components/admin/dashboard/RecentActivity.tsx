@@ -16,41 +16,20 @@ import { cn } from "@/lib/utils"
 import { useDashboardActivity } from "@/lib/hooks/useDashboard"
 import type { ActivityItem } from "@/lib/contracts/dashboard"
 
-const entityConfig: Record<string, { icon: LucideIcon; variant: string }> = {
-  payment: {
-    icon: CreditCard,
-    variant: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  },
-  enrollment: {
-    icon: GraduationCap,
-    variant: "bg-primary/10 text-primary",
-  },
-  student: {
-    icon: User,
-    variant: "bg-primary/10 text-primary",
-  },
-  evaluation: {
-    icon: BookOpen,
-    variant: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  },
-  grade: {
-    icon: BookOpen,
-    variant: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  },
-  attendance: {
-    icon: ClipboardCheck,
-    variant: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  },
-  user: {
-    icon: Shield,
-    variant: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  },
+// Icône par type d'entité, mais chip monochrome uniforme (règle "1 accent
+// + monochrome") : la lisibilité vient de l'icône et du texte, pas de 6
+// teintes différentes. Le libellé porte le sens.
+const entityIcons: Record<string, LucideIcon> = {
+  payment: CreditCard,
+  enrollment: GraduationCap,
+  student: User,
+  evaluation: BookOpen,
+  grade: BookOpen,
+  attendance: ClipboardCheck,
+  user: Shield,
 }
 
-const defaultConfig = {
-  icon: Activity,
-  variant: "bg-muted text-muted-foreground",
-}
+const CHIP_CLASS = "bg-muted text-muted-foreground"
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -65,15 +44,14 @@ function timeAgo(dateStr: string): string {
 }
 
 function ActivityRow({ item }: { item: ActivityItem }) {
-  const config = entityConfig[item.entity_type] ?? defaultConfig
-  const Icon = config.icon
+  const Icon = entityIcons[item.entity_type] ?? Activity
 
   return (
     <div className="flex items-start gap-3">
       <div
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-          config.variant
+          CHIP_CLASS
         )}
       >
         <Icon className="h-4 w-4" />
@@ -99,9 +77,9 @@ export function RecentActivity() {
   const items = data?.items ?? []
 
   return (
-    <Card className="border-0 shadow-sm ring-1 ring-border">
+    <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle className="text-base font-medium">Activité récente</CardTitle>
+        <CardTitle className="text-base font-semibold">Activité récente</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
