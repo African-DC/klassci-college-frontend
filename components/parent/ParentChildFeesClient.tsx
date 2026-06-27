@@ -43,11 +43,12 @@ export function ParentChildFeesClient({ childId }: ParentChildFeesClientProps) {
         </Link>
         <div>
           <h1 className="font-serif text-xl tracking-tight">
-            {data ? `Frais — ${data.child_name}` : "Frais scolaires"}
+            {data?.child_name ? `Frais — ${data.child_name}` : "Frais scolaires"}
           </h1>
-          {data && (
+          {data?.class_name && (
             <p className="text-sm text-muted-foreground">
-              {data.class_name} • {data.academic_year}
+              {data.class_name}
+              {data.academic_year ? ` • ${data.academic_year}` : ""}
             </p>
           )}
         </div>

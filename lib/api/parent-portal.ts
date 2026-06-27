@@ -1,14 +1,33 @@
+import { z } from "zod"
 import { apiFetch, apiFetchBlob, safeValidate } from "./client"
+import { mapFeeStatus } from "./student-portal"
 import {
   ParentDashboardSchema,
   ParentChildGradesResponseSchema,
-  ParentChildFeesResponseSchema,
   ParentChildBulletinsResponseSchema,
   type ParentDashboard,
   type ParentChildGradesResponse,
   type ParentChildFeesResponse,
   type ParentChildBulletinsResponse,
 } from "@/lib/contracts/parent-portal"
+
+// Le BE /parent/children/{id}/fees renvoie {student_id, enrollment_id,
+// total_due, total_paid, fees:[{id, category_name, amount, status, payments}]}.
+// On valide cette forme puis on la normalise vers le contrat UI.
+const ParentFeeRawSchema = z.object({
+  id: z.number(),
+  category_name: z.string(),
+  amount: z.coerce.number(),
+  status: z.string(),
+  payments: z.array(z.object({ amount: z.coerce.number() }).passthrough()).default([]),
+})
+const ParentChildFeesRawSchema = z.object({
+  student_id: z.number(),
+  enrollment_id: z.number().nullable().optional(),
+  total_due: z.coerce.number(),
+  total_paid: z.coerce.number(),
+  fees: z.array(ParentFeeRawSchema).default([]),
+})
 
 export interface ChildTimetableSlot {
   id: number
@@ -48,10 +67,30 @@ export const parentPortalApi = {
     return safeValidate(ParentChildGradesResponseSchema, unwrapResponse(res), `GET /parent/children/${childId}/grades`)
   },
 
-  // Frais d'un enfant
+  // Frais d'un enfant — normalise la réponse BE vers le contrat UI.
   getChildFees: async (childId: number): Promise<ParentChildFeesResponse> => {
     const res = await apiFetch<unknown>(`/parent/children/${childId}/fees`)
-    return safeValidate(ParentChildFeesResponseSchema, unwrapResponse(res), `GET /parent/children/${childId}/fees`)
+    const raw = safeValidate(ParentChildFeesRawSchema, unwrapResponse(res), `GET /parent/children/${childId}/fees`)
+    return {
+      child_name: null,
+      class_name: null,
+      academic_year: null,
+      total_expected: raw.total_due,
+      total_paid: raw.total_paid,
+      total_remaining: Math.max(0, raw.total_due - raw.total_paid),
+      fees: (raw.fees ?? []).map((f) => {
+        const paid = (f.payments ?? []).reduce((sum, p) => sum + p.amount, 0)
+        return {
+          id: f.id,
+          category_name: f.category_name,
+          total_amount: f.amount,
+          paid_amount: paid,
+          remaining: Math.max(0, f.amount - paid),
+          status: mapFeeStatus(f.status),
+          last_payment_date: null,
+        }
+      }),
+    }
   },
 
   // Bulletins d'un enfant

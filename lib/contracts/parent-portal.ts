@@ -63,9 +63,11 @@ export const ParentChildFeeItemSchema = z.object({
 })
 
 export const ParentChildFeesResponseSchema = z.object({
-  child_name: z.string(),
-  class_name: z.string(),
-  academic_year: z.string(),
+  // Le BE ne renvoie pas le nom/classe/année de l'enfant sur cet endpoint :
+  // champs optionnels, l'en-tête dégrade proprement si absents.
+  child_name: z.string().nullish(),
+  class_name: z.string().nullish(),
+  academic_year: z.string().nullish(),
   total_expected: z.coerce.number(),
   total_paid: z.coerce.number(),
   total_remaining: z.coerce.number(),
