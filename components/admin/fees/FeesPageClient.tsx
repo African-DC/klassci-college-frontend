@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { PageHero, heroGlassBtn, heroPrimaryBtn } from "@/components/shared/PageHero"
 import { FilterChips } from "@/components/shared/list/FilterChips"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -29,19 +29,19 @@ import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { useLevels } from "@/lib/hooks/useLevels"
 import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
 
-// Couleurs de marque KLASSCI, compatibles thème clair/sombre (tokens) :
-// obligatoire = bleu (primary), optionnel = orange (accent).
+// Monochrome KLASSCI : obligatoire = teinte bleue, optionnel = neutre.
+// (La couleur ne différencie pas des catégories — cf. rule premium-redesign.)
 const MANDATORY_COLOR = {
-  bg: "bg-primary/5",
+  bg: "bg-primary/[0.06]",
   border: "border-primary/20",
   icon: "bg-primary/10 text-primary",
-  badge: "border-primary/30 bg-primary/10 text-primary",
+  badge: "border-primary/25 bg-primary/10 text-primary",
 }
 const OPTIONAL_COLOR = {
-  bg: "bg-accent/5",
-  border: "border-accent/25",
-  icon: "bg-accent/10 text-accent",
-  badge: "border-accent/30 bg-accent/10 text-accent",
+  bg: "bg-muted/40",
+  border: "border-border",
+  icon: "bg-muted text-muted-foreground",
+  badge: "border-border bg-muted text-muted-foreground",
 }
 
 export function FeesPageClient() {
@@ -103,13 +103,6 @@ export function FeesPageClient() {
   const totalVariants = variants?.length ?? 0
   const totalConfigured = variants?.reduce((sum, v) => sum + v.amount, 0) ?? 0
 
-  const kpis: KpiItem[] = [
-    { label: "Obligatoires", value: totalMandatory, icon: Shield, tone: "primary" },
-    { label: "Optionnels", value: totalOptional, icon: CircleDot, tone: "default" },
-    { label: "Variantes", value: totalVariants, icon: Layers, tone: "default" },
-    { label: "Montant configuré", value: `${totalConfigured.toLocaleString("fr-FR")} F`, icon: Coins, tone: "accent" },
-  ]
-
   // Filtre obligatoire/optionnel sur les catégories affichées.
   const displayedCategories = (categories ?? []).filter((c) => {
     if (categoryFilter === "mandatory") return c.is_mandatory
@@ -129,33 +122,35 @@ export function FeesPageClient() {
 
   return (
     <div className="space-y-6">
-      {/* Header premium */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Wallet aria-hidden="true" className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="font-serif text-2xl tracking-tight">Frais scolaires</h1>
-            <p className="text-sm text-muted-foreground">
-              Configuration des catégories de frais et montants par niveau
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setVariantModalOpen(true)} disabled={!currentYearId}>
-            <Layers className="mr-2 h-4 w-4" />
-            Nouvelle variante
-          </Button>
-          <Button onClick={() => setCategoryModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nouvelle catégorie
-          </Button>
-        </div>
-      </div>
-
-      {/* KPI summary */}
-      <KpiStrip items={kpis} />
+      {/* Hero signature KLASSCI (dégradé bleu + KPIs intégrés) */}
+      <PageHero
+        icon={Wallet}
+        title="Frais scolaires"
+        subtitle="Configuration des catégories de frais et montants par niveau"
+        actions={
+          <>
+            <button
+              type="button"
+              className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+              onClick={() => setVariantModalOpen(true)}
+              disabled={!currentYearId}
+            >
+              <Layers className="h-4 w-4" />
+              Nouvelle variante
+            </button>
+            <button type="button" className={heroPrimaryBtn} onClick={() => setCategoryModalOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Nouvelle catégorie
+            </button>
+          </>
+        }
+        kpis={[
+          { label: "Obligatoires", value: totalMandatory, icon: Shield },
+          { label: "Optionnels", value: totalOptional, icon: CircleDot },
+          { label: "Variantes", value: totalVariants, icon: Layers },
+          { label: "Montant configuré", value: `${totalConfigured.toLocaleString("fr-FR")} F`, icon: Coins },
+        ]}
+      />
 
       {/* Categories as premium cards */}
       <div>
