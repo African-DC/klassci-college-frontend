@@ -26,6 +26,30 @@ function getDefaultRedirect(role: string | undefined): string {
   return portal ? `/${portal}/dashboard` : "/admin/dashboard"
 }
 
+// Behind a reverse proxy, req.nextUrl defaults to Next's internal origin
+// (localhost:3000), so NextResponse.redirect(req.nextUrl.clone()) leaks
+// localhost into the Location. We rebuild the absolute URL from the forwarded
+// headers (Caddy sets X-Forwarded-Host / X-Forwarded-Proto) so the 307 points
+// back at the host the user actually used — works on the https domain and on
+// the raw IP in http alike. (A relative Location is not an option: Next's
+// middleware runtime parses Location as an absolute URL and throws on a path.)
+function hostRedirect(req: NextRequest, pathname: string, search = ""): NextResponse {
+  const url = req.nextUrl.clone()
+  url.pathname = pathname
+  url.search = search
+  const fwdHost = req.headers.get("x-forwarded-host") ?? req.headers.get("host")
+  const fwdProto = req.headers.get("x-forwarded-proto")
+  if (fwdHost) {
+    // Split host[:port] explicitly — setting url.host with a port-less value
+    // leaves the internal :3000 port in place, producing an unreachable URL.
+    const [hostname, port] = fwdHost.split(":")
+    url.hostname = hostname
+    url.port = port ?? ""
+  }
+  if (fwdProto) url.protocol = `${fwdProto}:`
+  return NextResponse.redirect(url)
+}
+
 // NextAuth wrapper qui gère les redirections d'auth + portails.
 const authMiddleware = auth((req) => {
   const { pathname } = req.nextUrl
@@ -38,10 +62,7 @@ const authMiddleware = auth((req) => {
   const isLoggedIn = !!session?.user?.id
 
   if (session?.error === "RefreshTokenError" && pathname !== "/login") {
-    const url = req.nextUrl.clone()
-    url.pathname = "/login"
-    url.searchParams.delete("callbackUrl")
-    return NextResponse.redirect(url)
+    return hostRedirect(req, "/login")
   }
 
   const portalFromPath = getPortalFromPath(pathname)
@@ -49,10 +70,7 @@ const authMiddleware = auth((req) => {
 
   if (isProtectedRoute && !isLoggedIn) {
     if (process.env.NODE_ENV === "production") {
-      const url = req.nextUrl.clone()
-      url.pathname = "/login"
-      url.searchParams.set("callbackUrl", pathname)
-      return NextResponse.redirect(url)
+      return hostRedirect(req, "/login", `?callbackUrl=${encodeURIComponent(pathname)}`)
     }
     return NextResponse.next()
   }
@@ -64,18 +82,14 @@ const authMiddleware = auth((req) => {
   if (pathname === "/login" && isLoggedIn && !session.error) {
     const dest = getDefaultRedirect(session.user.role)
     if (dest !== "/login") {
-      const url = req.nextUrl.clone()
-      url.pathname = dest
-      return NextResponse.redirect(url)
+      return hostRedirect(req, dest)
     }
   }
 
   if (isProtectedRoute && isLoggedIn && session.user.role) {
     const expectedPortal = ROLE_TO_PORTAL[session.user.role]
     if (expectedPortal && portalFromPath !== expectedPortal) {
-      const url = req.nextUrl.clone()
-      url.pathname = getDefaultRedirect(session.user.role)
-      return NextResponse.redirect(url)
+      return hostRedirect(req, getDefaultRedirect(session.user.role))
     }
   }
 

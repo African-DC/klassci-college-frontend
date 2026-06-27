@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { settingsApi } from "@/lib/api/settings"
+import { apiFetchBlob } from "@/lib/api/client"
 import type { SchoolSettings } from "@/lib/contracts/settings"
 import { ColorField } from "./pdf-identity/ColorField"
 import { LivePreview } from "./pdf-identity/LivePreview"
@@ -35,6 +36,32 @@ function isValidHex(v: string): boolean {
 
 export function PdfIdentitySection({ settings, isLoading }: PdfIdentitySectionProps) {
   const queryClient = useQueryClient()
+  const [previewing, setPreviewing] = useState(false)
+
+  // Authenticated PDF preview: fetch the sample PDF as a blob (with the Bearer
+  // token, via apiFetchBlob) then open the object URL. A direct window.open of
+  // the BE URL hits the API without auth → 401 "Not authenticated".
+  async function handlePdfPreview() {
+    // Open the tab synchronously inside the click gesture so the popup blocker
+    // doesn't kill it, then point it at the blob once the fetch resolves.
+    const win = window.open("", "_blank")
+    setPreviewing(true)
+    try {
+      const date = new Date().toISOString().slice(0, 10)
+      const blob = await apiFetchBlob(`/payments/daily-cash-book?date=${date}`)
+      const url = URL.createObjectURL(blob)
+      if (win) win.location.href = url
+      else window.open(url, "_blank")
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (e) {
+      win?.close()
+      toast.error("Aperçu PDF indisponible", {
+        description: e instanceof Error ? e.message : "Erreur lors de la génération du PDF",
+      })
+    } finally {
+      setPreviewing(false)
+    }
+  }
 
   const initial: IdentityFormValues = useMemo(
     () => ({
@@ -247,17 +274,11 @@ export function PdfIdentitySection({ settings, isLoading }: PdfIdentitySectionPr
               variant="outline"
               size="sm"
               className="h-11 sm:h-10"
-              onClick={() => {
-                window.open(
-                  `${process.env.NEXT_PUBLIC_API_URL}/payments/daily-cash-book?date=${new Date()
-                    .toISOString()
-                    .slice(0, 10)}`,
-                  "_blank",
-                )
-              }}
+              disabled={previewing}
+              onClick={handlePdfPreview}
             >
               <Eye className="h-4 w-4 mr-1.5" />
-              Aperçu PDF (bordereau du jour)
+              {previewing ? "Génération…" : "Aperçu PDF (bordereau du jour)"}
             </Button>
             {!primaryValid && (
               <span className="text-xs text-rose-600">Couleur principale invalide</span>
