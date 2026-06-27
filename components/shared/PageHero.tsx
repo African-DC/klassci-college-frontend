@@ -29,7 +29,9 @@ export function PageHero({ icon: Icon, title, subtitle, actions, kpis, className
   return (
     <section
       className={cn(
-        "rounded-2xl bg-gradient-to-br from-[#0a3d8f] via-[#0453cb] to-[#3b7ddb] p-5 text-white shadow-sm sm:p-6",
+        // Dégradé bi-marque KLASSCI : bleu (titre, à gauche) -> orange du logo
+        // (à droite). Les deux couleurs de la marque dans le fond du hero.
+        "rounded-2xl bg-[linear-gradient(135deg,#0a3d8f_0%,#0453cb_42%,#2a69cb_56%,#f5821f_92%)] p-5 text-white shadow-sm sm:p-6",
         className,
       )}
     >
@@ -55,7 +57,7 @@ export function PageHero({ icon: Icon, title, subtitle, actions, kpis, className
             return (
               <div
                 key={i}
-                className="rounded-xl border border-white/15 bg-white/10 px-3 py-2.5"
+                className="rounded-xl border border-white/20 bg-white/15 px-3 py-2.5 backdrop-blur-sm"
                 role="group"
                 aria-label={typeof k.value === "string" || typeof k.value === "number" ? `${k.label} : ${k.value}` : k.label}
               >
@@ -94,7 +96,7 @@ export function SectionTitle({
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
       {Icon && (
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[#3b7ddb] text-white shadow-sm">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#f5821f] to-[#f9a826] text-white shadow-sm">
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
       )}
