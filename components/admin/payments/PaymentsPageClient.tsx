@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
+import { PageHero, heroAccentBtn, type HeroKpi } from "@/components/shared/PageHero"
 import {
   Dialog,
   DialogContent,
@@ -98,7 +99,7 @@ export function PaymentsPageClient() {
   }
 
   const { data, isLoading } = usePayments(params)
-  const { data: summary, isLoading: loadingSummary } = useFinancialSummary()
+  const { data: summary } = useFinancialSummary()
   const { mutate: validatePayment, isPending: validating } = useValidatePayment()
   const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
   const { data: feeCategories } = useFeeCategories()
@@ -169,65 +170,51 @@ export function PaymentsPageClient() {
     setSearch("")
   }
 
+  const heroKpis: HeroKpi[] | undefined = summary
+    ? [
+        {
+          label: "Attendu",
+          value: `${summary.total_expected.toLocaleString("fr-FR")} F`,
+          icon: Banknote,
+        },
+        {
+          label: "Collecté",
+          value: `${summary.total_paid.toLocaleString("fr-FR")} F`,
+          icon: Wallet,
+          hint: `${summary.payment_count} paiement(s)`,
+        },
+        {
+          label: "En attente",
+          value: `${summary.total_pending.toLocaleString("fr-FR")} F`,
+          icon: AlertCircle,
+        },
+        {
+          label: "Taux de recouvrement",
+          value: `${summary.completion_rate.toFixed(1)}%`,
+          icon: TrendingUp,
+          hint:
+            summary.total_cancelled > 0
+              ? `${summary.total_cancelled.toLocaleString("fr-FR")} FCFA annulés`
+              : undefined,
+        },
+      ]
+    : undefined
+
   return (
     <div className="space-y-6">
-      {/* En-tête premium */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <CreditCard className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="font-serif text-2xl tracking-tight">Paiements</h1>
-            <p className="text-sm text-muted-foreground">
-              Suivi des paiements et tableau de bord financier
-            </p>
-          </div>
-        </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nouveau paiement
-        </Button>
-      </div>
-
-      {/* KPIs financiers premium */}
-      {loadingSummary ? (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-xl" />
-          ))}
-        </div>
-      ) : summary ? (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <KpiCard
-            icon={Banknote}
-            label="Attendu"
-            value={summary.total_expected}
-            color="blue"
-          />
-          <KpiCard
-            icon={Wallet}
-            label="Collecté"
-            value={summary.total_paid}
-            color="emerald"
-            subtext={`${summary.payment_count} paiement(s)`}
-          />
-          <KpiCard
-            icon={AlertCircle}
-            label="En attente"
-            value={summary.total_pending}
-            color="amber"
-          />
-          <KpiCard
-            icon={TrendingUp}
-            label="Taux de recouvrement"
-            value={summary.completion_rate}
-            isPercent
-            color={summary.completion_rate >= 70 ? "emerald" : "amber"}
-            subtext={summary.total_cancelled > 0 ? `${summary.total_cancelled.toLocaleString("fr-FR")} FCFA annulés` : undefined}
-          />
-        </div>
-      ) : null}
+      {/* Hero signature KLASSCI (dégradé bleu + KPIs financiers intégrés) */}
+      <PageHero
+        icon={CreditCard}
+        title="Paiements"
+        subtitle="Suivi des paiements et tableau de bord financier"
+        actions={
+          <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nouveau paiement
+          </button>
+        }
+        kpis={heroKpis}
+      />
 
       {/* Barre de recherche + filtres */}
       <Card className="border-0 shadow-sm ring-1 ring-border">
@@ -628,61 +615,5 @@ function StudentAvatar({ photoUrl, initials }: { photoUrl?: string | null; initi
     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
       {initials}
     </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Premium KPI Card
-// ---------------------------------------------------------------------------
-
-const KPI_COLORS = {
-  blue: { bg: "bg-blue-50", icon: "text-blue-600 bg-blue-100", ring: "ring-blue-200/60" },
-  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600 bg-emerald-100", ring: "ring-emerald-200/60" },
-  amber: { bg: "bg-amber-50", icon: "text-amber-600 bg-amber-100", ring: "ring-amber-200/60" },
-  rose: { bg: "bg-rose-50", icon: "text-rose-600 bg-rose-100", ring: "ring-rose-200/60" },
-  neutral: { bg: "bg-slate-50", icon: "text-slate-500 bg-slate-100", ring: "ring-slate-200/60" },
-}
-
-function KpiCard({
-  icon: Icon,
-  label,
-  value,
-  color,
-  isPercent,
-  subtext,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: number
-  color: keyof typeof KPI_COLORS
-  isPercent?: boolean
-  subtext?: string
-}) {
-  // Empty-state guard : value=0 doit etre neutre, pas un faux signal vert/amber.
-  // Cf. rule `not-enrolled-empty-state.md` : "0 FCFA Collecté" en vert suggère
-  // a tort "tout paye !" alors qu'il n'y a juste aucun paiement enregistre.
-  const effectiveColor: keyof typeof KPI_COLORS = value === 0 ? "neutral" : color
-  const c = KPI_COLORS[effectiveColor]
-  return (
-    <Card className={`border-0 shadow-sm ring-1 ${c.ring} overflow-hidden`}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
-            <p className="text-2xl font-bold tabular-nums tracking-tight">
-              {isPercent
-                ? `${value.toFixed(1)}%`
-                : `${value.toLocaleString("fr-FR")} FCFA`}
-            </p>
-            {subtext && (
-              <p className="text-[11px] text-muted-foreground">{subtext}</p>
-            )}
-          </div>
-          <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${c.icon}`}>
-            <Icon className="h-4.5 w-4.5" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   )
 }

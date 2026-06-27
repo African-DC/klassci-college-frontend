@@ -105,6 +105,7 @@ npm run test:e2e
 @rules/auth-architecture.md
 @rules/ux-target-user-reality.md
 @rules/redesign-premium.md
+@rules/premium-design-system.md
 @rules/deploy.md
 @rules/git.md
 @rules/changelog.md

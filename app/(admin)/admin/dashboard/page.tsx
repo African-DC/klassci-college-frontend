@@ -1,7 +1,6 @@
-import { DashboardKpis } from "@/components/admin/dashboard/DashboardKpis"
 import { QuickActions } from "@/components/admin/dashboard/QuickActions"
 import { DashboardCharts } from "@/components/admin/dashboard/DashboardChartsWrapper"
-import { WelcomeHeader } from "@/components/admin/dashboard/WelcomeHeader"
+import { DashboardHero } from "@/components/admin/dashboard/DashboardHero"
 import { RecentActivity } from "@/components/admin/dashboard/RecentActivity"
 
 export const metadata = { title: "Dashboard | KLASSCI" }
@@ -9,9 +8,7 @@ export const metadata = { title: "Dashboard | KLASSCI" }
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <WelcomeHeader />
-
-      <DashboardKpis />
+      <DashboardHero />
 
       <QuickActions />
 

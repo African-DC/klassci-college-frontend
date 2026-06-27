@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { PageHero, type HeroKpi } from "@/components/shared/PageHero"
 import { AttendanceGrid } from "./AttendanceGrid"
 import { AttendanceHistory } from "./AttendanceHistory"
 import { AttendanceStats } from "./AttendanceStats"
@@ -69,36 +69,29 @@ export function AttendancePageClient() {
     ? `Classe ${selectedClass.name}${dayOfWeek ? ` · ${dayOfWeek}` : ""}`
     : "Pointage des présences par session de cours, historique et statistiques"
 
-  const kpis: KpiItem[] = [
-    { label: "Classes", value: classes.length, icon: School, tone: "primary" },
+  const kpis: HeroKpi[] = [
+    { label: "Classes", value: classes.length, icon: School },
     {
       label: selectedClass ? "Créneaux de la classe" : "Créneaux",
       value: selectedClass ? (slots?.length ?? 0) : "—",
       icon: BookOpen,
-      tone: "emerald",
     },
     {
       label: "Créneaux ce jour",
       value: selectedClass ? availableSlots.length : "—",
       icon: CalendarDays,
-      tone: "accent",
     },
   ]
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-          <ClipboardCheck aria-hidden="true" className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <h1 className="font-serif text-2xl tracking-tight">Présences</h1>
-          <p className="text-sm text-muted-foreground capitalize">{subtitle}</p>
-        </div>
-      </div>
-
-      <KpiStrip items={kpis} columns={3} />
+      {/* Hero signature KLASSCI (dégradé bleu + KPIs intégrés) */}
+      <PageHero
+        icon={ClipboardCheck}
+        title="Présences"
+        subtitle={<span className="capitalize">{subtitle}</span>}
+        kpis={kpis}
+      />
 
       {/* Filtres principaux */}
       <div className="flex flex-wrap items-end gap-3">

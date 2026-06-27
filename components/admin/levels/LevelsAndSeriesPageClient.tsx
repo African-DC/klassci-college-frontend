@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
-import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { PageHero, heroGlassBtn, heroAccentBtn, type HeroKpi } from "@/components/shared/PageHero"
 import { ListSearchBar } from "@/components/shared/list/ListSearchBar"
 import { matchesSearch } from "@/lib/utils/list-search"
 import { useLevels, useDeleteLevel } from "@/lib/hooks/useLevels"
@@ -98,11 +98,11 @@ export function LevelsAndSeriesPageClient() {
   // KPIs (données peu nombreuses : calcul direct à chaque render).
   const noSeriesCount = levels.filter((l) => (seriesByLevel.get(l.id)?.length ?? 0) === 0).length
   const avgSeries = levels.length > 0 ? (allSeries.length / levels.length).toFixed(1) : "0"
-  const kpis: KpiItem[] = [
-    { label: "Niveaux", value: levels.length, icon: GraduationCap, tone: "primary" },
-    { label: "Séries", value: allSeries.length, icon: BookOpen, tone: "emerald" },
-    { label: "Séries / niveau", value: avgSeries, icon: Layers, tone: "accent" },
-    { label: "Niveaux sans série", value: noSeriesCount, icon: AlertTriangle, tone: noSeriesCount > 0 ? "destructive" : "default" },
+  const kpis: HeroKpi[] = [
+    { label: "Niveaux", value: levels.length, icon: GraduationCap },
+    { label: "Séries", value: allSeries.length, icon: BookOpen },
+    { label: "Séries / niveau", value: avgSeries, icon: Layers },
+    { label: "Niveaux sans série", value: noSeriesCount, icon: AlertTriangle },
   ]
 
   // Recherche : filtre les niveaux par nom OU par nom de série. Quand un niveau
@@ -160,42 +160,35 @@ export function LevelsAndSeriesPageClient() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Layers aria-hidden="true" className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="font-serif text-xl tracking-tight">Niveaux & Séries</h1>
-            <p className="text-sm text-muted-foreground">Structure académique de l&apos;établissement</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs"
-            onClick={() => setExpanded(new Set(levels.map((l) => l.id)))}
-          >
-            Tout déplier
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs"
-            onClick={() => setExpanded(new Set())}
-          >
-            Tout replier
-          </Button>
-          <Button size="sm" onClick={() => setLevelCreateOpen(true)}>
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Nouveau niveau
-          </Button>
-        </div>
-      </div>
-
-      <KpiStrip items={kpis} />
+      {/* Hero signature KLASSCI (dégradé bleu + KPIs intégrés) */}
+      <PageHero
+        icon={Layers}
+        title="Niveaux & Séries"
+        subtitle="Structure académique de l'établissement"
+        actions={
+          <>
+            <button
+              type="button"
+              className={heroGlassBtn}
+              onClick={() => setExpanded(new Set(levels.map((l) => l.id)))}
+            >
+              Tout déplier
+            </button>
+            <button
+              type="button"
+              className={heroGlassBtn}
+              onClick={() => setExpanded(new Set())}
+            >
+              Tout replier
+            </button>
+            <button type="button" className={heroAccentBtn} onClick={() => setLevelCreateOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Nouveau niveau
+            </button>
+          </>
+        }
+        kpis={kpis}
+      />
 
       <ListSearchBar
         value={search}

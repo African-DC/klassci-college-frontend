@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { PageHero, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
 import { ListSearchBar } from "@/components/shared/list/ListSearchBar"
 import { matchesSearch } from "@/lib/utils/list-search"
 import {
@@ -124,11 +124,11 @@ export function NotificationsPageClient() {
   const all = allNotifications ?? []
   const total = all.length
   const distinctTypes = new Set(all.map((n) => n.type)).size
-  const kpis: KpiItem[] = [
-    { label: "Total", value: total, icon: Inbox, tone: "primary" },
-    { label: "Non lues", value: unreadCount, icon: Mail, tone: unreadCount > 0 ? "accent" : "default" },
-    { label: "Lues", value: Math.max(total - unreadCount, 0), icon: MailOpen, tone: "emerald" },
-    { label: "Types actifs", value: distinctTypes, icon: Layers, tone: "accent" },
+  const kpis: HeroKpi[] = [
+    { label: "Total", value: total, icon: Inbox },
+    { label: "Non lues", value: unreadCount, icon: Mail },
+    { label: "Lues", value: Math.max(total - unreadCount, 0), icon: MailOpen },
+    { label: "Types actifs", value: distinctTypes, icon: Layers },
   ]
 
   // Recherche client sur titre + corps (par-dessus les filtres serveur type/lu).
@@ -138,35 +138,30 @@ export function NotificationsPageClient() {
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Bell aria-hidden="true" className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="font-serif text-2xl tracking-tight">Notifications</h1>
-            <p className="text-sm text-muted-foreground">
-              {unreadCount > 0
-                ? `${unreadCount} notification${unreadCount > 1 ? "s" : ""} non lue${unreadCount > 1 ? "s" : ""}`
-                : "Toutes les notifications sont lues"}
-            </p>
-          </div>
-        </div>
-        {unreadCount > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => markAllAsRead.mutate()}
-            disabled={markAllAsRead.isPending}
-          >
-            <CheckCheck className="mr-2 h-4 w-4" />
-            Tout marquer comme lu
-          </Button>
-        )}
-      </div>
-
-      <KpiStrip items={kpis} />
+      {/* Hero signature KLASSCI (dégradé bleu + KPIs intégrés) */}
+      <PageHero
+        icon={Bell}
+        title="Notifications"
+        subtitle={
+          unreadCount > 0
+            ? `${unreadCount} notification${unreadCount > 1 ? "s" : ""} non lue${unreadCount > 1 ? "s" : ""}`
+            : "Toutes les notifications sont lues"
+        }
+        actions={
+          unreadCount > 0 ? (
+            <button
+              type="button"
+              className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+              onClick={() => markAllAsRead.mutate()}
+              disabled={markAllAsRead.isPending}
+            >
+              <CheckCheck className="h-4 w-4" />
+              Tout marquer comme lu
+            </button>
+          ) : undefined
+        }
+        kpis={kpis}
+      />
 
       {/* Recherche + Filtres */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

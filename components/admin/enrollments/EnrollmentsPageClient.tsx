@@ -3,26 +3,23 @@
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { GraduationCap, Plus, ListChecks, CheckCircle2, Clock, XCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { PageHero, heroAccentBtn, type HeroKpi } from "@/components/shared/PageHero"
 import { EnrollmentsTable } from "./EnrollmentsTable"
 import { EnrollmentCreateModal } from "./EnrollmentCreateModal"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
 import { useAdminSummary } from "@/lib/hooks/useDashboard"
 
-function EnrollmentsKpis() {
+function useEnrollmentsKpis(): HeroKpi[] {
   const { data } = useAdminSummary()
-  const kpis: KpiItem[] = useMemo(() => {
+  return useMemo(() => {
     const e = data?.enrollments
-    const pending = e?.pending ?? 0
     return [
-      { label: "Inscriptions", value: e?.total ?? 0, icon: ListChecks, tone: "primary" },
-      { label: "Validées", value: e?.valid ?? 0, icon: CheckCircle2, tone: "emerald" },
-      { label: "À valider", value: pending, icon: Clock, tone: "accent" },
-      { label: "Rejetées / annulées", value: e?.closed ?? 0, icon: XCircle, tone: (e?.closed ?? 0) > 0 ? "destructive" : "default" },
+      { label: "Inscriptions", value: e?.total ?? 0, icon: ListChecks },
+      { label: "Validées", value: e?.valid ?? 0, icon: CheckCircle2 },
+      { label: "À valider", value: e?.pending ?? 0, icon: Clock },
+      { label: "Rejetées / annulées", value: e?.closed ?? 0, icon: XCircle },
     ]
   }, [data])
-  return <KpiStrip items={kpis} />
 }
 
 // Subtitle informatif sans redondance avec les chips. Le total renseigne
@@ -31,16 +28,16 @@ function EnrollmentsKpis() {
 function EnrollmentsSubtitle() {
   const { data, isLoading } = useEnrollments({ size: 1 })
   if (isLoading || !data) {
-    return <p className="text-sm text-muted-foreground">Gérez les inscriptions des élèves</p>
+    return <span>Gérez les inscriptions des élèves</span>
   }
   const total = data.total ?? 0
   if (total === 0) {
-    return <p className="text-sm text-muted-foreground">Aucune inscription pour le moment</p>
+    return <span>Aucune inscription pour le moment</span>
   }
   return (
-    <p className="text-sm text-muted-foreground">
+    <span>
       {total} inscription{total > 1 ? "s" : ""} au total
-    </p>
+    </span>
   )
 }
 
@@ -48,6 +45,7 @@ export function EnrollmentsPageClient() {
   const searchParams = useSearchParams()
   const [createOpen, setCreateOpen] = useState(false)
   const [preselectedStudentId, setPreselectedStudentId] = useState<number | undefined>(undefined)
+  const kpis = useEnrollmentsKpis()
 
   useEffect(() => {
     if (searchParams.get("action") === "create") {
@@ -62,23 +60,18 @@ export function EnrollmentsPageClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <GraduationCap aria-hidden="true" className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="font-serif text-xl tracking-tight sm:text-2xl">Inscriptions</h1>
-            <EnrollmentsSubtitle />
-          </div>
-        </div>
-        <Button onClick={() => setCreateOpen(true)} className="h-11 gap-2 sm:h-10">
-          <Plus aria-hidden="true" className="h-4 w-4" />
-          Nouvelle inscription
-        </Button>
-      </div>
-
-      <EnrollmentsKpis />
+      <PageHero
+        icon={GraduationCap}
+        title="Inscriptions"
+        subtitle={<EnrollmentsSubtitle />}
+        actions={
+          <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nouvelle inscription
+          </button>
+        }
+        kpis={kpis}
+      />
 
       <EnrollmentsTable />
 
