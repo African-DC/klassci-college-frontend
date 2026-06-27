@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PageHero } from "@/components/shared/PageHero"
 import { BulletinList } from "./BulletinList"
 import { BulletinGenerateButton } from "./BulletinGenerateButton"
 import { ReportsNav } from "./ReportsNav"
@@ -47,24 +48,18 @@ export function ReportsPageClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <FileText aria-hidden="true" className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="font-serif text-2xl tracking-tight">Bulletins scolaires</h1>
-            <p className="text-sm text-muted-foreground">
-              Génération et consultation des bulletins par classe et trimestre
-            </p>
-          </div>
-        </div>
-        <BulletinGenerateButton
-          classId={classId}
-          trimester={trimester}
-          academicYearId={activeYearId}
-        />
-      </div>
+      <PageHero
+        icon={FileText}
+        title="Bulletins scolaires"
+        subtitle="Génération et consultation des bulletins par classe et trimestre"
+        actions={
+          <BulletinGenerateButton
+            classId={classId}
+            trimester={trimester}
+            academicYearId={activeYearId}
+          />
+        }
+      />
 
       <ReportsNav current="bulletins" />
 

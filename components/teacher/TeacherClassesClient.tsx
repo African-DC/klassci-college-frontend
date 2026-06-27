@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
-import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { PageHero, premiumCardHover, type HeroKpi } from "@/components/shared/PageHero"
 import { ListSearchBar } from "@/components/shared/list/ListSearchBar"
 import { matchesSearch } from "@/lib/utils/list-search"
 import { useTeacherClasses } from "@/lib/hooks/useTeacherPortal"
@@ -25,7 +25,7 @@ export function TeacherClassesClient() {
   const [search, setSearch] = useState("")
 
   const list = useMemo(() => classes ?? [], [classes])
-  const kpis: KpiItem[] = useMemo(() => {
+  const kpis: HeroKpi[] = useMemo(() => {
     const students = list.reduce((s, c) => s + (c.student_count ?? 0), 0)
     const evals = list.reduce((s, c) => s + (c.total_evaluations ?? 0), 0)
     const graded = list.filter((c) => c.general_average !== null && c.general_average !== undefined)
@@ -33,15 +33,10 @@ export function TeacherClassesClient() {
       ? graded.reduce((s, c) => s + (c.general_average ?? 0), 0) / graded.length
       : null
     return [
-      { label: "Classes", value: list.length, icon: School, tone: "primary" },
-      { label: "Élèves", value: students, icon: Users, tone: "default" },
-      { label: "Évaluations", value: evals, icon: ClipboardList, tone: "default" },
-      {
-        label: "Moyenne globale",
-        value: avg !== null ? avg.toFixed(2) : "—",
-        icon: GraduationCap,
-        tone: avg === null ? "default" : avg >= 10 ? "emerald" : "destructive",
-      },
+      { label: "Classes", value: list.length, icon: School },
+      { label: "Élèves", value: students, icon: Users },
+      { label: "Évaluations", value: evals, icon: ClipboardList },
+      { label: "Moyenne globale", value: avg !== null ? avg.toFixed(2) : "—", icon: GraduationCap },
     ]
   }, [list])
 
@@ -52,12 +47,12 @@ export function TeacherClassesClient() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-serif text-xl tracking-tight">Mes classes</h1>
-        <p className="text-sm text-muted-foreground">
-          Classes assignées et statistiques
-        </p>
-      </div>
+      <PageHero
+        icon={School}
+        title="Mes classes"
+        subtitle="Classes assignées et statistiques"
+        kpis={classes && classes.length > 0 ? kpis : undefined}
+      />
 
       {isLoading ? (
         <ClassesSkeleton />
@@ -78,7 +73,6 @@ export function TeacherClassesClient() {
         </div>
       ) : (
         <>
-          <KpiStrip items={kpis} />
           {list.length > 3 && (
             <ListSearchBar
               value={search}
@@ -108,7 +102,7 @@ function ClassCard({ cls }: { cls: TeacherClass }) {
   const average = cls.general_average ?? null
   const totalEvals = cls.total_evaluations ?? 0
   return (
-    <Card className="border-0 shadow-sm ring-1 ring-border">
+    <Card className={`border-0 shadow-sm ring-1 ring-border ${premiumCardHover}`}>
       <CardContent className="p-4 space-y-3">
         {/* En-tête */}
         <div className="flex items-start justify-between">

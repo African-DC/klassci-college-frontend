@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
-import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { PageHero, premiumCardHover, type HeroKpi } from "@/components/shared/PageHero"
 import { useParentChildren } from "@/lib/hooks/useParentPortal"
 import type { ParentChild } from "@/lib/contracts/parent-portal"
 import { isEnrolledFromClassName, summarizeEnrollment } from "@/lib/utils/enrollment-status"
@@ -32,12 +32,12 @@ export function ParentChildrenClient() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-serif text-xl tracking-tight">Mes enfants</h1>
-        {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
-      </div>
-
-      {children && children.length > 0 && <ChildrenKpis childList={children} />}
+      <PageHero
+        icon={Users}
+        title="Mes enfants"
+        subtitle={subtitle ?? undefined}
+        kpis={children && children.length > 0 ? childrenKpis(children) : undefined}
+      />
 
       {isLoading ? (
         <ChildrenSkeleton />
@@ -64,30 +64,24 @@ export function ParentChildrenClient() {
   )
 }
 
-function ChildrenKpis({ childList }: { childList: ParentChild[] }) {
+function childrenKpis(childList: ParentChild[]): HeroKpi[] {
   const summary = summarizeEnrollment(childList)
   const remaining = childList
     .filter((c) => isEnrolledFromClassName(c.class_name))
     .reduce((s, c) => s + (c.fees_remaining ?? 0), 0)
-  const kpis: KpiItem[] = [
-    { label: "Enfants", value: summary.total, icon: Users, tone: "primary" },
-    { label: "Inscrits", value: summary.enrolled, icon: UserCheck, tone: "emerald" },
-    { label: "En attente", value: summary.pending, icon: Clock, tone: summary.pending > 0 ? "accent" : "default" },
-    {
-      label: "Restant total",
-      value: `${remaining.toLocaleString("fr-FR")} F`,
-      icon: Wallet,
-      tone: remaining > 0 ? "accent" : "default",
-    },
+  return [
+    { label: "Enfants", value: summary.total, icon: Users },
+    { label: "Inscrits", value: summary.enrolled, icon: UserCheck },
+    { label: "En attente", value: summary.pending, icon: Clock },
+    { label: "Restant total", value: `${remaining.toLocaleString("fr-FR")} F`, icon: Wallet },
   ]
-  return <KpiStrip items={kpis} />
 }
 
 function ChildDetailCard({ child }: { child: ParentChild }) {
   const isEnrolled = isEnrolledFromClassName(child.class_name)
 
   return (
-    <Card className="border-0 shadow-sm ring-1 ring-border">
+    <Card className={`border-0 shadow-sm ring-1 ring-border ${premiumCardHover}`}>
       <CardContent className="p-4">
         <div className="mb-3 flex items-start justify-between">
           <div className="flex items-center gap-3">
