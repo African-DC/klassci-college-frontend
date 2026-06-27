@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Plus, Pencil, Trash2, Wallet, Search, X, Shield, CircleDot, Layers } from "lucide-react"
+import { Plus, Pencil, Trash2, Wallet, Search, X, Shield, CircleDot, Layers, Coins } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { FilterChips } from "@/components/shared/list/FilterChips"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
@@ -39,6 +41,7 @@ export function FeesPageClient() {
   const [deleteTarget, setDeleteTarget] = useState<{ type: "category" | "variant"; id: number; name: string } | null>(null)
   const [optionsCategory, setOptionsCategory] = useState<FeeCategory | null>(null)
   const [searchVariant, setSearchVariant] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState<"all" | "mandatory" | "optional">("all")
 
   const { data: academicYearsData } = useAcademicYears()
   const currentYearId = academicYearsData?.items?.[0]?.id
@@ -87,6 +90,21 @@ export function FeesPageClient() {
   const totalMandatory = categories?.filter((c) => c.is_mandatory).length ?? 0
   const totalOptional = categories?.filter((c) => !c.is_mandatory).length ?? 0
   const totalVariants = variants?.length ?? 0
+  const totalConfigured = variants?.reduce((sum, v) => sum + v.amount, 0) ?? 0
+
+  const kpis: KpiItem[] = [
+    { label: "Obligatoires", value: totalMandatory, icon: Shield, tone: "primary" },
+    { label: "Optionnels", value: totalOptional, icon: CircleDot, tone: "default" },
+    { label: "Variantes", value: totalVariants, icon: Layers, tone: "default" },
+    { label: "Montant configuré", value: `${totalConfigured.toLocaleString("fr-FR")} F`, icon: Coins, tone: "accent" },
+  ]
+
+  // Filtre obligatoire/optionnel sur les catégories affichées.
+  const displayedCategories = (categories ?? []).filter((c) => {
+    if (categoryFilter === "mandatory") return c.is_mandatory
+    if (categoryFilter === "optional") return !c.is_mandatory
+    return true
+  })
 
   function handleConfirmDelete() {
     if (!deleteTarget) return
@@ -126,54 +144,32 @@ export function FeesPageClient() {
       </div>
 
       {/* KPI summary */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="border-0 shadow-sm ring-1 ring-border">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100">
-              <Shield className="h-4 w-4 text-red-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Obligatoires</p>
-              <p className="text-xl font-bold">{totalMandatory}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-border">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100">
-              <CircleDot className="h-4 w-4 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Optionnels</p>
-              <p className="text-xl font-bold">{totalOptional}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-border">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100">
-              <Layers className="h-4 w-4 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Variantes</p>
-              <p className="text-xl font-bold">{totalVariants}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <KpiStrip items={kpis} />
 
       {/* Categories as premium cards */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Catégories de frais</h2>
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Catégories de frais</h2>
+          <FilterChips
+            aria-label="Filtrer les catégories"
+            value={categoryFilter}
+            onChange={(v) => setCategoryFilter(v as "all" | "mandatory" | "optional")}
+            options={[
+              { value: "all", label: "Toutes", count: (categories ?? []).length },
+              { value: "mandatory", label: "Obligatoires", count: totalMandatory },
+              { value: "optional", label: "Optionnels", count: totalOptional },
+            ]}
+          />
+        </div>
         {loadingCategories ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-32 rounded-xl" />
             ))}
           </div>
-        ) : categories && categories.length > 0 ? (
+        ) : displayedCategories.length > 0 ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map((cat) => {
+            {displayedCategories.map((cat) => {
               const color = cat.is_mandatory ? MANDATORY_COLOR : OPTIONAL_COLOR
               const catVariants = variantsByCategory.get(cat.id) ?? []
               const totalAmount = catVariants.reduce((sum, v) => sum + v.amount, 0)
