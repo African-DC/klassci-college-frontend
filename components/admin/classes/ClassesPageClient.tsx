@@ -1,11 +1,33 @@
 "use client"
 
-import { useState } from "react"
-import { School, Plus, LayoutGrid, List } from "lucide-react"
+import { useMemo, useState } from "react"
+import { School, Plus, LayoutGrid, List, Users, Gauge, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { useClasses } from "@/lib/hooks/useClasses"
 import { ClassesTable } from "./ClassesTable"
 import { ClassesTreeView } from "./ClassesTreeView"
 import { ClassCreateModal } from "./ClassCreateModal"
+
+function ClassesKpis() {
+  const { data } = useClasses({ size: 200 })
+  const kpis: KpiItem[] = useMemo(() => {
+    const items = data?.items ?? []
+    const enrolled = items.reduce((s, c) => s + (c.enrolled_count ?? 0), 0)
+    const capacity = items.reduce((s, c) => s + (c.max_students ?? 0), 0)
+    const rate = capacity > 0 ? Math.round((enrolled / capacity) * 100) : 0
+    const full = items.filter(
+      (c) => (c.max_students ?? 0) > 0 && (c.enrolled_count ?? 0) / (c.max_students ?? 1) > 0.95,
+    ).length
+    return [
+      { label: "Classes", value: items.length, icon: School, tone: "primary" },
+      { label: "Élèves inscrits", value: enrolled, icon: Users, tone: "default" },
+      { label: "Taux d'occupation", value: `${rate}%`, icon: Gauge, tone: rate >= 80 ? "accent" : "emerald" },
+      { label: "Classes pleines", value: full, icon: AlertTriangle, tone: full > 0 ? "destructive" : "default" },
+    ]
+  }, [data])
+  return <KpiStrip items={kpis} />
+}
 
 export function ClassesPageClient() {
   const [createOpen, setCreateOpen] = useState(false)
@@ -59,6 +81,8 @@ export function ClassesPageClient() {
           </Button>
         </div>
       </div>
+
+      <ClassesKpis />
 
       {/* Content : mobile force toujours table (qui contient cards mobile),
           desktop respecte le choix utilisateur (arbre par défaut). */}

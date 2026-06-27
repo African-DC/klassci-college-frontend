@@ -33,6 +33,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { DataError } from "@/components/shared/DataError"
+import { ListSearchBar } from "@/components/shared/list/ListSearchBar"
+import { matchesSearch } from "@/lib/utils/list-search"
 
 const TYPE_LABELS: Record<string, string> = {
   controle: "Contrôle",
@@ -56,6 +58,7 @@ export function TeacherEvaluationsList() {
   const { data, isLoading, isError, refetch } = useTeacherEvaluations()
   const [classFilter, setClassFilter] = useState<string>("all")
   const [tab, setTab] = useState<FilterTab>("all")
+  const [search, setSearch] = useState("")
 
   const evaluations = data ?? []
 
@@ -72,9 +75,10 @@ export function TeacherEvaluationsList() {
       if (tab === "overdue" && !isOverdue(e.date, e.graded_students, e.total_students))
         return false
       if (tab === "done" && !isDone(e.graded_students, e.total_students)) return false
+      if (!matchesSearch([e.title, e.subject_name, e.class_name], search)) return false
       return true
     })
-  }, [evaluations, classFilter, tab])
+  }, [evaluations, classFilter, tab, search])
 
   const stats = useMemo(() => {
     const total = evaluations.length
@@ -134,6 +138,15 @@ export function TeacherEvaluationsList() {
       {/* ─── Filtres ──────────────────────────────────────────────── */}
       {!isLoading && evaluations.length > 0 && (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1 min-w-[200px] max-w-xs">
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">Recherche</label>
+            <ListSearchBar
+              value={search}
+              onChange={setSearch}
+              placeholder="Titre, matière, classe…"
+              aria-label="Rechercher une évaluation"
+            />
+          </div>
           <div className="flex-1 min-w-[160px] max-w-xs">
             <label className="mb-1 block text-xs font-medium text-muted-foreground">Classe</label>
             <Select value={classFilter} onValueChange={setClassFilter}>

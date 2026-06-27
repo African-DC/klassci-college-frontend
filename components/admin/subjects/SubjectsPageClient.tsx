@@ -1,11 +1,31 @@
 "use client"
 
-import { useState } from "react"
-import { BookMarked, Plus, LayoutGrid, List } from "lucide-react"
+import { useMemo, useState } from "react"
+import { BookMarked, Plus, LayoutGrid, List, Layers, UserX, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { useSubjects } from "@/lib/hooks/useSubjects"
 import { SubjectsTable } from "./SubjectsTable"
 import { SubjectsKanbanView } from "./SubjectsKanbanView"
 import { SubjectCreateModal } from "./SubjectCreateModal"
+
+function SubjectsKpis() {
+  const { data } = useSubjects({ size: 200 })
+  const kpis: KpiItem[] = useMemo(() => {
+    const items = data?.items ?? []
+    const uniqueNames = new Set(items.map((s) => s.name)).size
+    const instances = items.filter((s) => s.level_id !== null)
+    const withoutTeacher = instances.filter((s) => !s.teacher_id).length
+    const hours = instances.reduce((sum, s) => sum + (s.hours_per_week ?? 0), 0)
+    return [
+      { label: "Matières uniques", value: uniqueNames, icon: BookMarked, tone: "primary" },
+      { label: "Instances par niveau", value: instances.length, icon: Layers, tone: "default" },
+      { label: "Sans enseignant", value: withoutTeacher, icon: UserX, tone: withoutTeacher > 0 ? "accent" : "default" },
+      { label: "Heures / semaine", value: `${hours}h`, icon: Clock, tone: "default" },
+    ]
+  }, [data])
+  return <KpiStrip items={kpis} />
+}
 
 export function SubjectsPageClient() {
   const [createOpen, setCreateOpen] = useState(false)
@@ -59,6 +79,8 @@ export function SubjectsPageClient() {
           </Button>
         </div>
       </div>
+
+      <SubjectsKpis />
 
       {/* Mobile : toujours table. Desktop : respecte le choix utilisateur. */}
       <div className="md:hidden">

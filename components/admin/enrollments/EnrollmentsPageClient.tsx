@@ -1,12 +1,31 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { GraduationCap, Plus } from "lucide-react"
+import { GraduationCap, Plus, ListChecks, CheckCircle2, Clock, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
 import { EnrollmentsTable } from "./EnrollmentsTable"
 import { EnrollmentCreateModal } from "./EnrollmentCreateModal"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
+
+function EnrollmentsKpis() {
+  const { data } = useEnrollments({ size: 300 })
+  const kpis: KpiItem[] = useMemo(() => {
+    const items = data?.items ?? []
+    const total = data?.total ?? items.length
+    const valid = items.filter((e) => e.status === "valide").length
+    const pending = items.filter((e) => e.status === "prospect" || e.status === "en_validation").length
+    const closed = items.filter((e) => e.status === "rejete" || e.status === "annule").length
+    return [
+      { label: "Inscriptions", value: total, icon: ListChecks, tone: "primary" },
+      { label: "Validées", value: valid, icon: CheckCircle2, tone: "emerald" },
+      { label: "À valider", value: pending, icon: Clock, tone: pending > 0 ? "accent" : "default" },
+      { label: "Rejetées / annulées", value: closed, icon: XCircle, tone: "default" },
+    ]
+  }, [data])
+  return <KpiStrip items={kpis} />
+}
 
 // Subtitle informatif sans redondance avec les chips. Le total renseigne
 // l'admin sur la volumétrie de la queue ; les counts par statut sont sur
@@ -60,6 +79,8 @@ export function EnrollmentsPageClient() {
           Nouvelle inscription
         </Button>
       </div>
+
+      <EnrollmentsKpis />
 
       <EnrollmentsTable />
 

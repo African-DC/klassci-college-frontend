@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
 import {
   Dialog,
   DialogContent,
@@ -76,9 +77,12 @@ export function RoomsPageClient() {
   }), [debouncedSearch, typeFilter])
 
   const { data, isLoading, isError, error, refetch } = useRooms(params)
+  // Requête non filtrée pour les KPIs (le `data` ci-dessus est filtré par type/recherche).
+  const { data: allRoomsData } = useRooms({ size: 200 })
   const { data: classesData } = useClasses({ size: 100 })
   const deleteMutation = useDeleteRoom()
   const rooms = data?.items ?? []
+  const allRooms = useMemo(() => allRoomsData?.items ?? [], [allRoomsData])
   const allClasses = classesData?.items ?? []
 
   // Classes without a room
@@ -86,6 +90,19 @@ export function RoomsPageClient() {
     const roomClassIds = new Set(rooms.filter((r) => r.class_id).map((r) => r.class_id))
     return allClasses.filter((c) => !c.room_id && !roomClassIds.has(c.id))
   }, [allClasses, rooms])
+
+  const roomsKpis: KpiItem[] = useMemo(() => {
+    const totalCapacity = allRooms.reduce((s, r) => s + (r.capacity ?? 0), 0)
+    const classrooms = allRooms.filter((r) => r.room_type === "classroom").length
+    const noRoomClassIds = new Set(allRooms.filter((r) => r.class_id).map((r) => r.class_id))
+    const noRoom = allClasses.filter((c) => !c.room_id && !noRoomClassIds.has(c.id)).length
+    return [
+      { label: "Salles", value: allRooms.length, icon: DoorOpen, tone: "primary" },
+      { label: "Capacité totale", value: totalCapacity, icon: Users, tone: "default" },
+      { label: "Salles de classe", value: classrooms, icon: School, tone: "default" },
+      { label: "Classes sans salle", value: noRoom, icon: AlertTriangle, tone: noRoom > 0 ? "accent" : "default" },
+    ]
+  }, [allRooms, allClasses])
 
   // Batch create mutation
   const batchMutation = useMutation({
@@ -133,6 +150,8 @@ export function RoomsPageClient() {
           Nouvelle salle
         </Button>
       </div>
+
+      <KpiStrip items={roomsKpis} />
 
       {/* Classes without room — banner */}
       {classesWithoutRoom.length > 0 && (

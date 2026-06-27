@@ -117,18 +117,6 @@ export function SubjectsTable() {
     })
   }, [groups, debouncedSearch, levelFilter, teacherFilter])
 
-  const totalInstances = useMemo(
-    () => subjects.filter((s) => s.level_id !== null).length,
-    [subjects],
-  )
-  const totalHours = useMemo(
-    () =>
-      subjects
-        .filter((s) => s.level_id !== null)
-        .reduce((sum, s) => sum + s.hours_per_week, 0),
-    [subjects],
-  )
-
   function toggleExpanded(name: string) {
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -160,26 +148,6 @@ export function SubjectsTable() {
 
   return (
     <div className="space-y-4">
-      {/* KPI hero strip */}
-      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl font-bold text-primary tabular-nums">
-            {groups.length}
-          </span>
-          <span className="text-sm text-muted-foreground">matières uniques</span>
-        </div>
-        <span className="text-border" aria-hidden>·</span>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl font-bold tabular-nums">{totalInstances}</span>
-          <span className="text-sm text-muted-foreground">instances par niveau</span>
-        </div>
-        <span className="text-border" aria-hidden>·</span>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl font-bold tabular-nums">{totalHours}h</span>
-          <span className="text-sm text-muted-foreground">/ semaine au total</span>
-        </div>
-      </div>
-
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[240px] flex-1">

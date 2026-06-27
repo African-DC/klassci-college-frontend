@@ -12,11 +12,18 @@ import {
   Check,
   CheckCheck,
   Filter,
+  MailOpen,
+  Mail,
+  Inbox,
+  Layers,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { ListSearchBar } from "@/components/shared/list/ListSearchBar"
+import { matchesSearch } from "@/lib/utils/list-search"
 import {
   Select,
   SelectContent,
@@ -97,6 +104,7 @@ const NOTIFICATION_TYPES: NotificationType[] = [
 export function NotificationsPageClient() {
   const [typeFilter, setTypeFilter] = useState<NotificationType | "all">("all")
   const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">("all")
+  const [search, setSearch] = useState("")
 
   const params = {
     ...(typeFilter !== "all" && { type: typeFilter }),
@@ -105,11 +113,28 @@ export function NotificationsPageClient() {
   }
 
   const { data: notifications, isLoading, isError, refetch } = useNotifications(params)
+  // Liste non filtrée pour les KPIs (totaux indépendants des filtres actifs).
+  const { data: allNotifications } = useNotifications({})
   const { data: countData } = useNotificationCount()
   const markAsRead = useMarkAsRead()
   const markAllAsRead = useMarkAllAsRead()
 
   const unreadCount = countData?.count ?? 0
+
+  const all = allNotifications ?? []
+  const total = all.length
+  const distinctTypes = new Set(all.map((n) => n.type)).size
+  const kpis: KpiItem[] = [
+    { label: "Total", value: total, icon: Inbox, tone: "primary" },
+    { label: "Non lues", value: unreadCount, icon: Mail, tone: unreadCount > 0 ? "accent" : "default" },
+    { label: "Lues", value: Math.max(total - unreadCount, 0), icon: MailOpen, tone: "default" },
+    { label: "Types actifs", value: distinctTypes, icon: Layers, tone: "default" },
+  ]
+
+  // Recherche client sur titre + corps (par-dessus les filtres serveur type/lu).
+  const visibleNotifications = (notifications ?? []).filter((n) =>
+    matchesSearch([n.title, n.body], search),
+  )
 
   return (
     <div className="space-y-6">
@@ -141,8 +166,16 @@ export function NotificationsPageClient() {
         )}
       </div>
 
-      {/* Filtres */}
-      <div className="flex gap-3">
+      <KpiStrip items={kpis} />
+
+      {/* Recherche + Filtres */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <ListSearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Rechercher dans les notifications…"
+          aria-label="Rechercher une notification"
+        />
         <Select
           value={typeFilter}
           onValueChange={(v) => setTypeFilter(v as NotificationType | "all")}
@@ -184,14 +217,16 @@ export function NotificationsPageClient() {
           message="Impossible de charger les notifications."
           onRetry={() => refetch()}
         />
-      ) : !notifications || notifications.length === 0 ? (
+      ) : visibleNotifications.length === 0 ? (
         <div className="py-16 text-center">
           <Bell className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">Aucune notification.</p>
+          <p className="text-sm text-muted-foreground">
+            {search ? `Aucune notification ne correspond à « ${search} ».` : "Aucune notification."}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
-          {notifications.map((notification) => (
+          {visibleNotifications.map((notification) => (
             <NotificationRow
               key={notification.id}
               notification={notification}

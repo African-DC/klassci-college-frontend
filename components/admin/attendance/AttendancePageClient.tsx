@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { ClipboardList, ClipboardCheck, History, BarChart3, UserCheck } from "lucide-react"
+import { ClipboardList, ClipboardCheck, History, BarChart3, UserCheck, School, BookOpen, CalendarDays } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
 import { AttendanceGrid } from "./AttendanceGrid"
 import { AttendanceHistory } from "./AttendanceHistory"
 import { AttendanceStats } from "./AttendanceStats"
@@ -68,6 +69,22 @@ export function AttendancePageClient() {
     ? `Classe ${selectedClass.name}${dayOfWeek ? ` · ${dayOfWeek}` : ""}`
     : "Pointage des présences par session de cours, historique et statistiques"
 
+  const kpis: KpiItem[] = [
+    { label: "Classes", value: classes.length, icon: School, tone: "primary" },
+    {
+      label: selectedClass ? "Créneaux de la classe" : "Créneaux",
+      value: selectedClass ? (slots?.length ?? 0) : "—",
+      icon: BookOpen,
+      tone: "default",
+    },
+    {
+      label: "Créneaux ce jour",
+      value: selectedClass ? availableSlots.length : "—",
+      icon: CalendarDays,
+      tone: selectedClass && availableSlots.length === 0 ? "accent" : "default",
+    },
+  ]
+
   return (
     <div className="space-y-6">
       {/* En-tête */}
@@ -80,6 +97,8 @@ export function AttendancePageClient() {
           <p className="text-sm text-muted-foreground capitalize">{subtitle}</p>
         </div>
       </div>
+
+      <KpiStrip items={kpis} columns={3} />
 
       {/* Filtres principaux */}
       <div className="flex flex-wrap items-end gap-3">

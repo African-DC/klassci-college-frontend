@@ -2,11 +2,12 @@
 
 import Link from "next/link"
 import type { Route } from "next"
-import { Users, GraduationCap, Wallet, AlertCircle, FileText, Calendar, Clock } from "lucide-react"
+import { Users, GraduationCap, Wallet, AlertCircle, FileText, Calendar, Clock, UserCheck } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
 import { useParentChildren } from "@/lib/hooks/useParentPortal"
 import type { ParentChild } from "@/lib/contracts/parent-portal"
 import { isEnrolledFromClassName, summarizeEnrollment } from "@/lib/utils/enrollment-status"
@@ -36,6 +37,8 @@ export function ParentChildrenClient() {
         {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
       </div>
 
+      {children && children.length > 0 && <ChildrenKpis childList={children} />}
+
       {isLoading ? (
         <ChildrenSkeleton />
       ) : isError ? (
@@ -59,6 +62,25 @@ export function ParentChildrenClient() {
       )}
     </div>
   )
+}
+
+function ChildrenKpis({ childList }: { childList: ParentChild[] }) {
+  const summary = summarizeEnrollment(childList)
+  const remaining = childList
+    .filter((c) => isEnrolledFromClassName(c.class_name))
+    .reduce((s, c) => s + (c.fees_remaining ?? 0), 0)
+  const kpis: KpiItem[] = [
+    { label: "Enfants", value: summary.total, icon: Users, tone: "primary" },
+    { label: "Inscrits", value: summary.enrolled, icon: UserCheck, tone: "emerald" },
+    { label: "En attente", value: summary.pending, icon: Clock, tone: summary.pending > 0 ? "accent" : "default" },
+    {
+      label: "Restant total",
+      value: `${remaining.toLocaleString("fr-FR")} F`,
+      icon: Wallet,
+      tone: remaining > 0 ? "accent" : "default",
+    },
+  ]
+  return <KpiStrip items={kpis} />
 }
 
 function ChildDetailCard({ child }: { child: ParentChild }) {
