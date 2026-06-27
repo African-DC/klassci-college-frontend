@@ -7,10 +7,14 @@ import type { Route } from "next"
 import { Phone, Mail, MessageCircle, UserCircle2 } from "lucide-react"
 import { useParents, useDeleteParent } from "@/lib/hooks/useParents"
 import type { Parent } from "@/lib/contracts/parent"
+import type { PaginatedResponse } from "@/lib/contracts"
 import { CrudTable } from "@/components/shared/CrudTable"
+import { FilterChips } from "@/components/shared/list/FilterChips"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { ParentEditModal } from "./ParentEditModal"
+
+type AccountFilter = "all" | "with" | "without"
 
 // Actions inline Wave-style : Appeler / WhatsApp / Email
 function ContactActions({ parent }: { parent: Parent }) {
@@ -83,6 +87,19 @@ export function ParentsTable() {
   const { data, isLoading, isError, error, refetch } = useParents(params)
   const deleteMutation = useDeleteParent()
 
+  // Filtre compte (avec/sans) appliqué côté client sur la page chargée.
+  const [accountFilter, setAccountFilter] = useState<AccountFilter>("all")
+  const rawItems = useMemo(() => data?.items ?? [], [data])
+  const withAccountCount = useMemo(() => rawItems.filter((p) => !!p.user_id).length, [rawItems])
+  const filteredItems = useMemo(() => {
+    if (accountFilter === "with") return rawItems.filter((p) => !!p.user_id)
+    if (accountFilter === "without") return rawItems.filter((p) => !p.user_id)
+    return rawItems
+  }, [rawItems, accountFilter])
+  const tableData: PaginatedResponse<Parent> | undefined = data
+    ? { ...data, items: filteredItems }
+    : undefined
+
   const columns: ColumnDef<Parent>[] = useMemo(() => [
     {
       accessorKey: "last_name",
@@ -141,13 +158,21 @@ export function ParentsTable() {
     },
   ], [])
 
-  const items = data?.items ?? []
-
   return (
     <div className="space-y-4">
+      <FilterChips
+        aria-label="Filtrer par compte"
+        value={accountFilter}
+        onChange={(v) => setAccountFilter(v as AccountFilter)}
+        options={[
+          { value: "all", label: "Tous", count: rawItems.length },
+          { value: "with", label: "Avec compte", count: withAccountCount, tone: "default" },
+          { value: "without", label: "Sans compte", count: rawItems.length - withAccountCount, tone: "warning" },
+        ]}
+      />
       <div className="hidden md:block">
         <CrudTable<Parent>
-          data={data}
+          data={tableData}
           columns={columns}
           isLoading={isLoading}
           isError={isError}
@@ -176,12 +201,12 @@ export function ParentsTable() {
             Chargement…
           </p>
         )}
-        {!isLoading && items.length === 0 && (
+        {!isLoading && filteredItems.length === 0 && (
           <p className="rounded-lg border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
             Aucun parent trouvé
           </p>
         )}
-        {items.map((p) => {
+        {filteredItems.map((p) => {
           const loc = [p.city, p.commune].filter(Boolean).join(" / ")
           return (
             <MobileEntityListItem

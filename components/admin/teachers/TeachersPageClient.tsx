@@ -1,31 +1,29 @@
 "use client"
 
-import { BookOpen, Users } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { useMemo } from "react"
+import { BookOpen, Users, Award, Phone, UserX } from "lucide-react"
 import { CrudPageLayout } from "@/components/shared/CrudPageLayout"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
 import { TeachersTable } from "./TeachersTable"
 import { TeacherCreateModal } from "./TeacherCreateModal"
 import { useTeachers } from "@/lib/hooks/useTeachers"
 
 function TeacherKpis() {
-  const { data } = useTeachers({ size: 1 })
-  const total = data?.total ?? 0
-
-  return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-      <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <Users className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Enseignants</p>
-            <p className="text-xl font-bold">{total}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
+  const { data } = useTeachers({ size: 200 })
+  const kpis: KpiItem[] = useMemo(() => {
+    const items = data?.items ?? []
+    const total = data?.total ?? items.length
+    const withSpeciality = items.filter((t) => t.speciality?.trim()).length
+    const withPhone = items.filter((t) => t.phone?.trim()).length
+    const withoutSpeciality = items.length - withSpeciality
+    return [
+      { label: "Enseignants", value: total, icon: Users, tone: "primary" },
+      { label: "Avec spécialité", value: withSpeciality, icon: Award, tone: "default" },
+      { label: "Avec téléphone", value: withPhone, icon: Phone, tone: "default" },
+      { label: "Sans spécialité", value: withoutSpeciality, icon: UserX, tone: withoutSpeciality > 0 ? "accent" : "default" },
+    ]
+  }, [data])
+  return <KpiStrip items={kpis} />
 }
 
 export function TeachersPageClient() {

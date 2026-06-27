@@ -1,31 +1,29 @@
 "use client"
 
-import { Briefcase, Users } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { useMemo } from "react"
+import { Briefcase, Users, BadgeCheck, Phone, UserX } from "lucide-react"
 import { CrudPageLayout } from "@/components/shared/CrudPageLayout"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
 import { StaffTable } from "./StaffTable"
 import { StaffCreateModal } from "./StaffCreateModal"
 import { useStaffList } from "@/lib/hooks/useStaff"
 
 function StaffKpis() {
-  const { data } = useStaffList({ size: 1 })
-  const total = data?.total ?? 0
-
-  return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-      <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="p-4 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <Users aria-hidden="true" className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Personnel</p>
-            <p className="text-xl font-bold">{total}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
+  const { data } = useStaffList({ size: 200 })
+  const kpis: KpiItem[] = useMemo(() => {
+    const items = data?.items ?? []
+    const total = data?.total ?? items.length
+    const distinctPositions = new Set(items.map((s) => s.position?.trim()).filter(Boolean)).size
+    const withPhone = items.filter((s) => s.phone?.trim()).length
+    const withoutPosition = items.filter((s) => !s.position?.trim()).length
+    return [
+      { label: "Personnel", value: total, icon: Users, tone: "primary" },
+      { label: "Postes distincts", value: distinctPositions, icon: BadgeCheck, tone: "default" },
+      { label: "Avec téléphone", value: withPhone, icon: Phone, tone: "default" },
+      { label: "Sans poste", value: withoutPosition, icon: UserX, tone: withoutPosition > 0 ? "accent" : "default" },
+    ]
+  }, [data])
+  return <KpiStrip items={kpis} />
 }
 
 export function StaffPageClient() {

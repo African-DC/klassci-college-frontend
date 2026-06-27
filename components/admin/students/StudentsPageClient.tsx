@@ -1,8 +1,9 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Plus, Users } from "lucide-react"
+import { Plus, Users, UserCheck, UserPlus, School } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
 import { StudentsTable } from "./StudentsTable"
 import { useStudentFilters } from "@/lib/hooks/useStudents"
 import { useState } from "react"
@@ -26,6 +27,14 @@ export function StudentsPageClient() {
 
   const total = filters?.total ?? 0
   const noCurrent = filters?.no_current_enrollment_count ?? 0
+  const classesCount = filters?.by_class?.length ?? 0
+
+  const kpis: KpiItem[] = [
+    { label: "Élèves au total", value: total, icon: Users, tone: "primary" },
+    { label: "Inscrits", value: Math.max(total - noCurrent, 0), icon: UserCheck, tone: "emerald" },
+    { label: "À inscrire", value: noCurrent, icon: UserPlus, tone: noCurrent > 0 ? "accent" : "default" },
+    { label: "Classes", value: classesCount, icon: School, tone: "default" },
+  ]
 
   return (
     <div className="space-y-6">
@@ -61,6 +70,7 @@ export function StudentsPageClient() {
           Nouvelle inscription
         </Button>
       </div>
+      <KpiStrip items={kpis} />
       <StudentsTable initialUnenrolledOnly={unenrolledChip} onChipsConsumed={() => setUnenrolledChip(false)} />
     </div>
   )
