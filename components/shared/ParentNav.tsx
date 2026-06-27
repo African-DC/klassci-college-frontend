@@ -25,9 +25,9 @@ export function ParentNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
+                "relative flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
                 isActive
-                  ? "text-primary"
+                  ? "text-primary before:absolute before:top-0 before:left-1/2 before:h-1 before:w-6 before:-translate-x-1/2 before:rounded-full before:bg-accent before:content-['']"
                   : "text-muted-foreground"
               )}
             >

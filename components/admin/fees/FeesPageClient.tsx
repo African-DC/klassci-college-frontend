@@ -29,9 +29,20 @@ import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { useLevels } from "@/lib/hooks/useLevels"
 import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
 
-// Colors based on mandatory/optional type — semantic, not arbitrary
-const MANDATORY_COLOR = { bg: "bg-rose-50/60", border: "border-rose-200/80", icon: "bg-rose-100 text-rose-600" }
-const OPTIONAL_COLOR = { bg: "bg-blue-50/60", border: "border-blue-200/80", icon: "bg-blue-100 text-blue-600" }
+// Couleurs de marque KLASSCI, compatibles thème clair/sombre (tokens) :
+// obligatoire = bleu (primary), optionnel = orange (accent).
+const MANDATORY_COLOR = {
+  bg: "bg-primary/5",
+  border: "border-primary/20",
+  icon: "bg-primary/10 text-primary",
+  badge: "border-primary/30 bg-primary/10 text-primary",
+}
+const OPTIONAL_COLOR = {
+  bg: "bg-accent/5",
+  border: "border-accent/25",
+  icon: "bg-accent/10 text-accent",
+  badge: "border-accent/30 bg-accent/10 text-accent",
+}
 
 export function FeesPageClient() {
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
@@ -188,7 +199,7 @@ export function FeesPageClient() {
                           )}
                         </div>
                       </div>
-                      <Badge variant={cat.is_mandatory ? "destructive" : "secondary"} className="text-[10px] h-5">
+                      <Badge variant="outline" className={`text-[10px] h-5 ${color.badge}`}>
                         {cat.is_mandatory ? "Obligatoire" : "Optionnel"}
                       </Badge>
                     </div>

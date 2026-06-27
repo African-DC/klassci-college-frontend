@@ -145,9 +145,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   href={item.href}
                   onClick={onClose}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                    "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                     isActive
-                      ? "bg-primary/10 text-primary font-medium"
+                      ? "bg-primary/10 text-primary font-medium before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-accent before:content-['']"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >

@@ -3,8 +3,8 @@
 import { ArrowLeft, CheckCircle, Clock, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
 import {
   Table,
   TableBody,
@@ -63,43 +63,12 @@ export function ParentChildFeesClient({ childId }: ParentChildFeesClientProps) {
         </div>
       ) : (
         <>
-          {/* Résumé financier */}
-          <div className="grid grid-cols-3 gap-3">
-            <SummaryCard label="Total" value={`${data.total_expected.toLocaleString("fr-FR")} FCFA`} />
-            <SummaryCard
-              label="Payé"
-              value={`${data.total_paid.toLocaleString("fr-FR")} FCFA`}
-              className="text-emerald-600 dark:text-emerald-400"
-            />
-            <SummaryCard
-              label="Restant"
-              value={`${data.total_remaining.toLocaleString("fr-FR")} FCFA`}
-              className={data.total_remaining === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-accent"}
-            />
-          </div>
-
-          {/* Barre de progression */}
-          {(() => {
-            const paymentPercent = data.total_expected > 0
-              ? Math.min(100, (data.total_paid / data.total_expected) * 100)
-              : 0
-            return (
-              <Card className="border-0 shadow-sm ring-1 ring-border">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted-foreground">Progression des paiements</span>
-                    <span className="text-xs font-medium">{paymentPercent.toFixed(0)}%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-emerald-500 transition-all"
-                      style={{ width: `${paymentPercent}%` }}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })()}
+          {/* Synthèse aux couleurs KLASSCI */}
+          <FeeSummaryHero
+            totalExpected={data.total_expected}
+            totalPaid={data.total_paid}
+            totalRemaining={data.total_remaining}
+          />
 
           {/* Détail par catégorie */}
           {data.fees.length === 0 ? (
@@ -144,25 +113,6 @@ export function ParentChildFeesClient({ childId }: ParentChildFeesClientProps) {
         </>
       )}
     </div>
-  )
-}
-
-function SummaryCard({
-  label,
-  value,
-  className,
-}: {
-  label: string
-  value: string
-  className?: string
-}) {
-  return (
-    <Card className="border-0 shadow-sm ring-1 ring-border">
-      <CardContent className="p-3 text-center">
-        <p className={`text-sm font-bold ${className ?? ""}`}>{value}</p>
-        <p className="text-[10px] text-muted-foreground">{label}</p>
-      </CardContent>
-    </Card>
   )
 }
 
