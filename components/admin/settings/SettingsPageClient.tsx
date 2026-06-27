@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { ArrowRight, Settings, Shield } from "lucide-react"
+import { PageHero } from "@/components/shared/PageHero"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataError } from "@/components/shared/DataError"
@@ -17,17 +18,11 @@ export function SettingsPageClient() {
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <Settings aria-hidden="true" className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="font-serif text-2xl tracking-tight">Paramètres</h1>
-          <p className="text-sm text-muted-foreground">
-            Configuration de l&apos;établissement et des notifications
-          </p>
-        </div>
-      </div>
+      <PageHero
+        icon={Settings}
+        title="Paramètres"
+        subtitle="Configuration de l'établissement et des notifications"
+      />
 
       {/* Contenu */}
       {isLoading ? (

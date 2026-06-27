@@ -12,11 +12,10 @@ import {
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
+import { PageHero, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
 import { AcademicYearBanner } from "@/components/shared/AcademicYearBanner"
 import { useTeacherDashboard } from "@/lib/hooks/useTeacherPortal"
 import type { TeacherUpcomingEval } from "@/lib/contracts/teacher-portal"
@@ -31,7 +30,7 @@ export function TeacherDashboardClient() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <DashboardHeader name={null} />
+        <PageHero title="Espace Enseignant" subtitle="Votre journée en un coup d'œil" />
         <DataError
           message="Impossible de charger le tableau de bord."
           onRetry={() => refetch()}
@@ -43,7 +42,7 @@ export function TeacherDashboardClient() {
   if (!data) {
     return (
       <div className="space-y-6">
-        <DashboardHeader name={null} />
+        <PageHero title="Espace Enseignant" subtitle="Votre journée en un coup d'œil" />
         <div className="py-12 text-center text-sm text-muted-foreground">
           Aucune donnée disponible.
         </div>
@@ -51,19 +50,28 @@ export function TeacherDashboardClient() {
     )
   }
 
+  const heroKpis: HeroKpi[] = [
+    { label: "Élèves", value: data.total_students, icon: Users },
+    { label: "Classes", value: data.total_classes, icon: BookOpen },
+  ]
+
   return (
     <div className="space-y-6">
-      <DashboardHeader name={data.teacher_name}>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setSelfDeclareOpen(true)}
-          className="h-11 sm:h-9"
-        >
-          <CalendarX className="mr-1.5 h-4 w-4" aria-hidden="true" />
-          Me déclarer absent
-        </Button>
-      </DashboardHeader>
+      <PageHero
+        title={data.teacher_name ? `Bonjour, ${data.teacher_name.split(" ")[0]}` : "Espace Enseignant"}
+        subtitle="Votre journée en un coup d'œil"
+        actions={
+          <button
+            type="button"
+            onClick={() => setSelfDeclareOpen(true)}
+            className={heroGlassBtn}
+          >
+            <CalendarX className="h-4 w-4" aria-hidden="true" />
+            Me déclarer absent
+          </button>
+        }
+        kpis={heroKpis}
+      />
 
       <AcademicYearBanner currentYear={data.current_academic_year} role="teacher" />
 
@@ -94,19 +102,23 @@ export function TeacherDashboardClient() {
         </CardContent>
       </Card>
 
-      {/* KPIs — Card neutres shadcn */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard icon={Users} value={data.total_students} label="Élèves" />
-        <Link href="/teacher/classes" className="group">
-          <StatCard
-            icon={BookOpen}
-            value={data.total_classes}
-            label="Classes"
-            className="transition-colors group-hover:border-primary/40"
-            trailing={<ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />}
-          />
-        </Link>
-      </div>
+      {/* Accès rapide — mes classes */}
+      <Link href="/teacher/classes" className="group block">
+        <Card className="shadow-sm transition-colors group-hover:border-primary/40">
+          <CardContent className="flex items-center gap-3 p-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <BookOpen className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">Mes classes</p>
+              <p className="text-xs text-muted-foreground">
+                {data.total_classes} classe{data.total_classes > 1 ? "s" : ""}
+              </p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* Évaluations à venir */}
       <section className="space-y-3">
@@ -135,58 +147,6 @@ export function TeacherDashboardClient() {
         onClose={() => setSelfDeclareOpen(false)}
       />
     </div>
-  )
-}
-
-function DashboardHeader({
-  name,
-  children,
-}: {
-  name: string | null
-  children?: React.ReactNode
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="font-serif text-2xl tracking-tight">
-            {name ? `Bonjour, ${name.split(" ")[0]}` : "Espace Enseignant"}
-          </h1>
-          <p className="text-sm text-muted-foreground">Votre journée en un coup d&apos;œil</p>
-        </div>
-        {children}
-      </div>
-      <Separator />
-    </div>
-  )
-}
-
-function StatCard({
-  icon: Icon,
-  value,
-  label,
-  className,
-  trailing,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  value: React.ReactNode
-  label: string
-  className?: string
-  trailing?: React.ReactNode
-}) {
-  return (
-    <Card className={`shadow-sm ${className ?? ""}`}>
-      <CardContent className="flex items-center gap-3 p-4">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <Icon className="h-5 w-5" aria-hidden="true" />
-        </span>
-        <div className="flex-1">
-          <p className="text-2xl font-bold tabular-nums">{value}</p>
-          <p className="text-xs text-muted-foreground">{label}</p>
-        </div>
-        {trailing}
-      </CardContent>
-    </Card>
   )
 }
 
@@ -234,15 +194,9 @@ function EvaluationCard({ evaluation }: { evaluation: TeacherUpcomingEval }) {
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Skeleton className="h-7 w-48" />
-        <Skeleton className="h-4 w-64" />
-      </div>
+      <Skeleton className="h-40 rounded-2xl" />
       <Skeleton className="h-20 rounded-xl" />
-      <div className="grid grid-cols-2 gap-3">
-        <Skeleton className="h-20 rounded-lg" />
-        <Skeleton className="h-20 rounded-lg" />
-      </div>
+      <Skeleton className="h-20 rounded-lg" />
       <div className="space-y-2">
         <Skeleton className="h-4 w-36" />
         <Skeleton className="h-16 rounded-lg" />

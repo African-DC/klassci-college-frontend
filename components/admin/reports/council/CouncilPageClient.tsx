@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { PageHero } from "@/components/shared/PageHero"
 import { CouncilDeliberationTable } from "./CouncilDeliberationTable"
 import { ReportsNav } from "../ReportsNav"
 import { useCouncilMinutes } from "@/lib/hooks/useCouncil"
@@ -77,17 +78,11 @@ export function CouncilPageClient() {
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <Scale aria-hidden="true" className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="font-serif text-2xl tracking-tight">Conseil de classe</h1>
-          <p className="text-sm text-muted-foreground">
-            Procès-verbaux de délibération — décisions de passage par élève
-          </p>
-        </div>
-      </div>
+      <PageHero
+        icon={Scale}
+        title="Conseil de classe"
+        subtitle="Procès-verbaux de délibération, décisions de passage par élève"
+      />
 
       <ReportsNav current="council" />
 

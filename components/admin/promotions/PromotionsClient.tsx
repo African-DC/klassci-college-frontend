@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import { ArrowRight, ArrowUpFromLine, Check, RotateCcw, TriangleAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageHero, heroGlassBtn } from "@/components/shared/PageHero"
 import {
   Select,
   SelectContent,
@@ -117,25 +118,19 @@ export function PromotionsClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <ArrowUpFromLine aria-hidden="true" className="h-5 w-5 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="font-serif text-xl tracking-tight sm:text-2xl">Promotions</h1>
-            <p className="text-sm text-muted-foreground">
-              Promotion en masse pour préparer la rentrée
-            </p>
-          </div>
-        </div>
-        {step === "preview" && (
-          <Button variant="outline" onClick={reset} className="h-11 gap-2 sm:h-10">
-            <RotateCcw aria-hidden="true" className="h-4 w-4" />
-            Recommencer
-          </Button>
-        )}
-      </div>
+      <PageHero
+        icon={ArrowUpFromLine}
+        title="Promotions"
+        subtitle="Promotion en masse pour préparer la rentrée"
+        actions={
+          step === "preview" ? (
+            <button type="button" className={heroGlassBtn} onClick={reset}>
+              <RotateCcw aria-hidden="true" className="h-4 w-4" />
+              Recommencer
+            </button>
+          ) : undefined
+        }
+      />
 
       {step === "mapping" && (
         <Card>

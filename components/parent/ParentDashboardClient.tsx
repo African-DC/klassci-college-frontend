@@ -1,14 +1,22 @@
 "use client"
 
 import Link from "next/link"
-import { Users, GraduationCap, Wallet, AlertCircle, ChevronRight } from "lucide-react"
+import {
+  Users,
+  GraduationCap,
+  Wallet,
+  AlertCircle,
+  ChevronRight,
+  UserCheck,
+  Clock,
+} from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
+import { PageHero, type HeroKpi } from "@/components/shared/PageHero"
 import { AcademicYearBanner } from "@/components/shared/AcademicYearBanner"
 import { NotEnrolledBanner } from "@/components/shared/NotEnrolledBanner"
 import { useParentDashboard } from "@/lib/hooks/useParentPortal"
@@ -35,7 +43,7 @@ export function ParentDashboardClient() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <DashboardHeader name={null} />
+        <PageHero title="Espace Parent" subtitle="Résumé de vos enfants" />
         <DataError message="Impossible de charger le tableau de bord." onRetry={() => refetch()} />
       </div>
     )
@@ -44,7 +52,7 @@ export function ParentDashboardClient() {
   if (!data) {
     return (
       <div className="space-y-6">
-        <DashboardHeader name={null} />
+        <PageHero title="Espace Parent" subtitle="Résumé de vos enfants" />
         <div className="py-12 text-center text-sm text-muted-foreground">
           Aucune donnée disponible.
         </div>
@@ -54,38 +62,23 @@ export function ParentDashboardClient() {
 
   const enrollment = summarizeEnrollment(data.children)
 
+  // KPIs monochrome dans le hero. Le détail "en attente" garde sa couleur
+  // sémantique (amber) sur les cartes enfants en dessous, pas dans le hero.
+  const heroKpis: HeroKpi[] = [
+    { label: "Mes enfants", value: enrollment.total, icon: Users },
+    { label: "Inscrits", value: enrollment.enrolled, icon: UserCheck },
+    { label: "En attente", value: enrollment.pending, icon: Clock },
+  ]
+
   return (
     <div className="space-y-6">
-      <DashboardHeader name={data.parent_name} />
+      <PageHero
+        title={data.parent_name ? `Bonjour, ${data.parent_name.split(" ")[0]}` : "Espace Parent"}
+        subtitle="Résumé de vos enfants"
+        kpis={heroKpis}
+      />
 
       <AcademicYearBanner currentYear={data.current_academic_year} role="parent" />
-
-      {/* Résumé "Mes enfants" — seul accent primary. Le label compte les
-          enfants suivis, avec un breakdown inscrits / en attente. */}
-      <Card className="border-primary/30 bg-primary/5 shadow-sm">
-        <CardContent className="flex items-center gap-3 p-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Users className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium uppercase tracking-wider text-primary">Mes enfants</p>
-            <p className="text-2xl font-bold leading-tight tabular-nums">{enrollment.total}</p>
-            {enrollment.total > 0 && (
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {enrollment.enrolled} inscrit{enrollment.enrolled > 1 ? "s" : ""}
-                {enrollment.pending > 0 && (
-                  <>
-                    {" · "}
-                    <span className="font-medium text-amber-700 dark:text-amber-400">
-                      {enrollment.pending} en attente
-                    </span>
-                  </>
-                )}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Cartes enfants */}
       {data.children.length === 0 ? (
@@ -104,20 +97,6 @@ export function ParentDashboardClient() {
           ))}
         </div>
       )}
-    </div>
-  )
-}
-
-function DashboardHeader({ name }: { name: string | null }) {
-  return (
-    <div className="space-y-4">
-      <div className="space-y-1">
-        <h1 className="font-serif text-2xl tracking-tight">
-          {name ? `Bonjour, ${name.split(" ")[0]}` : "Espace Parent"}
-        </h1>
-        <p className="text-sm text-muted-foreground">Résumé de vos enfants</p>
-      </div>
-      <Separator />
     </div>
   )
 }
@@ -259,11 +238,7 @@ function ChildKpi({
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Skeleton className="h-7 w-48" />
-        <Skeleton className="h-4 w-32" />
-      </div>
-      <Skeleton className="h-20 rounded-lg" />
+      <Skeleton className="h-40 rounded-2xl" />
       {Array.from({ length: 2 }).map((_, i) => (
         <Skeleton key={i} className="h-44 rounded-lg" />
       ))}
