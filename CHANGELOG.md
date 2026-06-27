@@ -15,6 +15,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais admin : les cartes de catégories adoptent les couleurs de la marque (obligatoire en bleu, optionnel en orange) et s'affichent correctement en mode sombre, là où elles restaient en tons clairs *(admin)*.
 - Indicateurs clés des pages de gestion désormais alimentés par un calcul serveur : les chiffres restent exacts même au-delà de 100 lignes (grands établissements), là où ils étaient auparavant tronqués *(admin)*.
 
+### Fixed
+
+- Page Frais de l'élève et du parent : la liste restait en chargement infini puis en erreur pour un élève inscrit. Les montants, le total payé, le reste à payer et le statut de chaque frais s'affichent désormais correctement *(élève, parent)*.
+
 ### Added
 
 - Indicateurs clés (KPI), recherche instantanée et filtres ajoutés sur les pages de gestion qui en manquaient : Classes, Matières, Niveaux, Années scolaires, Inscriptions, Salles, Notifications, Frais, ainsi que les listes Élèves, Enseignants, Personnel et Parents. La recherche ignore les accents et la casse (taper « traore » trouve « Traoré ») *(admin)*.

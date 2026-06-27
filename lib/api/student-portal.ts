@@ -3,7 +3,6 @@ import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
   StudentDashboardSchema,
   StudentGradesResponseSchema,
-  StudentFeesResponseSchema,
   StudentBulletinSchema,
   StudentAttendanceResponseSchema,
   type StudentDashboard,
@@ -19,6 +18,31 @@ import {
 
 const TimetableSlotArraySchema = z.array(TimetableSlotSchema)
 const StudentBulletinArraySchema = z.array(StudentBulletinSchema)
+
+// Le BE /student/fees renvoie {total_due, total_paid, balance, fees:[{id,
+// fee_category_name, amount, status: paid|partial|pending, payments}]}. On
+// valide cette forme réelle puis on la normalise vers le contrat consommé par
+// l'UI (total_expected/total_remaining/category_name/paye|partiel|impaye).
+const FeePaymentRawSchema = z.object({ amount: z.coerce.number() }).passthrough()
+const StudentFeeRawSchema = z.object({
+  id: z.number(),
+  fee_category_name: z.string(),
+  amount: z.coerce.number(),
+  status: z.string(),
+  payments: z.array(FeePaymentRawSchema).default([]),
+})
+const StudentFeesRawSchema = z.object({
+  total_due: z.coerce.number(),
+  total_paid: z.coerce.number(),
+  balance: z.coerce.number(),
+  fees: z.array(StudentFeeRawSchema).default([]),
+})
+
+export function mapFeeStatus(status: string): "paye" | "partiel" | "impaye" {
+  if (status === "paid" || status === "paye") return "paye"
+  if (status === "partial" || status === "partiel") return "partiel"
+  return "impaye"
+}
 
 // Extrait l'item de la réponse API, qu'elle soit { data: T } ou T directement
 function unwrapResponse<T>(res: unknown): T {
@@ -85,10 +109,28 @@ export const studentPortalApi = {
     return safeValidate(TimetableSlotArraySchema, mapped, "GET /student/timetable")
   },
 
-  // Frais et paiements
+  // Frais et paiements — normalise la réponse BE vers le contrat UI.
   getFees: async (): Promise<StudentFeesResponse> => {
     const res = await apiFetch<unknown>("/student/fees")
-    return safeValidate(StudentFeesResponseSchema, unwrapResponse(res), "GET /student/fees")
+    const raw = safeValidate(StudentFeesRawSchema, unwrapResponse(res), "GET /student/fees")
+    return {
+      academic_year: "",
+      total_expected: raw.total_due,
+      total_paid: raw.total_paid,
+      total_remaining: raw.balance,
+      fees: (raw.fees ?? []).map((f) => {
+        const paid = (f.payments ?? []).reduce((sum, p) => sum + p.amount, 0)
+        return {
+          id: f.id,
+          category_name: f.fee_category_name,
+          total_amount: f.amount,
+          paid_amount: paid,
+          remaining: Math.max(0, f.amount - paid),
+          status: mapFeeStatus(f.status),
+          last_payment_date: null,
+        }
+      }),
+    }
   },
 
   // Bulletins publiés
