@@ -10,7 +10,7 @@ import { ParentCreateModal } from "./ParentCreateModal"
 
 export function ParentsPageClient() {
   const [createOpen, setCreateOpen] = useState(false)
-  const { data } = useParents({ size: 200 })
+  const { data } = useParents({ size: 100 })
   const total = data?.total ?? 0
 
   const kpis: KpiItem[] = useMemo(() => {

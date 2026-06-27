@@ -78,7 +78,7 @@ export function RoomsPageClient() {
 
   const { data, isLoading, isError, error, refetch } = useRooms(params)
   // Requête non filtrée pour les KPIs (le `data` ci-dessus est filtré par type/recherche).
-  const { data: allRoomsData } = useRooms({ size: 200 })
+  const { data: allRoomsData } = useRooms({ size: 100 })
   const { data: classesData } = useClasses({ size: 100 })
   const deleteMutation = useDeleteRoom()
   const rooms = data?.items ?? []

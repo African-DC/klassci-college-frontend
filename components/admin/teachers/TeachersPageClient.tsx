@@ -9,7 +9,7 @@ import { TeacherCreateModal } from "./TeacherCreateModal"
 import { useTeachers } from "@/lib/hooks/useTeachers"
 
 function TeacherKpis() {
-  const { data } = useTeachers({ size: 200 })
+  const { data } = useTeachers({ size: 100 })
   const kpis: KpiItem[] = useMemo(() => {
     const items = data?.items ?? []
     const total = data?.total ?? items.length
