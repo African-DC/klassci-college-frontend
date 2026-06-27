@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { useAdminSummary } from "@/lib/hooks/useDashboard"
 import {
   Dialog,
   DialogContent,
@@ -77,32 +78,28 @@ export function RoomsPageClient() {
   }), [debouncedSearch, typeFilter])
 
   const { data, isLoading, isError, error, refetch } = useRooms(params)
-  // Requête non filtrée pour les KPIs (le `data` ci-dessus est filtré par type/recherche).
-  const { data: allRoomsData } = useRooms({ size: 100 })
+  const { data: summary } = useAdminSummary()
   const { data: classesData } = useClasses({ size: 100 })
   const deleteMutation = useDeleteRoom()
   const rooms = data?.items ?? []
-  const allRooms = useMemo(() => allRoomsData?.items ?? [], [allRoomsData])
   const allClasses = classesData?.items ?? []
 
-  // Classes without a room
+  // Classes without a room (bannière actionnable)
   const classesWithoutRoom = useMemo(() => {
     const roomClassIds = new Set(rooms.filter((r) => r.class_id).map((r) => r.class_id))
     return allClasses.filter((c) => !c.room_id && !roomClassIds.has(c.id))
   }, [allClasses, rooms])
 
   const roomsKpis: KpiItem[] = useMemo(() => {
-    const totalCapacity = allRooms.reduce((s, r) => s + (r.capacity ?? 0), 0)
-    const classrooms = allRooms.filter((r) => r.room_type === "classroom").length
-    const noRoomClassIds = new Set(allRooms.filter((r) => r.class_id).map((r) => r.class_id))
-    const noRoom = allClasses.filter((c) => !c.room_id && !noRoomClassIds.has(c.id)).length
+    const r = summary?.rooms
+    const noRoom = r?.classes_without_room ?? 0
     return [
-      { label: "Salles", value: allRooms.length, icon: DoorOpen, tone: "primary" },
-      { label: "Capacité totale", value: totalCapacity, icon: Users, tone: "default" },
-      { label: "Salles de classe", value: classrooms, icon: School, tone: "default" },
+      { label: "Salles", value: r?.total ?? 0, icon: DoorOpen, tone: "primary" },
+      { label: "Capacité totale", value: r?.capacity ?? 0, icon: Users, tone: "default" },
+      { label: "Salles de classe", value: r?.classrooms ?? 0, icon: School, tone: "default" },
       { label: "Classes sans salle", value: noRoom, icon: AlertTriangle, tone: noRoom > 0 ? "accent" : "default" },
     ]
-  }, [allRooms, allClasses])
+  }, [summary])
 
   // Batch create mutation
   const batchMutation = useMutation({

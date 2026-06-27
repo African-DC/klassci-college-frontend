@@ -4,26 +4,21 @@ import { useMemo, useState } from "react"
 import { School, Plus, LayoutGrid, List, Users, Gauge, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
-import { useClasses } from "@/lib/hooks/useClasses"
+import { useAdminSummary } from "@/lib/hooks/useDashboard"
 import { ClassesTable } from "./ClassesTable"
 import { ClassesTreeView } from "./ClassesTreeView"
 import { ClassCreateModal } from "./ClassCreateModal"
 
 function ClassesKpis() {
-  const { data } = useClasses({ size: 100 })
+  const { data } = useAdminSummary()
   const kpis: KpiItem[] = useMemo(() => {
-    const items = data?.items ?? []
-    const enrolled = items.reduce((s, c) => s + (c.enrolled_count ?? 0), 0)
-    const capacity = items.reduce((s, c) => s + (c.max_students ?? 0), 0)
-    const rate = capacity > 0 ? Math.round((enrolled / capacity) * 100) : 0
-    const full = items.filter(
-      (c) => (c.max_students ?? 0) > 0 && (c.enrolled_count ?? 0) / (c.max_students ?? 1) > 0.95,
-    ).length
+    const c = data?.classes
+    const rate = c && c.capacity > 0 ? Math.round((c.enrolled / c.capacity) * 100) : 0
     return [
-      { label: "Classes", value: items.length, icon: School, tone: "primary" },
-      { label: "Élèves inscrits", value: enrolled, icon: Users, tone: "default" },
+      { label: "Classes", value: c?.total ?? 0, icon: School, tone: "primary" },
+      { label: "Élèves inscrits", value: c?.enrolled ?? 0, icon: Users, tone: "default" },
       { label: "Taux d'occupation", value: `${rate}%`, icon: Gauge, tone: rate >= 80 ? "accent" : "emerald" },
-      { label: "Classes pleines", value: full, icon: AlertTriangle, tone: full > 0 ? "destructive" : "default" },
+      { label: "Classes pleines", value: c?.full ?? 0, icon: AlertTriangle, tone: (c?.full ?? 0) > 0 ? "destructive" : "default" },
     ]
   }, [data])
   return <KpiStrip items={kpis} />

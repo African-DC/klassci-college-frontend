@@ -6,20 +6,17 @@ import { CrudPageLayout } from "@/components/shared/CrudPageLayout"
 import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
 import { StaffTable } from "./StaffTable"
 import { StaffCreateModal } from "./StaffCreateModal"
-import { useStaffList } from "@/lib/hooks/useStaff"
+import { useAdminSummary } from "@/lib/hooks/useDashboard"
 
 function StaffKpis() {
-  const { data } = useStaffList({ size: 100 })
+  const { data } = useAdminSummary()
   const kpis: KpiItem[] = useMemo(() => {
-    const items = data?.items ?? []
-    const total = data?.total ?? items.length
-    const distinctPositions = new Set(items.map((s) => s.position?.trim()).filter(Boolean)).size
-    const withPhone = items.filter((s) => s.phone?.trim()).length
-    const withoutPosition = items.filter((s) => !s.position?.trim()).length
+    const s = data?.staff
+    const withoutPosition = s?.without_position ?? 0
     return [
-      { label: "Personnel", value: total, icon: Users, tone: "primary" },
-      { label: "Postes distincts", value: distinctPositions, icon: BadgeCheck, tone: "default" },
-      { label: "Avec téléphone", value: withPhone, icon: Phone, tone: "default" },
+      { label: "Personnel", value: s?.total ?? 0, icon: Users, tone: "primary" },
+      { label: "Postes distincts", value: s?.distinct_positions ?? 0, icon: BadgeCheck, tone: "default" },
+      { label: "Avec téléphone", value: s?.with_phone ?? 0, icon: Phone, tone: "default" },
       { label: "Sans poste", value: withoutPosition, icon: UserX, tone: withoutPosition > 0 ? "accent" : "default" },
     ]
   }, [data])

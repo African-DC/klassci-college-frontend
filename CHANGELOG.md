@@ -8,6 +8,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Changed
+
+- Indicateurs clés des pages de gestion désormais alimentés par un calcul serveur : les chiffres restent exacts même au-delà de 100 lignes (grands établissements), là où ils étaient auparavant tronqués *(admin)*.
+
 ### Added
 
 - Indicateurs clés (KPI), recherche instantanée et filtres ajoutés sur les pages de gestion qui en manquaient : Classes, Matières, Niveaux, Années scolaires, Inscriptions, Salles, Notifications, Frais, ainsi que les listes Élèves, Enseignants, Personnel et Parents. La recherche ignore les accents et la casse (taper « traore » trouve « Traoré ») *(admin)*.
