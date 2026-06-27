@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
-import { CheckCircle2, Circle, CalendarRange, CalendarCheck, History, CalendarClock } from "lucide-react"
+import { CheckCircle2, Circle } from "lucide-react"
 import { useAcademicYears, useDeleteAcademicYear, useSetCurrentYear } from "@/lib/hooks/useAcademicYears"
 import type { AcademicYear } from "@/lib/contracts/academic-year"
 import type { PaginatedResponse } from "@/lib/contracts"
 import { CrudTable, type FilterConfig } from "@/components/shared/CrudTable"
-import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
 import { AcademicYearEditModal } from "./AcademicYearEditModal"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -34,18 +33,6 @@ export function AcademicYearsTable() {
 
   const allItems = useMemo(() => data?.items ?? [], [data])
   const now = Date.now()
-
-  const kpis: KpiItem[] = useMemo(() => {
-    const current = allItems.find((y) => y.is_current)
-    const past = allItems.filter((y) => !y.is_current && new Date(y.end_date).getTime() < now).length
-    const upcoming = allItems.filter((y) => !y.is_current && new Date(y.start_date).getTime() > now).length
-    return [
-      { label: "Années", value: allItems.length, icon: CalendarRange, tone: "primary" },
-      { label: "Année courante", value: current?.name ?? "—", icon: CalendarCheck, tone: current ? "emerald" : "default" },
-      { label: "Passées", value: past, icon: History, tone: "default" },
-      { label: "À venir", value: upcoming, icon: CalendarClock, tone: "default" },
-    ]
-  }, [allItems, now])
 
   const filtered = useMemo(() => {
     return allItems.filter((y) => {
@@ -126,7 +113,6 @@ export function AcademicYearsTable() {
 
   return (
     <div className="space-y-4">
-      <KpiStrip items={kpis} />
       <CrudTable<AcademicYear>
         data={tableData}
         columns={columns}

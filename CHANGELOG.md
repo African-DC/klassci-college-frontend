@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Bandeau de synthèse des Frais (élève, parent) repassé au dégradé bleu-orange de la marque, et indicateurs de la page Années scolaires intégrés au bandeau d'en-tête *(tous)*.
 - Tableaux de bord enseignant, élève et parent désormais en tête de page sur le bandeau bleu-orange KLASSCI, indicateurs clés intégrés. Pages Promotions, Paramètres, Conseil de classe et Statistiques DREN harmonisées sur le même bandeau *(tous)*.
 - Refonte visuelle de toute l'application : chaque page (tableau de bord, listes d'administration, portails enseignant et parent) s'ouvre désormais sur un bandeau au dégradé **bleu et orange** (les deux couleurs du logo KLASSCI), avec les indicateurs clés intégrés en blanc et l'action principale mise en avant en orange. Les en-têtes de section reprennent l'orange de la marque. Identité cohérente du haut de page jusqu'aux moindres détails, vérifiée en mode clair et sombre *(tous)*.
 - Pages Frais (élève, parent) avec un bandeau de synthèse bleu marque : total attendu, montant payé en vert et « Reste à payer » mis en avant en orange, avec barre de progression. Plus lisible d'un coup d'œil *(élève, parent)*.

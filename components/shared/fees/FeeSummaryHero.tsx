@@ -31,7 +31,7 @@ export function FeeSummaryHero({
     <section
       aria-label="Résumé des frais"
       className={cn(
-        "rounded-2xl bg-primary p-5 text-primary-foreground shadow-sm sm:p-6",
+        "rounded-2xl bg-[linear-gradient(135deg,#0a3d8f_0%,#0453cb_42%,#2a69cb_56%,#f5821f_92%)] p-5 text-primary-foreground shadow-sm sm:p-6",
         className,
       )}
     >
@@ -79,8 +79,8 @@ export function FeeSummaryHero({
               !hasExpected
                 ? "text-primary-foreground/80"
                 : settled
-                  ? "text-emerald-300"
-                  : "text-accent",
+                  ? "text-emerald-200"
+                  : "text-white",
             )}
           >
             {hasExpected ? fmt(totalRemaining) : "—"}
