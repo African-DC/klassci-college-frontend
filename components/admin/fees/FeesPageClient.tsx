@@ -5,8 +5,8 @@ import { Plus, Pencil, Trash2, Wallet, Search, X, Shield, CircleDot, Layers, Coi
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { PageHero, heroGlassBtn, heroPrimaryBtn } from "@/components/shared/PageHero"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { PageHero, SectionTitle, heroGlassBtn, heroAccentBtn, premiumCardHover } from "@/components/shared/PageHero"
 import { FilterChips } from "@/components/shared/list/FilterChips"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -138,7 +138,7 @@ export function FeesPageClient() {
               <Layers className="h-4 w-4" />
               Nouvelle variante
             </button>
-            <button type="button" className={heroPrimaryBtn} onClick={() => setCategoryModalOpen(true)}>
+            <button type="button" className={heroAccentBtn} onClick={() => setCategoryModalOpen(true)}>
               <Plus className="h-4 w-4" />
               Nouvelle catégorie
             </button>
@@ -155,7 +155,7 @@ export function FeesPageClient() {
       {/* Categories as premium cards */}
       <div>
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Catégories de frais</h2>
+          <SectionTitle icon={Wallet}>Catégories de frais</SectionTitle>
           <FilterChips
             aria-label="Filtrer les catégories"
             value={categoryFilter}
@@ -180,7 +180,7 @@ export function FeesPageClient() {
               const catVariants = variantsByCategory.get(cat.id) ?? []
               const totalAmount = catVariants.reduce((sum, v) => sum + v.amount, 0)
               return (
-                <Card key={cat.id} className={`border ${color.border} ${color.bg} shadow-sm hover:shadow-md transition-shadow`}>
+                <Card key={cat.id} className={`border ${color.border} ${color.bg} shadow-sm ${premiumCardHover}`}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2.5">
@@ -251,9 +251,7 @@ export function FeesPageClient() {
       {/* Variantes (montants par niveau) avec search */}
       <Card className="border-0 shadow-sm ring-1 ring-border overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Montants par niveau
-          </CardTitle>
+          <SectionTitle icon={Coins}>Montants par niveau</SectionTitle>
           <div className="relative w-[220px]">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
