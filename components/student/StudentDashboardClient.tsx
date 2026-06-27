@@ -2,8 +2,8 @@
 
 import { CalendarDays, ClipboardList, Wallet, AlertCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PageHero, type HeroKpi } from "@/components/shared/PageHero"
 import { AcademicYearBanner } from "@/components/shared/AcademicYearBanner"
 import { NotEnrolledBanner } from "@/components/shared/NotEnrolledBanner"
 import { useStudentDashboard } from "@/lib/hooks/useStudentPortal"
@@ -17,7 +17,7 @@ export function StudentDashboardClient() {
   if (isError || !data) {
     return (
       <div className="space-y-6">
-        <DashboardHeader title="Espace Élève" subtitle="Votre résumé du jour" />
+        <PageHero title="Espace Élève" subtitle="Votre résumé du jour" />
         <div className="py-12 text-center text-sm text-muted-foreground">
           Impossible de charger le tableau de bord. Veuillez réessayer.
         </div>
@@ -33,11 +33,33 @@ export function StudentDashboardClient() {
     ? `${data.class_name} · Votre résumé du jour`
     : "Votre espace personnel"
 
+  // KPIs monochrome dans le hero. On garde la logique "non inscrit" : on
+  // affiche "—" tant que l'élève n'a pas d'inscription validée, plutôt que des
+  // zéros trompeurs (les couleurs sémantiques restent sur les statuts hors hero).
+  const heroKpis: HeroKpi[] = [
+    {
+      label: "Moyenne",
+      value: data.general_average !== null ? `${data.general_average.toFixed(2)}/20` : "—",
+      icon: ClipboardList,
+    },
+    {
+      label: "Frais restants",
+      value: isEnrolled ? `${data.fees_remaining.toLocaleString("fr-FR")} FCFA` : "—",
+      icon: Wallet,
+    },
+    {
+      label: "Absences",
+      value: isEnrolled ? String(data.total_absences) : "—",
+      icon: AlertCircle,
+    },
+  ]
+
   return (
     <div className="space-y-6">
-      <DashboardHeader
+      <PageHero
         title={`Bonjour, ${data.student_name.split(" ")[0]}`}
         subtitle={subtitle}
+        kpis={heroKpis}
       />
 
       <AcademicYearBanner currentYear={data.current_academic_year} role="student" />
@@ -72,98 +94,15 @@ export function StudentDashboardClient() {
           </div>
         </CardContent>
       </Card>
-
-      {/* KPIs — `—` muted quand non applicable pour éviter le faux signal
-          "0 FCFA vert = tout payé" alors qu'aucun frais n'est encore affecté. */}
-      <div className="grid grid-cols-3 gap-3">
-        <KpiTile
-          icon={ClipboardList}
-          label="Moyenne"
-          value={data.general_average !== null ? `${data.general_average.toFixed(2)}/20` : "—"}
-          valueClassName={
-            data.general_average === null
-              ? "text-muted-foreground"
-              : data.general_average >= 10
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-amber-600"
-          }
-        />
-        <KpiTile
-          icon={Wallet}
-          label="Frais restants"
-          value={isEnrolled ? `${data.fees_remaining.toLocaleString("fr-FR")} FCFA` : "—"}
-          valueClassName={
-            !isEnrolled
-              ? "text-muted-foreground"
-              : data.fees_remaining === 0
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-accent"
-          }
-        />
-        <KpiTile
-          icon={AlertCircle}
-          label="Absences"
-          value={isEnrolled ? String(data.total_absences) : "—"}
-          valueClassName={
-            !isEnrolled
-              ? "text-muted-foreground"
-              : data.total_absences > 5
-                ? "text-destructive"
-                : "text-foreground"
-          }
-        />
-      </div>
     </div>
-  )
-}
-
-function DashboardHeader({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div className="space-y-4">
-      <div className="space-y-1">
-        <h1 className="font-serif text-2xl tracking-tight">{title}</h1>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
-      </div>
-      <Separator />
-    </div>
-  )
-}
-
-function KpiTile({
-  icon: Icon,
-  label,
-  value,
-  valueClassName,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string
-  valueClassName?: string
-}) {
-  return (
-    <Card className="shadow-sm">
-      <CardContent className="p-3 text-center">
-        <Icon className="mx-auto mb-1 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-        <p className={`text-lg font-bold tabular-nums ${valueClassName ?? ""}`}>{value}</p>
-        <p className="text-[10px] text-muted-foreground">{label}</p>
-      </CardContent>
-    </Card>
   )
 }
 
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Skeleton className="h-7 w-48" />
-        <Skeleton className="h-4 w-64" />
-      </div>
+      <Skeleton className="h-44 rounded-2xl" />
       <Skeleton className="h-20 rounded-xl" />
-      <div className="grid grid-cols-3 gap-3">
-        <Skeleton className="h-24 rounded-lg" />
-        <Skeleton className="h-24 rounded-lg" />
-        <Skeleton className="h-24 rounded-lg" />
-      </div>
     </div>
   )
 }
