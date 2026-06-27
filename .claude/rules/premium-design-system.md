@@ -25,12 +25,16 @@ jusqu'au plus petit bouton imbriqué, **sur les 10 couches de profondeur**.
 | `--muted` / `--card` / `--border` | — | Surfaces et profondeur |
 | `--background` / `--foreground` | — | Fond de page / texte |
 
-### Les 3 bleus du dégradé hero (signature)
+### Le dégradé bi-marque du hero (signature)
 
+Le hero glisse du **bleu** (titre, à gauche) vers **l'orange du logo** (coin bas-droite) :
+les DEUX couleurs de la marque dans le fond du hero.
 ```
-#0a3d8f  →  #0453cb  →  #3b7ddb
+bg-[linear-gradient(135deg,#0a3d8f_0%,#0453cb_42%,#2a69cb_56%,#f5821f_92%)]
 ```
-Utilisés **uniquement** dans le `PageHero` (`bg-gradient-to-br from-[#0a3d8f] via-[#0453cb] to-[#3b7ddb]`).
+Le titre et les actions restent sur la zone bleue (haut). L'orange occupe le coin
+bas-droite (derrière les derniers KPIs) → l'orange se voit dans le fond, pas juste
+sur un bouton. Réservé au `PageHero`.
 
 ### Couleurs sémantiques (statut uniquement, jamais décoratif)
 
@@ -67,8 +71,9 @@ Ne jamais réinventer un en‑tête. Les **formulaires (create/edit)** n'ont **p
 de hero : ils utilisent l'en‑tête standard (icône `bg-primary` + titre).
 
 Structure :
-- Dégradé bleu 3 stops, texte blanc, icône en pastille verre (`bg-white/10 border-white/15`).
-- **1 accent orange focal** : le CTA principal en orange (`bg-accent`) OU un trait/badge orange.
+- **Dégradé bleu→orange** (les 2 couleurs du logo), texte blanc, icône en pastille verre.
+- L'orange est présent **dans le fond** (coin bas-droite) ET sur le **CTA focal** (`heroAccentBtn`,
+  orange + ring blanc pour rester net sur la zone orange).
 - **KPIs intégrés dans le hero** en cartes verre blanches (`bg-white/10 border-white/15`),
   monochrome blanc (jamais une couleur par KPI). Layout d'une carte KPI :
   **label petit en haut** (`text-[11px] uppercase text-white/65`) + icône discrète à
@@ -116,7 +121,7 @@ le focal orange**. Une carte dans une carte dans une carte reste lisible.
 | 1 | **Hero** | dégradé bleu, `text-white` | — | `rounded-2xl` | `shadow-sm` | `PageHero` | **1 orange focal** |
 | 2 | **Section card** | `bg-card` | `border` | `rounded-xl` | `shadow-sm` | `Card` | titre bleu + 1 action |
 | 3 | **Sub-card** (carte dans carte) | `bg-muted/40` | `border-border/60` | `rounded-lg` | — | `p-4` | `Card`/`div` | — |
-| 4 | **Section-bar** (en‑tête interne) | section-icon dégradé + titre | `border-b` | — | — | `pb-3` | `CardHeader` | icône dégradé bleu |
+| 4 | **Section-bar** (en‑tête interne) | section-icon dégradé + titre | `border-b` | — | — | `pb-3` | `CardHeader` | icône dégradé **orange** |
 | 5 | **Row / list item** | `bg-background`, hover `bg-muted/50` | `border-b last:border-0` | — | — | `px-3 py-2.5` | `TableRow` / `div` | statut (badge) |
 | 6 | **Inline group** (groupe dans une ligne) | `bg-muted/60` | `border` | `rounded-md` | — | `p-2` | `div` | — |
 | 7 | **Control** (input/select) | `bg-background` | `border-input` | `rounded-md` | — | `h-9 px-3` | `Input`/`Select` | ring `--ring` au focus |
@@ -154,9 +159,11 @@ opacité de surface qui monte. Jamais deux `bg-card` adjacents sans séparation
 
 ### Section-bar interne (couche 4) — section-icon dégradé
 
+L'icône de section est au **dégradé orange** (l'orange de la marque, qui se diffuse
+ainsi sur chaque sous-section de la page, pas seulement dans le hero) :
 ```tsx
 <div className="flex items-center gap-2.5 border-b pb-3">
-  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[#3b7ddb] text-white shadow-sm">
+  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#f5821f] to-[#f9a826] text-white shadow-sm">
     <Icon className="h-4 w-4" />
   </span>
   <h2 className="text-sm font-semibold">Montants par niveau</h2>
