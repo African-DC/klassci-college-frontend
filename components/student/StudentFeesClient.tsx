@@ -2,8 +2,8 @@
 
 import { CheckCircle, Clock, AlertCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
 import {
   Table,
   TableBody,
@@ -45,53 +45,13 @@ export function StudentFeesClient() {
         </div>
       ) : (
         <>
-          {/* Résumé financier — Wave-style 3 KPIs amount-first.
-              Neutralisé en gris si total_expected=0 (signal vert "—FCFA payé"
-              quand rien à payer = faux signal — cf. rule not-enrolled-empty-state). */}
-          <div className="grid grid-cols-3 gap-3">
-            <SummaryCard
-              label="Total"
-              value={`${data.total_expected.toLocaleString("fr-FR")} FCFA`}
-            />
-            <SummaryCard
-              label="Payé"
-              value={`${data.total_paid.toLocaleString("fr-FR")} FCFA`}
-              className={data.total_expected > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}
-            />
-            <SummaryCard
-              label="Restant"
-              value={`${data.total_remaining.toLocaleString("fr-FR")} FCFA`}
-              className={
-                data.total_expected === 0
-                  ? "text-muted-foreground"
-                  : data.total_remaining === 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-accent"
-              }
-            />
-          </div>
-
-          {/* Barre de progression */}
-          <Card className="border-0 shadow-sm ring-1 ring-border">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground">Progression des paiements</span>
-                <span className="text-xs font-medium">
-                  {data.total_expected > 0
-                    ? `${Math.min(100, (data.total_paid / data.total_expected) * 100).toFixed(0)}%`
-                    : "0%"}
-                </span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-emerald-500 transition-all"
-                  style={{
-                    width: `${data.total_expected > 0 ? Math.min(100, (data.total_paid / data.total_expected) * 100) : 0}%`,
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          {/* Synthèse aux couleurs KLASSCI. Neutralisé si rien à payer
+              (cf. rule not-enrolled-empty-state). */}
+          <FeeSummaryHero
+            totalExpected={data.total_expected}
+            totalPaid={data.total_paid}
+            totalRemaining={data.total_remaining}
+          />
 
           {/* Détail par catégorie */}
           {data.fees.length === 0 ? (
@@ -136,25 +96,6 @@ export function StudentFeesClient() {
         </>
       )}
     </div>
-  )
-}
-
-function SummaryCard({
-  label,
-  value,
-  className,
-}: {
-  label: string
-  value: string
-  className?: string
-}) {
-  return (
-    <Card className="border-0 shadow-sm ring-1 ring-border">
-      <CardContent className="p-3 text-center">
-        <p className={`text-sm font-bold ${className ?? ""}`}>{value}</p>
-        <p className="text-[10px] text-muted-foreground">{label}</p>
-      </CardContent>
-    </Card>
   )
 }
 

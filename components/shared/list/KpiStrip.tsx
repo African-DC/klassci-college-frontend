@@ -20,6 +20,16 @@ const toneStyles: Record<KpiTone, string> = {
   emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
 }
 
+// Liseré de gauche aux couleurs de la marque KLASSCI (bleu / orange) pour que
+// l'identité se ressente sur chaque liste. Tons sémantiques conservés.
+const edgeStyles: Record<KpiTone, string> = {
+  default: "border-l-border",
+  primary: "border-l-primary",
+  accent: "border-l-accent",
+  destructive: "border-l-destructive",
+  emerald: "border-l-emerald-500",
+}
+
 export interface KpiItem {
   label: string
   value: React.ReactNode
@@ -56,7 +66,7 @@ export function KpiStrip({ items, columns = 4, className }: KpiStripProps) {
             key={i}
             role="group"
             aria-label={valueText ? `${item.label} : ${valueText}` : item.label}
-            className="shadow-sm"
+            className={cn("border-l-[3px] shadow-sm", edgeStyles[item.tone ?? "default"])}
           >
             <CardContent className="flex items-start justify-between gap-3 p-4">
               <div className="min-w-0 space-y-0.5">

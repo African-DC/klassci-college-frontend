@@ -105,8 +105,10 @@ export function StudentNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
-                  isActive ? "text-primary" : "text-muted-foreground",
+                  "relative flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
+                  isActive
+                    ? "text-primary before:absolute before:top-0 before:left-1/2 before:h-1 before:w-6 before:-translate-x-1/2 before:rounded-full before:bg-accent before:content-['']"
+                    : "text-muted-foreground",
                 )}
               >
                 <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
@@ -119,8 +121,10 @@ export function StudentNav() {
             aria-haspopup="true"
             onClick={() => setMoreOpen((prev) => !prev)}
             className={cn(
-              "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
-              isMoreActive || moreOpen ? "text-primary" : "text-muted-foreground",
+              "relative flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
+              isMoreActive || moreOpen
+                ? "text-primary before:absolute before:top-0 before:left-1/2 before:h-1 before:w-6 before:-translate-x-1/2 before:rounded-full before:bg-accent before:content-['']"
+                : "text-muted-foreground",
             )}
           >
             <MoreHorizontal className={cn("h-5 w-5", (isMoreActive || moreOpen) && "text-primary")} />
