@@ -105,9 +105,10 @@ export function SectionTitle({
   )
 }
 
-/** Bouton ORANGE plein — l'action focale du hero (accent KLASSCI). */
+/** Bouton ORANGE plein — l'action focale du hero. Ring blanc pour rester net
+ * même sur la zone orange du dégradé du hero. */
 export const heroAccentBtn =
-  "inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-3.5 text-sm font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/90"
+  "inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-3.5 text-sm font-semibold text-accent-foreground shadow-sm ring-1 ring-white/35 transition-colors hover:bg-accent/90"
 
 /** Bouton blanc plein pour action principale alternative dans le hero (texte bleu). */
 export const heroPrimaryBtn =
