@@ -8,20 +8,18 @@ import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
 import { EnrollmentsTable } from "./EnrollmentsTable"
 import { EnrollmentCreateModal } from "./EnrollmentCreateModal"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
+import { useAdminSummary } from "@/lib/hooks/useDashboard"
 
 function EnrollmentsKpis() {
-  const { data } = useEnrollments({ size: 100 })
+  const { data } = useAdminSummary()
   const kpis: KpiItem[] = useMemo(() => {
-    const items = data?.items ?? []
-    const total = data?.total ?? items.length
-    const valid = items.filter((e) => e.status === "valide").length
-    const pending = items.filter((e) => e.status === "prospect" || e.status === "en_validation").length
-    const closed = items.filter((e) => e.status === "rejete" || e.status === "annule").length
+    const e = data?.enrollments
+    const pending = e?.pending ?? 0
     return [
-      { label: "Inscriptions", value: total, icon: ListChecks, tone: "primary" },
-      { label: "Validées", value: valid, icon: CheckCircle2, tone: "emerald" },
+      { label: "Inscriptions", value: e?.total ?? 0, icon: ListChecks, tone: "primary" },
+      { label: "Validées", value: e?.valid ?? 0, icon: CheckCircle2, tone: "emerald" },
       { label: "À valider", value: pending, icon: Clock, tone: pending > 0 ? "accent" : "default" },
-      { label: "Rejetées / annulées", value: closed, icon: XCircle, tone: "default" },
+      { label: "Rejetées / annulées", value: e?.closed ?? 0, icon: XCircle, tone: "default" },
     ]
   }, [data])
   return <KpiStrip items={kpis} />

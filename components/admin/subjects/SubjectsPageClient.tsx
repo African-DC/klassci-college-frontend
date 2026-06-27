@@ -4,24 +4,21 @@ import { useMemo, useState } from "react"
 import { BookMarked, Plus, LayoutGrid, List, Layers, UserX, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
-import { useSubjects } from "@/lib/hooks/useSubjects"
+import { useAdminSummary } from "@/lib/hooks/useDashboard"
 import { SubjectsTable } from "./SubjectsTable"
 import { SubjectsKanbanView } from "./SubjectsKanbanView"
 import { SubjectCreateModal } from "./SubjectCreateModal"
 
 function SubjectsKpis() {
-  const { data } = useSubjects({ size: 100 })
+  const { data } = useAdminSummary()
   const kpis: KpiItem[] = useMemo(() => {
-    const items = data?.items ?? []
-    const uniqueNames = new Set(items.map((s) => s.name)).size
-    const instances = items.filter((s) => s.level_id !== null)
-    const withoutTeacher = instances.filter((s) => !s.teacher_id).length
-    const hours = instances.reduce((sum, s) => sum + (s.hours_per_week ?? 0), 0)
+    const s = data?.subjects
+    const withoutTeacher = s?.without_teacher ?? 0
     return [
-      { label: "Matières uniques", value: uniqueNames, icon: BookMarked, tone: "primary" },
-      { label: "Instances par niveau", value: instances.length, icon: Layers, tone: "default" },
+      { label: "Matières uniques", value: s?.unique_names ?? 0, icon: BookMarked, tone: "primary" },
+      { label: "Instances par niveau", value: s?.instances ?? 0, icon: Layers, tone: "default" },
       { label: "Sans enseignant", value: withoutTeacher, icon: UserX, tone: withoutTeacher > 0 ? "accent" : "default" },
-      { label: "Heures / semaine", value: `${hours}h`, icon: Clock, tone: "default" },
+      { label: "Heures / semaine", value: `${s?.total_hours ?? 0}h`, icon: Clock, tone: "default" },
     ]
   }, [data])
   return <KpiStrip items={kpis} />

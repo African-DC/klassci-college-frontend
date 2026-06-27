@@ -6,20 +6,17 @@ import { CrudPageLayout } from "@/components/shared/CrudPageLayout"
 import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
 import { TeachersTable } from "./TeachersTable"
 import { TeacherCreateModal } from "./TeacherCreateModal"
-import { useTeachers } from "@/lib/hooks/useTeachers"
+import { useAdminSummary } from "@/lib/hooks/useDashboard"
 
 function TeacherKpis() {
-  const { data } = useTeachers({ size: 100 })
+  const { data } = useAdminSummary()
   const kpis: KpiItem[] = useMemo(() => {
-    const items = data?.items ?? []
-    const total = data?.total ?? items.length
-    const withSpeciality = items.filter((t) => t.speciality?.trim()).length
-    const withPhone = items.filter((t) => t.phone?.trim()).length
-    const withoutSpeciality = items.length - withSpeciality
+    const t = data?.teachers
+    const withoutSpeciality = t?.without_speciality ?? 0
     return [
-      { label: "Enseignants", value: total, icon: Users, tone: "primary" },
-      { label: "Avec spécialité", value: withSpeciality, icon: Award, tone: "default" },
-      { label: "Avec téléphone", value: withPhone, icon: Phone, tone: "default" },
+      { label: "Enseignants", value: t?.total ?? 0, icon: Users, tone: "primary" },
+      { label: "Avec spécialité", value: t?.with_speciality ?? 0, icon: Award, tone: "default" },
+      { label: "Avec téléphone", value: t?.with_phone ?? 0, icon: Phone, tone: "default" },
       { label: "Sans spécialité", value: withoutSpeciality, icon: UserX, tone: withoutSpeciality > 0 ? "accent" : "default" },
     ]
   }, [data])

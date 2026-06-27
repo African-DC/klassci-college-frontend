@@ -4,24 +4,23 @@ import { useMemo, useState } from "react"
 import { HeartHandshake, Plus, Users, UserCheck, UserX, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
-import { useParents } from "@/lib/hooks/useParents"
+import { useAdminSummary } from "@/lib/hooks/useDashboard"
 import { ParentsTable } from "./ParentsTable"
 import { ParentCreateModal } from "./ParentCreateModal"
 
 export function ParentsPageClient() {
   const [createOpen, setCreateOpen] = useState(false)
-  const { data } = useParents({ size: 100 })
-  const total = data?.total ?? 0
+  const { data } = useAdminSummary()
+  const total = data?.parents.total ?? 0
 
   const kpis: KpiItem[] = useMemo(() => {
-    const items = data?.items ?? []
-    const withAccount = items.filter((p) => !!p.user_id).length
-    const withEmail = items.filter((p) => p.email?.trim()).length
+    const p = data?.parents
+    const withoutAccount = p?.without_account ?? 0
     return [
       { label: "Parents au total", value: total, icon: Users, tone: "primary" },
-      { label: "Avec compte", value: withAccount, icon: UserCheck, tone: "emerald" },
-      { label: "Sans compte", value: items.length - withAccount, icon: UserX, tone: items.length - withAccount > 0 ? "accent" : "default" },
-      { label: "Avec email", value: withEmail, icon: Mail, tone: "default" },
+      { label: "Avec compte", value: p?.with_account ?? 0, icon: UserCheck, tone: "emerald" },
+      { label: "Sans compte", value: withoutAccount, icon: UserX, tone: withoutAccount > 0 ? "accent" : "default" },
+      { label: "Avec email", value: p?.with_email ?? 0, icon: Mail, tone: "default" },
     ]
   }, [data, total])
 
