@@ -15,9 +15,9 @@ function TeacherKpis() {
     const withoutSpeciality = t?.without_speciality ?? 0
     return [
       { label: "Enseignants", value: t?.total ?? 0, icon: Users, tone: "primary" },
-      { label: "Avec spécialité", value: t?.with_speciality ?? 0, icon: Award, tone: "default" },
-      { label: "Avec téléphone", value: t?.with_phone ?? 0, icon: Phone, tone: "default" },
-      { label: "Sans spécialité", value: withoutSpeciality, icon: UserX, tone: withoutSpeciality > 0 ? "accent" : "default" },
+      { label: "Avec spécialité", value: t?.with_speciality ?? 0, icon: Award, tone: "emerald" },
+      { label: "Avec téléphone", value: t?.with_phone ?? 0, icon: Phone, tone: "accent" },
+      { label: "Sans spécialité", value: withoutSpeciality, icon: UserX, tone: withoutSpeciality > 0 ? "destructive" : "default" },
     ]
   }, [data])
   return <KpiStrip items={kpis} />

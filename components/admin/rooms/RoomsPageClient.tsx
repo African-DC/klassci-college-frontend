@@ -95,9 +95,9 @@ export function RoomsPageClient() {
     const noRoom = r?.classes_without_room ?? 0
     return [
       { label: "Salles", value: r?.total ?? 0, icon: DoorOpen, tone: "primary" },
-      { label: "Capacité totale", value: r?.capacity ?? 0, icon: Users, tone: "default" },
-      { label: "Salles de classe", value: r?.classrooms ?? 0, icon: School, tone: "default" },
-      { label: "Classes sans salle", value: noRoom, icon: AlertTriangle, tone: noRoom > 0 ? "accent" : "default" },
+      { label: "Capacité totale", value: r?.capacity ?? 0, icon: Users, tone: "emerald" },
+      { label: "Salles de classe", value: r?.classrooms ?? 0, icon: School, tone: "accent" },
+      { label: "Classes sans salle", value: noRoom, icon: AlertTriangle, tone: noRoom > 0 ? "destructive" : "default" },
     ]
   }, [summary])
 
@@ -132,8 +132,8 @@ export function RoomsPageClient() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <DoorOpen aria-hidden="true" className="h-5 w-5 text-primary" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+            <DoorOpen aria-hidden="true" className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Salles</h1>

@@ -18,8 +18,8 @@ function EnrollmentsKpis() {
     return [
       { label: "Inscriptions", value: e?.total ?? 0, icon: ListChecks, tone: "primary" },
       { label: "Validées", value: e?.valid ?? 0, icon: CheckCircle2, tone: "emerald" },
-      { label: "À valider", value: pending, icon: Clock, tone: pending > 0 ? "accent" : "default" },
-      { label: "Rejetées / annulées", value: e?.closed ?? 0, icon: XCircle, tone: "default" },
+      { label: "À valider", value: pending, icon: Clock, tone: "accent" },
+      { label: "Rejetées / annulées", value: e?.closed ?? 0, icon: XCircle, tone: (e?.closed ?? 0) > 0 ? "destructive" : "default" },
     ]
   }, [data])
   return <KpiStrip items={kpis} />
@@ -64,8 +64,8 @@ export function EnrollmentsPageClient() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <GraduationCap aria-hidden="true" className="h-5 w-5 text-primary" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+            <GraduationCap aria-hidden="true" className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <h1 className="font-serif text-xl tracking-tight sm:text-2xl">Inscriptions</h1>
