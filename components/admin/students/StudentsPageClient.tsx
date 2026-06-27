@@ -33,15 +33,15 @@ export function StudentsPageClient() {
     { label: "Élèves au total", value: total, icon: Users, tone: "primary" },
     { label: "Inscrits", value: Math.max(total - noCurrent, 0), icon: UserCheck, tone: "emerald" },
     { label: "À inscrire", value: noCurrent, icon: UserPlus, tone: noCurrent > 0 ? "accent" : "default" },
-    { label: "Classes", value: classesCount, icon: School, tone: "accent" },
+    { label: "Classes", value: classesCount, icon: School, tone: "default" },
   ]
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Users aria-hidden="true" className="h-5 w-5" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <Users aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0">
             <h1 className="font-serif text-xl tracking-tight sm:text-2xl">Élèves</h1>

@@ -127,8 +127,8 @@ export function NotificationsPageClient() {
   const kpis: KpiItem[] = [
     { label: "Total", value: total, icon: Inbox, tone: "primary" },
     { label: "Non lues", value: unreadCount, icon: Mail, tone: unreadCount > 0 ? "accent" : "default" },
-    { label: "Lues", value: Math.max(total - unreadCount, 0), icon: MailOpen, tone: "emerald" },
-    { label: "Types actifs", value: distinctTypes, icon: Layers, tone: "accent" },
+    { label: "Lues", value: Math.max(total - unreadCount, 0), icon: MailOpen, tone: "default" },
+    { label: "Types actifs", value: distinctTypes, icon: Layers, tone: "default" },
   ]
 
   // Recherche client sur titre + corps (par-dessus les filtres serveur type/lu).
@@ -141,8 +141,8 @@ export function NotificationsPageClient() {
       {/* En-tête */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Bell aria-hidden="true" className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Bell aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="font-serif text-2xl tracking-tight">Notifications</h1>

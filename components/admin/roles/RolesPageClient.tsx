@@ -13,8 +13,8 @@ export function RolesPageClient() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Shield aria-hidden="true" className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Shield aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="font-serif text-2xl tracking-tight">Rôles &amp; Permissions</h1>

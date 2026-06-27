@@ -105,8 +105,8 @@ export function FeesPageClient() {
 
   const kpis: KpiItem[] = [
     { label: "Obligatoires", value: totalMandatory, icon: Shield, tone: "primary" },
-    { label: "Optionnels", value: totalOptional, icon: CircleDot, tone: "accent" },
-    { label: "Variantes", value: totalVariants, icon: Layers, tone: "emerald" },
+    { label: "Optionnels", value: totalOptional, icon: CircleDot, tone: "default" },
+    { label: "Variantes", value: totalVariants, icon: Layers, tone: "default" },
     { label: "Montant configuré", value: `${totalConfigured.toLocaleString("fr-FR")} F`, icon: Coins, tone: "accent" },
   ]
 
@@ -132,8 +132,8 @@ export function FeesPageClient() {
       {/* Header premium */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Wallet aria-hidden="true" className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Wallet aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="font-serif text-2xl tracking-tight">Frais scolaires</h1>

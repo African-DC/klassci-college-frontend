@@ -100,9 +100,9 @@ export function LevelsAndSeriesPageClient() {
   const avgSeries = levels.length > 0 ? (allSeries.length / levels.length).toFixed(1) : "0"
   const kpis: KpiItem[] = [
     { label: "Niveaux", value: levels.length, icon: GraduationCap, tone: "primary" },
-    { label: "Séries", value: allSeries.length, icon: BookOpen, tone: "emerald" },
-    { label: "Séries / niveau", value: avgSeries, icon: Layers, tone: "accent" },
-    { label: "Niveaux sans série", value: noSeriesCount, icon: AlertTriangle, tone: noSeriesCount > 0 ? "destructive" : "default" },
+    { label: "Séries", value: allSeries.length, icon: BookOpen, tone: "default" },
+    { label: "Séries / niveau", value: avgSeries, icon: Layers, tone: "default" },
+    { label: "Niveaux sans série", value: noSeriesCount, icon: AlertTriangle, tone: noSeriesCount > 0 ? "accent" : "default" },
   ]
 
   // Recherche : filtre les niveaux par nom OU par nom de série. Quand un niveau
@@ -163,8 +163,8 @@ export function LevelsAndSeriesPageClient() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Layers aria-hidden="true" className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Layers aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="font-serif text-xl tracking-tight">Niveaux & Séries</h1>

@@ -16,9 +16,9 @@ function SubjectsKpis() {
     const withoutTeacher = s?.without_teacher ?? 0
     return [
       { label: "Matières uniques", value: s?.unique_names ?? 0, icon: BookMarked, tone: "primary" },
-      { label: "Instances par niveau", value: s?.instances ?? 0, icon: Layers, tone: "emerald" },
-      { label: "Sans enseignant", value: withoutTeacher, icon: UserX, tone: withoutTeacher > 0 ? "destructive" : "default" },
-      { label: "Heures / semaine", value: `${s?.total_hours ?? 0}h`, icon: Clock, tone: "accent" },
+      { label: "Instances par niveau", value: s?.instances ?? 0, icon: Layers, tone: "default" },
+      { label: "Sans enseignant", value: withoutTeacher, icon: UserX, tone: withoutTeacher > 0 ? "accent" : "default" },
+      { label: "Heures / semaine", value: `${s?.total_hours ?? 0}h`, icon: Clock, tone: "default" },
     ]
   }, [data])
   return <KpiStrip items={kpis} />
@@ -33,8 +33,8 @@ export function SubjectsPageClient() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <BookMarked aria-hidden="true" className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <BookMarked aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Matières</h1>

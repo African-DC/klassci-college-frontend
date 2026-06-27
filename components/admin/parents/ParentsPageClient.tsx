@@ -19,8 +19,8 @@ export function ParentsPageClient() {
     return [
       { label: "Parents au total", value: total, icon: Users, tone: "primary" },
       { label: "Avec compte", value: p?.with_account ?? 0, icon: UserCheck, tone: "emerald" },
-      { label: "Sans compte", value: withoutAccount, icon: UserX, tone: withoutAccount > 0 ? "destructive" : "default" },
-      { label: "Avec email", value: p?.with_email ?? 0, icon: Mail, tone: "accent" },
+      { label: "Sans compte", value: withoutAccount, icon: UserX, tone: withoutAccount > 0 ? "accent" : "default" },
+      { label: "Avec email", value: p?.with_email ?? 0, icon: Mail, tone: "default" },
     ]
   }, [data, total])
 
@@ -28,8 +28,8 @@ export function ParentsPageClient() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <HeartHandshake aria-hidden="true" className="h-5 w-5" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <HeartHandshake aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0">
             <h1 className="font-serif text-xl tracking-tight sm:text-2xl">Parents</h1>

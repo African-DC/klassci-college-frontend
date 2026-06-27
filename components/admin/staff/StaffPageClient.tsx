@@ -15,9 +15,9 @@ function StaffKpis() {
     const withoutPosition = s?.without_position ?? 0
     return [
       { label: "Personnel", value: s?.total ?? 0, icon: Users, tone: "primary" },
-      { label: "Postes distincts", value: s?.distinct_positions ?? 0, icon: BadgeCheck, tone: "emerald" },
-      { label: "Avec téléphone", value: s?.with_phone ?? 0, icon: Phone, tone: "accent" },
-      { label: "Sans poste", value: withoutPosition, icon: UserX, tone: withoutPosition > 0 ? "destructive" : "default" },
+      { label: "Postes distincts", value: s?.distinct_positions ?? 0, icon: BadgeCheck, tone: "default" },
+      { label: "Avec téléphone", value: s?.with_phone ?? 0, icon: Phone, tone: "default" },
+      { label: "Sans poste", value: withoutPosition, icon: UserX, tone: withoutPosition > 0 ? "accent" : "default" },
     ]
   }, [data])
   return <KpiStrip items={kpis} />

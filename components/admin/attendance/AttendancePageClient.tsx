@@ -75,13 +75,13 @@ export function AttendancePageClient() {
       label: selectedClass ? "Créneaux de la classe" : "Créneaux",
       value: selectedClass ? (slots?.length ?? 0) : "—",
       icon: BookOpen,
-      tone: "emerald",
+      tone: "default",
     },
     {
       label: "Créneaux ce jour",
       value: selectedClass ? availableSlots.length : "—",
       icon: CalendarDays,
-      tone: "accent",
+      tone: selectedClass && availableSlots.length === 0 ? "accent" : "default",
     },
   ]
 
@@ -89,8 +89,8 @@ export function AttendancePageClient() {
     <div className="space-y-6">
       {/* En-tête */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-          <ClipboardCheck aria-hidden="true" className="h-5 w-5" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <ClipboardCheck aria-hidden="true" className="h-5 w-5 text-primary" />
         </div>
         <div className="min-w-0">
           <h1 className="font-serif text-2xl tracking-tight">Présences</h1>
