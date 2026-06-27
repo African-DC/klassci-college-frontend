@@ -12,22 +12,22 @@ import { Card, CardContent } from "@/components/ui/card"
  */
 export type KpiTone = "default" | "primary" | "accent" | "destructive" | "emerald"
 
-const toneStyles: Record<KpiTone, string> = {
-  default: "bg-muted text-muted-foreground",
-  primary: "bg-primary/10 text-primary",
-  accent: "bg-accent/10 text-accent",
-  destructive: "bg-destructive/10 text-destructive",
-  emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+// Couleurs de marque KLASSCI franchement présentes : carte teintée + pastille
+// d'icône pleine (bleu / orange / vert). Sémantique conservée, clair/sombre OK.
+const toneCard: Record<KpiTone, string> = {
+  default: "",
+  primary: "border-primary/25 bg-primary/[0.06]",
+  accent: "border-accent/30 bg-accent/[0.07]",
+  destructive: "border-destructive/30 bg-destructive/[0.07]",
+  emerald: "border-emerald-500/30 bg-emerald-500/[0.07]",
 }
 
-// Liseré de gauche aux couleurs de la marque KLASSCI (bleu / orange) pour que
-// l'identité se ressente sur chaque liste. Tons sémantiques conservés.
-const edgeStyles: Record<KpiTone, string> = {
-  default: "border-l-border",
-  primary: "border-l-primary",
-  accent: "border-l-accent",
-  destructive: "border-l-destructive",
-  emerald: "border-l-emerald-500",
+const toneIcon: Record<KpiTone, string> = {
+  default: "bg-muted text-muted-foreground",
+  primary: "bg-primary text-primary-foreground",
+  accent: "bg-accent text-accent-foreground",
+  destructive: "bg-destructive text-destructive-foreground",
+  emerald: "bg-emerald-600 text-white",
 }
 
 export interface KpiItem {
@@ -66,7 +66,7 @@ export function KpiStrip({ items, columns = 4, className }: KpiStripProps) {
             key={i}
             role="group"
             aria-label={valueText ? `${item.label} : ${valueText}` : item.label}
-            className={cn("border-l-[3px] shadow-sm", edgeStyles[item.tone ?? "default"])}
+            className={cn("shadow-sm", toneCard[item.tone ?? "default"])}
           >
             <CardContent className="flex items-start justify-between gap-3 p-4">
               <div className="min-w-0 space-y-0.5">
@@ -83,8 +83,8 @@ export function KpiStrip({ items, columns = 4, className }: KpiStripProps) {
               {Icon && (
                 <span
                   className={cn(
-                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                    toneStyles[item.tone ?? "default"],
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg shadow-sm",
+                    toneIcon[item.tone ?? "default"],
                   )}
                 >
                   <Icon className="h-5 w-5" aria-hidden="true" />

@@ -18,8 +18,8 @@ export function SettingsPageClient() {
     <div className="space-y-6">
       {/* En-tête */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <Settings aria-hidden="true" className="h-5 w-5 text-primary" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+          <Settings aria-hidden="true" className="h-5 w-5" />
         </div>
         <div>
           <h1 className="font-serif text-2xl tracking-tight">Paramètres</h1>

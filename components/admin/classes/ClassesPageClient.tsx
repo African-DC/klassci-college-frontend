@@ -16,8 +16,8 @@ function ClassesKpis() {
     const rate = c && c.capacity > 0 ? Math.round((c.enrolled / c.capacity) * 100) : 0
     return [
       { label: "Classes", value: c?.total ?? 0, icon: School, tone: "primary" },
-      { label: "Élèves inscrits", value: c?.enrolled ?? 0, icon: Users, tone: "default" },
-      { label: "Taux d'occupation", value: `${rate}%`, icon: Gauge, tone: rate >= 80 ? "accent" : "emerald" },
+      { label: "Élèves inscrits", value: c?.enrolled ?? 0, icon: Users, tone: "emerald" },
+      { label: "Taux d'occupation", value: `${rate}%`, icon: Gauge, tone: "accent" },
       { label: "Classes pleines", value: c?.full ?? 0, icon: AlertTriangle, tone: (c?.full ?? 0) > 0 ? "destructive" : "default" },
     ]
   }, [data])
@@ -33,8 +33,8 @@ export function ClassesPageClient() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <School aria-hidden="true" className="h-5 w-5 text-primary" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+            <School aria-hidden="true" className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Classes</h1>
