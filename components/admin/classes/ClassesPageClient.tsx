@@ -10,7 +10,7 @@ import { ClassesTreeView } from "./ClassesTreeView"
 import { ClassCreateModal } from "./ClassCreateModal"
 
 function ClassesKpis() {
-  const { data } = useClasses({ size: 200 })
+  const { data } = useClasses({ size: 100 })
   const kpis: KpiItem[] = useMemo(() => {
     const items = data?.items ?? []
     const enrolled = items.reduce((s, c) => s + (c.enrolled_count ?? 0), 0)

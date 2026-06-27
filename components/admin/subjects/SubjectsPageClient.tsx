@@ -10,7 +10,7 @@ import { SubjectsKanbanView } from "./SubjectsKanbanView"
 import { SubjectCreateModal } from "./SubjectCreateModal"
 
 function SubjectsKpis() {
-  const { data } = useSubjects({ size: 200 })
+  const { data } = useSubjects({ size: 100 })
   const kpis: KpiItem[] = useMemo(() => {
     const items = data?.items ?? []
     const uniqueNames = new Set(items.map((s) => s.name)).size

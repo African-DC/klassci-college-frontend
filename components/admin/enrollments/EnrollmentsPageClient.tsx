@@ -10,7 +10,7 @@ import { EnrollmentCreateModal } from "./EnrollmentCreateModal"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
 
 function EnrollmentsKpis() {
-  const { data } = useEnrollments({ size: 300 })
+  const { data } = useEnrollments({ size: 100 })
   const kpis: KpiItem[] = useMemo(() => {
     const items = data?.items ?? []
     const total = data?.total ?? items.length

@@ -9,7 +9,7 @@ import { StaffCreateModal } from "./StaffCreateModal"
 import { useStaffList } from "@/lib/hooks/useStaff"
 
 function StaffKpis() {
-  const { data } = useStaffList({ size: 200 })
+  const { data } = useStaffList({ size: 100 })
   const kpis: KpiItem[] = useMemo(() => {
     const items = data?.items ?? []
     const total = data?.total ?? items.length
