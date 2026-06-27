@@ -37,7 +37,7 @@ export function ParentChildrenClient() {
         {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
       </div>
 
-      {children && children.length > 0 && <ChildrenKpis children={children} />}
+      {children && children.length > 0 && <ChildrenKpis childList={children} />}
 
       {isLoading ? (
         <ChildrenSkeleton />
@@ -64,9 +64,9 @@ export function ParentChildrenClient() {
   )
 }
 
-function ChildrenKpis({ children }: { children: ParentChild[] }) {
-  const summary = summarizeEnrollment(children)
-  const remaining = children
+function ChildrenKpis({ childList }: { childList: ParentChild[] }) {
+  const summary = summarizeEnrollment(childList)
+  const remaining = childList
     .filter((c) => isEnrolledFromClassName(c.class_name))
     .reduce((s, c) => s + (c.fees_remaining ?? 0), 0)
   const kpis: KpiItem[] = [
