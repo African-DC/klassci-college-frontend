@@ -10,9 +10,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
-- Identité visuelle KLASSCI plus présente dans toute l'application : la page active du menu est signalée par un repère orange, les indicateurs clés portent un liseré bleu ou orange, et la couleur orange de la marque ressort enfin au lieu d'un bleu uniforme. Rendu vérifié en mode clair et sombre *(tous)*.
-- Pages Frais (élève, parent) refondues avec un bandeau de synthèse bleu marque : total attendu, montant payé en vert et « Reste à payer » mis en avant en orange, avec barre de progression. Plus lisible d'un coup d'œil *(élève, parent)*.
-- Page Frais admin : les cartes de catégories adoptent les couleurs de la marque (obligatoire en bleu, optionnel en orange) et s'affichent correctement en mode sombre, là où elles restaient en tons clairs *(admin)*.
+- Refonte visuelle de toute l'application : chaque page (tableau de bord, listes d'administration, portails enseignant et parent) s'ouvre désormais sur un bandeau au dégradé bleu KLASSCI, avec les indicateurs clés intégrés en blanc et l'action principale mise en avant en orange, la couleur du logo. Identité de marque cohérente du haut de page jusqu'aux moindres détails, vérifiée en mode clair et sombre *(tous)*.
+- Pages Frais (élève, parent) avec un bandeau de synthèse bleu marque : total attendu, montant payé en vert et « Reste à payer » mis en avant en orange, avec barre de progression. Plus lisible d'un coup d'œil *(élève, parent)*.
+- Page Frais admin refondue : bandeau dégradé bleu, cartes de catégories sobres et lisibles aussi bien en clair qu'en sombre *(admin)*.
 - Indicateurs clés des pages de gestion désormais alimentés par un calcul serveur : les chiffres restent exacts même au-delà de 100 lignes (grands établissements), là où ils étaient auparavant tronqués *(admin)*.
 
 ### Fixed
