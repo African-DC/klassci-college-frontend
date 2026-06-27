@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import type { Route } from "next"
 import {
@@ -7,16 +8,47 @@ import {
   GraduationCap,
   ClipboardList,
   ChevronRight,
+  School,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
+import { KpiStrip, type KpiItem } from "@/components/shared/list/KpiStrip"
+import { ListSearchBar } from "@/components/shared/list/ListSearchBar"
+import { matchesSearch } from "@/lib/utils/list-search"
 import { useTeacherClasses } from "@/lib/hooks/useTeacherPortal"
 import type { TeacherClass } from "@/lib/contracts/teacher-portal"
 
 export function TeacherClassesClient() {
   const { data: classes, isLoading, isError, refetch } = useTeacherClasses()
+  const [search, setSearch] = useState("")
+
+  const list = useMemo(() => classes ?? [], [classes])
+  const kpis: KpiItem[] = useMemo(() => {
+    const students = list.reduce((s, c) => s + (c.student_count ?? 0), 0)
+    const evals = list.reduce((s, c) => s + (c.total_evaluations ?? 0), 0)
+    const graded = list.filter((c) => c.general_average !== null && c.general_average !== undefined)
+    const avg = graded.length
+      ? graded.reduce((s, c) => s + (c.general_average ?? 0), 0) / graded.length
+      : null
+    return [
+      { label: "Classes", value: list.length, icon: School, tone: "primary" },
+      { label: "Élèves", value: students, icon: Users, tone: "default" },
+      { label: "Évaluations", value: evals, icon: ClipboardList, tone: "default" },
+      {
+        label: "Moyenne globale",
+        value: avg !== null ? avg.toFixed(2) : "—",
+        icon: GraduationCap,
+        tone: avg === null ? "default" : avg >= 10 ? "emerald" : "destructive",
+      },
+    ]
+  }, [list])
+
+  const filtered = useMemo(
+    () => list.filter((c) => matchesSearch([c.class_name, c.subject_name, c.level_name], search)),
+    [list, search],
+  )
 
   return (
     <div className="space-y-6">
@@ -45,11 +77,28 @@ export function TeacherClassesClient() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {classes.map((cls) => (
-            <ClassCard key={cls.class_id} cls={cls} />
-          ))}
-        </div>
+        <>
+          <KpiStrip items={kpis} />
+          {list.length > 3 && (
+            <ListSearchBar
+              value={search}
+              onChange={setSearch}
+              placeholder="Rechercher une classe ou une matière…"
+              aria-label="Rechercher une classe"
+            />
+          )}
+          {filtered.length === 0 ? (
+            <p className="rounded-lg border bg-muted/30 py-10 text-center text-sm text-muted-foreground">
+              Aucune classe ne correspond à « {search} ».
+            </p>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((cls) => (
+                <ClassCard key={cls.class_id} cls={cls} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

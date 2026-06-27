@@ -10,6 +10,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Indicateurs clés (KPI), recherche instantanée et filtres ajoutés sur les pages de gestion qui en manquaient : Classes, Matières, Niveaux, Années scolaires, Inscriptions, Salles, Notifications, Frais, ainsi que les listes Élèves, Enseignants, Personnel et Parents. La recherche ignore les accents et la casse (taper « traore » trouve « Traoré ») *(admin)*.
+- Portails Enseignant et Parent : bandeau d'indicateurs en tête des listes « Mes classes », « Mes évaluations » et « Mes enfants », plus une recherche rapide pour retrouver une classe ou une évaluation *(enseignant, parent)*.
 - Fiches détail Élève, Enseignant, Personnel, Parent, Classe, Inscription : la flèche de retour passe à h-11 sur mobile (touch target Itel S661) au lieu de h-8/h-9 trop petit. Aria-label rendu explicite « Retour à la liste des inscriptions » au lieu de « Retour » seul *(admin)*.
 - Page Promotions admin : icône d'en-tête masquée aux lecteurs d'écran, bouton « Recommencer » passe à h-11 sur mobile *(admin)*.
 - Portail enseignant — fiche « Mes classes » : empty state plus chaleureux « Aucune classe assignée pour le moment » + invite à contacter l'administration. Bouton « Gérer les notes » passe à h-11 sur mobile avec aria-label explicite incluant la classe et la matière, pour mieux distinguer plusieurs cartes côte à côte *(enseignant)*.
