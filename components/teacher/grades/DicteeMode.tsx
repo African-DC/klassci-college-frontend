@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import type { Route } from "next"
 import {
   Mic,
   MicOff,
@@ -35,6 +36,13 @@ type EntryValue = number | null | undefined // undefined = pas saisi, null = abs
 interface DicteeModeProps {
   evaluationId: number
   classId: number
+  /**
+   * Page vers laquelle revenir à la sortie/l'enregistrement. Par défaut la
+   * saisie enseignant. L'admin (saisie déléguée) passe sa propre page de
+   * supervision : sans ça, revenir vers `/teacher/...` ferait traverser les
+   * portails et le middleware redirigerait l'admin vers son tableau de bord.
+   */
+  returnHref?: string
 }
 
 /**
@@ -54,8 +62,9 @@ interface DicteeModeProps {
  *   - beep audio sur succès (feedback non-visuel pour saisie sans regarder)
  *   - fallback total au tap : tout est utilisable sans micro
  */
-export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
+export function DicteeMode({ evaluationId, classId, returnHref }: DicteeModeProps) {
   const router = useRouter()
+  const backHref = returnHref ?? `/teacher/grades/${classId}/${evaluationId}`
   const { data: grades, isLoading } = useGrades(evaluationId)
   const { data: evals } = useEvaluations(classId)
   const evaluation = useMemo(
@@ -241,8 +250,8 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
 
   const performExit = useCallback(() => {
     speech.stop()
-    router.push(`/teacher/grades/${classId}/${evaluationId}`)
-  }, [speech, router, classId, evaluationId])
+    router.push(backHref as Route)
+  }, [speech, router, backHref])
 
   const requestExit = useCallback(() => {
     if (hasDirty) {
@@ -269,11 +278,11 @@ export function DicteeMode({ evaluationId, classId }: DicteeModeProps) {
             description: `${payload.filter((p) => p.value !== null).length} notes sur ${grades.length}`,
           })
           speech.stop()
-          router.push(`/teacher/grades/${classId}/${evaluationId}`)
+          router.push(backHref as Route)
         },
       },
     )
-  }, [grades, entries, updateMutation, speech, router, classId, evaluationId])
+  }, [grades, entries, updateMutation, speech, router, backHref])
 
   // ─── Rendu ─────────────────────────────────────────────────────────────
   if (isLoading || !grades) {
