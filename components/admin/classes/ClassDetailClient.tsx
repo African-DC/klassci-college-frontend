@@ -1,12 +1,22 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Pencil, Trash2, Users, School, DoorOpen } from "lucide-react"
+import {
+  ArrowLeft,
+  BookOpen,
+  CalendarDays,
+  GraduationCap,
+  Pencil,
+  School,
+  Trash2,
+  Users,
+} from "lucide-react"
 import { useClass, useDeleteClass } from "@/lib/hooks/useClasses"
+import { useTimetable } from "@/lib/hooks/useTimetable"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Dialog,
   DialogContent,
@@ -16,8 +26,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { DataError } from "@/components/shared/DataError"
+import { PageHero, heroGlassBtn, heroAccentBtn, type HeroKpi } from "@/components/shared/PageHero"
 import { ClassEditModal } from "./ClassEditModal"
-import { useState } from "react"
+import { OverviewTab } from "./detail/OverviewTab"
+import { StudentsTab } from "./detail/StudentsTab"
+import { TimetableTab } from "./detail/TimetableTab"
+import { SubjectsTab } from "./detail/SubjectsTab"
+import { TeachersTab } from "./detail/TeachersTab"
+import { deriveSubjects, deriveTeachers } from "./detail/class-helpers"
 
 interface ClassDetailClientProps {
   classId: number
@@ -26,126 +42,136 @@ interface ClassDetailClientProps {
 export function ClassDetailClient({ classId }: ClassDetailClientProps) {
   const router = useRouter()
   const { data: classData, isLoading, isError, error, refetch } = useClass(classId)
+  // Les slots EDT alimentent les KPIs du hero + l'onglet Aperçu (matières / profs).
+  const { data: slots } = useTimetable(classId)
   const deleteMutation = useDeleteClass()
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-lg" />
-          ))}
-        </div>
+      <div className="space-y-6 p-4 md:p-6">
+        <Skeleton className="h-40 w-full rounded-2xl" />
+        <Skeleton className="h-10 w-full max-w-md rounded-md" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     )
   }
 
   if (isError || !classData) {
-    return <DataError message={error?.message ?? "Classe introuvable"} error={error} onRetry={refetch} />
+    return (
+      <div className="p-4 md:p-6">
+        <DataError message={error?.message ?? "Classe introuvable"} error={error} onRetry={refetch} />
+      </div>
+    )
   }
 
+  const allSlots = slots ?? []
   const enrolled = classData.enrolled_count ?? 0
   const max = classData.max_students ?? 0
   const ratio = max > 0 ? Math.round((enrolled / max) * 100) : 0
 
+  const kpis: HeroKpi[] = [
+    {
+      label: "Effectif",
+      value: max > 0 ? `${enrolled}/${max}` : enrolled,
+      icon: Users,
+      hint: max > 0 ? `${ratio}% rempli` : "Capacité non définie",
+    },
+    { label: "Niveau", value: classData.level_name ?? "—", icon: GraduationCap },
+    { label: "Matières", value: deriveSubjects(allSlots).length, icon: BookOpen },
+    { label: "Enseignants", value: deriveTeachers(allSlots).length, icon: School },
+  ]
+
+  const subtitle = (
+    <>
+      {classData.level_name}
+      {classData.series_name ? ` · Série ${classData.series_name}` : ""}
+      {classData.room_id ? ` · Salle ${classData.name}` : ""}
+    </>
+  )
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Retour à la liste des classes"
-            className="h-11 w-11 sm:h-10 sm:w-10"
-            onClick={() => router.push("/admin/classes")}
-          >
-            <ArrowLeft aria-hidden="true" className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">{classData.name}</h1>
-            <p className="text-sm text-muted-foreground">
-              {classData.level_name}
-              {classData.series_name && ` — Série ${classData.series_name}`}
-            </p>
-          </div>
+    <div className="space-y-6 p-4 md:p-6">
+      <PageHero
+        icon={School}
+        title={classData.name}
+        subtitle={subtitle}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => router.push("/admin/classes")}
+              className={heroGlassBtn}
+              aria-label="Retour à la liste des classes"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Retour
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              className={heroGlassBtn}
+            >
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              Modifier
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(true)}
+              className={heroAccentBtn}
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+              Supprimer
+            </button>
+          </>
+        }
+        kpis={kpis}
+      />
+
+      <Tabs defaultValue="overview" className="space-y-4">
+        <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+          <TabsList className="inline-flex h-auto w-max gap-1 p-1">
+            <TabsTrigger value="overview" className="h-9 whitespace-nowrap">
+              <School className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Aperçu
+            </TabsTrigger>
+            <TabsTrigger value="students" className="h-9 whitespace-nowrap">
+              <Users className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Élèves
+            </TabsTrigger>
+            <TabsTrigger value="timetable" className="h-9 whitespace-nowrap">
+              <CalendarDays className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Emploi du temps</span>
+              <span className="sm:hidden">EDT</span>
+            </TabsTrigger>
+            <TabsTrigger value="subjects" className="h-9 whitespace-nowrap">
+              <BookOpen className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Matières
+            </TabsTrigger>
+            <TabsTrigger value="teachers" className="h-9 whitespace-nowrap">
+              <GraduationCap className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Enseignants
+            </TabsTrigger>
+          </TabsList>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Modifier
-          </Button>
-          <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="mr-2 h-4 w-4" />
-            Supprimer
-          </Button>
-        </div>
-      </div>
 
-      {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Élèves inscrits</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{enrolled}</div>
-            <p className="text-xs text-muted-foreground">sur {max || "—"} places</p>
-            {max > 0 && (
-              <div className="mt-2 h-2 rounded-full bg-muted">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    ratio > 95 ? "bg-rose-500" : ratio >= 80 ? "bg-amber-500" : "bg-emerald-500"
-                  }`}
-                  style={{ width: `${Math.min(ratio, 100)}%` }}
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Niveau</CardTitle>
-            <School className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{classData.level_name ?? "—"}</div>
-            {classData.series_name && (
-              <p className="text-xs text-muted-foreground">Série {classData.series_name}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Taux de remplissage</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{ratio}%</div>
-            <p className="text-xs text-muted-foreground">
-              {max > 0 ? `${max - enrolled} places disponibles` : "Capacité non définie"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Salle</CardTitle>
-            <DoorOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{classData.room_id ? `Salle #${classData.room_id}` : "—"}</div>
-            <p className="text-xs text-muted-foreground">
-              {classData.room_id ? "Salle assignée" : "Aucune salle assignée"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="overview">
+          <OverviewTab classData={classData} slots={allSlots} />
+        </TabsContent>
+        <TabsContent value="students">
+          <StudentsTab classId={classId} className={classData.name} />
+        </TabsContent>
+        <TabsContent value="timetable">
+          <TimetableTab classId={classId} />
+        </TabsContent>
+        <TabsContent value="subjects">
+          <SubjectsTab classId={classId} />
+        </TabsContent>
+        <TabsContent value="teachers">
+          <TeachersTab classId={classId} />
+        </TabsContent>
+      </Tabs>
 
       {/* Modals */}
       <ClassEditModal classId={editOpen ? classId : null} open={editOpen} onClose={() => setEditOpen(false)} />
@@ -155,11 +181,13 @@ export function ClassDetailClient({ classId }: ClassDetailClientProps) {
           <DialogHeader>
             <DialogTitle>Supprimer la classe</DialogTitle>
             <DialogDescription>
-              Cette action est irréversible. La classe "{classData.name}" sera définitivement supprimée.
+              Cette action est irréversible. La classe « {classData.name} » sera définitivement supprimée.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Annuler
+            </Button>
             <Button
               variant="destructive"
               disabled={deleteMutation.isPending}
