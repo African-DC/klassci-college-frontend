@@ -8,6 +8,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Added
+
+- Page publique de vérification d'un document scolaire : en scannant le cachet électronique (CEV) d'un certificat, d'une attestation ou d'un bulletin, ou en saisissant son code, n'importe qui confirme en un instant l'authenticité du document (établissement, type, élève, classe, année, date), sans aucun compte *(tous)*.
+
 ### Changed
 
 - Bandeau de synthèse des Frais (élève, parent) repassé au dégradé bleu-orange de la marque, et indicateurs de la page Années scolaires intégrés au bandeau d'en-tête *(tous)*.

@@ -19,6 +19,14 @@ function getPortalFromPath(pathname: string): Portal | null {
   return PORTALS.includes(segment as Portal) ? (segment as Portal) : null
 }
 
+// Routes publiques accessibles SANS authentification. Un parent/employeur qui
+// scanne le QR code d'un certificat papier arrive sur /verifier/* : il ne doit
+// jamais être redirigé vers /login, même s'il porte un cookie de session
+// expiré (RefreshTokenError) d'une visite précédente sur le même domaine.
+function isPublicRoute(pathname: string): boolean {
+  return pathname === "/login" || pathname.startsWith("/verifier")
+}
+
 function getDefaultRedirect(role: string | undefined): string {
   if (!role) return "/admin/dashboard"
   if (role === "super_admin") return "/super-admin/tenants"
@@ -61,7 +69,7 @@ const authMiddleware = auth((req) => {
   // logged in. session.id is the canonical authenticated marker.
   const isLoggedIn = !!session?.user?.id
 
-  if (session?.error === "RefreshTokenError" && pathname !== "/login") {
+  if (session?.error === "RefreshTokenError" && !isPublicRoute(pathname)) {
     return hostRedirect(req, "/login")
   }
 
