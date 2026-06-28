@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Vérification d'un document par saisie manuelle du code : sur la page de vérification, on peut maintenant taper le code « CEV-XXXX-XXXX-XXXX » imprimé au dos du document pour confirmer son authenticité, sans avoir à scanner *(tous)*.
 - Fiche de classe repensée en page à onglets (Aperçu, Élèves, Emploi du temps, Matières, Enseignants) avec bandeau bleu-orange et indicateurs clés. Téléchargement en un tap de la liste de classe et du rapport de synthèse (PDF), liste des élèves, emploi du temps par jour, et matières et enseignants déduits de l'emploi du temps *(admin)*.
 - Page publique de vérification d'un document scolaire : en scannant le cachet électronique (CEV) d'un certificat, d'une attestation ou d'un bulletin, ou en saisissant son code, n'importe qui confirme en un instant l'authenticité du document (établissement, type, élève, classe, année, date), sans aucun compte *(tous)*.
 

@@ -73,3 +73,41 @@ export async function verifyDocument(tenant: string, token: string): Promise<Ver
 
   return { status: "valid", document: parsed.data }
 }
+
+/**
+ * Interroge GET {BASE}/public/verify-code/{tenant}/{code} sans authentification.
+ *
+ * Pendant que verifyDocument() vérifie via le token scanné (Datamatrix), cette
+ * variante vérifie via le code CEV saisi manuellement (au dos du document). Le
+ * contrat de réponse est IDENTIQUE : même validation Zod, même politique
+ * d'échec. Tout statut non-200, tout shape inattendu, toute erreur réseau →
+ * "not_found".
+ */
+export async function verifyDocumentByCode(tenant: string, code: string): Promise<VerifyResult> {
+  let res: Response
+  try {
+    res = await fetch(
+      `${getBaseUrl()}/public/verify-code/${encodeURIComponent(tenant)}/${encodeURIComponent(code)}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+      },
+    )
+  } catch {
+    return { status: "not_found" }
+  }
+
+  if (!res.ok) {
+    return { status: "not_found" }
+  }
+
+  const json = (await res.json().catch(() => null)) as unknown
+  const parsed = VerifiedDocumentSchema.safeParse(json)
+  if (!parsed.success) {
+    console.error("[verify] réponse inattendue du serveur:", parsed.error.issues)
+    return { status: "not_found" }
+  }
+
+  return { status: "valid", document: parsed.data }
+}

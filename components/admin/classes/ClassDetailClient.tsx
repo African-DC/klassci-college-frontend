@@ -26,7 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { DataError } from "@/components/shared/DataError"
-import { PageHero, heroGlassBtn, heroAccentBtn, type HeroKpi } from "@/components/shared/PageHero"
+import { PageHero, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
 import { ClassEditModal } from "./ClassEditModal"
 import { OverviewTab } from "./detail/OverviewTab"
 import { StudentsTab } from "./detail/StudentsTab"
@@ -119,7 +119,7 @@ export function ClassDetailClient({ classId }: ClassDetailClientProps) {
             <button
               type="button"
               onClick={() => setDeleteOpen(true)}
-              className={heroAccentBtn}
+              className={heroGlassBtn}
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
               Supprimer
