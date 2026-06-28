@@ -1,7 +1,24 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { authApi } from "@/lib/api/auth"
-import { isTokenExpired } from "@/lib/utils/jwt"
+import { getTokenTenant, isTokenExpired } from "@/lib/utils/jwt"
+
+/**
+ * Fenêtre d'inactivité avant expiration de la session (mode veille). La
+ * session NextAuth est glissante : tant que l'utilisateur est actif, elle se
+ * prolonge ; après IDLE_TIMEOUT sans interaction, le cookie expire et la
+ * déconnexion est forcée. Voir SessionKeepAlive pour le déclencheur côté
+ * client (déconnexion proactive + maintien de l'access token frais).
+ */
+const IDLE_TIMEOUT_SECONDS = 30 * 60 // 30 minutes
+/** Re-rotation du cookie de session au plus une fois par cette fenêtre. */
+const SESSION_UPDATE_SECONDS = 5 * 60 // 5 minutes
+/**
+ * Marge avant l'expiration de l'access token BE (15 min) à partir de laquelle
+ * on déclenche un refresh. 5 min : large devant l'intervalle de poll client
+ * (2 min) pour qu'aucune requête ne parte avec un token déjà expiré.
+ */
+const ACCESS_TOKEN_REFRESH_MARGIN_SECONDS = 5 * 60
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
@@ -34,6 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: data.user.email,
             role: data.user.role,
             accessToken: data.access_token,
+            refreshToken: data.refreshToken ?? undefined,
           }
         } catch {
           return null
@@ -49,17 +67,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.email = user.email!
         token.role = user.role
         token.accessToken = user.accessToken
+        token.refreshToken = user.refreshToken
+        token.error = undefined
         return token
       }
 
-      // Return token if access token is still valid
-      if (!isTokenExpired(token.accessToken)) {
+      // Access token encore valide (hors marge de refresh) → on garde.
+      if (
+        token.accessToken &&
+        !isTokenExpired(token.accessToken, ACCESS_TOKEN_REFRESH_MARGIN_SECONDS)
+      ) {
         return token
       }
 
-      // Access token expired — refresh is handled by httpOnly cookie on the backend
-      // The frontend cannot read the refresh token (httpOnly).
-      // For now, force re-login when access token expires.
+      // Access token proche de l'expiration → refresh silencieux via le
+      // refresh token BE (rotation). Tant que l'utilisateur reste actif, le
+      // SessionKeepAlive déclenche ce callback assez tôt pour qu'aucune
+      // requête ne parte avec un token périmé.
+      if (token.refreshToken) {
+        try {
+          const refreshed = await authApi.refresh(
+            token.refreshToken,
+            getTokenTenant(token.accessToken) ?? undefined,
+          )
+          token.accessToken = refreshed.access_token
+          if (refreshed.refreshToken) token.refreshToken = refreshed.refreshToken
+          token.error = undefined
+          return token
+        } catch {
+          // Refresh token révoqué/expiré (inactivité prolongée) → re-login.
+          token.error = "RefreshTokenError"
+          return token
+        }
+      }
+
+      // Pas de refresh token (sessions d'avant cette feature) → re-login.
       token.error = "RefreshTokenError"
       return token
     },
@@ -88,5 +130,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: {
     strategy: "jwt",
+    // Session glissante : expire IDLE_TIMEOUT après la DERNIÈRE activité
+    // (chaque lecture de session pendant que l'utilisateur est actif reporte
+    // l'échéance). C'est le comportement « mode veille » : actif → maintenue,
+    // inactif au-delà de la fenêtre → déconnexion.
+    maxAge: IDLE_TIMEOUT_SECONDS,
+    updateAge: SESSION_UPDATE_SECONDS,
   },
 })

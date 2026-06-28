@@ -19,6 +19,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- La session ne se ferme plus pendant l'utilisation : tant que vous êtes actif, elle reste ouverte et se prolonge automatiquement. Elle n'expire désormais qu'après une période d'inactivité (mode veille), pas après un délai fixe *(tous)*.
+- Mode dictée des notes : le bouton « Mode dictée » de la saisie déléguée admin renvoyait vers le tableau de bord au lieu d'ouvrir la dictée. Il ouvre désormais la saisie vocale et revient à la bonne page en sortie *(admin, enseignant)*.
 - Page Frais de l'élève et du parent : la liste restait en chargement infini puis en erreur pour un élève inscrit. Les montants, le total payé, le reste à payer et le statut de chaque frais s'affichent désormais correctement *(élève, parent)*.
 
 ### Added

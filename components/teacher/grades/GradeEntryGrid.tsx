@@ -27,6 +27,14 @@ interface GradeEntryGridProps {
   evaluationId: number
   /** Si fourni, affiche le hero card avec ces métadonnées */
   classId?: number
+  /**
+   * Lien du bouton « Mode dictée ». Dépend du portail : enseignant
+   * (`/teacher/...`) ou admin en saisie déléguée (`/admin/...`). À défaut, on
+   * tombe sur la route enseignant. Indispensable côté admin, sinon le bouton
+   * pointerait vers `/teacher/...` et le middleware redirigerait l'admin vers
+   * son tableau de bord (changement de portail interdit).
+   */
+  dicteeHref?: string
 }
 
 /**
@@ -40,7 +48,7 @@ const SAVE_DEBOUNCE_MS = 1500
  */
 const SAVED_INDICATOR_MS = 2500
 
-export function GradeEntryGrid({ evaluationId, classId }: GradeEntryGridProps) {
+export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntryGridProps) {
   const { data: grades, isLoading, error } = useGrades(evaluationId)
   // Métadonnées de l'éval — fetch la liste de la classe (cache 5 min)
   const { data: evals } = useEvaluations(classId ?? 0)
@@ -216,7 +224,8 @@ export function GradeEntryGrid({ evaluationId, classId }: GradeEntryGridProps) {
               <Button asChild size="sm" className="shrink-0 gap-2">
                 <Link
                   href={
-                    `/teacher/grades/${classId}/${evaluationId}/dictee` as Route
+                    (dicteeHref ??
+                      `/teacher/grades/${classId}/${evaluationId}/dictee`) as Route
                   }
                 >
                   <Mic className="h-4 w-4" />

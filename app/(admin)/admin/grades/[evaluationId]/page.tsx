@@ -55,6 +55,11 @@ export default async function AdminGradeEntryPage({
       <GradeEntryGrid
         evaluationId={Number(evaluationId)}
         classId={classId ? Number(classId) : undefined}
+        dicteeHref={
+          classId
+            ? `/admin/grades/${evaluationId}/dictee?classId=${classId}`
+            : undefined
+        }
       />
     </div>
   )
