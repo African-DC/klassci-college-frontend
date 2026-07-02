@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Export en un tap des listes de gestion : bouton « Exporter » (Excel .xlsx ou PDF, aux couleurs de l'établissement) sur les pages Élèves, Paiements (avec total), Notes et Présences. L'export reprend exactement les lignes affichées, filtres compris *(admin)*.
 - Socle d'export de données réutilisable : les listes pourront bientôt être exportées en Excel (.xlsx) et en PDF, aux couleurs de l'établissement. L'Excel reste une vraie table exploitable (filtres, tri, colonnes typées), le PDF adopte la présentation sobre des documents officiels *(admin)*.
 - Vérification d'un document par saisie manuelle du code : sur la page de vérification, on peut maintenant taper le code « CEV-XXXX-XXXX-XXXX » imprimé au dos du document pour confirmer son authenticité, sans avoir à scanner *(tous)*.
 - Fiche de classe repensée en page à onglets (Aperçu, Élèves, Emploi du temps, Matières, Enseignants) avec bandeau bleu-orange et indicateurs clés. Téléchargement en un tap de la liste de classe et du rapport de synthèse (PDF), liste des élèves, emploi du temps par jour, et matières et enseignants déduits de l'emploi du temps *(admin)*.
