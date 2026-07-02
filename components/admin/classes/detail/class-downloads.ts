@@ -34,6 +34,11 @@ export function fetchClassGradeSheet(classId: number): Promise<Blob> {
   return apiFetchBlob(`/admin/classes/${classId}/grade-sheet`)
 }
 
+/** Cahier de texte de la classe (semaine en cours par défaut) — PDF. */
+export function fetchClassCahierTexte(classId: number): Promise<Blob> {
+  return apiFetchBlob(`/admin/classes/${classId}/cahier-texte`)
+}
+
 /**
  * Déclenche le téléchargement d'un Blob côté navigateur (création d'un
  * `<a download>` éphémère + revokeObjectURL). Pattern identique à
