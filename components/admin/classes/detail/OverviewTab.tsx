@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils"
 import { deriveSubjects, deriveTeachers } from "./class-helpers"
 import {
   fetchClassAttendanceSheet,
+  fetchClassCahierTexte,
   fetchClassGradeSheet,
   fetchClassRoster,
   fetchClassSynthesis,
@@ -270,6 +271,15 @@ export function OverviewTab({ classData, slots }: OverviewTabProps) {
             fetchBlob={() => fetchClassGradeSheet(classData.id)}
             filename={`feuille-notes-${safeName}.pdf`}
             label={`la feuille de notes de la classe ${name}`}
+          />
+
+          {/* Cahier de texte (semaine en cours) */}
+          <DocRow
+            title="Cahier de texte"
+            description="Le cahier de texte de la classe pour la semaine en cours."
+            fetchBlob={() => fetchClassCahierTexte(classData.id)}
+            filename={`cahier-texte-${safeName}.pdf`}
+            label={`le cahier de texte de la classe ${name}`}
           />
 
           {/* Rapport de synthèse */}

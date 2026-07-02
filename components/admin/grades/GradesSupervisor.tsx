@@ -3,13 +3,16 @@
 import { useState, useMemo } from "react"
 import Link from "next/link"
 import type { Route } from "next"
+import { toast } from "sonner"
 import {
   AlertTriangle,
   CheckCircle2,
   ClipboardList,
   Edit3,
+  FileText,
   Hourglass,
   Info,
+  Loader2,
   Plus,
   TrendingUp,
 } from "lucide-react"
@@ -17,12 +20,19 @@ import { cn } from "@/lib/utils"
 import { useEvaluations } from "@/lib/hooks/useGrades"
 import { useClasses } from "@/lib/hooks/useClasses"
 import { useSubjects } from "@/lib/hooks/useSubjects"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { usePermissions } from "@/lib/hooks/usePermissions"
 import type { Evaluation } from "@/lib/contracts/grade"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ExportMenu } from "@/components/export/ExportMenu"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
+import { apiFetchBlob } from "@/lib/api/client"
+import {
+  fileSafeName,
+  triggerBlobDownload,
+} from "@/components/admin/classes/detail/class-downloads"
 import { useSettings } from "@/lib/hooks/useSettings"
 import { EvaluationCreateModal } from "./EvaluationCreateModal"
 import { buildGradesExportPayload } from "./grades-export"
@@ -67,6 +77,11 @@ export function GradesSupervisor() {
   const { data: subjectsData } = useSubjects({ size: 100 })
   const subjects = subjectsData?.items ?? []
 
+  const { data: yearsData } = useAcademicYears()
+  const years = yearsData?.items ?? []
+  const currentYear = years.find((y) => y.is_current) ?? years[0]
+  const ayId = currentYear?.id
+
   const { has } = usePermissions()
   const canCreate = has("grades:write")
   const { data: settings } = useSettings()
@@ -76,6 +91,7 @@ export function GradesSupervisor() {
   const [trimester, setTrimester] = useState<number | null>(null)
   const [tab, setTab] = useState<FilterTab>("all")
   const [createOpen, setCreateOpen] = useState(false)
+  const [downloadingReport, setDownloadingReport] = useState(false)
 
   const { data: evaluations, isLoading, error } = useEvaluations(classId ?? 0)
 
@@ -131,6 +147,41 @@ export function GradesSupervisor() {
     return parts.length > 0 ? parts.join(" · ") : undefined
   })()
 
+  // Relevé de notes rempli : n'a de sens que par matière ET trimestre précis.
+  const reportReady =
+    classId != null && subjectId != null && trimester != null && ayId != null
+  const reportClassName = classes.find((c) => c.id === classId)?.name
+  const reportSubjectName = subjects.find((s) => s.id === subjectId)?.name
+  const reportLabel = `le relevé de notes${
+    reportClassName ? ` de la classe ${reportClassName}` : ""
+  }${reportSubjectName ? ` en ${reportSubjectName}` : ""}${
+    trimester ? ` (T${trimester})` : ""
+  }`
+  const reportFilename = `releve-notes-${fileSafeName(
+    reportClassName ?? "classe",
+  )}-${fileSafeName(reportSubjectName ?? "matiere")}-T${trimester}.pdf`
+  const fetchGradeReport = () =>
+    apiFetchBlob(
+      `/reports/classes/${classId}/grade-report?subject_id=${subjectId}&trimester=${trimester}&academic_year_id=${ayId}`,
+    )
+
+  async function handleGradeReport() {
+    if (!reportReady) return
+    setDownloadingReport(true)
+    try {
+      triggerBlobDownload(await fetchGradeReport(), reportFilename)
+    } catch (err) {
+      toast.error("Téléchargement impossible", {
+        description:
+          err instanceof Error ? err.message : "Erreur lors de la génération du PDF",
+      })
+    } finally {
+      setDownloadingReport(false)
+    }
+  }
+
+  const reportHint = "Choisir une classe, une matière et un trimestre"
+
   const tabsOrder: { key: FilterTab; label: string; count: number }[] = [
     { key: "all", label: "Toutes", count: stats.total },
     { key: "todo", label: "À saisir", count: stats.todo },
@@ -152,7 +203,33 @@ export function GradesSupervisor() {
               Suivez la progression des évaluations et saisissez au nom des enseignants si besoin.
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            <div
+              className="flex items-center gap-2"
+              title={reportReady ? undefined : reportHint}
+            >
+              <PdfPreviewButton
+                fetchBlob={fetchGradeReport}
+                label={reportLabel}
+                disabled={!reportReady}
+                className="h-11 sm:h-10"
+              />
+              <Button
+                variant="outline"
+                onClick={handleGradeReport}
+                disabled={!reportReady || downloadingReport}
+                aria-label="Télécharger le relevé de notes"
+                title={reportReady ? undefined : reportHint}
+                className="h-11 sm:h-10"
+              >
+                {downloadingReport ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <FileText className="mr-2 h-4 w-4" aria-hidden="true" />
+                )}
+                Relevé de notes (PDF)
+              </Button>
+            </div>
             <ExportMenu
               filename="notes"
               disabled={noClassSelected || filtered.length === 0}
