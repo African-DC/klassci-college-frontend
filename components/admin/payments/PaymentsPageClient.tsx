@@ -45,12 +45,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ExportMenu } from "@/components/export/ExportMenu"
 import { PaymentCreateWizard } from "./PaymentCreateWizard"
 import { usePayments, useFinancialSummary, useValidatePayment, useCancelPayment } from "@/lib/hooks/usePayments"
 import { useFeeCategories } from "@/lib/hooks/useFees"
+import { useSettings } from "@/lib/hooks/useSettings"
 import { paymentsApi } from "@/lib/api/payments"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@/lib/contracts/payment"
+import { buildPaymentsExportPayload } from "./payments-export"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ""
 
@@ -103,6 +106,7 @@ export function PaymentsPageClient() {
   const { mutate: validatePayment, isPending: validating } = useValidatePayment()
   const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
   const { data: feeCategories } = useFeeCategories()
+  const { data: settings } = useSettings()
 
   // Client-side date filtering (BE doesn't support date params yet)
   const payments = useMemo(() => {
@@ -119,6 +123,20 @@ export function PaymentsPageClient() {
   }, [data, dateFrom, dateTo])
 
   const activeFilterCount = [statusFilter, methodFilter, categoryFilter, dateFrom, dateTo].filter(Boolean).length
+
+  // Résumé lisible des filtres actifs pour l'entête du document exporté.
+  const exportFilters = useMemo(() => {
+    const parts: string[] = []
+    if (statusFilter) parts.push(`Statut : ${STATUS_CONFIG[statusFilter].label}`)
+    if (methodFilter) parts.push(`Méthode : ${METHOD_LABELS[methodFilter]}`)
+    if (categoryFilter) {
+      const name = feeCategories?.find((c) => String(c.id) === categoryFilter)?.name
+      if (name) parts.push(`Catégorie : ${name}`)
+    }
+    if (dateFrom || dateTo) parts.push(`Période : ${dateFrom || "…"} au ${dateTo || "…"}`)
+    if (debouncedSearch) parts.push(`Recherche « ${debouncedSearch} »`)
+    return parts.length > 0 ? parts.join(" · ") : undefined
+  }, [statusFilter, methodFilter, categoryFilter, dateFrom, dateTo, debouncedSearch, feeCategories])
 
   const handlePreviewReceipt = useCallback(async (payment: Payment) => {
     setDownloadingId(payment.id)
@@ -208,10 +226,19 @@ export function PaymentsPageClient() {
         title="Paiements"
         subtitle="Suivi des paiements et tableau de bord financier"
         actions={
-          <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Nouveau paiement
-          </button>
+          <>
+            <ExportMenu
+              filename="paiements"
+              disabled={payments.length === 0}
+              getPayload={() =>
+                buildPaymentsExportPayload({ payments, settings, filters: exportFilters })
+              }
+            />
+            <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Nouveau paiement
+            </button>
+          </>
         }
         kpis={heroKpis}
       />

@@ -188,7 +188,7 @@ export function AttendancePageClient() {
         </TabsContent>
 
         <TabsContent value="statistiques">
-          <AttendanceStats classId={classId} />
+          <AttendanceStats classId={classId} className={selectedClass?.name} />
         </TabsContent>
       </Tabs>
     </div>

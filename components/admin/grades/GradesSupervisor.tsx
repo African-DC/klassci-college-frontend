@@ -22,7 +22,10 @@ import type { Evaluation } from "@/lib/contracts/grade"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ExportMenu } from "@/components/export/ExportMenu"
+import { useSettings } from "@/lib/hooks/useSettings"
 import { EvaluationCreateModal } from "./EvaluationCreateModal"
+import { buildGradesExportPayload } from "./grades-export"
 import {
   Select,
   SelectContent,
@@ -66,6 +69,7 @@ export function GradesSupervisor() {
 
   const { has } = usePermissions()
   const canCreate = has("grades:write")
+  const { data: settings } = useSettings()
 
   const [classId, setClassId] = useState<number | null>(null)
   const [subjectId, setSubjectId] = useState<number | null>(null)
@@ -108,6 +112,25 @@ export function GradesSupervisor() {
   }
 
   const noClassSelected = classId === null
+
+  // Résumé lisible du contexte pour l'entête du document exporté.
+  const TAB_LABELS: Record<FilterTab, string> = {
+    all: "Toutes",
+    todo: "À saisir",
+    overdue: "En retard",
+    done: "Terminées",
+  }
+  const exportFilters = (() => {
+    const parts: string[] = []
+    const className = classes.find((c) => c.id === classId)?.name
+    if (className) parts.push(`Classe ${className}`)
+    const subjectName = subjects.find((s) => s.id === subjectId)?.name
+    if (subjectName) parts.push(subjectName)
+    if (trimester) parts.push(`T${trimester}`)
+    if (tab !== "all") parts.push(TAB_LABELS[tab])
+    return parts.length > 0 ? parts.join(" · ") : undefined
+  })()
+
   const tabsOrder: { key: FilterTab; label: string; count: number }[] = [
     { key: "all", label: "Toutes", count: stats.total },
     { key: "todo", label: "À saisir", count: stats.todo },
@@ -129,12 +152,21 @@ export function GradesSupervisor() {
               Suivez la progression des évaluations et saisissez au nom des enseignants si besoin.
             </p>
           </div>
-          {canCreate && (
-            <Button onClick={() => setCreateOpen(true)} className="shrink-0">
-              <Plus className="mr-2 h-4 w-4" />
-              Nouvelle évaluation
-            </Button>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            <ExportMenu
+              filename="notes"
+              disabled={noClassSelected || filtered.length === 0}
+              getPayload={() =>
+                buildGradesExportPayload({ evaluations: filtered, settings, filters: exportFilters })
+              }
+            />
+            {canCreate && (
+              <Button onClick={() => setCreateOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Nouvelle évaluation
+              </Button>
+            )}
+          </div>
         </div>
 
         {!noClassSelected && (
