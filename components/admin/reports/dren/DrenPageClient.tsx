@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { Download, FileSpreadsheet, Loader2, Users, UserCheck, TrendingUp, BarChart3, Building } from "lucide-react"
+import { Download, Eye, FileSpreadsheet, Loader2, Users, UserCheck, TrendingUp, BarChart3, Building } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -29,6 +29,7 @@ import { ReportsNav } from "../ReportsNav"
 import { useDrenStats } from "@/lib/hooks/useDrenStats"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { drenApi } from "@/lib/api/dren"
+import { openPdfPreview } from "@/lib/pdf/preview"
 
 export function DrenPageClient() {
   const { data: academicYearsData } = useAcademicYears()
@@ -37,6 +38,7 @@ export function DrenPageClient() {
   const activeYearId = academicYearId ?? academicYears?.[0]?.id
   const { data: stats, isLoading, isError } = useDrenStats(activeYearId)
   const [downloading, setDownloading] = useState<"excel" | "pdf" | null>(null)
+  const [previewingPdf, setPreviewingPdf] = useState(false)
 
   // Téléchargement authentifié via blob
   const handleDownload = useCallback(async (type: "excel" | "pdf") => {
@@ -52,6 +54,17 @@ export function DrenPageClient() {
       toast.error(err instanceof Error ? err.message : `Impossible de télécharger le fichier ${type.toUpperCase()}`)
     } finally {
       setDownloading(null)
+    }
+  }, [activeYearId])
+
+  // Aperçu inline du PDF (même blob authentifié que le téléchargement)
+  const handlePreviewPdf = useCallback(async () => {
+    if (!activeYearId) return
+    setPreviewingPdf(true)
+    try {
+      await openPdfPreview(() => drenApi.downloadPdf(activeYearId))
+    } finally {
+      setPreviewingPdf(false)
     }
   }, [activeYearId])
 
@@ -75,9 +88,20 @@ export function DrenPageClient() {
             </button>
             <button
               type="button"
+              className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+              onClick={handlePreviewPdf}
+              disabled={previewingPdf || !activeYearId}
+              aria-label="Aperçu du PDF des statistiques DREN"
+            >
+              {previewingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+              Aperçu
+            </button>
+            <button
+              type="button"
               className={`${heroAccentBtn} disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={() => handleDownload("pdf")}
               disabled={downloading === "pdf"}
+              aria-label="Télécharger le PDF des statistiques DREN"
             >
               {downloading === "pdf" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               PDF

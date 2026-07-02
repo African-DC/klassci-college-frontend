@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Award, FileCheck2, FileText, Loader2, Download, FilePlus } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { studentDocumentsApi } from "@/lib/api/student-documents"
 import { downloadBlob } from "@/lib/utils"
 import { SectionCard, StatusPill, EmptyState } from "./_primitives"
@@ -103,25 +104,34 @@ export function DocumentsTab({ studentId, studentLastName }: DocumentsTabProps) 
 
                 <p className="text-xs leading-relaxed text-muted-foreground">{doc.description}</p>
 
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleDownload(doc)}
-                  disabled={isDownloading}
-                  className="h-11 w-full gap-2 sm:h-10"
-                >
-                  {isDownloading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Génération…
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      Télécharger
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <PdfPreviewButton
+                    fetchBlob={() => doc.download(studentId)}
+                    label={doc.title}
+                    size="sm"
+                    className="h-11 flex-1 sm:h-10"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDownload(doc)}
+                    disabled={isDownloading}
+                    aria-label={`Télécharger ${doc.title}`}
+                    className="h-11 flex-1 gap-2 sm:h-10"
+                  >
+                    {isDownloading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Génération…
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        Télécharger
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             )
           })}

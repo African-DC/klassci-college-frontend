@@ -6,6 +6,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { studentDocumentsApi } from "@/lib/api/student-documents"
 import { downloadBlob } from "@/lib/utils"
 import { useParentChildren } from "@/lib/hooks/useParentPortal"
@@ -134,24 +135,33 @@ export function ParentChildDocumentsClient({
                   </p>
                 </div>
               </div>
-              <Button
-                size="lg"
-                onClick={() => handleDownload(doc)}
-                disabled={disabled}
-                aria-disabled={disabled}
-                className="h-11 w-full"
-              >
-                {isDownloading ? (
-                  <>
-                    <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
-                    Génération...
-                  </>
-                ) : !isEnrolled ? (
-                  "Disponible après inscription"
-                ) : (
-                  "Télécharger PDF"
-                )}
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <PdfPreviewButton
+                  fetchBlob={() => doc.download(childId)}
+                  label={doc.title}
+                  disabled={disabled}
+                  className="h-11 w-full sm:flex-1"
+                />
+                <Button
+                  size="lg"
+                  onClick={() => handleDownload(doc)}
+                  disabled={disabled}
+                  aria-disabled={disabled}
+                  aria-label={`Télécharger ${doc.title}`}
+                  className="h-11 w-full sm:flex-1"
+                >
+                  {isDownloading ? (
+                    <>
+                      <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
+                      Génération...
+                    </>
+                  ) : !isEnrolled ? (
+                    "Disponible après inscription"
+                  ) : (
+                    "Télécharger PDF"
+                  )}
+                </Button>
+              </div>
             </div>
           )
         })}

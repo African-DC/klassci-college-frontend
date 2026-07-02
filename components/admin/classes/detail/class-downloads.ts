@@ -24,6 +24,16 @@ export function fetchClassSynthesis(
   )
 }
 
+/** Feuille d'appel (présences vierges à cocher) de la classe — PDF. */
+export function fetchClassAttendanceSheet(classId: number): Promise<Blob> {
+  return apiFetchBlob(`/admin/classes/${classId}/attendance-sheet`)
+}
+
+/** Feuille de notes (grille de saisie vierge) de la classe — PDF. */
+export function fetchClassGradeSheet(classId: number): Promise<Blob> {
+  return apiFetchBlob(`/admin/classes/${classId}/grade-sheet`)
+}
+
 /**
  * Déclenche le téléchargement d'un Blob côté navigateur (création d'un
  * `<a download>` éphémère + revokeObjectURL). Pattern identique à

@@ -21,6 +21,7 @@ import { DataError } from "@/components/shared/DataError"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
 import { SectionCard, EmptyState, InitialsAvatar } from "@/components/admin/students/tabs/_primitives"
 import { getUploadUrl } from "@/lib/utils"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { fetchClassRoster, fileSafeName, triggerBlobDownload } from "./class-downloads"
 
 interface StudentsTabProps {
@@ -83,19 +84,29 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
   }
 
   const downloadBtn = (
-    <Button
-      onClick={handleRoster}
-      disabled={downloading || students.length === 0}
-      size="sm"
-      className="h-11 bg-accent text-accent-foreground shadow-sm hover:bg-accent/90 sm:h-9"
-    >
-      {downloading ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-      ) : (
-        <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-      )}
-      Liste (PDF)
-    </Button>
+    <div className="flex items-center gap-2">
+      <PdfPreviewButton
+        fetchBlob={() => fetchClassRoster(classId)}
+        label={`la liste de la classe ${className}`}
+        disabled={students.length === 0}
+        size="sm"
+        className="h-11 sm:h-9"
+      />
+      <Button
+        onClick={handleRoster}
+        disabled={downloading || students.length === 0}
+        size="sm"
+        aria-label={`Télécharger la liste de la classe ${className}`}
+        className="h-11 bg-accent text-accent-foreground shadow-sm hover:bg-accent/90 sm:h-9"
+      >
+        {downloading ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+        ) : (
+          <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+        )}
+        Liste (PDF)
+      </Button>
+    </div>
   )
 
   return (

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { useParentChildBulletins } from "@/lib/hooks/useParentPortal"
 import { parentPortalApi } from "@/lib/api/parent-portal"
 import { downloadBlob } from "@/lib/utils"
@@ -103,21 +104,28 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
                   </div>
                 )}
                 {bulletin.is_published && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDownload(bulletin.id)}
-                    disabled={downloadingId === bulletin.id}
-                    aria-label={`Télécharger le bulletin du trimestre ${bulletin.trimester} en PDF`}
-                    className="h-11 w-full sm:h-9"
-                  >
-                    {downloadingId === bulletin.id ? (
-                      <Loader2 aria-hidden="true" className="mr-1.5 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Download aria-hidden="true" className="mr-1.5 h-4 w-4" />
-                    )}
-                    Télécharger PDF
-                  </Button>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <PdfPreviewButton
+                      fetchBlob={() => parentPortalApi.downloadChildBulletinPdf(bulletin.id)}
+                      label={`le bulletin du trimestre ${bulletin.trimester}`}
+                      className="h-11 w-full sm:h-9 sm:flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDownload(bulletin.id)}
+                      disabled={downloadingId === bulletin.id}
+                      aria-label={`Télécharger le bulletin du trimestre ${bulletin.trimester} en PDF`}
+                      className="h-11 w-full sm:h-9 sm:flex-1"
+                    >
+                      {downloadingId === bulletin.id ? (
+                        <Loader2 aria-hidden="true" className="mr-1.5 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download aria-hidden="true" className="mr-1.5 h-4 w-4" />
+                      )}
+                      Télécharger PDF
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>

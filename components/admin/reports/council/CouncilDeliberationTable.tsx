@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table"
 import { toast } from "sonner"
 import { downloadBlob } from "@/lib/utils"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { CouncilDecisionBadge } from "./CouncilDecisionBadge"
 import { CouncilValidateButton } from "./CouncilValidateButton"
 import { useUpdateDecisions } from "@/lib/hooks/useCouncil"
@@ -269,14 +270,20 @@ export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyC
             disabled={isReadOnly || stats.pending > 0}
           />
         </div>
-        <Button variant="outline" onClick={handleDownloadPdf} disabled={isDownloading}>
-          {isDownloading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="mr-2 h-4 w-4" />
-          )}
-          Exporter PDF
-        </Button>
+        <div className="flex items-center gap-2">
+          <PdfPreviewButton
+            fetchBlob={() => councilApi.downloadPdf(minutes.id)}
+            label="le PV de conseil"
+          />
+          <Button variant="outline" onClick={handleDownloadPdf} disabled={isDownloading} aria-label="Télécharger le PV de conseil en PDF">
+            {isDownloading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            Exporter PDF
+          </Button>
+        </div>
       </div>
     </div>
   )

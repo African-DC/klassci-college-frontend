@@ -23,8 +23,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { SectionCard } from "@/components/admin/students/tabs/_primitives"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
+import { cn } from "@/lib/utils"
 import { deriveSubjects, deriveTeachers } from "./class-helpers"
 import {
+  fetchClassAttendanceSheet,
+  fetchClassGradeSheet,
   fetchClassRoster,
   fetchClassSynthesis,
   fileSafeName,
@@ -63,9 +67,76 @@ function MetricTile({
   )
 }
 
+/**
+ * Ligne « document PDF » : titre + description, avec un couple d'actions
+ * Aperçu / Télécharger pointant sur la même source de blob.
+ */
+function DocRow({
+  title,
+  description,
+  fetchBlob,
+  filename,
+  label,
+  accent,
+}: {
+  title: string
+  description: string
+  fetchBlob: () => Promise<Blob>
+  filename: string
+  label: string
+  accent?: boolean
+}) {
+  const [downloading, setDownloading] = useState(false)
+
+  async function handleDownload() {
+    setDownloading(true)
+    try {
+      triggerBlobDownload(await fetchBlob(), filename)
+    } catch (err) {
+      toast.error("Téléchargement impossible", {
+        description: err instanceof Error ? err.message : "Erreur lors de la génération du PDF",
+      })
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-border/60 bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="text-sm font-medium">{title}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <PdfPreviewButton
+          fetchBlob={fetchBlob}
+          label={label}
+          className="h-11 w-full sm:h-10 sm:w-auto"
+        />
+        <Button
+          onClick={handleDownload}
+          disabled={downloading}
+          variant={accent ? "default" : "outline"}
+          aria-label={`Télécharger ${label}`}
+          className={cn(
+            "h-11 w-full sm:h-10 sm:w-auto",
+            accent && "bg-accent text-accent-foreground shadow-sm hover:bg-accent/90",
+          )}
+        >
+          {downloading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+          )}
+          Télécharger
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export function OverviewTab({ classData, slots }: OverviewTabProps) {
   const [trimester, setTrimester] = useState("1")
-  const [downloadingRoster, setDownloadingRoster] = useState(false)
   const [downloadingSynthesis, setDownloadingSynthesis] = useState(false)
 
   const enrolled = classData.enrolled_count ?? 0
@@ -80,25 +151,14 @@ export function OverviewTab({ classData, slots }: OverviewTabProps) {
   const name = classData.name
   const safeName = fileSafeName(name)
 
-  async function handleRoster() {
-    setDownloadingRoster(true)
-    try {
-      const blob = await fetchClassRoster(classData.id)
-      triggerBlobDownload(blob, `liste-classe-${safeName}.pdf`)
-    } catch (err) {
-      toast.error("Téléchargement impossible", {
-        description: err instanceof Error ? err.message : "Erreur lors de la génération du PDF",
-      })
-    } finally {
-      setDownloadingRoster(false)
-    }
-  }
+  const fetchSynthesis = () =>
+    fetchClassSynthesis(classData.id, Number(trimester), academicYearId as number)
 
   async function handleSynthesis() {
     if (!academicYearId) return
     setDownloadingSynthesis(true)
     try {
-      const blob = await fetchClassSynthesis(classData.id, Number(trimester), academicYearId)
+      const blob = await fetchSynthesis()
       triggerBlobDownload(blob, `synthese-${safeName}-T${trimester}.pdf`)
     } catch (err) {
       toast.error("Téléchargement impossible", {
@@ -185,26 +245,32 @@ export function OverviewTab({ classData, slots }: OverviewTabProps) {
       >
         <div className="space-y-3">
           {/* Liste de classe (roster) */}
-          <div className="flex flex-col gap-3 rounded-lg border border-border/60 bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium">Liste de classe</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Les élèves inscrits, avec matricule et coordonnées.
-              </p>
-            </div>
-            <Button
-              onClick={handleRoster}
-              disabled={downloadingRoster}
-              className="h-11 w-full bg-accent text-accent-foreground shadow-sm hover:bg-accent/90 sm:h-10 sm:w-auto"
-            >
-              {downloadingRoster ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-              )}
-              Télécharger
-            </Button>
-          </div>
+          <DocRow
+            title="Liste de classe"
+            description="Les élèves inscrits, avec matricule et coordonnées."
+            fetchBlob={() => fetchClassRoster(classData.id)}
+            filename={`liste-classe-${safeName}.pdf`}
+            label={`la liste de la classe ${name}`}
+            accent
+          />
+
+          {/* Feuille d'appel (présences vierges) */}
+          <DocRow
+            title="Feuille d'appel"
+            description="Grille de présences vierge à cocher pour l'appel en classe."
+            fetchBlob={() => fetchClassAttendanceSheet(classData.id)}
+            filename={`feuille-appel-${safeName}.pdf`}
+            label={`la feuille d'appel de la classe ${name}`}
+          />
+
+          {/* Feuille de notes (grille de saisie vierge) */}
+          <DocRow
+            title="Feuille de notes"
+            description="Grille de saisie des notes vierge pour les enseignants."
+            fetchBlob={() => fetchClassGradeSheet(classData.id)}
+            filename={`feuille-notes-${safeName}.pdf`}
+            label={`la feuille de notes de la classe ${name}`}
+          />
 
           {/* Rapport de synthèse */}
           {academicYearId ? (
@@ -226,10 +292,16 @@ export function OverviewTab({ classData, slots }: OverviewTabProps) {
                     <SelectItem value="3">Trimestre 3</SelectItem>
                   </SelectContent>
                 </Select>
+                <PdfPreviewButton
+                  fetchBlob={fetchSynthesis}
+                  label={`la synthèse de la classe ${name} (T${trimester})`}
+                  className="h-11 w-full sm:h-10 sm:w-auto"
+                />
                 <Button
                   variant="outline"
                   onClick={handleSynthesis}
                   disabled={downloadingSynthesis}
+                  aria-label={`Télécharger la synthèse de la classe ${name}`}
                   className="h-11 w-full sm:h-10 sm:w-auto"
                 >
                   {downloadingSynthesis ? (

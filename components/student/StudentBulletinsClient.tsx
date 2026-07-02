@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { downloadBlob } from "@/lib/utils"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { useStudentBulletins } from "@/lib/hooks/useStudentPortal"
 import { studentPortalApi } from "@/lib/api/student-portal"
 import { DataError } from "@/components/shared/DataError"
@@ -97,21 +98,29 @@ function BulletinCard({ bulletin }: { bulletin: StudentBulletin }) {
             <Badge variant="secondary" className="text-[10px]">Brouillon</Badge>
           )}
           {isPublished && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleDownload}
-              disabled={isDownloading}
-              aria-label={`Télécharger le bulletin ${bulletin.trimester} en PDF`}
-              className="h-11 sm:h-9"
-            >
-              {isDownloading ? (
-                <Loader2 aria-hidden="true" className="mr-1 h-4 w-4 animate-spin sm:h-3 sm:w-3" />
-              ) : (
-                <Download aria-hidden="true" className="mr-1 h-4 w-4 sm:h-3 sm:w-3" />
-              )}
-              PDF
-            </Button>
+            <>
+              <PdfPreviewButton
+                fetchBlob={() => studentPortalApi.downloadBulletin(bulletin.id)}
+                label={`le bulletin ${bulletin.trimester}`}
+                size="sm"
+                className="h-11 sm:h-9"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDownload}
+                disabled={isDownloading}
+                aria-label={`Télécharger le bulletin ${bulletin.trimester} en PDF`}
+                className="h-11 sm:h-9"
+              >
+                {isDownloading ? (
+                  <Loader2 aria-hidden="true" className="mr-1 h-4 w-4 animate-spin sm:h-3 sm:w-3" />
+                ) : (
+                  <Download aria-hidden="true" className="mr-1 h-4 w-4 sm:h-3 sm:w-3" />
+                )}
+                PDF
+              </Button>
+            </>
           )}
         </div>
       </CardContent>
