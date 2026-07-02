@@ -18,6 +18,7 @@ import { timetableApi } from "@/lib/api/timetable"
 import { downloadBlob } from "@/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
 import { timetableKeys } from "@/lib/hooks/useTimetable"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { TimetableGrid } from "@/components/admin/timetable/TimetableGrid"
 import { TimetableHoursSidebar } from "@/components/admin/timetable/TimetableHoursSidebar"
 import { GenerateDiagnosticModal } from "@/components/admin/timetable/GenerateDiagnosticModal"
@@ -155,10 +156,17 @@ export default function TimetablePage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <PdfPreviewButton
+            fetchBlob={() => timetableApi.exportPdf(selectedClassId as number, weekOffset)}
+            label="l'emploi du temps"
+            disabled={!selectedClassId}
+            className="h-11 sm:h-10"
+          />
           <Button
             variant="outline"
             onClick={handleExportPdf}
             disabled={!selectedClassId || exportingPdf}
+            aria-label="Télécharger l'emploi du temps en PDF"
             className="h-11 sm:h-10"
           >
             {exportingPdf ? (

@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Aperçu PDF sur tous les documents : à côté de chaque bouton « Télécharger », un bouton « Aperçu » ouvre le document dans un nouvel onglet sans le télécharger (bulletins, certificats et attestations, reçus de paiement, liste de classe, rapport de synthèse, PV de conseil, emploi du temps, statistiques DREN). Deux nouveaux documents de classe, la feuille d'appel et la feuille de notes vierges, sont aussi téléchargeables et consultables en aperçu depuis la fiche de classe *(admin, enseignant, parent, élève)*.
 - Export en un tap des listes de gestion : bouton « Exporter » (Excel .xlsx ou PDF, aux couleurs de l'établissement) sur les pages Élèves, Paiements (avec total), Notes et Présences. L'export reprend exactement les lignes affichées, filtres compris *(admin)*.
 - Socle d'export de données réutilisable : les listes pourront bientôt être exportées en Excel (.xlsx) et en PDF, aux couleurs de l'établissement. L'Excel reste une vraie table exploitable (filtres, tri, colonnes typées), le PDF adopte la présentation sobre des documents officiels *(admin)*.
 - Vérification d'un document par saisie manuelle du code : sur la page de vérification, on peut maintenant taper le code « CEV-XXXX-XXXX-XXXX » imprimé au dos du document pour confirmer son authenticité, sans avoir à scanner *(tous)*.

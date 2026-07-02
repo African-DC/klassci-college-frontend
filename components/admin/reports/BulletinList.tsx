@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
-import { Eye, Download, DownloadCloud, Send, ChevronLeft, ChevronRight } from "lucide-react"
+import { Download, DownloadCloud, Send, ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import {
   Table,
   TableBody,
@@ -257,17 +258,13 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <Button
+                      <PdfPreviewButton
+                        fetchBlob={() => bulletinsApi.downloadPdf(bulletin.id)}
+                        label={`le bulletin de ${bulletin.student_name}`}
+                        iconOnly
                         size="icon"
                         variant="ghost"
-                        onClick={() => setPreviewId(bulletin.id)}
-                        title="Voir le détail"
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span className="sr-only">
-                          Voir le bulletin de {bulletin.student_name}
-                        </span>
-                      </Button>
+                      />
                       <Button
                         size="icon"
                         variant="ghost"
