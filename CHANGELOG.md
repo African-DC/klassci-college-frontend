@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Demandes de congé : depuis son profil (et son tableau de bord pour l'enseignant), on demande un congé en quelques secondes et on suit son statut ; une page « Congés » côté administration permet d'approuver ou refuser les demandes en attente *(enseignant, personnel, admin)*.
 - Pièces jointes sur l'onglet Documents de la fiche élève : téléversez un PDF ou une image (extrait de naissance, certificat médical, etc.), en choisissant le type dans une liste ou en le créant à la volée ; consultez ou supprimez chaque document *(admin)*.
 - Section « Préférences de notifications » sur la page profil : activez ou désactivez l'email et le SMS d'un simple interrupteur ; la cloche dans l'application reste toujours active *(tous)*.
 - Nouvel espace « Mon profil », accessible depuis le menu du compte dans tous les portails : sa photo (l'enseignant et le personnel la mettent eux-mêmes), ses informations et son téléphone modifiable en un clic. L'ajout de photo a été retiré des fiches enseignant et personnel côté admin, la photo étant désormais gérée par la personne elle-même *(tous)*.

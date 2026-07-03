@@ -9,6 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { ProfileInfoCard } from "./ProfileInfoCard"
 import { NotificationPrefsCard } from "./NotificationPrefsCard"
+import { MyLeaveCard } from "@/components/shared/leave/MyLeaveCard"
+
+const LEAVE_ROLES = ["admin", "director", "teacher", "staff"]
 import { useMyProfile, profileKeys } from "@/lib/hooks/useProfile"
 import { profileApi } from "@/lib/api/profile"
 import { getUploadUrl } from "@/lib/utils"
@@ -121,6 +124,8 @@ export function ProfilePageClient() {
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
 
       <ProfileInfoCard profile={profile} />
+
+      {LEAVE_ROLES.includes(profile.role) && <MyLeaveCard />}
 
       <NotificationPrefsCard />
     </div>

@@ -18,6 +18,7 @@ import {
   Wallet,
   CreditCard,
   CalendarDays,
+  CalendarClock,
   CalendarRange,
   ClipboardList,
   HeartHandshake,
@@ -87,6 +88,7 @@ const navigation: NavSection[] = [
       { label: "Présences", href: "/admin/attendance", icon: UserCheck },
       { label: "Bulletins", href: "/admin/reports", icon: FileText },
       { label: "Performance", href: "/admin/performance" as Route, icon: Gauge },
+      { label: "Congés", href: "/admin/leave" as Route, icon: CalendarClock },
     ],
   },
   {
