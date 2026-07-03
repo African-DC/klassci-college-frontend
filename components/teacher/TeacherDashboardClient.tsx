@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { PageHero, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
 import { AcademicYearBanner } from "@/components/shared/AcademicYearBanner"
+import { MyLeaveCard } from "@/components/shared/leave/MyLeaveCard"
 import { useTeacherDashboard } from "@/lib/hooks/useTeacherPortal"
 import type { TeacherUpcomingEval } from "@/lib/contracts/teacher-portal"
 import { SelfDeclareAbsenceModal } from "./SelfDeclareAbsenceModal"
@@ -175,6 +176,8 @@ export function TeacherDashboardClient() {
           </div>
         )}
       </section>
+
+      <MyLeaveCard />
 
       <SelfDeclareAbsenceModal
         open={selfDeclareOpen}
