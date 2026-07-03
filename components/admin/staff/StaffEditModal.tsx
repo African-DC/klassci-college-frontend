@@ -2,11 +2,18 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { StaffUpdateSchema, type StaffUpdate } from "@/lib/contracts/staff"
+import { StaffUpdateSchema, STAFF_ROLE_OPTIONS, type StaffUpdate } from "@/lib/contracts/staff"
 import { useStaffMember, useUpdateStaff } from "@/lib/hooks/useStaff"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Form,
@@ -43,6 +50,7 @@ function EditForm({ staffId, onClose }: { staffId: number; onClose: () => void }
           last_name: staff.last_name,
           position: staff.position ?? undefined,
           phone: staff.phone ?? undefined,
+          role: staff.role ?? "staff",
         }
       : undefined,
   })
@@ -113,6 +121,31 @@ function EditForm({ staffId, onClose }: { staffId: number; onClose: () => void }
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Rôle d&apos;accès</FormLabel>
+              <Select value={field.value ?? "staff"} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Rôle d'accès" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {STAFF_ROLE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">

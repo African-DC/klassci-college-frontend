@@ -1,9 +1,10 @@
 "use client"
 
-import { User, Phone, CalendarDays, Mail, ShieldCheck } from "lucide-react"
+import { User, Phone, CalendarDays, Mail, ShieldCheck, Briefcase, KeyRound } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { Staff, StaffFull } from "@/lib/contracts/staff"
+import { staffRoleLabel } from "@/lib/contracts/staff"
 
 interface StaffProfileTabProps {
   staff: Staff
@@ -63,11 +64,20 @@ export function StaffProfileTab({ staff, fullData }: StaffProfileTabProps) {
           <h3 className="text-sm font-medium text-muted-foreground mb-4">
             Informations personnelles
           </h3>
-          {/* Drop Poste (déjà sub-title header) — principe 1 redesign-premium */}
           <div className="grid gap-5 sm:grid-cols-3">
             <InfoField label="Nom" value={staff.last_name} icon={User} />
             <InfoField label="Prénom" value={staff.first_name} icon={User} />
             <InfoField label="Téléphone" value={staff.phone} icon={Phone} />
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
+                <p className="text-xs font-medium text-muted-foreground">Rôle d&apos;accès</p>
+              </div>
+              <Badge variant="secondary" className="font-medium">
+                {staffRoleLabel(staff.role)}
+              </Badge>
+            </div>
+            <InfoField label="Poste" value={staff.position} icon={Briefcase} />
             <InfoField label="Créé le" value={createdAt} icon={CalendarDays} />
           </div>
         </CardContent>

@@ -4,10 +4,17 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Eye, EyeOff, KeyRound } from "lucide-react"
-import { StaffCreateSchema, type StaffCreate } from "@/lib/contracts/staff"
+import { StaffCreateSchema, STAFF_ROLE_OPTIONS, type StaffCreate } from "@/lib/contracts/staff"
 import { useCreateStaff } from "@/lib/hooks/useStaff"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Form,
   FormControl,
@@ -33,6 +40,7 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
       password: "",
       position: "",
       phone: "",
+      role: "staff",
     },
   })
 
@@ -109,6 +117,34 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Rôle d&apos;accès *</FormLabel>
+              <Select value={field.value ?? "staff"} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Rôle d'accès" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {STAFF_ROLE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription className="text-xs">
+                Détermine les droits d&apos;accès dans KLASSCI (le poste ci-dessus reste le libellé du métier).
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Compte de connexion — toujours obligatoire pour le staff
             (admin secondaire, secrétaire, comptable... doit accéder à un portail). */}
