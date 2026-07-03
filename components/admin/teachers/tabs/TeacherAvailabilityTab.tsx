@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { useQueryClient } from "@tanstack/react-query"
+import { Info } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { timetableApi } from "@/lib/api/timetable"
 import { timetableKeys, useTeacherAvailabilities } from "@/lib/hooks/useTimetable"
@@ -179,6 +180,16 @@ export function TeacherAvailabilityTab({ teacherId }: TeacherAvailabilityTabProp
 
   return (
     <div className="space-y-4">
+      <div className="flex items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+        <p className="text-muted-foreground">
+          Disponibilités <span className="font-medium text-foreground">annuelles</span> : ce planning
+          récurrent (par jour de la semaine) sert de base à la génération de l&apos;emploi du temps, il
+          ne se règle pas semaine par semaine. Pour une absence ponctuelle, utilisez plutôt une{" "}
+          <span className="font-medium text-foreground">demande de congé</span>.
+        </p>
+      </div>
+
       <AvailabilityToolbar
         editMode={editMode}
         saving={saving}

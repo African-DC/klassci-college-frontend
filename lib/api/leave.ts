@@ -44,4 +44,12 @@ export const leaveApi = {
     })
     return safeValidate(LeaveRequestSchema, json, "POST /admin/leave/requests/:id/reject")
   },
+
+  setInterim: async (id: number, teacherId: number | null): Promise<LeaveRequest> => {
+    const json = await apiFetch<unknown>(`/admin/leave/requests/${id}/interim`, {
+      method: "PATCH",
+      body: JSON.stringify({ teacher_id: teacherId }),
+    })
+    return safeValidate(LeaveRequestSchema, json, "PATCH /admin/leave/requests/:id/interim")
+  },
 }

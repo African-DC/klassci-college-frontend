@@ -61,3 +61,16 @@ export function useReviewLeaveRequest() {
     onError: (err: Error) => toast.error("Erreur", { description: err.message }),
   })
 }
+
+export function useSetInterim() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, teacherId }: { id: number; teacherId: number | null }) =>
+      leaveApi.setInterim(id, teacherId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leave"] })
+      toast.success("Remplaçant mis à jour")
+    },
+    onError: (err: Error) => toast.error("Erreur", { description: err.message }),
+  })
+}

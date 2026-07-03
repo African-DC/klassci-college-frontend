@@ -8,13 +8,21 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { useLeaveRequests, useReviewLeaveRequest } from "@/lib/hooks/useLeave"
+import { useLeaveRequests, useReviewLeaveRequest, useSetInterim } from "@/lib/hooks/useLeave"
+import { useTeachers } from "@/lib/hooks/useTeachers"
 import { leaveTypeLabel } from "@/lib/contracts/leave"
 import { LeaveStatusBadge, formatDateRange, dayCount } from "@/components/shared/leave/leave-ui"
 import { cn } from "@/lib/utils"
@@ -38,6 +46,9 @@ export function LeaveManagementClient() {
   const [filter, setFilter] = useState("pending")
   const { data, isLoading } = useLeaveRequests()
   const { mutate: review, isPending: reviewing } = useReviewLeaveRequest()
+  const { mutate: setInterim } = useSetInterim()
+  const { data: teacherData } = useTeachers({ size: 100 })
+  const teachers = teacherData?.items ?? []
   const [rejectTarget, setRejectTarget] = useState<number | null>(null)
   const [comment, setComment] = useState("")
 
@@ -97,51 +108,77 @@ export function LeaveManagementClient() {
         <div className="space-y-3">
           {filtered.map((r) => (
             <Card key={r.id} className="rounded-xl border shadow-sm">
-              <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium">{r.requester_name ?? "—"}</p>
-                    <span className="text-xs text-muted-foreground">
-                      {ROLE_LABELS[r.requester_role ?? ""] ?? r.requester_role ?? ""}
-                    </span>
-                    <LeaveStatusBadge status={r.status} />
+              <CardContent className="space-y-3 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium">{r.requester_name ?? "—"}</p>
+                      <span className="text-xs text-muted-foreground">
+                        {ROLE_LABELS[r.requester_role ?? ""] ?? r.requester_role ?? ""}
+                      </span>
+                      <LeaveStatusBadge status={r.status} />
+                    </div>
+                    <p className="mt-1 text-sm">
+                      {leaveTypeLabel(r.leave_type)} · {formatDateRange(r.start_date, r.end_date)} ·{" "}
+                      {dayCount(r.start_date, r.end_date)} j
+                    </p>
+                    {r.reason && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">Motif : {r.reason}</p>
+                    )}
+                    {r.review_comment && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">Décision : {r.review_comment}</p>
+                    )}
                   </div>
-                  <p className="mt-1 text-sm">
-                    {leaveTypeLabel(r.leave_type)} · {formatDateRange(r.start_date, r.end_date)} ·{" "}
-                    {dayCount(r.start_date, r.end_date)} j
-                  </p>
-                  {r.reason && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">Motif : {r.reason}</p>
-                  )}
-                  {r.review_comment && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">Décision : {r.review_comment}</p>
+
+                  {r.status === "pending" && (
+                    <div className="flex shrink-0 gap-2">
+                      <Button
+                        size="sm"
+                        className="h-11 gap-1.5 bg-emerald-600 hover:bg-emerald-600/90 sm:h-10"
+                        onClick={() => review({ id: r.id, approve: true })}
+                        disabled={reviewing}
+                      >
+                        <Check className="h-4 w-4" />
+                        Approuver
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-11 gap-1.5 text-destructive hover:bg-destructive/10 sm:h-10"
+                        onClick={() => {
+                          setRejectTarget(r.id)
+                          setComment("")
+                        }}
+                        disabled={reviewing}
+                      >
+                        <X className="h-4 w-4" />
+                        Refuser
+                      </Button>
+                    </div>
                   )}
                 </div>
 
-                {r.status === "pending" && (
-                  <div className="flex shrink-0 gap-2">
-                    <Button
-                      size="sm"
-                      className="h-11 gap-1.5 bg-emerald-600 hover:bg-emerald-600/90 sm:h-10"
-                      onClick={() => review({ id: r.id, approve: true })}
-                      disabled={reviewing}
+                {r.status === "approved" && (
+                  <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+                    <span className="text-xs font-medium text-muted-foreground">Remplaçant :</span>
+                    <Select
+                      value={r.interim_teacher_id ? String(r.interim_teacher_id) : "none"}
+                      onValueChange={(v) =>
+                        setInterim({ id: r.id, teacherId: v === "none" ? null : Number(v) })
+                      }
                     >
-                      <Check className="h-4 w-4" />
-                      Approuver
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-11 gap-1.5 text-destructive hover:bg-destructive/10 sm:h-10"
-                      onClick={() => {
-                        setRejectTarget(r.id)
-                        setComment("")
-                      }}
-                      disabled={reviewing}
-                    >
-                      <X className="h-4 w-4" />
-                      Refuser
-                    </Button>
+                      <SelectTrigger className="h-9 w-56">
+                        <SelectValue placeholder="Aucun remplaçant" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Aucun remplaçant</SelectItem>
+                        {teachers.map((t) => (
+                          <SelectItem key={t.id} value={String(t.id)}>
+                            {t.last_name} {t.first_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
               </CardContent>

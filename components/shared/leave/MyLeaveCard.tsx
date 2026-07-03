@@ -54,6 +54,11 @@ export function MyLeaveCard() {
                   {r.review_comment && (
                     <p className="mt-0.5 text-xs text-muted-foreground">Note : {r.review_comment}</p>
                   )}
+                  {r.interim_teacher_name && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Remplacé par : {r.interim_teacher_name}
+                    </p>
+                  )}
                 </div>
                 {r.status === "pending" && (
                   <Button
