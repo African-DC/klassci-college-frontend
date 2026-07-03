@@ -26,6 +26,15 @@ export const useCreateParent = useCreate
 export const useUpdateParent = useUpdate
 export const useDeleteParent = useDelete
 
+export function useParentFull(parentId: number | undefined) {
+  return useQuery({
+    queryKey: ["parent", parentId, "full"],
+    queryFn: () => parentsApi.getFull(parentId as number),
+    enabled: !!parentId,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
 export function useStudentParents(studentId: number | undefined) {
   return useQuery({
     queryKey: ["student-parents", studentId],

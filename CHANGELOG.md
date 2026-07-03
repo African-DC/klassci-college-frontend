@@ -10,6 +10,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Fiche parent (admin) repensée : en-tête premium avec le récapitulatif financier du foyer (nombre d'enfants, total payé, reste à payer sur l'année), enfants liés présentés en cartes claires avec leur classe, leur statut d'inscription et leur solde de scolarité (barre de progression), boutons de contact rapides (Appeler, WhatsApp, Email) et possibilité de lier un enfant existant en un clic *(admin)*.
+- Fiche personnel (admin) repensée : en-tête premium avec photo et contact rapide, plus un onglet « Activité » qui résume les versements encaissés, les inscriptions traitées et la dernière connexion du membre *(admin)*.
+
 - Score de performance des enseignants et suivi d'activité du personnel : l'enseignant consulte « Ma performance » depuis son portail, une note sur 100 avec le détail de chaque critère (assiduité, saisie des notes, prise de l'appel) et son évaluation. La direction dispose d'une page « Performance » avec le classement des enseignants et un tableau d'activité du personnel (versements encaissés, inscriptions traitées). Un critère sans donnée est affiché « données insuffisantes » plutôt que noté zéro *(admin, enseignant)*.
 - L'enseignant peut faire l'appel numérique des élèves depuis son portail : un onglet « Faire l'appel » (et un accès rapide sur le tableau de bord) affiche les élèves de la classe, tous présents par défaut ; il suffit de basculer les absents, retards ou excusés puis d'enregistrer. Pensé mobile, gros boutons, lisible en plein soleil *(enseignant)*.
 - Gestion des congés et jours fériés dans les Paramètres (onglet « Calendrier », sous les trimestres) : on ajoute ou supprime des périodes (libellé + date de début et de fin). Ces jours n'apparaissent plus dans le cahier de texte, même en plein trimestre *(admin)*.
@@ -34,6 +37,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Fiche parent : les enfants liés ne s'affichaient plus (lignes vides, « on ne voit rien ») ; ils réapparaissent avec leur nom, leur classe et leur situation *(admin)*.
 - La session ne se ferme plus pendant l'utilisation : tant que vous êtes actif, elle reste ouverte et se prolonge automatiquement. Elle n'expire désormais qu'après une période d'inactivité (mode veille), pas après un délai fixe *(tous)*.
 - Mode dictée des notes : le bouton « Mode dictée » de la saisie déléguée admin renvoyait vers le tableau de bord au lieu d'ouvrir la dictée. Il ouvre désormais la saisie vocale et revient à la bonne page en sortie *(admin, enseignant)*.
 - Page Frais de l'élève et du parent : la liste restait en chargement infini puis en erreur pour un élève inscrit. Les montants, le total payé, le reste à payer et le statut de chaque frais s'affichent désormais correctement *(élève, parent)*.
