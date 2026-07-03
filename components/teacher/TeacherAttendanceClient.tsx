@@ -20,7 +20,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataError } from "@/components/shared/DataError"
+import { AppelSheet } from "@/components/teacher/AppelSheet"
 import { useTeacherClasses, useTeacherClassAttendance } from "@/lib/hooks/useTeacherPortal"
 
 export function TeacherAttendanceClient() {
@@ -40,6 +42,17 @@ export function TeacherAttendanceClient() {
         </div>
       </div>
 
+      <Tabs defaultValue="appel" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="appel">Faire l&apos;appel</TabsTrigger>
+          <TabsTrigger value="stats">Statistiques</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="appel">
+          <AppelSheet />
+        </TabsContent>
+
+        <TabsContent value="stats" className="space-y-6">
       {/* Sélection de classe */}
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardHeader className="pb-4">
@@ -158,6 +171,8 @@ export function TeacherAttendanceClient() {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
