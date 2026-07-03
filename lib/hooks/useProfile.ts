@@ -7,6 +7,7 @@ import type { MyProfile } from "@/lib/contracts/profile"
 
 export const profileKeys = {
   me: ["profile", "me"] as const,
+  notifications: ["profile", "me", "notifications"] as const,
 }
 
 export function useMyProfile() {
@@ -14,6 +15,26 @@ export function useMyProfile() {
     queryKey: profileKeys.me,
     queryFn: profileApi.me,
     staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useNotificationPrefs() {
+  return useQuery({
+    queryKey: profileKeys.notifications,
+    queryFn: profileApi.notifications,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useUpdateNotificationPrefs() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: profileApi.updateNotifications,
+    onSuccess: (data) => {
+      queryClient.setQueryData(profileKeys.notifications, data)
+      toast.success("Préférences enregistrées")
+    },
+    onError: (err: Error) => toast.error("Erreur", { description: err.message }),
   })
 }
 

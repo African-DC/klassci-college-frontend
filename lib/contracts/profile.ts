@@ -21,5 +21,17 @@ export const MyProfileUpdateSchema = z.object({
   phone: z.string().optional(),
 })
 
+export const NotificationPrefsSchema = z.object({
+  email: z.boolean(),
+  sms: z.boolean(),
+})
+
+export const NotificationPrefsUpdateSchema = z.object({
+  email: z.boolean().optional(),
+  sms: z.boolean().optional(),
+})
+
 export type MyProfile = z.infer<typeof MyProfileSchema>
 export type MyProfileUpdate = z.infer<typeof MyProfileUpdateSchema>
+export type NotificationPrefs = z.infer<typeof NotificationPrefsSchema>
+export type NotificationPrefsUpdate = z.infer<typeof NotificationPrefsUpdateSchema>

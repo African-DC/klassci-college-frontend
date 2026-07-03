@@ -3,13 +3,12 @@
 import { useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Camera, Trash2, Loader2, Bell } from "lucide-react"
+import { Camera, Trash2, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Card, CardContent } from "@/components/ui/card"
 import { DataError } from "@/components/shared/DataError"
 import { ProfileInfoCard } from "./ProfileInfoCard"
+import { NotificationPrefsCard } from "./NotificationPrefsCard"
 import { useMyProfile, profileKeys } from "@/lib/hooks/useProfile"
 import { profileApi } from "@/lib/api/profile"
 import { getUploadUrl } from "@/lib/utils"
@@ -123,15 +122,7 @@ export function ProfilePageClient() {
 
       <ProfileInfoCard profile={profile} />
 
-      {/* Préférences de notifications — arrive prochainement (PR suivante) */}
-      <Card className="border border-dashed shadow-none rounded-xl">
-        <CardContent className="flex items-center gap-3 p-5 text-muted-foreground">
-          <Bell className="h-5 w-5 shrink-0" />
-          <p className="text-sm">
-            Les préférences de notifications arrivent bientôt : vous pourrez choisir comment être prévenu.
-          </p>
-        </CardContent>
-      </Card>
+      <NotificationPrefsCard />
     </div>
   )
 }

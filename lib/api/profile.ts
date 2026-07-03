@@ -1,6 +1,13 @@
 import { getSession } from "next-auth/react"
 import { z } from "zod"
-import { MyProfileSchema, type MyProfile, type MyProfileUpdate } from "@/lib/contracts/profile"
+import {
+  MyProfileSchema,
+  NotificationPrefsSchema,
+  type MyProfile,
+  type MyProfileUpdate,
+  type NotificationPrefs,
+  type NotificationPrefsUpdate,
+} from "@/lib/contracts/profile"
 import { apiFetch, handleExpiredSession, safeValidate } from "./client"
 
 function getBaseUrl(): string {
@@ -54,5 +61,18 @@ export const profileApi = {
 
   deletePhoto: async (): Promise<void> => {
     await apiFetch<void>("/profile/me/photo", { method: "DELETE" })
+  },
+
+  notifications: async (): Promise<NotificationPrefs> => {
+    const json = await apiFetch<unknown>("/profile/me/notifications")
+    return safeValidate(NotificationPrefsSchema, json, "GET /profile/me/notifications")
+  },
+
+  updateNotifications: async (data: NotificationPrefsUpdate): Promise<NotificationPrefs> => {
+    const json = await apiFetch<unknown>("/profile/me/notifications", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+    return safeValidate(NotificationPrefsSchema, json, "PUT /profile/me/notifications")
   },
 }
