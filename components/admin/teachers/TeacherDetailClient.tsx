@@ -1,27 +1,23 @@
 "use client"
 
 import { useRef, useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import {
-  ArrowLeft,
   BookOpen,
   Camera,
   Pencil,
   Trash2,
   User,
   GraduationCap,
-  Phone,
+  Users,
   FileText,
   CalendarDays,
   CalendarCheck,
   Clock,
   MoreVertical,
 } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import {
@@ -44,6 +40,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
+import { DetailHero } from "@/components/shared/DetailHero"
+import { ContactActions } from "@/components/shared/ContactActions"
+import type { HeroKpi } from "@/components/shared/PageHero"
 import { TeacherEditModal } from "./TeacherEditModal"
 import { TeacherOverviewTab } from "./tabs/TeacherOverviewTab"
 import { TeacherProfileTab } from "./tabs/TeacherProfileTab"
@@ -119,104 +118,67 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
   const initials = `${teacher.first_name?.[0] ?? ""}${teacher.last_name?.[0] ?? ""}`.toUpperCase()
   const fullName = `${teacher.last_name} ${teacher.first_name}`
   const photoSrc = getUploadUrl((teacher as Record<string, unknown>).photo_url as string | null | undefined)
+  const userEmail = fullData?.user_email as string | null | undefined
+  const heroKpis: HeroKpi[] = [
+    { label: "Classes", value: (fullData?.classes_count as number | undefined) ?? 0, icon: GraduationCap },
+    { label: "Élèves", value: (fullData?.students_count as number | undefined) ?? 0, icon: Users },
+    { label: "Heures / sem", value: (fullData?.hours_per_week as number | undefined) ?? 0, icon: Clock },
+  ]
 
   return (
     <div className="space-y-6">
-      {/* Header — mobile-first stack, AvatarImage gating, kebab actions
-          Pattern cristallisé dans redesign-premium.md principes 13 + 14 */}
-      <div className="flex items-start gap-3">
-        <Link
-          href="/admin/teachers"
-          aria-label="Retour à la liste des enseignants"
-          className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition-colors hover:bg-muted sm:h-9 sm:w-9"
-        >
-          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        </Link>
-
-        <button
-          type="button"
-          onClick={() => photoLoaded && setPhotoPreview(true)}
-          aria-label={photoLoaded ? "Voir la photo en grand" : "Photo de l'enseignant"}
-          className="shrink-0 overflow-hidden rounded-2xl border-2 border-border focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-default"
-          disabled={!photoLoaded}
-        >
-          <Avatar className="h-16 w-16 rounded-2xl sm:h-24 sm:w-24">
-            {photoSrc ? (
-              <AvatarImage
-                src={photoSrc}
-                alt={fullName}
-                className="object-cover"
-                onLoadingStatusChange={(status) => setPhotoLoaded(status === "loaded")}
-              />
-            ) : null}
-            <AvatarFallback className="rounded-2xl bg-primary/10 text-xl font-semibold text-primary sm:text-2xl">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-        </button>
-
-        <div className="min-w-0 flex-1">
-          <h1 className="font-serif text-lg tracking-tight sm:text-2xl">{fullName}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {teacher.speciality ?? "Enseignant"}
-          </p>
-          {teacher.phone && (
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <a
-                href={`tel:${teacher.phone}`}
-                className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/5"
-              >
-                <Phone className="h-3 w-3" />
-                {teacher.phone}
-              </a>
-            </div>
-          )}
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+      <DetailHero
+        onBack={() => router.push("/admin/teachers")}
+        backLabel="Retour à la liste des enseignants"
+        photoUrl={photoSrc}
+        initials={initials}
+        name={fullName}
+        subtitle={teacher.speciality ?? "Enseignant"}
+        contact={<ContactActions phone={teacher.phone} email={userEmail} variant="hero" />}
+        kpis={heroKpis}
+        onAvatarClick={() => photoLoaded && setPhotoPreview(true)}
+        onPhotoStatus={setPhotoLoaded}
+        actions={
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/20">
               <MoreVertical className="h-4 w-4" />
               <span className="sr-only">Actions sur l&apos;enseignant</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Modifier les infos
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-            >
-              <Camera className="mr-2 h-4 w-4" />
-              {photoSrc ? "Changer la photo" : "Ajouter une photo"}
-            </DropdownMenuItem>
-            {photoSrc && photoLoaded && (
-              <DropdownMenuItem onClick={handleDeletePhoto}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Supprimer la photo
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Modifier les infos
               </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => setDeleteOpen(true)}
-              className="text-destructive focus:text-destructive focus:bg-destructive/10"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Supprimer l&apos;enseignant
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                <Camera className="mr-2 h-4 w-4" />
+                {photoSrc ? "Changer la photo" : "Ajouter une photo"}
+              </DropdownMenuItem>
+              {photoSrc && photoLoaded && (
+                <DropdownMenuItem onClick={handleDeletePhoto}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Supprimer la photo
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setDeleteOpen(true)}
+                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Supprimer l&apos;enseignant
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+      />
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handlePhotoUpload}
-        />
-      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handlePhotoUpload}
+      />
 
       {/* Photo preview dialog */}
       {photoSrc && (
