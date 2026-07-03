@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Fiches enseignant et élève (admin) dotées du même en-tête premium : photo, contact rapide et indicateurs clés en un coup d'œil (enseignant : nombre de classes, d'élèves et heures par semaine ; élève : classe, taux de présence et reste à payer), les onglets détaillés existants restant inchangés *(admin)*.
 - Fiche parent (admin) repensée : en-tête premium avec le récapitulatif financier du foyer (nombre d'enfants, total payé, reste à payer sur l'année), enfants liés présentés en cartes claires avec leur classe, leur statut d'inscription et leur solde de scolarité (barre de progression), boutons de contact rapides (Appeler, WhatsApp, Email) et possibilité de lier un enfant existant en un clic *(admin)*.
 - Fiche personnel (admin) repensée : en-tête premium avec photo et contact rapide, plus un onglet « Activité » qui résume les versements encaissés, les inscriptions traitées et la dernière connexion du membre *(admin)*.
 
