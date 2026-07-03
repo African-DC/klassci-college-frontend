@@ -23,6 +23,7 @@ import {
   HeartHandshake,
   UserCheck,
   FileText,
+  Gauge,
   Bell,
   ShieldCheck,
   Settings,
@@ -85,6 +86,7 @@ const navigation: NavSection[] = [
       { label: "Notes", href: "/admin/grades", icon: ClipboardList },
       { label: "Présences", href: "/admin/attendance", icon: UserCheck },
       { label: "Bulletins", href: "/admin/reports", icon: FileText },
+      { label: "Performance", href: "/admin/performance" as Route, icon: Gauge },
     ],
   },
   {

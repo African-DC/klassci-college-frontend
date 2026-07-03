@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
-import { LayoutDashboard, CalendarDays, ClipboardList, UserCheck, LogOut, type LucideIcon } from "lucide-react"
+import { LayoutDashboard, CalendarDays, ClipboardList, UserCheck, Gauge, LogOut, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems: { label: string; href: Route; icon: LucideIcon }[] = [
@@ -13,6 +13,7 @@ const navItems: { label: string; href: Route; icon: LucideIcon }[] = [
   { label: "Mon EDT", href: "/teacher/timetable", icon: CalendarDays },
   { label: "Notes", href: "/teacher/grades" as Route, icon: ClipboardList },
   { label: "Appel", href: "/teacher/attendance" as Route, icon: UserCheck },
+  { label: "Ma perf", href: "/teacher/performance" as Route, icon: Gauge },
 ]
 
 export function TeacherNav() {
