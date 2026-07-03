@@ -1,11 +1,8 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
 import {
-  Camera,
   Pencil,
   Trash2,
   User,
@@ -43,55 +40,22 @@ import type { HeroKpi } from "@/components/shared/PageHero"
 import { StaffEditModal } from "./StaffEditModal"
 import { StaffProfileTab } from "./tabs/StaffProfileTab"
 import { StaffActivityTab } from "./tabs/StaffActivityTab"
-import { useStaffMember, useStaffFull, useDeleteStaff, staffKeys } from "@/lib/hooks/useStaff"
+import { useStaffMember, useStaffFull, useDeleteStaff } from "@/lib/hooks/useStaff"
 import { staffRoleLabel } from "@/lib/contracts/staff"
-import { staffApi } from "@/lib/api/staff"
 import { getUploadUrl } from "@/lib/utils"
 import { formatXof } from "@/lib/export/format"
 
 export function StaffDetailClient({ staffId }: { staffId: number }) {
   const router = useRouter()
-  const queryClient = useQueryClient()
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [photoPreview, setPhotoPreview] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [photoLoaded, setPhotoLoaded] = useState(false)
 
   const { data: staff, isLoading, isError, refetch } = useStaffMember(staffId)
   const { data: fullData } = useStaffFull(staffId)
   const { mutate: deleteStaff, isPending: deleting } = useDeleteStaff()
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      await staffApi.uploadPhoto(staffId, file)
-      queryClient.invalidateQueries({ queryKey: staffKeys.detail(staffId) })
-      queryClient.invalidateQueries({ queryKey: ["staff", staffId, "full"] })
-      toast.success("Photo mise à jour")
-    } catch {
-      toast.error("Erreur lors de l'upload")
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ""
-    }
-  }
-
-  const handleDeletePhoto = async () => {
-    try {
-      await staffApi.deletePhoto(staffId)
-      queryClient.invalidateQueries({ queryKey: staffKeys.detail(staffId) })
-      queryClient.invalidateQueries({ queryKey: ["staff", staffId, "full"] })
-      setPhotoPreview(false)
-      toast.success("Photo supprimée")
-    } catch {
-      toast.error("Erreur lors de la suppression de la photo")
-    }
-  }
 
   const handleDelete = () =>
     deleteStaff(staffId, { onSuccess: () => router.push("/admin/staff") })
@@ -155,16 +119,6 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
                 <Pencil className="mr-2 h-4 w-4" />
                 Modifier les infos
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                <Camera className="mr-2 h-4 w-4" />
-                {photoSrc ? "Changer la photo" : "Ajouter une photo"}
-              </DropdownMenuItem>
-              {photoSrc && photoLoaded && (
-                <DropdownMenuItem onClick={handleDeletePhoto}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Supprimer la photo
-                </DropdownMenuItem>
-              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
@@ -178,15 +132,7 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
         }
       />
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handlePhotoUpload}
-      />
-
-      {/* Photo preview dialog */}
+      {/* Photo preview (lecture seule — la photo est gérée par le membre lui-même) */}
       {photoSrc && (
         <Dialog open={photoPreview} onOpenChange={setPhotoPreview}>
           <DialogContent className="max-w-md p-2">
@@ -194,26 +140,7 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={photoSrc} alt={fullName} className="h-full w-full object-cover" />
             </div>
-            <div className="flex items-center justify-between px-2 pb-1">
-              <p className="text-sm font-medium">{fullName}</p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setPhotoPreview(false)
-                    fileInputRef.current?.click()
-                  }}
-                >
-                  <Camera className="mr-1.5 h-3.5 w-3.5" />
-                  Changer
-                </Button>
-                <Button variant="destructive" size="sm" onClick={handleDeletePhoto}>
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                  Supprimer
-                </Button>
-              </div>
-            </div>
+            <p className="px-2 pb-1 text-sm font-medium">{fullName}</p>
           </DialogContent>
         </Dialog>
       )}

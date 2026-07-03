@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+import type { Route } from "next"
 import { signOut, useSession } from "next-auth/react"
 import { useTheme } from "next-themes"
 import { Menu, LogOut, User, ChevronDown, Sun, Moon } from "lucide-react"
@@ -28,6 +30,11 @@ export function Navbar({ onMenuClick }: NavbarProps) {
     ?.split("@")[0]
     .slice(0, 2)
     .toUpperCase() ?? "AD"
+
+  const role = session?.user?.role
+  const profilePortal =
+    role === "teacher" ? "teacher" : role === "student" ? "student" : role === "parent" ? "parent" : "admin"
+  const profileHref = `/${profilePortal}/profile` as Route
 
   return (
     <header className="flex h-16 shrink-0 items-center border-b bg-card px-4 lg:px-6">
@@ -83,10 +90,11 @@ export function Navbar({ onMenuClick }: NavbarProps) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* TODO: lier a /settings/profile */}
-            <DropdownMenuItem disabled>
-              <User className="mr-2 h-4 w-4" />
-              Profil
+            <DropdownMenuItem asChild>
+              <Link href={profileHref}>
+                <User className="mr-2 h-4 w-4" />
+                Profil
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

@@ -1,12 +1,9 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
 import {
   BookOpen,
-  Camera,
   Pencil,
   Trash2,
   User,
@@ -18,7 +15,6 @@ import {
   Clock,
   MoreVertical,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import {
   DropdownMenu,
@@ -51,8 +47,7 @@ import { TeacherEvaluationsTab } from "./tabs/TeacherEvaluationsTab"
 import { TeacherTimetableTab } from "./tabs/TeacherTimetableTab"
 import { TeacherAvailabilityTab } from "./tabs/TeacherAvailabilityTab"
 import { TeacherAttendanceTab } from "./tabs/TeacherAttendanceTab"
-import { useTeacher, useTeacherFull, useDeleteTeacher, teacherKeys } from "@/lib/hooks/useTeachers"
-import { teachersApi } from "@/lib/api/teachers"
+import { useTeacher, useTeacherFull, useDeleteTeacher } from "@/lib/hooks/useTeachers"
 import { getUploadUrl } from "@/lib/utils"
 
 interface TeacherDetailClientProps {
@@ -61,47 +56,16 @@ interface TeacherDetailClientProps {
 
 export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
   const router = useRouter()
-  const queryClient = useQueryClient()
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [photoPreview, setPhotoPreview] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
   const [photoLoaded, setPhotoLoaded] = useState(false)
 
   const { data: teacher, isLoading, isError, refetch } = useTeacher(teacherId)
   const { data: fullData } = useTeacherFull(teacherId)
   const { mutate: deleteTeacher, isPending: deleting } = useDeleteTeacher()
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      await teachersApi.uploadPhoto(teacherId, file)
-      queryClient.invalidateQueries({ queryKey: teacherKeys.detail(teacherId) })
-      toast.success("Photo mise à jour")
-    } catch {
-      toast.error("Erreur lors de l'upload")
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ""
-    }
-  }
-
-  const handleDeletePhoto = async () => {
-    try {
-      await teachersApi.deletePhoto(teacherId)
-      queryClient.invalidateQueries({ queryKey: teacherKeys.detail(teacherId) })
-      queryClient.invalidateQueries({ queryKey: teacherKeys.all })
-      setPhotoPreview(false)
-      toast.success("Photo supprimée")
-    } catch {
-      toast.error("Erreur lors de la suppression de la photo")
-    }
-  }
 
   const handleDelete = () => {
     deleteTeacher(teacherId, {
@@ -149,16 +113,6 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
                 <Pencil className="mr-2 h-4 w-4" />
                 Modifier les infos
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                <Camera className="mr-2 h-4 w-4" />
-                {photoSrc ? "Changer la photo" : "Ajouter une photo"}
-              </DropdownMenuItem>
-              {photoSrc && photoLoaded && (
-                <DropdownMenuItem onClick={handleDeletePhoto}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Supprimer la photo
-                </DropdownMenuItem>
-              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
@@ -172,49 +126,15 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
         }
       />
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handlePhotoUpload}
-      />
-
-      {/* Photo preview dialog */}
+      {/* Photo preview (lecture seule — gérée par l'enseignant sur son profil) */}
       {photoSrc && (
         <Dialog open={photoPreview} onOpenChange={setPhotoPreview}>
           <DialogContent className="max-w-md p-2">
             <div className="relative aspect-square w-full overflow-hidden rounded-lg">
-              <img
-                src={photoSrc}
-                alt={fullName}
-                className="h-full w-full object-cover"
-              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoSrc} alt={fullName} className="h-full w-full object-cover" />
             </div>
-            <div className="flex items-center justify-between px-2 pb-1">
-              <p className="text-sm font-medium">{fullName}</p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setPhotoPreview(false)
-                    fileInputRef.current?.click()
-                  }}
-                >
-                  <Camera className="mr-1.5 h-3.5 w-3.5" />
-                  Changer
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeletePhoto}
-                >
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                  Supprimer
-                </Button>
-              </div>
-            </div>
+            <p className="px-2 pb-1 text-sm font-medium">{fullName}</p>
           </DialogContent>
         </Dialog>
       )}
