@@ -13,7 +13,6 @@ import type { Subject } from "@/lib/contracts/subject"
 
 interface TimetableHoursSidebarProps {
   classId: number
-  weekOffset?: number
 }
 
 interface SubjectHours {
@@ -68,8 +67,8 @@ function formatHours(h: number): string {
   return `${hours}h${String(minutes).padStart(2, "0")}`
 }
 
-export function TimetableHoursSidebar({ classId, weekOffset = 0 }: TimetableHoursSidebarProps) {
-  const { data: slots, isLoading: slotsLoading } = useTimetable(classId, weekOffset)
+export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
+  const { data: slots, isLoading: slotsLoading } = useTimetable(classId)
   const { data: classDetail } = useClass(classId)
   const levelId = classDetail?.level_id
   const { data: subjectsData, isLoading: subjectsLoading } = useSubjects(

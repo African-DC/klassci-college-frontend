@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react"
-import { Calendar, ChevronLeft, ChevronRight, FileDown, Wand2, Loader2 } from "lucide-react"
+import { Calendar, CalendarRange, FileDown, Wand2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,6 +14,7 @@ import {
 import { useTimetableStore } from "@/lib/stores/useTimetableStore"
 import { useGenerateTimetable } from "@/lib/hooks/useTimetable"
 import { useClasses } from "@/lib/hooks/useClasses"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { timetableApi } from "@/lib/api/timetable"
 import { downloadBlob } from "@/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
@@ -25,7 +26,7 @@ import { GenerateDiagnosticModal } from "@/components/admin/timetable/GenerateDi
 import type { TimetableDiagnostic } from "@/lib/contracts/timetable"
 
 export default function TimetablePage() {
-  const { selectedClassId, setSelectedClassId, weekOffset, nextWeek, prevWeek, resetWeek } = useTimetableStore()
+  const { selectedClassId, setSelectedClassId } = useTimetableStore()
   const generateMutation = useGenerateTimetable()
   const queryClient = useQueryClient()
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -41,6 +42,12 @@ export default function TimetablePage() {
 
   const { data: classesData } = useClasses({ size: 100 })
   const classes = useMemo(() => classesData?.items ?? [], [classesData])
+
+  const { data: yearsData } = useAcademicYears()
+  const currentYearName =
+    (yearsData?.items ?? []).find((y) => y.is_current)?.name ??
+    (yearsData?.items ?? [])[0]?.name ??
+    ""
 
   // Cleanup polling on unmount or class change
   useEffect(() => {
@@ -129,7 +136,7 @@ export default function TimetablePage() {
     if (!selectedClassId) return
     setExportingPdf(true)
     try {
-      const blob = await timetableApi.exportPdf(selectedClassId, weekOffset)
+      const blob = await timetableApi.exportPdf(selectedClassId)
       const className = classes.find((c) => c.id === selectedClassId)?.name ?? "classe"
       downloadBlob(blob, `emploi-du-temps-${className}.pdf`)
       toast.success("PDF exporté avec succès")
@@ -157,7 +164,7 @@ export default function TimetablePage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <PdfPreviewButton
-            fetchBlob={() => timetableApi.exportPdf(selectedClassId as number, weekOffset)}
+            fetchBlob={() => timetableApi.exportPdf(selectedClassId as number)}
             label="l'emploi du temps"
             disabled={!selectedClassId}
             className="h-11 sm:h-10"
@@ -218,34 +225,20 @@ export default function TimetablePage() {
           </Select>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label="Semaine précédente"
-            className="h-11 w-11 sm:h-9 sm:w-9"
-            onClick={prevWeek}
-          >
-            <ChevronLeft aria-hidden="true" className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={resetWeek}
-            aria-label="Revenir à cette semaine"
-            className="h-11 text-sm min-w-[120px] sm:h-9"
-          >
-            {weekOffset === 0 ? "Cette semaine" : `Semaine ${weekOffset > 0 ? "+" : ""}${weekOffset}`}
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label="Semaine suivante"
-            className="h-11 w-11 sm:h-9 sm:w-9"
-            onClick={nextWeek}
-          >
-            <ChevronRight aria-hidden="true" className="h-4 w-4" />
-          </Button>
+        <div
+          className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground"
+          title="L'emploi du temps est un modèle hebdomadaire valable toute l'année scolaire."
+        >
+          <CalendarRange aria-hidden="true" className="h-4 w-4 text-primary" />
+          <span>
+            Semaine type
+            {currentYearName ? (
+              <>
+                {" · "}
+                <span className="font-medium text-foreground">Année {currentYearName}</span>
+              </>
+            ) : null}
+          </span>
         </div>
       </div>
 
@@ -273,9 +266,9 @@ export default function TimetablePage() {
       {selectedClassId ? (
         <div className="flex gap-4 items-start">
           <div className="flex-1 min-w-0">
-            <TimetableGrid classId={selectedClassId} weekOffset={weekOffset} />
+            <TimetableGrid classId={selectedClassId} />
           </div>
-          <TimetableHoursSidebar classId={selectedClassId} weekOffset={weekOffset} />
+          <TimetableHoursSidebar classId={selectedClassId} />
         </div>
       ) : (
         <div className="flex h-64 items-center justify-center rounded-lg border border-dashed bg-muted/20">
