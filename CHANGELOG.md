@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- L'enseignant peut faire l'appel numérique des élèves depuis son portail : un onglet « Faire l'appel » (et un accès rapide sur le tableau de bord) affiche les élèves de la classe, tous présents par défaut ; il suffit de basculer les absents, retards ou excusés puis d'enregistrer. Pensé mobile, gros boutons, lisible en plein soleil *(enseignant)*.
 - Gestion des congés et jours fériés dans les Paramètres (onglet « Calendrier », sous les trimestres) : on ajoute ou supprime des périodes (libellé + date de début et de fin). Ces jours n'apparaissent plus dans le cahier de texte, même en plein trimestre *(admin)*.
 - Bouton « Ajouter les jours fériés civils » dans la section Congés : pré-remplit en un clic les jours fériés civils fixes ivoiriens qui tombent pendant l'année scolaire en cours (à relire puis enregistrer). Les vacances scolaires et les fêtes religieuses mobiles restent en saisie manuelle *(admin)*.
 - Relevé de notes rempli (PDF) téléchargeable et consultable en aperçu depuis la page Notes, une fois une classe, une matière et un trimestre choisis. Cahier de texte de la classe (semaine en cours) ajouté aux documents de la fiche de classe, en téléchargement et en aperçu *(admin, enseignant)*.

@@ -4,10 +4,12 @@ import {
   TeacherDashboardSchema,
   TeacherClassSchema,
   TeacherClassAttendanceStatsSchema,
+  TeacherClassRosterSchema,
   TeacherUpcomingEvalSchema,
   type TeacherDashboard,
   type TeacherClass,
   type TeacherClassAttendanceStats,
+  type TeacherClassRoster,
   type TeacherUpcomingEval,
 } from "@/lib/contracts/teacher-portal"
 
@@ -36,6 +38,16 @@ export const teacherPortalApi = {
     const res = await apiFetch<unknown>("/teacher/classes")
     const arr = Array.isArray(res) ? res : unwrapResponse<TeacherClass[]>(res)
     return safeValidate(TeacherClassArraySchema, arr, "GET /teacher/classes")
+  },
+
+  // Liste des élèves d'une classe (pour l'appel)
+  getClassRoster: async (classId: number): Promise<TeacherClassRoster> => {
+    const res = await apiFetch<unknown>(`/teacher/classes/${classId}/students`)
+    return safeValidate(
+      TeacherClassRosterSchema,
+      unwrapResponse(res),
+      `GET /teacher/classes/${classId}/students`,
+    )
   },
 
   // Stats de présence pour une classe
