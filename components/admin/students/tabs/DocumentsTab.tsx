@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Award, FileCheck2, FileText, Loader2, Download, FilePlus } from "lucide-react"
+import { Award, FileCheck2, FileText, Loader2, Download } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
+import { StudentAttachmentsSection } from "../attachments/StudentAttachmentsSection"
 import { studentDocumentsApi } from "@/lib/api/student-documents"
 import { downloadBlob } from "@/lib/utils"
-import { SectionCard, StatusPill, EmptyState } from "./_primitives"
+import { SectionCard, StatusPill } from "./_primitives"
 
 interface DocumentsTabProps {
   studentId: number
@@ -138,17 +139,7 @@ export function DocumentsTab({ studentId, studentLastName }: DocumentsTabProps) 
         </div>
       </SectionCard>
 
-      <SectionCard
-        icon={<FilePlus className="h-4 w-4" />}
-        title="Pièces jointes"
-        description="Acte de naissance, certificat médical, autres documents fournis"
-      >
-        <EmptyState
-          icon={<FilePlus className="h-5 w-5" />}
-          title="Aucune pièce jointe"
-          message="Cette fonctionnalité arrivera bientôt. En attendant, conservez les pièces dans le dossier papier de l'élève."
-        />
-      </SectionCard>
+      <StudentAttachmentsSection studentId={studentId} />
     </div>
   )
 }
