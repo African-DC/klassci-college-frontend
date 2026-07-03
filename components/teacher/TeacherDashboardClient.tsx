@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import type { Route } from "next"
 import Link from "next/link"
 import {
   CalendarDays,
@@ -9,6 +10,7 @@ import {
   ClipboardList,
   ChevronRight,
   CalendarX,
+  Gauge,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -112,6 +114,22 @@ export function TeacherDashboardClient() {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">Faire l&apos;appel</p>
               <p className="text-xs text-muted-foreground">Saisir les présences des élèves</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Accès rapide — ma performance */}
+      <Link href={"/teacher/performance" as Route} className="group block">
+        <Card className="shadow-sm transition-colors group-hover:border-primary/40">
+          <CardContent className="flex items-center gap-3 p-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <Gauge className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">Ma performance</p>
+              <p className="text-xs text-muted-foreground">Mon score et son détail</p>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardContent>

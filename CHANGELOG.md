@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Score de performance des enseignants et suivi d'activité du personnel : l'enseignant consulte « Ma performance » depuis son portail, une note sur 100 avec le détail de chaque critère (assiduité, saisie des notes, prise de l'appel) et son évaluation. La direction dispose d'une page « Performance » avec le classement des enseignants et un tableau d'activité du personnel (versements encaissés, inscriptions traitées). Un critère sans donnée est affiché « données insuffisantes » plutôt que noté zéro *(admin, enseignant)*.
 - L'enseignant peut faire l'appel numérique des élèves depuis son portail : un onglet « Faire l'appel » (et un accès rapide sur le tableau de bord) affiche les élèves de la classe, tous présents par défaut ; il suffit de basculer les absents, retards ou excusés puis d'enregistrer. Pensé mobile, gros boutons, lisible en plein soleil *(enseignant)*.
 - Gestion des congés et jours fériés dans les Paramètres (onglet « Calendrier », sous les trimestres) : on ajoute ou supprime des périodes (libellé + date de début et de fin). Ces jours n'apparaissent plus dans le cahier de texte, même en plein trimestre *(admin)*.
 - Bouton « Ajouter les jours fériés civils » dans la section Congés : pré-remplit en un clic les jours fériés civils fixes ivoiriens qui tombent pendant l'année scolaire en cours (à relire puis enregistrer). Les vacances scolaires et les fêtes religieuses mobiles restent en saisie manuelle *(admin)*.
