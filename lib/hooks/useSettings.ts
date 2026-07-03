@@ -3,7 +3,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { settingsApi } from "@/lib/api/settings"
-import type { SchoolInfoUpdate, TrimesterUpdate, NotificationUpdate } from "@/lib/contracts/settings"
+import type {
+  SchoolInfoUpdate,
+  TrimesterUpdate,
+  HolidaysUpdate,
+  NotificationUpdate,
+} from "@/lib/contracts/settings"
 
 export const settingsKeys = {
   all: ["settings"] as const,
@@ -38,6 +43,20 @@ export function useUpdateTrimesters() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
       toast.success("Trimestres mis à jour")
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour")
+    },
+  })
+}
+
+export function useUpdateHolidays() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: HolidaysUpdate) => settingsApi.updateHolidays(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.all })
+      toast.success("Congés mis à jour")
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour")

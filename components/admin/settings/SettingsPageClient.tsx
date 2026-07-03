@@ -9,6 +9,7 @@ import { DataError } from "@/components/shared/DataError"
 import { useSettings } from "@/lib/hooks/useSettings"
 import { SchoolInfoSection } from "./SchoolInfoSection"
 import { TrimesterSection } from "./TrimesterSection"
+import { HolidaySection } from "./HolidaySection"
 import { NotificationSection } from "./NotificationSection"
 import { PdfIdentitySection } from "./PdfIdentitySection"
 
@@ -34,7 +35,7 @@ export function SettingsPageClient() {
           <TabsList>
             <TabsTrigger value="school">Établissement</TabsTrigger>
             <TabsTrigger value="identity">Identité visuelle</TabsTrigger>
-            <TabsTrigger value="trimesters">Trimestres</TabsTrigger>
+            <TabsTrigger value="trimesters">Calendrier</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
 
@@ -46,8 +47,9 @@ export function SettingsPageClient() {
             <PdfIdentitySection settings={settings} isLoading={isLoading} />
           </TabsContent>
 
-          <TabsContent value="trimesters">
+          <TabsContent value="trimesters" className="space-y-6">
             <TrimesterSection settings={settings} />
+            <HolidaySection settings={settings} />
           </TabsContent>
 
           <TabsContent value="notifications">

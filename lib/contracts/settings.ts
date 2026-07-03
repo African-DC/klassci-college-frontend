@@ -10,6 +10,12 @@ export const TrimesterConfigSchema = z.object({
   end_date: z.string(),
 })
 
+export const SchoolHolidaySchema = z.object({
+  label: z.string(),
+  start_date: z.string(),
+  end_date: z.string(),
+})
+
 export const SchoolSettingsSchema = z.object({
   id: z.number().optional(),
   // --- Fields from backend ---
@@ -33,6 +39,7 @@ export const SchoolSettingsSchema = z.object({
   // --- UI-only fields ---
   active_academic_year: z.string().nullable().optional().default(null),
   trimesters: z.array(TrimesterConfigSchema).optional().default([]),
+  holidays: z.array(SchoolHolidaySchema).optional().default([]),
   // Notification preferences (now backed by BE columns on school_settings — see migration 0027)
   notify_by_email: z.boolean().optional().default(false),
   notify_by_sms: z.boolean().optional().default(false),
@@ -61,6 +68,21 @@ export const TrimesterUpdateSchema = z.object({
   trimesters: z.array(TrimesterConfigSchema).length(3, "3 trimestres requis"),
 })
 
+export const HolidayInputSchema = z
+  .object({
+    label: z.string().min(1, "Libellé requis"),
+    start_date: z.string().min(1, "Date de début requise"),
+    end_date: z.string().min(1, "Date de fin requise"),
+  })
+  .refine((h) => !h.start_date || !h.end_date || h.end_date >= h.start_date, {
+    message: "La date de fin doit être après le début",
+    path: ["end_date"],
+  })
+
+export const HolidaysUpdateSchema = z.object({
+  holidays: z.array(HolidayInputSchema),
+})
+
 export const NotificationUpdateSchema = z.object({
   notify_by_email: z.boolean(),
   notify_by_sms: z.boolean(),
@@ -72,7 +94,9 @@ export const NotificationUpdateSchema = z.object({
 })
 
 export type TrimesterConfig = z.infer<typeof TrimesterConfigSchema>
+export type SchoolHoliday = z.infer<typeof SchoolHolidaySchema>
 export type SchoolSettings = z.infer<typeof SchoolSettingsSchema>
 export type SchoolInfoUpdate = z.infer<typeof SchoolInfoUpdateSchema>
 export type TrimesterUpdate = z.infer<typeof TrimesterUpdateSchema>
+export type HolidaysUpdate = z.infer<typeof HolidaysUpdateSchema>
 export type NotificationUpdate = z.infer<typeof NotificationUpdateSchema>

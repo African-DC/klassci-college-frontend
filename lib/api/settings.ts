@@ -4,6 +4,7 @@ import {
   type SchoolSettings,
   type SchoolInfoUpdate,
   type TrimesterUpdate,
+  type HolidaysUpdate,
   type NotificationUpdate,
 } from "@/lib/contracts/settings"
 
@@ -44,6 +45,14 @@ export const settingsApi = {
       body: JSON.stringify(data),
     })
     return parseSettings(json, "PUT /admin/settings/trimesters")
+  },
+
+  updateHolidays: async (data: HolidaysUpdate): Promise<SchoolSettings> => {
+    const json = await apiFetch<unknown>("/admin/settings/holidays", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+    return parseSettings(json, "PUT /admin/settings/holidays")
   },
 
   updateNotifications: async (data: NotificationUpdate): Promise<SchoolSettings> => {
