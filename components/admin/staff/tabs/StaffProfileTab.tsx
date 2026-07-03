@@ -3,11 +3,11 @@
 import { User, Phone, CalendarDays, Mail, ShieldCheck } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import type { Staff } from "@/lib/contracts/staff"
+import type { Staff, StaffFull } from "@/lib/contracts/staff"
 
 interface StaffProfileTabProps {
   staff: Staff
-  fullData?: Record<string, unknown>
+  fullData?: StaffFull
 }
 
 function InfoField({

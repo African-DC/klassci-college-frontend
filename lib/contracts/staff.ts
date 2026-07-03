@@ -38,7 +38,25 @@ export const StaffListParamsSchema = z.object({
   position: z.string().optional(),
 })
 
+export const StaffActivitySchema = z.object({
+  payments_count: z.number(),
+  payments_amount: z.coerce.number(),
+  enrollments_count: z.number(),
+  academic_year_name: z.string().nullish(),
+})
+
+export const StaffFullSchema = StaffSchema.extend({
+  photo_url: z.string().nullish(),
+  user_email: z.string().nullish(),
+  user_is_active: z.boolean().nullish(),
+  user_last_login: z.string().nullish(),
+  user_created_at: z.string().nullish(),
+  activity: StaffActivitySchema,
+})
+
 export type Staff = z.infer<typeof StaffSchema>
 export type StaffCreate = z.infer<typeof StaffCreateSchema>
 export type StaffUpdate = z.infer<typeof StaffUpdateSchema>
 export type StaffListParams = z.infer<typeof StaffListParamsSchema>
+export type StaffActivity = z.infer<typeof StaffActivitySchema>
+export type StaffFull = z.infer<typeof StaffFullSchema>

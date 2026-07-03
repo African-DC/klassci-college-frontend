@@ -1,7 +1,7 @@
 import { getSession } from "next-auth/react"
 import { z } from "zod"
-import { StaffSchema } from "@/lib/contracts/staff"
-import type { Staff, StaffCreate, StaffUpdate } from "@/lib/contracts/staff"
+import { StaffSchema, StaffFullSchema } from "@/lib/contracts/staff"
+import type { Staff, StaffCreate, StaffUpdate, StaffFull } from "@/lib/contracts/staff"
 import { createCrudApi } from "./createCrudApi"
 import { apiFetch, handleExpiredSession, safeValidate } from "./client"
 
@@ -19,8 +19,9 @@ export const staffApi = {
     StaffSchema,
   ),
 
-  getFull: async (id: number): Promise<Record<string, unknown>> => {
-    return apiFetch<Record<string, unknown>>(`/admin/staff/${id}/full`)
+  getFull: async (id: number): Promise<StaffFull> => {
+    const json = await apiFetch<unknown>(`/admin/staff/${id}/full`)
+    return safeValidate(StaffFullSchema, json, `GET /admin/staff/${id}/full`)
   },
 
   uploadPhoto: async (staffId: number, file: File): Promise<{ photo_url: string }> => {
