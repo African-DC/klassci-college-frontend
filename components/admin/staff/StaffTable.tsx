@@ -7,6 +7,8 @@ import type { Route } from "next"
 import { Phone, MessageCircle, Mail } from "lucide-react"
 import { useStaffList, useDeleteStaff } from "@/lib/hooks/useStaff"
 import type { Staff } from "@/lib/contracts/staff"
+import { staffRoleLabel } from "@/lib/contracts/staff"
+import { Badge } from "@/components/ui/badge"
 import { CrudTable, type FilterConfig } from "@/components/shared/CrudTable"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
 import { useDebounce } from "@/lib/hooks/useDebounce"
@@ -117,12 +119,21 @@ export function StaffTable() {
             <div className="min-w-0">
               <p className="font-medium truncate">{s.last_name} {s.first_name}</p>
               {s.position && (
-                <p className="text-[10px] text-muted-foreground">{s.position}</p>
+                <p className="text-xs text-muted-foreground truncate">{s.position}</p>
               )}
             </div>
           </div>
         )
       },
+    },
+    {
+      accessorKey: "role",
+      header: "Rôle",
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="font-medium">
+          {staffRoleLabel(row.original.role)}
+        </Badge>
+      ),
     },
     {
       accessorKey: "phone",
@@ -192,6 +203,11 @@ export function StaffTable() {
               </>
             }
             secondary={s.position || (s.phone ? <span className="tabular-nums">{s.phone}</span> : null)}
+            status={
+              <Badge variant="secondary" className="text-[11px]">
+                {staffRoleLabel(s.role)}
+              </Badge>
+            }
           />
         ))}
       </div>

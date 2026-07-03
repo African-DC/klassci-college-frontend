@@ -1,5 +1,25 @@
 import { z } from "zod"
 
+// Rôles d'accès assignables à un membre du personnel (miroir de
+// STAFF_ASSIGNABLE_ROLES côté backend). Jamais admin / super_admin.
+export const STAFF_ROLE_OPTIONS = [
+  { value: "staff", label: "Personnel" },
+  { value: "accountant", label: "Comptable" },
+  { value: "director", label: "Directeur" },
+] as const
+
+const STAFF_ROLE_LABELS: Record<string, string> = {
+  staff: "Personnel",
+  accountant: "Comptable",
+  director: "Directeur",
+}
+
+/** Libellé français du rôle d'accès (défaut : Personnel). */
+export function staffRoleLabel(role?: string | null): string {
+  if (!role) return "Personnel"
+  return STAFF_ROLE_LABELS[role] ?? role
+}
+
 export const StaffSchema = z.object({
   id: z.number(),
   user_id: z.number(),
@@ -7,6 +27,7 @@ export const StaffSchema = z.object({
   last_name: z.string(),
   position: z.string().nullish(),
   phone: z.string().nullish(),
+  role: z.string().nullish(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 }).passthrough()
@@ -21,6 +42,7 @@ export const StaffCreateSchema = z.object({
   password: z.string({ required_error: "Le mot de passe est requis" }).min(8, "8 caractères minimum"),
   position: z.string().optional(),
   phone: z.string().optional(),
+  role: z.string().optional(),
 })
 
 // L'update n'envoie jamais email/password (changement compte = endpoint dédié)
@@ -29,6 +51,7 @@ export const StaffUpdateSchema = z.object({
   last_name: z.string().min(1).optional(),
   position: z.string().optional(),
   phone: z.string().optional(),
+  role: z.string().optional(),
 })
 
 export const StaffListParamsSchema = z.object({

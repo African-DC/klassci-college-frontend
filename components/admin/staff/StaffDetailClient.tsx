@@ -44,6 +44,7 @@ import { StaffEditModal } from "./StaffEditModal"
 import { StaffProfileTab } from "./tabs/StaffProfileTab"
 import { StaffActivityTab } from "./tabs/StaffActivityTab"
 import { useStaffMember, useStaffFull, useDeleteStaff, staffKeys } from "@/lib/hooks/useStaff"
+import { staffRoleLabel } from "@/lib/contracts/staff"
 import { staffApi } from "@/lib/api/staff"
 import { getUploadUrl } from "@/lib/utils"
 import { formatXof } from "@/lib/export/format"
@@ -133,7 +134,12 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
         photoUrl={photoSrc}
         initials={initials}
         name={fullName}
-        subtitle={staff.position ?? "Personnel"}
+        badge={
+          <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-white">
+            {staffRoleLabel(staff.role)}
+          </span>
+        }
+        subtitle={staff.position ?? "Poste non renseigné"}
         contact={<ContactActions phone={staff.phone} email={fullData?.user_email} variant="hero" />}
         kpis={kpis}
         onAvatarClick={() => photoLoaded && setPhotoPreview(true)}
