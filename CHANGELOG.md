@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Intérim : sur un congé approuvé, la direction choisit un enseignant remplaçant depuis la page Congés ; le demandeur voit qui assure son remplacement sur sa carte « Mes congés » *(admin, enseignant)*.
 - Demandes de congé : depuis son profil (et son tableau de bord pour l'enseignant), on demande un congé en quelques secondes et on suit son statut ; une page « Congés » côté administration permet d'approuver ou refuser les demandes en attente *(enseignant, personnel, admin)*.
 - Pièces jointes sur l'onglet Documents de la fiche élève : téléversez un PDF ou une image (extrait de naissance, certificat médical, etc.), en choisissant le type dans une liste ou en le créant à la volée ; consultez ou supprimez chaque document *(admin)*.
 - Section « Préférences de notifications » sur la page profil : activez ou désactivez l'email et le SMS d'un simple interrupteur ; la cloche dans l'application reste toujours active *(tous)*.
@@ -33,6 +34,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- L'onglet Disponibilités d'un enseignant précise désormais qu'il s'agit du planning **annuel** récurrent, base de la génération de l'emploi du temps (et non un réglage semaine par semaine) ; pour une absence ponctuelle, on passe par une demande de congé *(admin)*.
 - Emploi du temps : les flèches « Semaine précédente / suivante » sont retirées au profit d'un repère fixe « Semaine type · Année {en cours} ». L'emploi du temps vaut pour toute l'année scolaire ; l'ancien sélecteur laissait croire, à tort, que chaque semaine avait son propre planning *(admin)*.
 - Bandeau de synthèse des Frais (élève, parent) repassé au dégradé bleu-orange de la marque, et indicateurs de la page Années scolaires intégrés au bandeau d'en-tête *(tous)*.
 - Tableaux de bord enseignant, élève et parent désormais en tête de page sur le bandeau bleu-orange KLASSCI, indicateurs clés intégrés. Pages Promotions, Paramètres, Conseil de classe et Statistiques DREN harmonisées sur le même bandeau *(tous)*.

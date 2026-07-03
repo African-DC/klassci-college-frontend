@@ -36,6 +36,8 @@ export const LeaveRequestSchema = z.object({
   reviewed_by: z.number().nullish(),
   reviewed_at: z.string().nullish(),
   review_comment: z.string().nullish(),
+  interim_teacher_id: z.number().nullish(),
+  interim_teacher_name: z.string().nullish(),
   created_at: z.string(),
   requester_name: z.string().nullish(),
   requester_role: z.string().nullish(),
