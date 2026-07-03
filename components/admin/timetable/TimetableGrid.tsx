@@ -67,12 +67,11 @@ function minutesToPx(minutes: number): number {
 
 interface TimetableGridProps {
   classId: number
-  weekOffset?: number
 }
 
-export function TimetableGrid({ classId, weekOffset = 0 }: TimetableGridProps) {
+export function TimetableGrid({ classId }: TimetableGridProps) {
   const queryClient = useQueryClient()
-  const { data: slots, isLoading } = useTimetable(classId, weekOffset)
+  const { data: slots, isLoading } = useTimetable(classId)
   const deleteMutation = useDeleteSlot()
   const [createModal, setCreateModal] = useState<{ day: string; time: string; endTime?: string } | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<TimetableSlot | null>(null)

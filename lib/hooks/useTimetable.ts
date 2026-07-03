@@ -13,18 +13,17 @@ import type {
 
 export const timetableKeys = {
   all: ["timetable"] as const,
-  byClass: (classId: number, weekOffset?: number) =>
-    ["timetable", "class", classId, weekOffset ?? 0] as const,
+  byClass: (classId: number) => ["timetable", "class", classId] as const,
   byTeacher: (teacherId: number) => ["timetable", "teacher", teacherId] as const,
   mine: () => ["timetable", "mine"] as const,
   availabilities: (teacherId: number) =>
     ["timetable", "availabilities", teacherId] as const,
 }
 
-export function useTimetable(classId: number, weekOffset: number = 0) {
+export function useTimetable(classId: number) {
   return useQuery({
-    queryKey: timetableKeys.byClass(classId, weekOffset),
-    queryFn: () => timetableApi.listByClass(classId, weekOffset),
+    queryKey: timetableKeys.byClass(classId),
+    queryFn: () => timetableApi.listByClass(classId),
     enabled: !!classId,
     staleTime: 1000 * 60 * 5,
   })

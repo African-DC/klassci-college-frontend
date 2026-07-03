@@ -44,11 +44,8 @@ function slotsToFr<T extends { day: string }>(slots: T[]): T[] {
 }
 
 export const timetableApi = {
-  listByClass: async (classId: number, weekOffset?: number): Promise<TimetableSlot[]> => {
+  listByClass: async (classId: number): Promise<TimetableSlot[]> => {
     const params = new URLSearchParams({ class_id: String(classId) })
-    if (weekOffset !== undefined && weekOffset !== 0) {
-      params.set("week_offset", String(weekOffset))
-    }
     const json = await apiFetch<{ data?: TimetableSlot[] } | TimetableSlot[]>(
       `/timetable?${params}`,
     )
@@ -177,12 +174,9 @@ export const timetableApi = {
     await apiFetch<void>(`/teacher-availabilities/${availabilityId}`, { method: "DELETE" })
   },
 
-  exportPdf: async (classId: number, weekOffset?: number): Promise<Blob> => {
+  exportPdf: async (classId: number): Promise<Blob> => {
     const session = await getSession()
     const params = new URLSearchParams({ class_id: String(classId) })
-    if (weekOffset !== undefined && weekOffset !== 0) {
-      params.set("week_offset", String(weekOffset))
-    }
     const base = process.env.NEXT_PUBLIC_API_URL ?? ""
     const res = await fetch(`${base}/timetable/export-pdf?${params}`, {
       headers: {
