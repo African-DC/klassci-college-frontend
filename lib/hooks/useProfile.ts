@@ -1,0 +1,30 @@
+"use client"
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+import { profileApi } from "@/lib/api/profile"
+import type { MyProfile } from "@/lib/contracts/profile"
+
+export const profileKeys = {
+  me: ["profile", "me"] as const,
+}
+
+export function useMyProfile() {
+  return useQuery({
+    queryKey: profileKeys.me,
+    queryFn: profileApi.me,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useUpdateMyProfile() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: profileApi.update,
+    onSuccess: (data: MyProfile) => {
+      queryClient.setQueryData(profileKeys.me, data)
+      toast.success("Profil mis à jour")
+    },
+    onError: (err: Error) => toast.error("Erreur", { description: err.message }),
+  })
+}

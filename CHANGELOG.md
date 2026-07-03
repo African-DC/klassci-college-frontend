@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Nouvel espace « Mon profil », accessible depuis le menu du compte dans tous les portails : sa photo (l'enseignant et le personnel la mettent eux-mêmes), ses informations et son téléphone modifiable en un clic. L'ajout de photo a été retiré des fiches enseignant et personnel côté admin, la photo étant désormais gérée par la personne elle-même *(tous)*.
 - Le rôle d'accès d'un membre du personnel (Personnel, Comptable, Directeur) se choisit à la création et se modifie ensuite ; il apparaît désormais clairement dans la liste, sur la fiche détail et dans les formulaires, en plus de son poste *(admin)*.
 - Fiches enseignant et élève (admin) dotées du même en-tête premium : photo, contact rapide et indicateurs clés en un coup d'œil (enseignant : nombre de classes, d'élèves et heures par semaine ; élève : classe, taux de présence et reste à payer), les onglets détaillés existants restant inchangés *(admin)*.
 - Fiche parent (admin) repensée : en-tête premium avec le récapitulatif financier du foyer (nombre d'enfants, total payé, reste à payer sur l'année), enfants liés présentés en cartes claires avec leur classe, leur statut d'inscription et leur solde de scolarité (barre de progression), boutons de contact rapides (Appeler, WhatsApp, Email) et possibilité de lier un enfant existant en un clic *(admin)*.
