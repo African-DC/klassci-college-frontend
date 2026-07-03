@@ -2,7 +2,8 @@
 
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CalendarOff, Loader2, Plus, Trash2 } from "lucide-react"
+import { CalendarOff, Flag, Loader2, Plus, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +17,41 @@ import {
 } from "@/components/ui/form"
 import { HolidaysUpdateSchema, type HolidaysUpdate, type SchoolSettings } from "@/lib/contracts/settings"
 import { useUpdateHolidays } from "@/lib/hooks/useSettings"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+
+// Jours fériés civils fixes de Côte d'Ivoire (les fêtes religieuses mobiles —
+// Aïd, Pâques, Ascension… — varient chaque année et restent en saisie manuelle).
+const IVORIAN_CIVIL_HOLIDAYS: { month: number; day: number; label: string }[] = [
+  { month: 1, day: 1, label: "Jour de l'An" },
+  { month: 5, day: 1, label: "Fête du Travail" },
+  { month: 8, day: 7, label: "Fête de l'Indépendance" },
+  { month: 8, day: 15, label: "Assomption" },
+  { month: 11, day: 1, label: "Toussaint" },
+  { month: 11, day: 15, label: "Journée nationale de la Paix" },
+  { month: 12, day: 25, label: "Noël" },
+]
+
+const pad = (n: number) => String(n).padStart(2, "0")
+
+// Fériés civils tombant dans l'année scolaire [ayStart, ayEnd] (ISO yyyy-mm-dd).
+// Les dates ISO se comparent lexicographiquement.
+function civilHolidaysForYear(
+  ayStart: string,
+  ayEnd: string,
+): { label: string; start_date: string; end_date: string }[] {
+  const years = [...new Set([Number(ayStart.slice(0, 4)), Number(ayEnd.slice(0, 4))])]
+  const rows: { label: string; start_date: string; end_date: string }[] = []
+  for (const h of IVORIAN_CIVIL_HOLIDAYS) {
+    for (const y of years) {
+      const d = `${y}-${pad(h.month)}-${pad(h.day)}`
+      if (d >= ayStart && d <= ayEnd) {
+        rows.push({ label: h.label, start_date: d, end_date: d })
+        break
+      }
+    }
+  }
+  return rows
+}
 
 interface HolidaySectionProps {
   settings: SchoolSettings
@@ -23,6 +59,9 @@ interface HolidaySectionProps {
 
 export function HolidaySection({ settings }: HolidaySectionProps) {
   const { mutate, isPending } = useUpdateHolidays()
+  const { data: yearsData } = useAcademicYears()
+  const currentYear =
+    (yearsData?.items ?? []).find((y) => y.is_current) ?? (yearsData?.items ?? [])[0]
 
   const form = useForm<HolidaysUpdate>({
     resolver: zodResolver(HolidaysUpdateSchema),
@@ -36,6 +75,23 @@ export function HolidaySection({ settings }: HolidaySectionProps) {
 
   function onSubmit(data: HolidaysUpdate) {
     mutate(data)
+  }
+
+  function addCivilHolidays() {
+    if (!currentYear) return
+    const suggested = civilHolidaysForYear(currentYear.start_date, currentYear.end_date)
+    const existing = new Set((form.getValues("holidays") ?? []).map((h) => h.start_date))
+    const fresh = suggested.filter((h) => !existing.has(h.start_date))
+    if (fresh.length === 0) {
+      toast.info("Jours fériés civils déjà présents", {
+        description: "Rien à ajouter pour l'année scolaire en cours.",
+      })
+      return
+    }
+    fresh.forEach((h) => append(h))
+    toast.success(`${fresh.length} jour(s) férié(s) civil(s) ajouté(s)`, {
+      description: "Relisez les dates puis enregistrez.",
+    })
   }
 
   return (
@@ -120,15 +176,28 @@ export function HolidaySection({ settings }: HolidaySectionProps) {
             )}
 
             <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-11 sm:h-10"
-                onClick={() => append({ label: "", start_date: "", end_date: "" })}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Ajouter un congé
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 sm:h-10"
+                  onClick={() => append({ label: "", start_date: "", end_date: "" })}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Ajouter un congé
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 sm:h-10"
+                  onClick={addCivilHolidays}
+                  disabled={!currentYear}
+                  title="Ajoute les jours fériés civils fixes de l'année scolaire en cours."
+                >
+                  <Flag className="mr-2 h-4 w-4" />
+                  Ajouter les jours fériés civils
+                </Button>
+              </div>
               <Button type="submit" disabled={isPending} className="h-11 sm:h-10">
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Enregistrer
