@@ -12,7 +12,6 @@ import {
   UserPlus,
   Clock,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import {
   DropdownMenu,
@@ -146,8 +145,6 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
         </Dialog>
       )}
 
-      <AccountSection entityType="staff" entityId={staffId} />
-
       {/* Tabs */}
       <Tabs defaultValue="profil" className="space-y-4">
         <TabsList>
@@ -168,6 +165,9 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
           <StaffActivityTab fullData={fullData} />
         </TabsContent>
       </Tabs>
+
+      {/* Compte de connexion — information secondaire, placée en bas de fiche */}
+      <AccountSection entityType="staff" entityId={staffId} />
 
       <StaffEditModal staffId={staffId} open={editOpen} onClose={() => setEditOpen(false)} />
 

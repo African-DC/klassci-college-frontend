@@ -3,40 +3,17 @@
 import { useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { getSession } from "next-auth/react"
-import { Wallet, CheckCircle, Plus } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
+import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
+import { EnrollmentFeesBreakdown, type EnrollmentFeeItem } from "@/components/admin/payments/EnrollmentFeesBreakdown"
+import { PaymentHistoryList } from "@/components/admin/payments/PaymentHistoryList"
 import { StudentPaymentModal } from "@/components/admin/students/tabs/StudentPaymentModal"
 
 interface EnrollmentPaymentsTabProps {
   enrollmentId: number
   enrollment?: { student_id?: number }
-}
-
-interface EnrollmentFeeItem {
-  id: number
-  enrollment_id: number
-  category_name: string
-  amount: number
-  paid: number
-  remaining: number
-  status: string
-  is_optional?: boolean
-  option_name?: string | null
-}
-
-function formatFCFA(amount: number): string {
-  return `${amount.toLocaleString("fr-FR")} FCFA`
-}
-
-const STATUS_LABEL: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pending: { label: "En attente", variant: "secondary" },
-  partial: { label: "Partiel", variant: "outline" },
-  paid: { label: "Payé", variant: "default" },
-  waived: { label: "Exonéré", variant: "secondary" },
 }
 
 export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPaymentsTabProps) {
@@ -46,7 +23,7 @@ export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPa
 
   const { data: fees, isLoading } = useQuery({
     queryKey: ["enrollment-fees", enrollmentId],
-    queryFn: async () => {
+    queryFn: async (): Promise<EnrollmentFeeItem[]> => {
       if (!studentId) return []
       const session = await getSession()
       const baseUrl = process.env.NEXT_PUBLIC_API_URL
@@ -58,102 +35,44 @@ export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPa
       })
       if (!res.ok) return []
       const data = await res.json()
-      const items: EnrollmentFeeItem[] = Array.isArray(data) ? data : data.items ?? []
-      // Filter to only this enrollment's fees
+      const items: (EnrollmentFeeItem & { enrollment_id: number })[] = Array.isArray(data) ? data : data.items ?? []
       return items.filter((f) => f.enrollment_id === enrollmentId)
     },
     enabled: !!studentId,
     staleTime: 1000 * 60 * 2,
   })
 
-  const totalExpected = (fees ?? []).reduce((s, f) => s + f.amount, 0)
-  const totalPaid = (fees ?? []).reduce((s, f) => s + f.paid, 0)
-  const feesRemaining = Math.max(0, totalExpected - totalPaid)
-  const feesRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0
+  const feeList = fees ?? []
+  const totalExpected = feeList.reduce((s, f) => s + f.amount, 0)
+  const totalPaid = feeList.reduce((s, f) => s + f.paid, 0)
+  const totalRemaining = Math.max(0, totalExpected - totalPaid)
 
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-36 rounded-lg" />
-        <Skeleton className="h-16 rounded-lg" />
+        <Skeleton className="h-40 rounded-2xl" />
+        <Skeleton className="h-32 rounded-lg" />
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      {/* Hero section */}
-      <Card className="border-0 shadow-sm ring-1 ring-border bg-primary text-primary-foreground">
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="grid gap-4 sm:grid-cols-2 flex-1">
-              <div>
-                <p className="text-xs text-primary-foreground/70">Total attendu</p>
-                <p className="text-2xl font-bold">{formatFCFA(totalExpected)}</p>
-              </div>
-              <div className="sm:text-right">
-                <p className="text-xs text-primary-foreground/70">Total payé</p>
-                <p className="text-2xl font-bold">{formatFCFA(totalPaid)}</p>
-              </div>
-            </div>
-            {studentId && feesRemaining > 0 && (
-              <Button
-                size="sm"
-                variant="secondary"
-                className="shrink-0 ml-4"
-                onClick={() => setPaymentOpen(true)}
-              >
-                <Plus className="mr-1.5 h-3.5 w-3.5" />
-                Enregistrer paiement
-              </Button>
-            )}
-          </div>
-          <Progress
-            value={feesRate}
-            className="h-3 bg-primary-foreground/20 [&>div]:bg-primary-foreground"
-          />
-          <p className="mt-2 text-sm text-primary-foreground/80">
-            Reste à payer : <span className="font-semibold">{formatFCFA(feesRemaining)}</span>
-          </p>
-        </CardContent>
-      </Card>
+      <FeeSummaryHero totalExpected={totalExpected} totalPaid={totalPaid} totalRemaining={totalRemaining} />
 
-      {/* Fee details */}
-      {(fees ?? []).length > 0 ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {(fees ?? []).map((fee) => {
-            const st = STATUS_LABEL[fee.status] ?? { label: fee.status, variant: "outline" as const }
-            return (
-              <Card key={fee.id} className="border-0 shadow-sm ring-1 ring-border">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">
-                        {fee.option_name ?? fee.category_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatFCFA(fee.paid)} / {formatFCFA(fee.amount)}
-                      </p>
-                    </div>
-                    <Badge variant={st.variant} className="text-[10px] shrink-0">
-                      {st.label}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted mb-3">
-            <Wallet className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <p className="text-sm text-muted-foreground">Aucun frais associé à cette inscription.</p>
+      {studentId && totalRemaining > 0 && (
+        <div className="flex justify-end">
+          <Button onClick={() => setPaymentOpen(true)} className="h-11 sm:h-10">
+            <Plus className="mr-1.5 h-4 w-4" />
+            Enregistrer un paiement
+          </Button>
         </div>
       )}
 
-      {/* Payment modal */}
+      <EnrollmentFeesBreakdown fees={feeList} />
+
+      <PaymentHistoryList enrollmentId={enrollmentId} />
+
       {studentId && (
         <StudentPaymentModal
           studentId={studentId}
@@ -161,6 +80,7 @@ export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPa
           onClose={() => {
             setPaymentOpen(false)
             queryClient.invalidateQueries({ queryKey: ["enrollment-fees", enrollmentId] })
+            queryClient.invalidateQueries({ queryKey: ["payments", "enrollment", enrollmentId] })
           }}
         />
       )}

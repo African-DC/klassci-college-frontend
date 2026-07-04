@@ -140,8 +140,6 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
         </Dialog>
       )}
 
-      <AccountSection entityType="teacher" entityId={teacherId} />
-
       {/* Tabs — controlled + scroll-x mobile (pattern principe 13/14) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
@@ -210,6 +208,9 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
           <TeacherAttendanceTab teacherId={teacherId} />
         </TabsContent>
       </Tabs>
+
+      {/* Compte de connexion — information secondaire, placée en bas de fiche */}
+      <AccountSection entityType="teacher" entityId={teacherId} />
 
       {/* Edit modal */}
       <TeacherEditModal teacherId={teacherId} open={editOpen} onClose={() => setEditOpen(false)} />
