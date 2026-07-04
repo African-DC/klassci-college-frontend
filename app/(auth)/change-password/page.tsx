@@ -9,12 +9,12 @@ export const metadata = { title: "Changer le mot de passe" }
  */
 export default function ChangePasswordPage() {
   return (
-    <div className="space-y-8">
-      <div className="space-y-3">
-        <h1 className="font-serif text-3xl text-foreground">
+    <div className="space-y-7">
+      <div className="space-y-2">
+        <h1 className="font-serif text-[1.7rem] font-bold leading-tight text-foreground">
           Choisissez un mot de passe
         </h1>
-        <p className="text-[15px] font-light text-muted-foreground">
+        <p className="text-[14px] font-light text-muted-foreground">
           Pour votre sécurité, remplacez le mot de passe temporaire avant
           d&apos;accéder à votre espace.
         </p>

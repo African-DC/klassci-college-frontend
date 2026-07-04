@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import type { Route } from "next"
-import { signOut, useSession } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { useTheme } from "next-themes"
 import { Menu, LogOut, User, ChevronDown, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { NotificationBell } from "@/components/shared/NotificationBell"
 import { AcademicYearBadge } from "@/components/shared/AcademicYearBadge"
+import { logout } from "@/lib/utils/logout"
 
 interface NavbarProps {
   onMenuClick: () => void
@@ -99,7 +100,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
+              onClick={() => void logout()}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Deconnexion
