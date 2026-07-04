@@ -99,7 +99,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Deconnexion

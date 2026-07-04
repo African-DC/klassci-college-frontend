@@ -192,18 +192,25 @@ export function DicteeMode({ evaluationId, classId, returnHref }: DicteeModeProp
     if (speech.listening) {
       speech.stop()
     } else {
-      // Init AudioContext dans le geste utilisateur (iOS l'exige), puis pré-vol
-      // permission + démarrage.
+      // Init AudioContext dans le geste utilisateur (iOS l'exige). `start()`
+      // déclenche lui-même le prompt de permission micro (Chrome).
       ensureAudio()
-      void speech.requestAndStart()
+      speech.start()
     }
   }, [speech, ensureAudio])
 
   const onMicRetry = useCallback(() => {
     speech.reset()
     ensureAudio()
-    void speech.requestAndStart()
+    speech.start()
   }, [speech, ensureAudio])
+
+  // Après un refus micro corrigé via les réglages du site, Chromium exige un
+  // rechargement pour l'appliquer. En état « refusé » rien n'est saisi (0/N) →
+  // reload sans risque de perte.
+  const onMicReload = useCallback(() => {
+    window.location.reload()
+  }, [])
 
   // ─── Quitter avec garde sur dirty ──────────────────────────────────────
   const hasDirty = useMemo(() => {
@@ -363,6 +370,7 @@ export function DicteeMode({ evaluationId, classId, returnHref }: DicteeModeProp
               micServiceUnavailable={speech.serviceUnavailable}
               onMicToggle={onMicToggle}
               onMicRetry={onMicRetry}
+              onMicReload={onMicReload}
             />
           </div>
         </div>

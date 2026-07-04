@@ -26,6 +26,7 @@ interface DicteeControlsProps {
   micServiceUnavailable: boolean
   onMicToggle: () => void
   onMicRetry: () => void
+  onMicReload: () => void
 }
 
 /**
@@ -51,6 +52,7 @@ export function DicteeControls({
   micServiceUnavailable,
   onMicToggle,
   onMicRetry,
+  onMicReload,
 }: DicteeControlsProps) {
   return (
     <div className="space-y-3 px-4 pb-6">
@@ -85,12 +87,10 @@ export function DicteeControls({
       {micSupported && micSecureContext && !micServiceUnavailable && micPermissionDenied && (
         <MicBanner
           tone="danger"
-          action={
-            <RetryButton onClick={onMicRetry}>Réessayer le micro</RetryButton>
-          }
+          action={<RetryButton onClick={onMicReload}>Recharger la page</RetryButton>}
         >
-          Accès au micro refusé. Autorisez-le dans le navigateur, l&apos;activation
-          se fait ensuite toute seule (ou appuyez sur « Réessayer »).
+          Accès au micro refusé. Autorisez-le dans le navigateur, puis rechargez la
+          page pour l&apos;appliquer.
         </MicBanner>
       )}
 

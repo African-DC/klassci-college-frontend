@@ -19,17 +19,17 @@ import { useCallback, useEffect, useRef, useState } from "react"
  * menteur sur desktop, cf. bug #282) :
  *
  * - `permissionDenied` : vrai refus du micro (getUserMedia NotAllowedError, ou
- *   `not-allowed` de l'ASR). Récupérable en autorisant le micro. On relit la
- *   Permissions API et on écoute son `onchange` → dès que l'utilisateur
- *   autorise, le flag se lève tout seul (aucun reload nécessaire).
+ *   `not-allowed` de l'ASR). `start()` déclenche lui-même le prompt de permission
+ *   (pas de pré-vol getUserMedia : il entre en conflit avec l'ASR, cf. Chromium
+ *   41083534). Après un refus corrigé via les réglages du site, Chromium exige
+ *   un rechargement → le CTA de récupération recharge la page.
  * - `serviceUnavailable` : le SERVICE de reconnaissance (serveur distant utilisé
  *   par `webkitSpeechRecognition` sur desktop) est indisponible (`network`,
- *   `service-not-allowed`, `audio-capture`). Le micro n'est PAS en cause. On
- *   invite alors à saisir au clavier, sans message alarmant.
+ *   `service-not-allowed`, `audio-capture`, `language-not-supported`). Micro OK,
+ *   navigateur en cause (Edge notoirement cassé) → « utilisez Chrome / clavier ».
  *
- * Le pré-vol `requestAndStart()` appelle `getUserMedia({audio:true})` dans le
- * geste utilisateur (clic) : prompt de permission propre + distinction nette
- * refus-micro / souci-service. `reset()` permet un « Réessayer » sans reload.
+ * `reset()` réarme après un échec. La Permissions API `onchange` lève aussi
+ * `permissionDenied` si l'état passe à "granted" sans reload (grant par prompt).
  */
 
 interface SpeechRecognitionEventLike {
@@ -81,12 +81,6 @@ interface UseSpeechRecognitionReturn {
   start: () => void
   /** Arrête la reconnaissance (geste volontaire). */
   stop: () => void
-  /**
-   * Demande la permission micro (getUserMedia) DANS le geste utilisateur, puis
-   * démarre. À câbler sur le clic du bouton — c'est le chemin fiable desktop +
-   * mobile. Résout après le start (ou après avoir positionné un flag d'échec).
-   */
-  requestAndStart: () => Promise<void>
   /** Réinitialise les flags d'échec pour permettre un « Réessayer ». */
   reset: () => void
   supported: boolean
@@ -120,10 +114,6 @@ export function useSpeechRecognition({
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
   const userStoppedRef = useRef(false)
-  // Passe à true dès qu'un getUserMedia réussit : on SAIT alors que le micro est
-  // accordé. Tout `not-allowed` ultérieur de l'ASR n'est donc PAS un refus micro
-  // mais un souci du service vocal du navigateur (Edge notoirement cassé).
-  const micGrantedRef = useRef(false)
   const onResultRef = useRef(onResult)
   const onErrorRef = useRef(onError)
 
@@ -173,12 +163,14 @@ export function useSpeechRecognition({
       if (event.error === "no-speech" || event.error === "aborted") return
 
       // Souci du SERVICE de reconnaissance (pas le micro). Fréquent sur desktop
-      // où `webkitSpeechRecognition` s'appuie sur un service distant. Le micro
-      // reste utilisable — on bascule sur la saisie clavier sans alarmer.
+      // où `webkitSpeechRecognition` s'appuie sur un service distant, et
+      // notoirement sur Microsoft Edge (`language-not-supported`, `network`
+      // même micro autorisé). Le micro reste utilisable — bascule clavier.
       if (
         event.error === "network" ||
         event.error === "service-not-allowed" ||
-        event.error === "audio-capture"
+        event.error === "audio-capture" ||
+        event.error === "language-not-supported"
       ) {
         setServiceUnavailable(true)
         userStoppedRef.current = true
@@ -189,23 +181,13 @@ export function useSpeechRecognition({
         return
       }
 
+      // Vrai refus du micro. Après avoir autorisé via les réglages du site, les
+      // navigateurs Chromium exigent un rechargement — d'où le CTA « Recharger ».
       if (event.error === "not-allowed") {
-        // Si le micro a déjà été accordé (getUserMedia OK), un `not-allowed` de
-        // l'ASR vient du SERVICE vocal du navigateur, pas d'un refus micro.
-        if (micGrantedRef.current) {
-          setServiceUnavailable(true)
-          userStoppedRef.current = true
-          const msg =
-            "Le micro fonctionne mais la reconnaissance vocale est bloquée par ce navigateur (fréquent sur Microsoft Edge). Utilisez Google Chrome pour dicter, ou saisissez les notes au clavier."
-          setError(msg)
-          onErrorRef.current?.(msg)
-          return
-        }
-        // Sinon : vrai refus du micro — récupérable, ne plus auto-restart.
         setPermissionDenied(true)
         userStoppedRef.current = true
         const msg =
-          "Accès au micro refusé. Autorisez-le puis appuyez sur « Réessayer le micro »."
+          "Accès au micro refusé. Autorisez-le dans le navigateur, puis rechargez la page."
         setError(msg)
         onErrorRef.current?.(msg)
         return
@@ -282,40 +264,6 @@ export function useSpeechRecognition({
     }
   }, [])
 
-  const requestAndStart = useCallback(async () => {
-    // Pré-vol permission dans le geste utilisateur : distingue refus-micro net
-    // d'un souci de service, et pose un prompt de permission propre.
-    if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        // On n'a pas besoin du flux — l'ASR ouvre le sien. Libérer aussitôt.
-        stream.getTracks().forEach((t) => t.stop())
-        micGrantedRef.current = true
-        setPermissionDenied(false)
-      } catch (err) {
-        const name = (err as { name?: string })?.name
-        if (name === "NotAllowedError" || name === "SecurityError") {
-          setPermissionDenied(true)
-          const msg =
-            "Accès au micro refusé. Autorisez-le puis appuyez sur « Réessayer le micro »."
-          setError(msg)
-          onErrorRef.current?.(msg)
-          return
-        }
-        if (name === "NotFoundError" || name === "NotReadableError") {
-          setServiceUnavailable(true)
-          const msg =
-            "Aucun micro disponible. Saisissez les notes au clavier."
-          setError(msg)
-          onErrorRef.current?.(msg)
-          return
-        }
-        // Autre erreur getUserMedia — on tente quand même l'ASR.
-      }
-    }
-    start()
-  }, [start])
-
   const stop = useCallback(() => {
     const recognition = recognitionRef.current
     if (!recognition) return
@@ -340,7 +288,6 @@ export function useSpeechRecognition({
     interimTranscript,
     start,
     stop,
-    requestAndStart,
     reset,
     supported,
     secureContext,
