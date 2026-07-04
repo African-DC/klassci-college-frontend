@@ -11,11 +11,11 @@ export const drenApi = {
     return safeValidate(DrenStatsSchema, stats, "GET /reports/dren-stats")
   },
 
-  // Télécharger l'export (authentifié) — le BE retourne un export JSON/blob
+  // Télécharger le classeur Excel (authentifié)
   downloadExcel: (academicYearId: number): Promise<Blob> =>
-    apiFetchBlob(`/reports/dren-stats/${academicYearId}/export`),
+    apiFetchBlob(`/reports/dren-stats/${academicYearId}/export?format=xlsx`),
 
-  // Télécharger l'export PDF (authentifié)
+  // Télécharger le PDF (authentifié)
   downloadPdf: (academicYearId: number): Promise<Blob> =>
-    apiFetchBlob(`/reports/dren-stats/${academicYearId}/export`),
+    apiFetchBlob(`/reports/dren-stats/${academicYearId}/export?format=pdf`),
 }

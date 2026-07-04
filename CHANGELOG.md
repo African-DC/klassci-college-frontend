@@ -8,6 +8,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Conseil de classe : le procès-verbal se charge à nouveau pour une classe et un trimestre ; s'il n'existe pas encore, un bouton « Générer le procès-verbal » le crée à partir des bulletins. Les décisions s'enregistrent, le procès-verbal se valide et se télécharge en PDF *(admin)*.
+- Statistiques DREN : les boutons Excel et PDF téléchargent désormais un vrai fichier (classeur Excel ou document PDF) au lieu d'ouvrir des données brutes *(admin)*.
+
 ### Added
 
 - Page Notes : bouton unique « Relevé de notes » qui regroupe l'aperçu et le téléchargement du relevé rempli, plus le téléchargement d'une feuille de notes vierge à remplir à la main (élèves de la classe, matière et trimestre pré-renseignés si choisis) *(admin, enseignant)*.
