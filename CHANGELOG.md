@@ -45,6 +45,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Après une mise à jour de la plateforme, un onglet resté ouvert pouvait afficher « Une erreur est survenue / Loading chunk failed » à la navigation ; la page se recharge désormais automatiquement pour récupérer la dernière version *(tous)*.
 - Onglet Documents de la fiche élève : les pièces jointes ajoutées sont désormais nettement séparées du formulaire d'envoi (section « Documents ajoutés »), avec un bouton Aperçu pour prévisualiser le PDF ou l'image en plus du téléchargement *(admin)*.
 - Onglet Notifications des Paramètres : les options sont plus compactes, la page est moins haute et ne provoque plus de défilement inutile *(admin)*.
 - Fiche parent : les enfants liés ne s'affichaient plus (lignes vides, « on ne voit rien ») ; ils réapparaissent avec leur nom, leur classe et leur situation *(admin)*.

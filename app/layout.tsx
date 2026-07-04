@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans, DM_Serif_Display } from 'next/font/google';
 import { Providers } from '@/components/shared/Providers';
+import { ChunkErrorReloader } from '@/components/shared/ChunkErrorReloader';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${dmSans.variable} ${dmSerif.variable} font-sans antialiased`}>
+        <ChunkErrorReloader />
         <Providers>{children}</Providers>
       </body>
     </html>
