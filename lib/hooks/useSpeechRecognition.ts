@@ -90,6 +90,12 @@ interface UseSpeechRecognitionReturn {
   /** Réinitialise les flags d'échec pour permettre un « Réessayer ». */
   reset: () => void
   supported: boolean
+  /**
+   * Contexte sécurisé (https ou localhost). Le micro et la reconnaissance
+   * vocale sont BLOQUÉS par le navigateur sur origine non sécurisée (http hors
+   * localhost, ex. une IP brute) : rien à autoriser côté utilisateur.
+   */
+  secureContext: boolean
   /** Vrai refus du micro — récupérable en autorisant. */
   permissionDenied: boolean
   /** Service de reconnaissance indisponible — micro OK, saisir au clavier. */
@@ -108,6 +114,9 @@ export function useSpeechRecognition({
   const [supported, setSupported] = useState(false)
   const [permissionDenied, setPermissionDenied] = useState(false)
   const [serviceUnavailable, setServiceUnavailable] = useState(false)
+  // Optimiste au SSR ; corrigé au mount. `isSecureContext` peut être undefined
+  // sur de vieux navigateurs → on ne bloque que si explicitement false.
+  const [secureContext, setSecureContext] = useState(true)
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
   const userStoppedRef = useRef(false)
@@ -122,6 +131,7 @@ export function useSpeechRecognition({
 
   useEffect(() => {
     if (typeof window === "undefined") return
+    setSecureContext(window.isSecureContext !== false)
     const Ctor = window.SpeechRecognition ?? window.webkitSpeechRecognition
     if (!Ctor) {
       setSupported(false)
@@ -317,6 +327,7 @@ export function useSpeechRecognition({
     requestAndStart,
     reset,
     supported,
+    secureContext,
     permissionDenied,
     serviceUnavailable,
     error,

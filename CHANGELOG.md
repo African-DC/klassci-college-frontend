@@ -10,7 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
-- Mode dictée : le micro se débloque tout seul dès qu'on l'autorise dans le navigateur, sans recharger la page ; quand la reconnaissance vocale est indisponible (réseau ou navigateur), un message clair invite à saisir au clavier au lieu d'afficher « micro refusé » à tort, et un bouton « Réessayer le micro » est proposé *(enseignant, admin)*.
+- Mode dictée : le micro se débloque tout seul dès qu'on l'autorise dans le navigateur, sans recharger la page ; quand la reconnaissance vocale est indisponible (réseau ou navigateur), un message clair invite à saisir au clavier au lieu d'afficher « micro refusé » à tort, et un bouton « Réessayer le micro » est proposé. Sur une adresse non sécurisée (http), un message explique que la dictée vocale exige le site sécurisé https, au lieu de laisser croire à un refus de permission *(enseignant, admin)*.
 - Conseil de classe : le procès-verbal se charge à nouveau pour une classe et un trimestre ; s'il n'existe pas encore, un bouton « Générer le procès-verbal » le crée à partir des bulletins. Les décisions s'enregistrent, le procès-verbal se valide et se télécharge en PDF *(admin)*.
 - Statistiques DREN : les boutons Excel et PDF téléchargent désormais un vrai fichier (classeur Excel ou document PDF) au lieu d'ouvrir des données brutes *(admin)*.
 - Page Notes : en choisissant une matière, les évaluations et les compteurs d'onglets (Toutes, À saisir, En retard, Terminées) se mettent bien à jour ; auparavant certaines matières n'affichaient aucune évaluation et les compteurs restaient figés *(admin)*.

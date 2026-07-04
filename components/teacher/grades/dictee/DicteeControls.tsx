@@ -20,6 +20,7 @@ interface DicteeControlsProps {
   onNext: () => void
   // Micro
   micSupported: boolean
+  micSecureContext: boolean
   micListening: boolean
   micPermissionDenied: boolean
   micServiceUnavailable: boolean
@@ -44,6 +45,7 @@ export function DicteeControls({
   onAbsent,
   onNext,
   micSupported,
+  micSecureContext,
   micListening,
   micPermissionDenied,
   micServiceUnavailable,
@@ -59,7 +61,15 @@ export function DicteeControls({
         </MicBanner>
       )}
 
-      {micSupported && micServiceUnavailable && (
+      {micSupported && !micSecureContext && (
+        <MicBanner tone="info">
+          La dictée vocale nécessite une connexion sécurisée (https). Ouvrez le
+          site via https://college.klassci.com pour dicter, ou saisissez les notes
+          au clavier.
+        </MicBanner>
+      )}
+
+      {micSupported && micSecureContext && micServiceUnavailable && (
         <MicBanner
           tone="info"
           action={
@@ -71,7 +81,7 @@ export function DicteeControls({
         </MicBanner>
       )}
 
-      {micSupported && !micServiceUnavailable && micPermissionDenied && (
+      {micSupported && micSecureContext && !micServiceUnavailable && micPermissionDenied && (
         <MicBanner
           tone="danger"
           action={
@@ -118,7 +128,7 @@ export function DicteeControls({
         </Button>
       </div>
 
-      {micSupported && !micPermissionDenied && !micServiceUnavailable && (
+      {micSupported && micSecureContext && !micPermissionDenied && !micServiceUnavailable && (
         <Button
           variant="ghost"
           size="lg"
