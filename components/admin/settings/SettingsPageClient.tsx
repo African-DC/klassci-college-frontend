@@ -12,6 +12,7 @@ import { TrimesterSection } from "./TrimesterSection"
 import { HolidaySection } from "./HolidaySection"
 import { NotificationSection } from "./NotificationSection"
 import { PdfIdentitySection } from "./PdfIdentitySection"
+import { MailPulseSection } from "./MailPulseSection"
 
 export function SettingsPageClient() {
   const { data: settings, isLoading, isError, refetch } = useSettings()
@@ -37,6 +38,7 @@ export function SettingsPageClient() {
             <TabsTrigger value="identity">Identité visuelle</TabsTrigger>
             <TabsTrigger value="trimesters">Calendrier</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="mailpulse">MailPulse</TabsTrigger>
           </TabsList>
 
           <TabsContent value="school">
@@ -54,6 +56,10 @@ export function SettingsPageClient() {
 
           <TabsContent value="notifications">
             <NotificationSection settings={settings} />
+          </TabsContent>
+
+          <TabsContent value="mailpulse">
+            <MailPulseSection />
           </TabsContent>
         </Tabs>
       ) : null}
