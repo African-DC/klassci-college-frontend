@@ -95,7 +95,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.error = undefined
           return token
         } catch {
-          // Refresh token révoqué/expiré (inactivité prolongée) → re-login.
+          // Le refresh a échoué. Cause la plus fréquente : COURSE DE ROTATION.
+          // Le refresh token BE est à usage unique (rotation) ; un autre appel
+          // jwt concurrent (navigation via middleware, SessionKeepAlive,
+          // useSession) l'a déjà consommé et rotaté, invalidant notre copie.
+          // Tant que l'access token courant n'est PAS réellement expiré, on
+          // GARDE la session : le prochain appel jwt lira le cookie rafraîchi
+          // par l'appel gagnant et repartira propre. On ne déconnecte QUE si
+          // l'access token est vraiment périmé (vraie fin de session côté
+          // inactivité, ou refresh durablement cassé). Sans ça, un utilisateur
+          // ACTIF était éjecté au moindre refresh concurrent.
+          if (token.accessToken && !isTokenExpired(token.accessToken, 0)) {
+            token.error = undefined
+            return token
+          }
           token.error = "RefreshTokenError"
           return token
         }
