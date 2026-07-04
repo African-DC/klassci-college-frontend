@@ -85,9 +85,6 @@ export function GradesFilters({
             ))}
           </SelectContent>
         </Select>
-        {noClass && (
-          <p className="mt-1 text-[11px] text-muted-foreground">Choisissez d&apos;abord la classe</p>
-        )}
       </div>
 
       <div className="w-32">
