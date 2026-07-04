@@ -35,6 +35,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Page Emploi du temps repensée dans la ligne premium KLASSCI : bandeau bleu-orange rappelant « Semaine type · Année en cours », classe et actions (générer, exporter PDF) regroupées dans une carte de contrôle avec sélection rapide par classe *(admin)*.
 - Page Notes repensée dans la ligne premium KLASSCI : bandeau bleu-orange avec les indicateurs clés (évaluations, terminées, en retard, taux de saisie), filtres et actions PDF regroupés, onglets de statut harmonisés *(admin)*.
 - Onglet MailPulse aux vraies couleurs de la marque : bandeau sombre, logo enveloppe orange et wordmark « Mail·Pulse », avec l'état de la clé API en pastille. La mise en page a été resserrée pour supprimer la barre de défilement superflue *(admin)*.
 - L'onglet Disponibilités d'un enseignant précise désormais qu'il s'agit du planning **annuel** récurrent, base de la génération de l'emploi du temps (et non un réglage semaine par semaine) ; pour une absence ponctuelle, on passe par une demande de congé *(admin)*.
