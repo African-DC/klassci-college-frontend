@@ -102,6 +102,7 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
             {/* Types */}
             <div className="space-y-2">
               <p className="text-sm font-semibold">Types de notifications</p>
+              <div className="grid gap-2 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="notify_grades"
@@ -187,6 +188,7 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
                   </FormItem>
                 )}
               />
+              </div>
             </div>
 
             <div className="flex justify-end pt-2">
