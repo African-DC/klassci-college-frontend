@@ -49,6 +49,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Page Notes : les filtres (Classe, Matière, Trimestre) restaient désalignés tant qu'aucune classe n'était choisie ; ils sont désormais alignés dans tous les cas *(admin)*.
 - Page Notes : à la sélection d'une classe, la liste « Matière » affichait toutes les matières de tous les niveaux (doublons). Elle ne propose désormais que les matières réellement enseignées dans la classe choisie *(admin)*.
 - Après une mise à jour de la plateforme, un onglet resté ouvert pouvait afficher « Une erreur est survenue / Loading chunk failed » à la navigation ; la page se recharge désormais automatiquement pour récupérer la dernière version *(tous)*.
 - Onglet Documents de la fiche élève : les pièces jointes ajoutées sont désormais nettement séparées du formulaire d'envoi (section « Documents ajoutés »), avec un bouton Aperçu pour prévisualiser le PDF ou l'image en plus du téléchargement *(admin)*.

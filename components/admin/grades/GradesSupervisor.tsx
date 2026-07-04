@@ -235,6 +235,13 @@ export function GradesSupervisor() {
             </div>
           </div>
 
+          {noClass && (
+            <p className="text-[11px] text-muted-foreground">
+              Choisissez d&apos;abord une classe pour filtrer les matières et afficher les
+              évaluations.
+            </p>
+          )}
+
           {!noClass && !canCreate && (
             <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2 text-xs text-blue-900 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200">
               <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
