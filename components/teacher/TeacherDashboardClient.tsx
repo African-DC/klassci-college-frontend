@@ -21,11 +21,14 @@ import { PageHero, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHe
 import { AcademicYearBanner } from "@/components/shared/AcademicYearBanner"
 import { MyLeaveCard } from "@/components/shared/leave/MyLeaveCard"
 import { useTeacherDashboard } from "@/lib/hooks/useTeacherPortal"
+import { useMyPerformance } from "@/lib/hooks/usePerformance"
+import { formatScore } from "@/lib/utils/performance"
 import type { TeacherUpcomingEval } from "@/lib/contracts/teacher-portal"
 import { SelfDeclareAbsenceModal } from "./SelfDeclareAbsenceModal"
 
 export function TeacherDashboardClient() {
   const { data, isLoading, isError, refetch } = useTeacherDashboard()
+  const { data: perf } = useMyPerformance()
   const [selfDeclareOpen, setSelfDeclareOpen] = useState(false)
 
   if (isLoading) return <DashboardSkeleton />
@@ -130,8 +133,16 @@ export function TeacherDashboardClient() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">Ma performance</p>
-              <p className="text-xs text-muted-foreground">Mon score et son détail</p>
+              <p className="text-xs text-muted-foreground">
+                {perf ? `${perf.performance.rating} · voir le détail` : "Mon score et son détail"}
+              </p>
             </div>
+            {perf && perf.performance.global_score !== null && (
+              <span className="shrink-0 text-lg font-bold tabular-nums text-primary">
+                {formatScore(perf.performance.global_score)}
+                <span className="text-xs font-medium text-muted-foreground"> / 100</span>
+              </span>
+            )}
             <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardContent>
         </Card>
