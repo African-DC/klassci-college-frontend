@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -35,7 +36,17 @@ export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalPro
   })
 
   const { data: categories } = useFeeCategories()
-  const mandatoryCategories = categories?.filter((c) => c.is_mandatory) ?? []
+  // Liste des catégories sélectionnables : les obligatoires + la catégorie
+  // courante de la variante si elle n'y figure pas (sinon le Select ne peut
+  // pas afficher la valeur pré-remplie et paraît vide à l'ouverture).
+  const selectableCategories = useMemo(() => {
+    const mandatory = categories?.filter((c) => c.is_mandatory) ?? []
+    if (variant && !mandatory.some((c) => c.id === variant.fee_category_id)) {
+      const current = categories?.find((c) => c.id === variant.fee_category_id)
+      if (current) return [current, ...mandatory]
+    }
+    return mandatory
+  }, [categories, variant])
   const { data: levelsData } = useLevels()
   const levels = levelsData?.items ?? []
   const { mutate, isPending } = useUpdateFeeVariant()
@@ -72,7 +83,7 @@ export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalPro
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mandatoryCategories.map((c) => (
+                      {selectableCategories.map((c) => (
                         <SelectItem key={c.id} value={c.id.toString()}>
                           {c.name}
                         </SelectItem>

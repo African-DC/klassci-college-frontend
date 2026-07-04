@@ -1,13 +1,10 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Plus, Pencil, Trash2, Wallet, Search, X, Shield, CircleDot, Layers, Coins } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { Plus, Pencil, Trash2, Wallet, Shield, CircleDot, Layers, Coins, Copy, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { PageHero, SectionTitle, heroGlassBtn, heroAccentBtn, premiumCardHover } from "@/components/shared/PageHero"
-import { FilterChips } from "@/components/shared/list/FilterChips"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
@@ -23,36 +20,21 @@ import { FeeCategoryCreateModal } from "./FeeCategoryCreateModal"
 import { FeeCategoryEditModal } from "./FeeCategoryEditModal"
 import { FeeVariantCreateModal } from "./FeeVariantCreateModal"
 import { FeeVariantEditModal } from "./FeeVariantEditModal"
-import { FeeOptionsDialog } from "./FeeOptionsDialog"
+import { FeeVariantCopyModal } from "./FeeVariantCopyModal"
+import { FeesByLevelTree } from "./FeesByLevelTree"
+import { OptionalCategoryPanel } from "./OptionalCategoryPanel"
 import { useFeeCategories, useFeeVariants, useDeleteFeeCategory, useDeleteFeeVariant } from "@/lib/hooks/useFees"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { useLevels } from "@/lib/hooks/useLevels"
 import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
 
-// Monochrome KLASSCI : obligatoire = teinte bleue, optionnel = neutre.
-// (La couleur ne différencie pas des catégories — cf. rule premium-redesign.)
-const MANDATORY_COLOR = {
-  bg: "bg-primary/[0.06]",
-  border: "border-primary/20",
-  icon: "bg-primary/10 text-primary",
-  badge: "border-primary/25 bg-primary/10 text-primary",
-}
-const OPTIONAL_COLOR = {
-  bg: "bg-muted/40",
-  border: "border-border",
-  icon: "bg-muted text-muted-foreground",
-  badge: "border-border bg-muted text-muted-foreground",
-}
-
 export function FeesPageClient() {
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [variantModalOpen, setVariantModalOpen] = useState(false)
+  const [copyModalOpen, setCopyModalOpen] = useState(false)
   const [editCategory, setEditCategory] = useState<FeeCategory | null>(null)
   const [editVariant, setEditVariant] = useState<FeeVariant | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: "category" | "variant"; id: number; name: string } | null>(null)
-  const [optionsCategory, setOptionsCategory] = useState<FeeCategory | null>(null)
-  const [searchVariant, setSearchVariant] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState<"all" | "mandatory" | "optional">("all")
 
   const { data: academicYearsData } = useAcademicYears()
   const currentYearId = academicYearsData?.items?.[0]?.id
@@ -60,7 +42,7 @@ export function FeesPageClient() {
   const { data: categories, isLoading: loadingCategories } = useFeeCategories()
   const { data: variants, isLoading: loadingVariants } = useFeeVariants(currentYearId)
   const { data: levelsData } = useLevels()
-  const levels = levelsData?.items ?? []
+  const levels = useMemo(() => levelsData?.items ?? [], [levelsData])
   const { mutate: deleteCategory, isPending: deletingCategory } = useDeleteFeeCategory()
   const { mutate: deleteVariant, isPending: deletingVariant } = useDeleteFeeVariant()
 
@@ -75,7 +57,6 @@ export function FeesPageClient() {
     return map
   }, [levels])
 
-  // Group variants by category for display
   const variantsByCategory = useMemo(() => {
     const map = new Map<number, FeeVariant[]>()
     variants?.forEach((v) => {
@@ -86,29 +67,14 @@ export function FeesPageClient() {
     return map
   }, [variants])
 
-  // Filter variants by search
-  const filteredVariants = useMemo(() => {
-    if (!variants || !searchVariant.trim()) return variants ?? []
-    const q = searchVariant.toLowerCase()
-    return variants.filter((v) => {
-      const catName = categoryNameMap.get(v.fee_category_id) ?? ""
-      const lvlName = levelNameMap.get(v.level_id) ?? ""
-      return catName.toLowerCase().includes(q) || lvlName.toLowerCase().includes(q)
-    })
-  }, [variants, searchVariant, categoryNameMap, levelNameMap])
+  const mandatoryCategories = useMemo(() => (categories ?? []).filter((c) => c.is_mandatory), [categories])
+  const optionalCategories = useMemo(() => (categories ?? []).filter((c) => !c.is_mandatory), [categories])
 
-  // KPI totals
-  const totalMandatory = categories?.filter((c) => c.is_mandatory).length ?? 0
-  const totalOptional = categories?.filter((c) => !c.is_mandatory).length ?? 0
-  const totalVariants = variants?.length ?? 0
+  // KPIs
+  const totalMandatory = mandatoryCategories.length
+  const totalOptional = optionalCategories.length
+  const configuredLevels = useMemo(() => new Set((variants ?? []).map((v) => v.level_id)).size, [variants])
   const totalConfigured = variants?.reduce((sum, v) => sum + v.amount, 0) ?? 0
-
-  // Filtre obligatoire/optionnel sur les catégories affichées.
-  const displayedCategories = (categories ?? []).filter((c) => {
-    if (categoryFilter === "mandatory") return c.is_mandatory
-    if (categoryFilter === "optional") return !c.is_mandatory
-    return true
-  })
 
   function handleConfirmDelete() {
     if (!deleteTarget) return
@@ -122,11 +88,11 @@ export function FeesPageClient() {
 
   return (
     <div className="space-y-6">
-      {/* Hero signature KLASSCI (dégradé bleu + KPIs intégrés) */}
+      {/* Hero signature KLASSCI (dégradé bleu -> orange + KPIs intégrés) */}
       <PageHero
         icon={Wallet}
         title="Frais scolaires"
-        subtitle="Configuration des catégories de frais et montants par niveau"
+        subtitle="Grille tarifaire par niveau et frais optionnels"
         actions={
           <>
             <button
@@ -136,7 +102,7 @@ export function FeesPageClient() {
               disabled={!currentYearId}
             >
               <Layers className="h-4 w-4" />
-              Nouvelle variante
+              Nouveau montant
             </button>
             <button type="button" className={heroAccentBtn} onClick={() => setCategoryModalOpen(true)}>
               <Plus className="h-4 w-4" />
@@ -145,89 +111,66 @@ export function FeesPageClient() {
           </>
         }
         kpis={[
-          { label: "Obligatoires", value: totalMandatory, icon: Shield },
-          { label: "Optionnels", value: totalOptional, icon: CircleDot },
-          { label: "Variantes", value: totalVariants, icon: Layers },
+          { label: "Frais obligatoires", value: totalMandatory, icon: Shield },
+          { label: "Frais optionnels", value: totalOptional, icon: CircleDot },
+          { label: "Niveaux configurés", value: configuredLevels, icon: GraduationCap },
           { label: "Montant configuré", value: `${totalConfigured.toLocaleString("fr-FR")} F`, icon: Coins },
         ]}
       />
 
-      {/* Categories as premium cards */}
-      <div>
-        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <SectionTitle icon={Wallet}>Catégories de frais</SectionTitle>
-          <FilterChips
-            aria-label="Filtrer les catégories"
-            value={categoryFilter}
-            onChange={(v) => setCategoryFilter(v as "all" | "mandatory" | "optional")}
-            options={[
-              { value: "all", label: "Toutes", count: (categories ?? []).length },
-              { value: "mandatory", label: "Obligatoires", count: totalMandatory },
-              { value: "optional", label: "Optionnels", count: totalOptional },
-            ]}
-          />
-        </div>
+      {/* ── Frais obligatoires ─────────────────────────────────────────── */}
+      <section className="space-y-4">
+        <SectionTitle icon={Shield}>Frais obligatoires</SectionTitle>
+
+        {/* Catégories obligatoires (définitions) */}
         {loadingCategories ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-xl" />
+              <Skeleton key={i} className="h-28 rounded-xl" />
             ))}
           </div>
-        ) : displayedCategories.length > 0 ? (
+        ) : mandatoryCategories.length > 0 ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {displayedCategories.map((cat) => {
-              const color = cat.is_mandatory ? MANDATORY_COLOR : OPTIONAL_COLOR
+            {mandatoryCategories.map((cat) => {
               const catVariants = variantsByCategory.get(cat.id) ?? []
               const totalAmount = catVariants.reduce((sum, v) => sum + v.amount, 0)
               return (
-                <Card key={cat.id} className={`border ${color.border} ${color.bg} shadow-sm ${premiumCardHover}`}>
+                <Card key={cat.id} className={`border border-primary/20 bg-primary/[0.06] shadow-sm ${premiumCardHover}`}>
                   <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="mb-3 flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5">
-                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${color.icon}`}>
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                           <Wallet className="h-4 w-4" />
-                        </div>
+                        </span>
                         <div>
                           <h3 className="text-sm font-semibold">{cat.name}</h3>
                           {cat.description && (
-                            <p className="text-[11px] text-muted-foreground line-clamp-1">{cat.description}</p>
+                            <p className="line-clamp-1 text-[11px] text-muted-foreground">{cat.description}</p>
                           )}
                         </div>
                       </div>
-                      <Badge variant="outline" className={`text-[10px] h-5 ${color.badge}`}>
-                        {cat.is_mandatory ? "Obligatoire" : "Optionnel"}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground">{catVariants.length}</span> niveau(x) configuré(s)
-                      </div>
-                      {totalAmount > 0 && (
-                        <div className="text-xs font-semibold tabular-nums">
-                          {totalAmount.toLocaleString("fr-FR")} FCFA
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border/50">
-                      {!cat.is_mandatory && (
-                        <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => setOptionsCategory(cat)}>
-                          Options
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditCategory(cat)} aria-label="Modifier la catégorie">
+                          <Pencil className="h-3.5 w-3.5" />
                         </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => setDeleteTarget({ type: "category", id: cat.id, name: cat.name })}
+                          aria-label="Supprimer la catégorie"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">{catVariants.length}</span> niveau(x)
+                      </span>
+                      {totalAmount > 0 && (
+                        <span className="text-xs font-semibold tabular-nums">{totalAmount.toLocaleString("fr-FR")} FCFA</span>
                       )}
-                      <div className="flex-1" />
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditCategory(cat)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={() => setDeleteTarget({ type: "category", id: cat.id, name: cat.name })}
-                      >
-                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -236,9 +179,9 @@ export function FeesPageClient() {
           </div>
         ) : (
           <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-              <Wallet className="h-8 w-8 mb-2 opacity-40" />
-              <p className="text-sm">Aucune catégorie de frais</p>
+            <CardContent className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+              <Shield className="mb-2 h-8 w-8 opacity-40" />
+              <p className="text-sm">Aucun frais obligatoire</p>
               <Button size="sm" variant="outline" className="mt-3" onClick={() => setCategoryModalOpen(true)}>
                 <Plus className="mr-2 h-3.5 w-3.5" />
                 Créer une catégorie
@@ -246,106 +189,109 @@ export function FeesPageClient() {
             </CardContent>
           </Card>
         )}
-      </div>
 
-      {/* Variantes (montants par niveau) avec search */}
-      <Card className="border-0 shadow-sm ring-1 ring-border overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <SectionTitle icon={Coins}>Montants par niveau</SectionTitle>
-          <div className="relative w-[220px]">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher..."
-              value={searchVariant}
-              onChange={(e) => setSearchVariant(e.target.value)}
-              className="h-8 pl-8 pr-8 text-xs"
-            />
-            {searchVariant && (
-              <button
-                onClick={() => setSearchVariant("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3 w-3" />
-              </button>
+        {/* Grille par niveau (arbre) */}
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardContent className="space-y-3 p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <SectionTitle icon={Coins}>Grille par niveau</SectionTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9"
+                  onClick={() => setCopyModalOpen(true)}
+                  disabled={!currentYearId || (variants?.length ?? 0) === 0}
+                >
+                  <Copy className="mr-1.5 h-3.5 w-3.5" />
+                  Copier des montants
+                </Button>
+                <Button size="sm" className="h-9" onClick={() => setVariantModalOpen(true)} disabled={!currentYearId}>
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  Nouveau montant
+                </Button>
+              </div>
+            </div>
+            {loadingVariants ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-14 rounded-xl" />
+                ))}
+              </div>
+            ) : (
+              <FeesByLevelTree
+                levels={levels}
+                variants={variants ?? []}
+                categoryNameMap={categoryNameMap}
+                onEditVariant={(v) => setEditVariant(v)}
+                onDeleteVariant={(v) =>
+                  setDeleteTarget({
+                    type: "variant",
+                    id: v.id,
+                    name: `${categoryNameMap.get(v.fee_category_id) ?? "Frais"} · ${levelNameMap.get(v.level_id) ?? ""}`,
+                  })
+                }
+              />
             )}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* ── Frais optionnels ───────────────────────────────────────────── */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <SectionTitle icon={CircleDot}>Frais optionnels</SectionTitle>
+          <p className="text-xs text-muted-foreground">Options proposées à l&apos;inscription (cantine, transport…)</p>
+        </div>
+        {loadingCategories ? (
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <Skeleton className="h-40 rounded-xl" />
+            <Skeleton className="h-40 rounded-xl" />
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loadingVariants ? (
-            <div className="p-4 space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-12" />
-              ))}
-            </div>
-          ) : filteredVariants.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/30">
-                    <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Catégorie</th>
-                    <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Niveau</th>
-                    <th className="px-4 py-2.5 text-right font-medium text-muted-foreground text-xs">Montant</th>
-                    <th className="px-4 py-2.5 text-right font-medium text-muted-foreground text-xs w-[100px]">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredVariants.map((v) => {
-                    const catName = categoryNameMap.get(v.fee_category_id) ?? `#${v.fee_category_id}`
-                    const lvlName = levelNameMap.get(v.level_id) ?? `#${v.level_id}`
-                    return (
-                      <tr key={v.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors group">
-                        <td className="px-4 py-3 font-medium">{catName}</td>
-                        <td className="px-4 py-3">
-                          <Badge variant="outline" className="text-xs">{lvlName}</Badge>
-                          {v.series_id && <span className="ml-1 text-xs text-muted-foreground">(série)</span>}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                          {v.amount.toLocaleString("fr-FR")} <span className="text-xs text-muted-foreground">FCFA</span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditVariant(v)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7"
-                              onClick={() => setDeleteTarget({ type: "variant", id: v.id, name: `${catName} ${lvlName}` })}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-              <Layers className="h-8 w-8 mb-2 opacity-40" />
-              <p className="text-sm">
-                {searchVariant ? "Aucune variante correspondante" : "Aucune variante configurée"}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        ) : optionalCategories.length > 0 ? (
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            {optionalCategories.map((cat) => (
+              <OptionalCategoryPanel
+                key={cat.id}
+                category={cat}
+                academicYearId={currentYearId}
+                onEditCategory={(c) => setEditCategory(c)}
+                onDeleteCategory={(c) => setDeleteTarget({ type: "category", id: c.id, name: c.name })}
+              />
+            ))}
+          </div>
+        ) : (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+              <CircleDot className="mb-2 h-8 w-8 opacity-40" />
+              <p className="text-sm">Aucun frais optionnel</p>
+              <p className="text-xs">Créez une catégorie et décochez « obligatoire » pour proposer des options.</p>
+            </CardContent>
+          </Card>
+        )}
+      </section>
 
       {/* Modals */}
       <FeeCategoryCreateModal open={categoryModalOpen} onClose={() => setCategoryModalOpen(false)} />
       {currentYearId && (
-        <FeeVariantCreateModal
-          open={variantModalOpen}
-          onClose={() => setVariantModalOpen(false)}
-          academicYearId={currentYearId}
-        />
+        <>
+          <FeeVariantCreateModal
+            open={variantModalOpen}
+            onClose={() => setVariantModalOpen(false)}
+            academicYearId={currentYearId}
+          />
+          <FeeVariantCopyModal
+            open={copyModalOpen}
+            onClose={() => setCopyModalOpen(false)}
+            mandatoryCategories={mandatoryCategories}
+            variants={variants ?? []}
+            levelNameMap={levelNameMap}
+            academicYearId={currentYearId}
+          />
+        </>
       )}
       <FeeCategoryEditModal category={editCategory} onClose={() => setEditCategory(null)} />
-      <FeeVariantEditModal variant={editVariant} onClose={() => setEditVariant(null)} />
-      <FeeOptionsDialog category={optionsCategory} academicYearId={currentYearId} onClose={() => setOptionsCategory(null)} />
+      <FeeVariantEditModal key={editVariant?.id ?? "none"} variant={editVariant} onClose={() => setEditVariant(null)} />
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>

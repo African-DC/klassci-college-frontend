@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
-import { PageHero, heroAccentBtn, type HeroKpi } from "@/components/shared/PageHero"
+import { PageHero, heroAccentBtn, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
 import {
   Dialog,
   DialogContent,
@@ -230,6 +230,7 @@ export function PaymentsPageClient() {
             <ExportMenu
               filename="paiements"
               disabled={payments.length === 0}
+              className={heroGlassBtn}
               getPayload={() =>
                 buildPaymentsExportPayload({ payments, settings, filters: exportFilters })
               }

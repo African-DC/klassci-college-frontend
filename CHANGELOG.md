@@ -11,9 +11,16 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ### Changed
 
 - Page de connexion repensée en version premium : grande photo d'une classe habillée aux couleurs de la marque avec accroche et points forts à gauche, formulaire présenté dans une carte élégante à droite, plus lisible sur mobile comme sur ordinateur *(tous)*.
+- Page Frais repensée : la grille des frais obligatoires s'affiche désormais en arbre par niveau (on voit d'un coup ce qu'un élève d'un niveau paie et le total), et les frais optionnels avec leurs options (montant par option) sont visibles et modifiables directement, au lieu d'être cachés derrière un bouton *(admin)*.
+
+### Added
+
+- Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
 
+- Page Paiements : le bouton « Exporter » est désormais bien visible sur le bandeau bleu (il était blanc sur blanc, invisible tant qu'on ne le survolait pas) *(admin)*.
+- Page Frais : à la modification d'un montant, la catégorie est correctement pré-remplie dans le formulaire *(admin)*.
 - Session : on n'est plus déconnecté pendant qu'on utilise l'application. Un renouvellement de session simultané pouvait éjecter un utilisateur pourtant actif ; seule une vraie inactivité prolongée déconnecte désormais *(tous)*.
 - Mode dictée : la saisie vocale des notes fonctionne à nouveau. Le micro était bloqué par une politique de sécurité du site trop stricte, même quand l'enseignant l'avait autorisé dans le navigateur *(enseignant, admin)*.
 - Déconnexion : le bouton « Se déconnecter » ramène toujours vers la page de connexion du site réellement utilisé (college.klassci.com ou autre), et non plus vers une adresse locale invalide *(tous)*.
