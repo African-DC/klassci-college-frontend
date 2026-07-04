@@ -1,56 +1,35 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import Link from "next/link"
-import type { Route } from "next"
-import {
-  Save,
-  Loader2,
-  CheckCircle2,
-  AlertTriangle,
-  AlertCircle,
-  CircleSlash,
-  Cloud,
-  CloudOff,
-  Mic,
-} from "lucide-react"
+import { Save, Loader2, CheckCircle2 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useGrades, useUpdateGrades, useEvaluations } from "@/lib/hooks/useGrades"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { parseGradeInput, categorizeGrade, computeAverage } from "@/lib/utils/grade-parser"
-
-type CellStatus = "idle" | "dirty" | "pending" | "saved" | "error"
+import { parseGradeInput, computeAverage } from "@/lib/utils/grade-parser"
+import { GradeEntryHero } from "./entry/GradeEntryHero"
+import { GradeRow, type CellStatus } from "./entry/GradeRow"
 
 interface GradeEntryGridProps {
   evaluationId: number
-  /** Si fourni, affiche le hero card avec ces métadonnées */
+  /** Si fourni, affiche le hero premium avec ces métadonnées. */
   classId?: number
   /**
    * Lien du bouton « Mode dictée ». Dépend du portail : enseignant
-   * (`/teacher/...`) ou admin en saisie déléguée (`/admin/...`). À défaut, on
-   * tombe sur la route enseignant. Indispensable côté admin, sinon le bouton
-   * pointerait vers `/teacher/...` et le middleware redirigerait l'admin vers
-   * son tableau de bord (changement de portail interdit).
+   * (`/teacher/...`) ou admin en saisie déléguée (`/admin/...`). À défaut côté
+   * enseignant, on tombe sur la route enseignant.
    */
   dicteeHref?: string
 }
 
-/**
- * Délai après la dernière modif avant l'envoi BE. 1.5s = équilibre entre
- * réactivité (user a "sauvé") et batching (groupe les frappes successives).
- */
+/** Délai debounce après la dernière modif avant envoi BE. */
 const SAVE_DEBOUNCE_MS = 1500
-
-/**
- * Délai après lequel un cellStatus "saved" repasse en "idle" (visuel).
- */
+/** Délai après lequel un cellStatus « saved » repasse en « idle » (visuel). */
 const SAVED_INDICATOR_MS = 2500
 
 export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntryGridProps) {
   const { data: grades, isLoading, error } = useGrades(evaluationId)
-  // Métadonnées de l'éval — fetch la liste de la classe (cache 5 min)
   const { data: evals } = useEvaluations(classId ?? 0)
   const evaluation = useMemo(
     () => evals?.find((e) => e.id === evaluationId),
@@ -104,7 +83,6 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
             dirtySet.forEach((id) => next.set(id, "saved"))
             return next
           })
-          // Repasse en idle après 2.5s pour ne pas polluer l'UI
           setTimeout(() => {
             setCellStatus((prev) => {
               const next = new Map(prev)
@@ -122,7 +100,6 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
             return next
           })
           toast.error("Échec de la sauvegarde — réessaie")
-          // Garde dirty pour retry au prochain edit ou save manuel
         },
       },
     )
@@ -133,7 +110,6 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
     saveTimerRef.current = setTimeout(flushSave, SAVE_DEBOUNCE_MS)
   }, [flushSave])
 
-  // Cleanup au unmount
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
@@ -145,23 +121,23 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
     function handler(e: BeforeUnloadEvent) {
       if (dirtyStudentsRef.current.size > 0) {
         e.preventDefault()
-        e.returnValue = "" // Chrome exige une string vide
+        e.returnValue = ""
       }
     }
     window.addEventListener("beforeunload", handler)
     return () => window.removeEventListener("beforeunload", handler)
   }, [])
 
-  function handleGradeChange(studentId: number, rawValue: string) {
-    const result = parseGradeInput(rawValue)
-    // `result.value` est null pour les cas absent / invalide / vide, et un
-    // number sinon. C'est exactement ce qu'on veut stocker. Les erreurs
-    // (hors borne, format) seront visibles via l'UI (couleur de cellule).
-    setLocalGrades((prev) => new Map(prev).set(studentId, result.value))
-    dirtyStudentsRef.current.add(studentId)
-    setCellStatus((prev) => new Map(prev).set(studentId, "dirty"))
-    scheduleSave()
-  }
+  const handleGradeChange = useCallback(
+    (studentId: number, rawValue: string) => {
+      const result = parseGradeInput(rawValue)
+      setLocalGrades((prev) => new Map(prev).set(studentId, result.value))
+      dirtyStudentsRef.current.add(studentId)
+      setCellStatus((prev) => new Map(prev).set(studentId, "dirty"))
+      scheduleSave()
+    },
+    [scheduleSave],
+  )
 
   // ─── Rendering ─────────────────────────────────────────────────────────
   if (error) {
@@ -187,91 +163,21 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
 
   const gradedCount = Array.from(localGrades.values()).filter((v) => v !== null).length
   const totalCount = grades.length
-  const isAllGraded = gradedCount === totalCount && totalCount > 0
   const dirtyCount = dirtyStudentsRef.current.size
   const classAverage = computeAverage(localGrades.values())
 
   return (
     <div className="space-y-5">
-      {/* ─── Hero card ──────────────────────────────────────────────── */}
       {evaluation && (
-        <div className="rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium uppercase tracking-wide text-primary">
-                  {evaluation.type}
-                </span>
-                <span>{evaluation.subject_name}</span>
-                <span className="text-muted-foreground/40">·</span>
-                <span>{evaluation.class_name}</span>
-                <span className="text-muted-foreground/40">·</span>
-                <span>Trimestre {evaluation.trimester}</span>
-              </div>
-              <h2 className="mt-1 font-serif text-2xl tracking-tight text-foreground">
-                {evaluation.title}
-              </h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Coefficient {evaluation.coefficient} ·{" "}
-                {new Date(evaluation.date).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
-            </div>
-            {classId && (
-              <Button asChild size="sm" className="shrink-0 gap-2">
-                <Link
-                  href={
-                    (dicteeHref ??
-                      `/teacher/grades/${classId}/${evaluationId}/dictee`) as Route
-                  }
-                >
-                  <Mic className="h-4 w-4" />
-                  Mode dictée
-                </Link>
-              </Button>
-            )}
-          </div>
-
-          {/* Progression + Save indicator */}
-          <div className="mt-4 grid grid-cols-3 gap-3">
-            <KpiTile
-              label="Saisies"
-              value={`${gradedCount}/${totalCount}`}
-              tone={isAllGraded ? "success" : "neutral"}
-            />
-            <KpiTile
-              label="Moyenne classe"
-              value={classAverage !== null ? `${classAverage.toFixed(2)}` : "—"}
-              tone="neutral"
-            />
-            <KpiTile
-              label="Statut"
-              value={
-                dirtyCount > 0
-                  ? `${dirtyCount} non sauvé${dirtyCount > 1 ? "s" : ""}`
-                  : lastSaved
-                    ? "Synchronisé"
-                    : "Prêt"
-              }
-              tone={dirtyCount > 0 ? "warning" : "success"}
-              icon={dirtyCount > 0 ? CloudOff : Cloud}
-            />
-          </div>
-
-          {/* Progress bar */}
-          <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className={cn(
-                "h-full rounded-full transition-all duration-500",
-                isAllGraded ? "bg-emerald-500" : "bg-primary",
-              )}
-              style={{ width: `${totalCount > 0 ? (gradedCount / totalCount) * 100 : 0}%` }}
-            />
-          </div>
-        </div>
+        <GradeEntryHero
+          evaluation={evaluation}
+          gradedCount={gradedCount}
+          totalCount={totalCount}
+          classAverage={classAverage}
+          dirtyCount={dirtyCount}
+          lastSaved={lastSaved}
+          dicteeHref={classId ? dicteeHref ?? `/teacher/grades/${classId}/${evaluationId}/dictee` : undefined}
+        />
       )}
 
       {/* ─── Status bar (manual save + sync indicator) ────────────────── */}
@@ -286,9 +192,7 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
           )}
           {dirtyCount > 0 && (
             <span className="flex items-center gap-1 text-amber-600">
-              <Loader2
-                className={cn("h-3 w-3", updateMutation.isPending && "animate-spin")}
-              />
+              <Loader2 className={cn("h-3 w-3", updateMutation.isPending && "animate-spin")} />
               {updateMutation.isPending ? "Synchronisation…" : "Modifications en attente"}
             </span>
           )}
@@ -297,7 +201,7 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
           onClick={() => flushSave()}
           disabled={dirtyCount === 0 || updateMutation.isPending}
           size="sm"
-          className="h-10 self-end sm:self-auto"
+          className="h-11 self-end sm:h-10 sm:self-auto"
         >
           {updateMutation.isPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -308,22 +212,16 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
         </Button>
       </div>
 
-      {/* ─── Grade entries ──────────────────────────────────────────── */}
+      {/* ─── Grade entries — 1 colonne mobile, 2 colonnes desktop ─────── */}
       <div className="overflow-hidden rounded-xl border bg-card">
-        <div className="divide-y">
+        <div className="grid grid-cols-1 lg:grid-cols-2">
           {grades.map((grade, index) => {
-            // `initialValue` est la valeur côté serveur — connue dès le mount
-            // de GradeRow (qui ne se monte qu'après que `grades` ait été
-            // récupéré). C'est elle qui pré-remplit l'input en mode "Réviser".
-            // `localGrades.get(...)` reste la source de vérité pour la
-            // catégorisation (couleur de cellule) qui suit les frappes en cours.
             const serverValue =
-              grade.value !== null && grade.value !== undefined
-                ? Number(grade.value)
-                : null
+              grade.value !== null && grade.value !== undefined ? Number(grade.value) : null
             const liveValue = localGrades.has(grade.student_id)
               ? localGrades.get(grade.student_id) ?? null
               : serverValue
+            const isLeftColumn = index % 2 === 0
             return (
               <GradeRow
                 key={grade.student_id}
@@ -334,193 +232,13 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
                 status={cellStatus.get(grade.student_id) ?? "idle"}
                 originalStatus={grade.status}
                 onChange={(rawValue) => handleGradeChange(grade.student_id, rawValue)}
+                className={cn(
+                  "border-b border-border/60",
+                  isLeftColumn && "lg:border-r",
+                )}
               />
             )
           })}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────────────────
-
-interface KpiTileProps {
-  label: string
-  value: string
-  tone: "success" | "warning" | "neutral"
-  icon?: React.ComponentType<{ className?: string }>
-}
-
-function KpiTile({ label, value, tone, icon: Icon }: KpiTileProps) {
-  return (
-    <div className="rounded-lg border bg-card/50 p-3">
-      <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-        {Icon && <Icon className="h-3 w-3" />}
-        {label}
-      </div>
-      <div
-        className={cn(
-          "mt-1 text-lg font-semibold tabular-nums",
-          tone === "success" && "text-emerald-600",
-          tone === "warning" && "text-amber-600",
-          tone === "neutral" && "text-foreground",
-        )}
-      >
-        {value}
-      </div>
-    </div>
-  )
-}
-
-interface GradeRowProps {
-  index: number
-  studentName: string
-  /** Valeur côté serveur — sert UNIQUEMENT à l'init de l'input (mode "Réviser"). */
-  initialValue: number | null
-  /** Valeur courante (serveur OU frappe locale en cours) — pour la catégorisation. */
-  value: number | null
-  status: CellStatus
-  originalStatus: string
-  onChange: (rawValue: string) => void
-}
-
-function GradeRow({
-  index,
-  studentName,
-  initialValue,
-  value,
-  status,
-  originalStatus,
-  onChange,
-}: GradeRowProps) {
-  // rawInput est la source de vérité pour ce que l'utilisateur tape (incluant
-  // les états transitoires comme "12," avant complétion). On l'initialise UNE
-  // SEULE FOIS depuis `initialValue` (côté serveur), puis le user contrôle.
-  // Pas de useEffect [value] qui écraserait sa frappe (ex: "12," → parser → 12
-  // → reset à "12" sans virgule). Trade-off : si le serveur refetch avec une
-  // valeur différente, le row reste sur la valeur tapée. Acceptable — single
-  // editor at a time.
-  const [rawInput, setRawInput] = useState<string>(
-    initialValue !== null ? String(initialValue).replace(".", ",") : "",
-  )
-
-  const category = categorizeGrade(value, originalStatus)
-  const colorTone = useMemo(() => {
-    switch (category) {
-      case "difficulte":
-        return {
-          bg: "bg-rose-50/60",
-          text: "text-rose-700",
-          border: "border-rose-200",
-          Icon: AlertTriangle,
-          label: "En difficulté",
-        }
-      case "moyen":
-        return {
-          bg: "bg-amber-50/60",
-          text: "text-amber-700",
-          border: "border-amber-200",
-          Icon: null,
-          label: "Passable",
-        }
-      case "bon":
-        return {
-          bg: "bg-emerald-50/60",
-          text: "text-emerald-700",
-          border: "border-emerald-200",
-          Icon: CheckCircle2,
-          label: "Bon",
-        }
-      case "absent":
-        return {
-          bg: "bg-muted/40",
-          text: "text-muted-foreground",
-          border: "border-muted",
-          Icon: CircleSlash,
-          label: "Absent",
-        }
-      case "non_saisi":
-      default:
-        return {
-          bg: "",
-          text: "text-muted-foreground/60",
-          border: "border-input",
-          Icon: null,
-          label: "—",
-        }
-    }
-  }, [category])
-
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-3 px-4 py-3 transition-colors",
-        status === "saved" && "bg-emerald-50/40",
-        status === "error" && "bg-destructive/5",
-      )}
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <span className="w-7 shrink-0 font-mono text-xs text-muted-foreground/70">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-        <span className="truncate text-sm font-medium">{studentName}</span>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-2">
-        {/* Category badge — visible quand valeur saisie, cachée en non_saisi */}
-        {category !== "non_saisi" && colorTone.Icon && (
-          <span
-            className={cn(
-              "hidden items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium sm:inline-flex",
-              colorTone.bg,
-              colorTone.text,
-            )}
-            title={colorTone.label}
-          >
-            <colorTone.Icon className="h-3 w-3" />
-            {colorTone.label}
-          </span>
-        )}
-
-        {/* Input */}
-        <div className="relative">
-          <input
-            type="text"
-            inputMode="decimal"
-            pattern="[0-9]*[,.]?[0-9]*"
-            value={rawInput}
-            onChange={(e) => {
-              setRawInput(e.target.value)
-              onChange(e.target.value)
-            }}
-            placeholder="--"
-            tabIndex={index + 1}
-            className={cn(
-              "h-12 w-24 rounded-lg border-2 bg-background px-3 text-center text-base font-semibold tabular-nums transition-colors",
-              "placeholder:font-normal placeholder:text-muted-foreground/40",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-              status === "saved" && "border-emerald-400",
-              status === "error" && "border-destructive",
-              status === "pending" && "border-primary/60",
-              (status === "idle" || status === "dirty") && colorTone.border,
-              colorTone.text,
-            )}
-            aria-label={`Note de ${studentName} sur 20`}
-          />
-          <span className="pointer-events-none absolute -right-1 -top-1 text-[10px] text-muted-foreground/50">
-            /20
-          </span>
-        </div>
-
-        {/* Sync status icon */}
-        <div className="flex h-5 w-5 items-center justify-center">
-          {status === "pending" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-          {status === "saved" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-          {status === "error" && <AlertCircle className="h-4 w-4 text-destructive" />}
-          {status === "dirty" && <span className="h-2 w-2 rounded-full bg-amber-500" />}
         </div>
       </div>
     </div>
