@@ -84,7 +84,7 @@ export function StudentNav() {
               role="menuitem"
               onClick={() => {
                 setMoreOpen(false)
-                signOut({ callbackUrl: "/login" })
+                signOut({ callbackUrl: `${window.location.origin}/login` })
               }}
               className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
             >
