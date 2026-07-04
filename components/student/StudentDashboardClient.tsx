@@ -104,6 +104,31 @@ export function StudentDashboardClient() {
         </CardContent>
       </Card>
 
+      {/* Dernière note obtenue — mise en avant */}
+      {isEnrolled && data.latest_grade && (
+        <Card className="shadow-sm">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-accent/10 text-accent">
+              <span className="text-lg font-bold leading-none">
+                {data.latest_grade.value.toFixed(2)}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                / {data.latest_grade.out_of}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Dernière note
+              </p>
+              <p className="truncate text-sm font-semibold">{data.latest_grade.subject_name}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {data.latest_grade.evaluation_title}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {isEnrolled && (
         <Link href={"/student/grades" as Route} className="group block">
           <Card className="shadow-sm transition-colors group-hover:border-primary/40">

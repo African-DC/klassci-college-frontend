@@ -8,13 +8,20 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Conseil de classe : le procès-verbal se charge à nouveau pour une classe et un trimestre ; s'il n'existe pas encore, un bouton « Générer le procès-verbal » le crée à partir des bulletins. Les décisions s'enregistrent, le procès-verbal se valide et se télécharge en PDF *(admin)*.
+- Statistiques DREN : les boutons Excel et PDF téléchargent désormais un vrai fichier (classeur Excel ou document PDF) au lieu d'ouvrir des données brutes *(admin)*.
+- Page Notes : en choisissant une matière, les évaluations et les compteurs d'onglets (Toutes, À saisir, En retard, Terminées) se mettent bien à jour ; auparavant certaines matières n'affichaient aucune évaluation et les compteurs restaient figés *(admin)*.
+
 ### Added
 
 - Partage du lien de l'application soigné : sur Slack, WhatsApp, Twitter/X, LinkedIn ou par message, le lien college.klassci.com affiche désormais une carte aux couleurs de KLASSCI College (logo, accroche) au lieu d'un lien nu *(tous)*.
+- Page Notes : bouton unique « Relevé de notes » qui regroupe l'aperçu et le téléchargement du relevé rempli, plus le téléchargement d'une feuille de notes vierge à remplir à la main (élèves de la classe, matière et trimestre pré-renseignés si choisis) *(admin, enseignant)*.
+- Tableau de bord élève : la dernière note obtenue est mise en avant (matière, note sur 20 et intitulé de l'évaluation) *(élève)*.
 - Tableau de bord dédié au personnel (secrétariat) : indicateurs orientés inscriptions à valider, prospects à inscrire, paiements en attente et élèves inscrits, avec des actions rapides adaptées (inscription, encaissement, présences, classes, congés) *(personnel)*.
 - Tableau de bord enseignant : la carte « Ma performance » affiche désormais directement le score sur 100 et l'appréciation *(enseignant)*.
 - Tableau de bord élève enrichi de deux accès rapides : « Mes notes » et « Mes bulletins » *(élève)*.
-
 - Nouvel onglet « MailPulse » dans les Paramètres : activez les notifications parents par email et WhatsApp, réglez l'expéditeur et la clé d'accès (jamais réaffichée), gérez vos destinataires de test avec un interrupteur par adresse ou numéro, envoyez un test (simulation ou réel) et préparez la réponse automatique « INFO » sur WhatsApp *(admin)*.
 - Intérim : sur un congé approuvé, la direction choisit un enseignant remplaçant depuis la page Congés ; le demandeur voit qui assure son remplacement sur sa carte « Mes congés » *(admin, enseignant)*.
 - Demandes de congé : depuis son profil (et son tableau de bord pour l'enseignant), on demande un congé en quelques secondes et on suit son statut ; une page « Congés » côté administration permet d'approuver ou refuser les demandes en attente *(enseignant, personnel, admin)*.

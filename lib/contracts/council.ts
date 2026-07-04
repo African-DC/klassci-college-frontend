@@ -20,7 +20,7 @@ export const CouncilDecisionRecordSchema = z.object({
   student_name: z.string(),
   average: z.coerce.number().nullable(),
   rank: z.number().nullable(),
-  absence_count: z.number().default(0),
+  absence_count: z.number(),
   auto_decision: CouncilDecisionSchema.nullable(),
   final_decision: CouncilDecisionSchema.nullable(),
   override_reason: z.string().nullable(),
