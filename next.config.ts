@@ -51,8 +51,13 @@ const SECURITY_HEADERS = [
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   {
+    // microphone=(self) : la dictée vocale (mode dictée des notes) a besoin du
+    // micro pour NOTRE origine. `microphone=()` le bloquait au niveau document,
+    // AU-DESSUS de la permission utilisateur → `not-allowed` partout. `(self)`
+    // est le défaut navigateur (origine propre seulement, pas les iframes tiers).
+    // camera / geolocation restent bloqués (non utilisés).
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+    value: 'camera=(), microphone=(self), geolocation=(), interest-cohort=()',
   },
 ];
 
