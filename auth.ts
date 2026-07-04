@@ -52,6 +52,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             role: data.user.role,
             accessToken: data.access_token,
             refreshToken: data.refreshToken ?? undefined,
+            mustChangePassword: data.user.must_change_password,
           }
         } catch {
           return null
@@ -68,6 +69,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role = user.role
         token.accessToken = user.accessToken
         token.refreshToken = user.refreshToken
+        token.mustChangePassword = user.mustChangePassword
         token.error = undefined
         return token
       }
@@ -138,6 +140,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.id = token.id
       session.user.email = token.email
       session.user.role = token.role
+      session.user.mustChangePassword = token.mustChangePassword
       return session
     },
   },

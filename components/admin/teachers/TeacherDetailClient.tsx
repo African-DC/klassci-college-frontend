@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
 import { DetailHero } from "@/components/shared/DetailHero"
+import { AccountSection } from "@/components/shared/account/AccountSection"
 import { ContactActions } from "@/components/shared/ContactActions"
 import type { HeroKpi } from "@/components/shared/PageHero"
 import { TeacherEditModal } from "./TeacherEditModal"
@@ -138,6 +139,8 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
           </DialogContent>
         </Dialog>
       )}
+
+      <AccountSection entityType="teacher" entityId={teacherId} />
 
       {/* Tabs — controlled + scroll-x mobile (pattern principe 13/14) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

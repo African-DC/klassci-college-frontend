@@ -73,6 +73,16 @@ const authMiddleware = auth((req) => {
     return hostRedirect(req, "/login")
   }
 
+  // Mot de passe temporaire (compte créé ou réinitialisé par un admin) :
+  // forcer l'écran de changement avant tout autre accès.
+  if (
+    isLoggedIn &&
+    session.user.mustChangePassword &&
+    pathname !== "/change-password"
+  ) {
+    return hostRedirect(req, "/change-password")
+  }
+
   const portalFromPath = getPortalFromPath(pathname)
   const isProtectedRoute = portalFromPath !== null
 

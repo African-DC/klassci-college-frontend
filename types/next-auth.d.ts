@@ -17,6 +17,8 @@ declare module "next-auth" {
     email: string
     role: UserRole
     accessToken: string
+    /** Mot de passe temporaire à changer à la 1re connexion. */
+    mustChangePassword?: boolean
     /**
      * Refresh token BE, capté côté serveur depuis le cookie httpOnly posé par
      * /auth/login. Stocké uniquement dans le JWT NextAuth chiffré (jamais
@@ -31,6 +33,7 @@ declare module "next-auth" {
       id: string
       email: string
       role: UserRole
+      mustChangePassword?: boolean
     }
     accessToken: string
     error?: string
@@ -43,6 +46,7 @@ declare module "next-auth/jwt" {
     email: string
     role: UserRole
     accessToken: string
+    mustChangePassword?: boolean
     /** Refresh token BE — server-side only, jamais propagé à la session client. */
     refreshToken?: string
     error?: string
