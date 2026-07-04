@@ -10,9 +10,15 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Page Notes : bouton unique « Relevé de notes » qui regroupe l'aperçu et le téléchargement du relevé rempli, plus le téléchargement d'une feuille de notes vierge à remplir à la main (élèves de la classe, matière et trimestre pré-renseignés si choisis) *(admin, enseignant)*.
+- Tableau de bord élève : la dernière note obtenue est mise en avant (matière, note sur 20 et intitulé de l'évaluation) *(élève)*.
 - Tableau de bord dédié au personnel (secrétariat) : indicateurs orientés inscriptions à valider, prospects à inscrire, paiements en attente et élèves inscrits, avec des actions rapides adaptées (inscription, encaissement, présences, classes, congés) *(personnel)*.
 - Tableau de bord enseignant : la carte « Ma performance » affiche désormais directement le score sur 100 et l'appréciation *(enseignant)*.
 - Tableau de bord élève enrichi de deux accès rapides : « Mes notes » et « Mes bulletins » *(élève)*.
+
+### Fixed
+
+- Page Notes : en choisissant une matière, les évaluations et les compteurs d'onglets (Toutes, À saisir, En retard, Terminées) se mettent bien à jour ; auparavant certaines matières n'affichaient aucune évaluation et les compteurs restaient figés *(admin)*.
 
 - Nouvel onglet « MailPulse » dans les Paramètres : activez les notifications parents par email et WhatsApp, réglez l'expéditeur et la clé d'accès (jamais réaffichée), gérez vos destinataires de test avec un interrupteur par adresse ou numéro, envoyez un test (simulation ou réel) et préparez la réponse automatique « INFO » sur WhatsApp *(admin)*.
 - Intérim : sur un congé approuvé, la direction choisit un enseignant remplaçant depuis la page Congés ; le demandeur voit qui assure son remplacement sur sa carte « Mes congés » *(admin, enseignant)*.
