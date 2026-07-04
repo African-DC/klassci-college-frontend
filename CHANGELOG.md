@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Nouvel onglet « MailPulse » dans les Paramètres : activez les notifications parents par email et WhatsApp, réglez l'expéditeur et la clé d'accès (jamais réaffichée), gérez vos destinataires de test avec un interrupteur par adresse ou numéro, envoyez un test (simulation ou réel) et préparez la réponse automatique « INFO » sur WhatsApp *(admin)*.
 - Intérim : sur un congé approuvé, la direction choisit un enseignant remplaçant depuis la page Congés ; le demandeur voit qui assure son remplacement sur sa carte « Mes congés » *(admin, enseignant)*.
 - Demandes de congé : depuis son profil (et son tableau de bord pour l'enseignant), on demande un congé en quelques secondes et on suit son statut ; une page « Congés » côté administration permet d'approuver ou refuser les demandes en attente *(enseignant, personnel, admin)*.
 - Pièces jointes sur l'onglet Documents de la fiche élève : téléversez un PDF ou une image (extrait de naissance, certificat médical, etc.), en choisissant le type dans une liste ou en le créant à la volée ; consultez ou supprimez chaque document *(admin)*.
