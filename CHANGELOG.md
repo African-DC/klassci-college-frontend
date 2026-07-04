@@ -51,6 +51,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Police des titres remplacée par Nunito Sans, plus sobre et lisible, à la place de l'ancienne police jugée trop fantaisiste *(tous)*.
 - Saisie des notes repensée dans la ligne premium KLASSCI : en-tête au dégradé bleu-orange avec le détail de l'évaluation et les indicateurs clés (saisies, moyenne de la classe, état de sauvegarde), « Mode dictée » mis en avant en orange. Sur grand écran, les élèves s'affichent sur deux colonnes pour moins de défilement ; une seule colonne sur téléphone *(enseignant, admin)*.
 - Mode dictée sur grand écran : l'espace est désormais utilisé avec un panneau « Classe » à droite listant tous les élèves et leur note, l'élève en cours surligné, cliquable pour y sauter directement. Sur téléphone, l'affichage plein écran séquentiel reste inchangé *(enseignant, admin)*.
 - Page Emploi du temps repensée dans la ligne premium KLASSCI : bandeau bleu-orange rappelant « Semaine type · Année en cours », classe et actions (générer, exporter PDF) regroupées dans une carte de contrôle avec sélection rapide par classe *(admin)*.
