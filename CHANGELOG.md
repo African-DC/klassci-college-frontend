@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Partage du lien de l'application soigné : sur Slack, WhatsApp, Twitter/X, LinkedIn ou par message, le lien college.klassci.com affiche désormais une carte aux couleurs de KLASSCI College (logo, accroche) au lieu d'un lien nu *(tous)*.
 - Tableau de bord dédié au personnel (secrétariat) : indicateurs orientés inscriptions à valider, prospects à inscrire, paiements en attente et élèves inscrits, avec des actions rapides adaptées (inscription, encaissement, présences, classes, congés) *(personnel)*.
 - Tableau de bord enseignant : la carte « Ma performance » affiche désormais directement le score sur 100 et l'appréciation *(enseignant)*.
 - Tableau de bord élève enrichi de deux accès rapides : « Mes notes » et « Mes bulletins » *(élève)*.
