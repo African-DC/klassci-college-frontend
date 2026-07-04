@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Mode dictée : le micro se débloque tout seul dès qu'on l'autorise dans le navigateur, sans recharger la page ; quand la reconnaissance vocale est indisponible (réseau ou navigateur), un message clair invite à saisir au clavier au lieu d'afficher « micro refusé » à tort, et un bouton « Réessayer le micro » est proposé *(enseignant, admin)*.
 - Conseil de classe : le procès-verbal se charge à nouveau pour une classe et un trimestre ; s'il n'existe pas encore, un bouton « Générer le procès-verbal » le crée à partir des bulletins. Les décisions s'enregistrent, le procès-verbal se valide et se télécharge en PDF *(admin)*.
 - Statistiques DREN : les boutons Excel et PDF téléchargent désormais un vrai fichier (classeur Excel ou document PDF) au lieu d'ouvrir des données brutes *(admin)*.
 - Page Notes : en choisissant une matière, les évaluations et les compteurs d'onglets (Toutes, À saisir, En retard, Terminées) se mettent bien à jour ; auparavant certaines matières n'affichaient aucune évaluation et les compteurs restaient figés *(admin)*.
@@ -47,6 +48,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Mode dictée sur grand écran : l'espace est désormais utilisé avec un panneau « Classe » à droite listant tous les élèves et leur note, l'élève en cours surligné, cliquable pour y sauter directement. Sur téléphone, l'affichage plein écran séquentiel reste inchangé *(enseignant, admin)*.
 - Page Emploi du temps repensée dans la ligne premium KLASSCI : bandeau bleu-orange rappelant « Semaine type · Année en cours », classe et actions (générer, exporter PDF) regroupées dans une carte de contrôle avec sélection rapide par classe *(admin)*.
 - Page Notes repensée dans la ligne premium KLASSCI : bandeau bleu-orange avec les indicateurs clés (évaluations, terminées, en retard, taux de saisie), filtres et actions PDF regroupés, onglets de statut harmonisés *(admin)*.
 - Onglet MailPulse aux vraies couleurs de la marque : bandeau sombre, logo enveloppe orange et wordmark « Mail·Pulse », avec l'état de la clé API en pastille. La mise en page a été resserrée pour supprimer la barre de défilement superflue *(admin)*.
