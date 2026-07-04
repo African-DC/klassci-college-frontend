@@ -1,6 +1,15 @@
 "use client"
 
-import { CalendarDays, ClipboardList, Wallet, AlertCircle } from "lucide-react"
+import type { Route } from "next"
+import Link from "next/link"
+import {
+  CalendarDays,
+  ClipboardList,
+  Wallet,
+  AlertCircle,
+  FileText,
+  ChevronRight,
+} from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHero, type HeroKpi } from "@/components/shared/PageHero"
@@ -94,6 +103,44 @@ export function StudentDashboardClient() {
           </div>
         </CardContent>
       </Card>
+
+      {isEnrolled && (
+        <Link href={"/student/grades" as Route} className="group block">
+          <Card className="shadow-sm transition-colors group-hover:border-primary/40">
+            <CardContent className="flex items-center gap-3 p-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <ClipboardList className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Mes notes</p>
+                <p className="text-xs text-muted-foreground">
+                  Voir le détail de mes notes par matière et trimestre
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            </CardContent>
+          </Card>
+        </Link>
+      )}
+
+      {isEnrolled && (
+        <Link href={"/student/bulletins" as Route} className="group block">
+          <Card className="shadow-sm transition-colors group-hover:border-primary/40">
+            <CardContent className="flex items-center gap-3 p-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <FileText className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Mes bulletins</p>
+                <p className="text-xs text-muted-foreground">
+                  Consulter mes bulletins publiés par trimestre
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            </CardContent>
+          </Card>
+        </Link>
+      )}
     </div>
   )
 }

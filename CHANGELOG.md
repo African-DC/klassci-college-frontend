@@ -12,6 +12,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 - Tableau de bord dédié au personnel (secrétariat) : indicateurs orientés inscriptions à valider, prospects à inscrire, paiements en attente et élèves inscrits, avec des actions rapides adaptées (inscription, encaissement, présences, classes, congés) *(personnel)*.
 - Tableau de bord enseignant : la carte « Ma performance » affiche désormais directement le score sur 100 et l'appréciation *(enseignant)*.
+- Tableau de bord élève enrichi de deux accès rapides : « Mes notes » et « Mes bulletins » *(élève)*.
 
 - Nouvel onglet « MailPulse » dans les Paramètres : activez les notifications parents par email et WhatsApp, réglez l'expéditeur et la clé d'accès (jamais réaffichée), gérez vos destinataires de test avec un interrupteur par adresse ou numéro, envoyez un test (simulation ou réel) et préparez la réponse automatique « INFO » sur WhatsApp *(admin)*.
 - Intérim : sur un congé approuvé, la direction choisit un enseignant remplaçant depuis la page Congés ; le demandeur voit qui assure son remplacement sur sa carte « Mes congés » *(admin, enseignant)*.
@@ -52,6 +53,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Connexion : les comptes Personnel, Comptable et Directeur étaient refusés à tort (« email ou mot de passe incorrect ») ; ils peuvent désormais se connecter *(personnel, comptable, directeur)*.
 - Page Notes : les filtres (Classe, Matière, Trimestre) restaient désalignés tant qu'aucune classe n'était choisie ; ils sont désormais alignés dans tous les cas *(admin)*.
 - Page Notes : à la sélection d'une classe, la liste « Matière » affichait toutes les matières de tous les niveaux (doublons). Elle ne propose désormais que les matières réellement enseignées dans la classe choisie *(admin)*.
 - Après une mise à jour de la plateforme, un onglet resté ouvert pouvait afficher « Une erreur est survenue / Loading chunk failed » à la navigation ; la page se recharge désormais automatiquement pour récupérer la dernière version *(tous)*.
