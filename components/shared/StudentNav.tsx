@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react"
 import type { Route } from "next"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { signOut } from "next-auth/react"
 import {
   LayoutDashboard,
   CalendarDays,
@@ -17,6 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { logout } from "@/lib/utils/logout"
 
 const mainNavItems: { label: string; href: Route; icon: LucideIcon }[] = [
   { label: "Accueil", href: "/student/dashboard", icon: LayoutDashboard },
@@ -84,7 +84,7 @@ export function StudentNav() {
               role="menuitem"
               onClick={() => {
                 setMoreOpen(false)
-                signOut({ callbackUrl: `${window.location.origin}/login` })
+                void logout()
               }}
               className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
             >
