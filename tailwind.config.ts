@@ -20,7 +20,9 @@ const config: Config = {
   	extend: {
   		fontFamily: {
   			sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
-  			serif: ['var(--font-serif)', 'Georgia', 'serif'],
+  			// `serif` = police des titres (Nunito Sans via --font-serif).
+  			// Fallback sur une pile sans-serif (la police n'est plus un serif).
+  			serif: ['var(--font-serif)', 'system-ui', 'sans-serif'],
   		},
   		colors: {
   			border: 'hsl(var(--border))',

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { DM_Sans, DM_Serif_Display } from 'next/font/google';
+import { DM_Sans, Nunito_Sans } from 'next/font/google';
 import { Providers } from '@/components/shared/Providers';
 import { ChunkErrorReloader } from '@/components/shared/ChunkErrorReloader';
 import './globals.css';
@@ -9,8 +9,11 @@ const dmSans = DM_Sans({
   variable: '--font-sans',
 });
 
-const dmSerif = DM_Serif_Display({
-  weight: '400',
+// Police des titres : Nunito Sans (humaniste, sobre) en remplacement de
+// DM Serif Display, jugé trop fantaisiste. Variable font → tous les poids
+// (les titres utilisent semibold/bold). Le token Tailwind `font-serif`
+// (var --font-serif) pointe désormais sur cette police pour tous les titres.
+const nunitoSans = Nunito_Sans({
   subsets: ['latin'],
   variable: '--font-serif',
 });
@@ -50,7 +53,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${dmSans.variable} ${dmSerif.variable} font-sans antialiased`}>
+      <body className={`${dmSans.variable} ${nunitoSans.variable} font-sans antialiased`}>
         <ChunkErrorReloader />
         <Providers>{children}</Providers>
       </body>
