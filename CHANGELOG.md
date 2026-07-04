@@ -20,6 +20,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Section « Compte de connexion » sur la fiche d'un élève, parent, enseignant ou membre du personnel : voir l'état du compte (email, dernière connexion), créer le compte s'il n'existe pas (élève/parent) avec un email pré-rempli et éditable, et réinitialiser le mot de passe. Le mot de passe temporaire est affiché pour être communiqué *(admin, personnel)*.
+- Changement de mot de passe obligatoire à la première connexion après création ou réinitialisation par un administrateur : l'utilisateur choisit son propre mot de passe avant d'accéder à son espace *(tous)*.
 - Partage du lien de l'application soigné : sur Slack, WhatsApp, Twitter/X, LinkedIn ou par message, le lien college.klassci.com affiche désormais une carte aux couleurs de KLASSCI College (logo, accroche) au lieu d'un lien nu *(tous)*.
 - Page Notes : bouton unique « Relevé de notes » qui regroupe l'aperçu et le téléchargement du relevé rempli, plus le téléchargement d'une feuille de notes vierge à remplir à la main (élèves de la classe, matière et trimestre pré-renseignés si choisis) *(admin, enseignant)*.
 - Tableau de bord élève : la dernière note obtenue est mise en avant (matière, note sur 20 et intitulé de l'évaluation) *(élève)*.

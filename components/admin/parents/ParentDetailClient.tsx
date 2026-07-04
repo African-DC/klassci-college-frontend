@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
 import { DetailHero } from "@/components/shared/DetailHero"
+import { AccountSection } from "@/components/shared/account/AccountSection"
 import { ContactActions } from "@/components/shared/ContactActions"
 import type { HeroKpi } from "@/components/shared/PageHero"
 import { useParent, useParentFull, useDeleteParent, useUnlinkParent } from "@/lib/hooks/useParents"
@@ -199,6 +200,8 @@ export function ParentDetailClient({ parentId }: { parentId: number }) {
           </div>
         </CardContent>
       </Card>
+
+      <AccountSection entityType="parent" entityId={parentId} />
 
       <ParentEditModal parentId={parentId} open={editOpen} onClose={() => setEditOpen(false)} />
       <ParentLinkChildModal

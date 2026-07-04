@@ -28,6 +28,7 @@ export const UserSchema = z.object({
   role: UserRoleSchema,
   first_name: z.string(),
   last_name: z.string(),
+  must_change_password: z.boolean().optional(),
 })
 
 export const LoginResponseSchema = z.object({

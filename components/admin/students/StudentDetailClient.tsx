@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
 import { DetailHero } from "@/components/shared/DetailHero"
+import { AccountSection } from "@/components/shared/account/AccountSection"
 import type { HeroKpi } from "@/components/shared/PageHero"
 import { StudentEditModal } from "./StudentEditModal"
 import { StudentJourneyTimeline } from "./StudentJourneyTimeline"
@@ -241,6 +242,8 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
           </DialogContent>
         </Dialog>
       )}
+
+      <AccountSection entityType="student" entityId={studentId} />
 
       {/* Tabs — reordered by usage frequency, scroll-x on mobile, controlled for cross-tab links */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

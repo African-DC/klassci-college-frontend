@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
 import { DetailHero } from "@/components/shared/DetailHero"
+import { AccountSection } from "@/components/shared/account/AccountSection"
 import { ContactActions } from "@/components/shared/ContactActions"
 import type { HeroKpi } from "@/components/shared/PageHero"
 import { StaffEditModal } from "./StaffEditModal"
@@ -144,6 +145,8 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
           </DialogContent>
         </Dialog>
       )}
+
+      <AccountSection entityType="staff" entityId={staffId} />
 
       {/* Tabs */}
       <Tabs defaultValue="profil" className="space-y-4">
