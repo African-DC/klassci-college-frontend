@@ -243,8 +243,6 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         </Dialog>
       )}
 
-      <AccountSection entityType="student" entityId={studentId} />
-
       {/* Tabs — reordered by usage frequency, scroll-x on mobile, controlled for cross-tab links */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
@@ -317,6 +315,9 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
           <DocumentsTab studentId={studentId} studentLastName={student.last_name} />
         </TabsContent>
       </Tabs>
+
+      {/* Compte de connexion — information secondaire, placée en bas de fiche */}
+      <AccountSection entityType="student" entityId={studentId} />
 
       {/* Edit modal */}
       <StudentEditModal studentId={studentId} open={editOpen} onClose={() => setEditOpen(false)} />

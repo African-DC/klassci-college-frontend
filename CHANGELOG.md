@@ -10,6 +10,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Fiche inscription et onglet Paiements repensés en premium : en-tête avec bandeau de marque (classe, année, statut), synthèse claire des frais (payé, reste à payer, progression), détail de chaque frais avec sa barre d'avancement et son statut, et historique des versements montrant la répartition sur les frais avec le reçu téléchargeable pour chacun *(admin)*.
+- Onglet Paiements de la fiche élève : même bandeau de synthèse premium des frais (payé, reste à payer) *(admin)*.
+- Fiches élève, enseignant et personnel : la carte « Compte de connexion » passe en bas de page, ce n'est pas l'information principale à l'ouverture de la fiche *(admin)*.
 - Page de connexion repensée en version premium : grande photo d'une classe habillée aux couleurs de la marque avec accroche et points forts à gauche, formulaire présenté dans une carte élégante à droite, plus lisible sur mobile comme sur ordinateur *(tous)*.
 - Page Frais repensée : la grille des frais obligatoires s'affiche désormais en arbre par niveau (on voit d'un coup ce qu'un élève d'un niveau paie et le total), et les frais optionnels avec leurs options (montant par option) sont visibles et modifiables directement, au lieu d'être cachés derrière un bouton *(admin)*.
 
