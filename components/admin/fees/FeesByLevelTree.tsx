@@ -55,11 +55,13 @@ export function FeesByLevelTree({
     [levels, byLevel],
   )
 
-  // Déplié par défaut sur tous les niveaux configurés.
-  const [open, setOpen] = useState<Set<number>>(() => new Set(rows.map((r) => r.level.id)))
+  // Déplié par défaut : on suit les niveaux explicitement REPLIÉS par l'admin.
+  // (Un état "ouverts" initialisé au montage raterait les niveaux dont les
+  // variantes arrivent après le premier rendu.)
+  const [collapsed, setCollapsed] = useState<Set<number>>(() => new Set())
 
   function toggle(levelId: number) {
-    setOpen((prev) => {
+    setCollapsed((prev) => {
       const next = new Set(prev)
       if (next.has(levelId)) next.delete(levelId)
       else next.add(levelId)
@@ -80,7 +82,7 @@ export function FeesByLevelTree({
   return (
     <div className="space-y-2.5">
       {rows.map(({ level, items }) => {
-        const isOpen = open.has(level.id)
+        const isOpen = !collapsed.has(level.id)
         const total = items.reduce((sum, v) => sum + v.amount, 0)
         return (
           <div
