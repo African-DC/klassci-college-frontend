@@ -76,8 +76,9 @@ export function DicteeControls({
             <RetryButton onClick={onMicRetry}>Réessayer</RetryButton>
           }
         >
-          Reconnaissance vocale indisponible sur ce navigateur ou ce réseau. Le
-          micro fonctionne, saisissez au clavier ou réessayez.
+          Le micro fonctionne, mais la reconnaissance vocale est bloquée par ce
+          navigateur (fréquent sur Microsoft Edge). Utilisez Google Chrome pour
+          dicter, ou saisissez les notes au clavier.
         </MicBanner>
       )}
 

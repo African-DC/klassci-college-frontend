@@ -120,6 +120,10 @@ export function useSpeechRecognition({
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
   const userStoppedRef = useRef(false)
+  // Passe à true dès qu'un getUserMedia réussit : on SAIT alors que le micro est
+  // accordé. Tout `not-allowed` ultérieur de l'ASR n'est donc PAS un refus micro
+  // mais un souci du service vocal du navigateur (Edge notoirement cassé).
+  const micGrantedRef = useRef(false)
   const onResultRef = useRef(onResult)
   const onErrorRef = useRef(onError)
 
@@ -179,14 +183,25 @@ export function useSpeechRecognition({
         setServiceUnavailable(true)
         userStoppedRef.current = true
         const msg =
-          "Reconnaissance vocale indisponible sur ce navigateur ou ce réseau. Saisissez les notes au clavier."
+          "Reconnaissance vocale indisponible ici. Sur Microsoft Edge elle est souvent bloquée : utilisez Google Chrome pour dicter, ou saisissez les notes au clavier."
         setError(msg)
         onErrorRef.current?.(msg)
         return
       }
 
-      // Vrai refus du micro — récupérable, ne plus auto-restart.
       if (event.error === "not-allowed") {
+        // Si le micro a déjà été accordé (getUserMedia OK), un `not-allowed` de
+        // l'ASR vient du SERVICE vocal du navigateur, pas d'un refus micro.
+        if (micGrantedRef.current) {
+          setServiceUnavailable(true)
+          userStoppedRef.current = true
+          const msg =
+            "Le micro fonctionne mais la reconnaissance vocale est bloquée par ce navigateur (fréquent sur Microsoft Edge). Utilisez Google Chrome pour dicter, ou saisissez les notes au clavier."
+          setError(msg)
+          onErrorRef.current?.(msg)
+          return
+        }
+        // Sinon : vrai refus du micro — récupérable, ne plus auto-restart.
         setPermissionDenied(true)
         userStoppedRef.current = true
         const msg =
@@ -275,6 +290,7 @@ export function useSpeechRecognition({
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
         // On n'a pas besoin du flux — l'ASR ouvre le sien. Libérer aussitôt.
         stream.getTracks().forEach((t) => t.stop())
+        micGrantedRef.current = true
         setPermissionDenied(false)
       } catch (err) {
         const name = (err as { name?: string })?.name
