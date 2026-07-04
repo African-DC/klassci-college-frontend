@@ -26,24 +26,25 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex min-h-screen">
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-gradient-to-br from-[#0a2d5e] via-[#0f3f8c] to-[#1a5bb5]">
-        {/* Subtle texture overlay */}
-        <div className="absolute inset-0 opacity-[0.04]">
-          <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
-                <path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" strokeWidth="0.5" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-        </div>
-
-        {/* Decorative shapes */}
-        <div className="absolute -top-32 -right-32 h-[500px] w-[500px] rounded-full bg-white/[0.03]" />
-        <div className="absolute -bottom-40 -left-40 h-[600px] w-[600px] rounded-full bg-white/[0.04]" />
-        <div className="absolute top-1/3 right-1/5 h-72 w-72 rounded-full bg-[#f58220]/[0.06]" />
+      {/* Left panel — branding sur photo d'une classe ivoirienne */}
+      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-[#08264f]">
+        {/* Photo de fond (enseignante + élèves) — object-right pour garder le
+            visage visible côté clair du voile. */}
+        <Image
+          src="/images/login-bg.png"
+          alt=""
+          fill
+          priority
+          sizes="55vw"
+          className="object-cover object-right"
+        />
+        {/* Voile de marque : bleu foncé à gauche (là où est le texte) →
+            translucide à droite (la photo respire), pour la lisibilité. */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#08264f]/[0.97] via-[#0f3f8c]/[0.86] to-[#0f3f8c]/[0.32]" />
+        {/* Vignette verticale : renforce logo (haut) et pied (bas). */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#08264f]/85 via-transparent to-[#08264f]/45" />
+        {/* Halo orange de marque, discret, en bas à droite. */}
+        <div className="absolute -bottom-24 -right-20 h-80 w-80 rounded-full bg-[#f58220]/25 blur-3xl" />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 text-white">
