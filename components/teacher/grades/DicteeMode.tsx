@@ -357,6 +357,7 @@ export function DicteeMode({ evaluationId, classId, returnHref }: DicteeModeProp
               }}
               onNext={goNext}
               micSupported={speech.supported}
+              micSecureContext={speech.secureContext}
               micListening={speech.listening}
               micPermissionDenied={speech.permissionDenied}
               micServiceUnavailable={speech.serviceUnavailable}
