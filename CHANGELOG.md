@@ -35,6 +35,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Onglet MailPulse aux vraies couleurs de la marque : bandeau sombre, logo enveloppe orange et wordmark « Mail·Pulse », avec l'état de la clé API en pastille. La mise en page a été resserrée pour supprimer la barre de défilement superflue *(admin)*.
 - L'onglet Disponibilités d'un enseignant précise désormais qu'il s'agit du planning **annuel** récurrent, base de la génération de l'emploi du temps (et non un réglage semaine par semaine) ; pour une absence ponctuelle, on passe par une demande de congé *(admin)*.
 - Emploi du temps : les flèches « Semaine précédente / suivante » sont retirées au profit d'un repère fixe « Semaine type · Année {en cours} ». L'emploi du temps vaut pour toute l'année scolaire ; l'ancien sélecteur laissait croire, à tort, que chaque semaine avait son propre planning *(admin)*.
 - Bandeau de synthèse des Frais (élève, parent) repassé au dégradé bleu-orange de la marque, et indicateurs de la page Années scolaires intégrés au bandeau d'en-tête *(tous)*.
