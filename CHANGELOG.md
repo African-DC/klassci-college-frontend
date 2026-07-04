@@ -35,6 +35,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Page Notes repensée dans la ligne premium KLASSCI : bandeau bleu-orange avec les indicateurs clés (évaluations, terminées, en retard, taux de saisie), filtres et actions PDF regroupés, onglets de statut harmonisés *(admin)*.
 - Onglet MailPulse aux vraies couleurs de la marque : bandeau sombre, logo enveloppe orange et wordmark « Mail·Pulse », avec l'état de la clé API en pastille. La mise en page a été resserrée pour supprimer la barre de défilement superflue *(admin)*.
 - L'onglet Disponibilités d'un enseignant précise désormais qu'il s'agit du planning **annuel** récurrent, base de la génération de l'emploi du temps (et non un réglage semaine par semaine) ; pour une absence ponctuelle, on passe par une demande de congé *(admin)*.
 - Emploi du temps : les flèches « Semaine précédente / suivante » sont retirées au profit d'un repère fixe « Semaine type · Année {en cours} ». L'emploi du temps vaut pour toute l'année scolaire ; l'ancien sélecteur laissait croire, à tort, que chaque semaine avait son propre planning *(admin)*.
@@ -47,6 +48,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Page Notes : à la sélection d'une classe, la liste « Matière » affichait toutes les matières de tous les niveaux (doublons). Elle ne propose désormais que les matières réellement enseignées dans la classe choisie *(admin)*.
 - Après une mise à jour de la plateforme, un onglet resté ouvert pouvait afficher « Une erreur est survenue / Loading chunk failed » à la navigation ; la page se recharge désormais automatiquement pour récupérer la dernière version *(tous)*.
 - Onglet Documents de la fiche élève : les pièces jointes ajoutées sont désormais nettement séparées du formulaire d'envoi (section « Documents ajoutés »), avec un bouton Aperçu pour prévisualiser le PDF ou l'image en plus du téléchargement *(admin)*.
 - Onglet Notifications des Paramètres : les options sont plus compactes, la page est moins haute et ne provoque plus de défilement inutile *(admin)*.
