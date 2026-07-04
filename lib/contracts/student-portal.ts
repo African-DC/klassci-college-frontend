@@ -11,11 +11,22 @@ export const StudentNextCourseSchema = z.object({
   room: z.string().nullish(),
 })
 
+export const StudentLatestGradeSchema = z.object({
+  value: z.coerce.number(),
+  out_of: z.number(),
+  subject_name: z.string(),
+  evaluation_title: z.string(),
+  type: z.string(),
+  trimester: z.number(),
+  date: z.string(),
+})
+
 export const StudentDashboardSchema = z.object({
   student_name: z.string(),
   class_name: z.string(),
   next_course: StudentNextCourseSchema.nullable(),
   general_average: z.number().nullable(),
+  latest_grade: StudentLatestGradeSchema.nullish(),
   fees_remaining: z.number(),
   total_absences: z.number(),
   current_academic_year: z.string().nullish(),

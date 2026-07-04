@@ -5,7 +5,10 @@ import { toast } from "sonner"
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
   ClipboardList,
+  Download,
+  Eye,
   FileText,
   Info,
   Loader2,
@@ -16,21 +19,25 @@ import { PageHero, heroAccentBtn } from "@/components/shared/PageHero"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ExportMenu } from "@/components/export/ExportMenu"
-import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { apiFetchBlob } from "@/lib/api/client"
+import { openPdfPreview } from "@/lib/pdf/preview"
 import {
   fileSafeName,
   triggerBlobDownload,
 } from "@/components/admin/classes/detail/class-downloads"
 import { useEvaluations } from "@/lib/hooks/useGrades"
 import { useClasses } from "@/lib/hooks/useClasses"
-import { useSubjects } from "@/lib/hooks/useSubjects"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { usePermissions } from "@/lib/hooks/usePermissions"
-import { useSettings } from "@/lib/hooks/useSettings"
 import { EvaluationCreateModal } from "./EvaluationCreateModal"
-import { buildGradesExportPayload } from "./grades-export"
 import { GradesFilters } from "./GradesFilters"
 import { GradesTable } from "./GradesTable"
 import { TAB_LABELS, isDone, isOverdue, type FilterTab } from "./grades-helpers"
@@ -45,18 +52,8 @@ export function GradesSupervisor() {
   const [tab, setTab] = useState<FilterTab>("all")
   const [createOpen, setCreateOpen] = useState(false)
   const [downloadingReport, setDownloadingReport] = useState(false)
-
-  // Cascade : les matières sont filtrées par la classe (niveau + série). On
-  // n'affiche que les INSTANCES (level_id défini), pas l'entrée catalogue, pour
-  // ne montrer que les matières réellement enseignées dans cette classe.
-  const { data: subjectsData } = useSubjects(
-    classId ? { class_id: classId, size: 100 } : { size: 100 },
-  )
-  const subjects = useMemo(() => {
-    const raw = subjectsData?.items ?? []
-    const instances = raw.filter((s) => s.level_id !== null)
-    return instances.length > 0 ? instances : raw
-  }, [subjectsData])
+  const [downloadingSheet, setDownloadingSheet] = useState(false)
+  const [previewing, setPreviewing] = useState(false)
 
   const { data: yearsData } = useAcademicYears()
   const years = yearsData?.items ?? []
@@ -65,35 +62,59 @@ export function GradesSupervisor() {
 
   const { has } = usePermissions()
   const canCreate = has("grades:write")
-  const { data: settings } = useSettings()
 
   const { data: evaluations, isLoading, error } = useEvaluations(classId ?? 0)
 
   const noClass = classId === null
 
-  const filtered = useMemo(() => {
-    if (!evaluations) return []
-    return evaluations.filter((e) => {
-      if (subjectId && e.subject_id !== subjectId) return false
+  // Les matières du filtre sont dérivées des évaluations réellement présentes
+  // dans la classe (dédupliquées par nom). C'est robuste au mélange
+  // catalogue/instance : une évaluation peut référencer l'entrée générique
+  // (sans niveau) ou l'instance de niveau, deux subject_id pour le même nom.
+  const subjectOptions = useMemo(() => {
+    const byName = new Map<string, { id: number; name: string }>()
+    for (const e of evaluations ?? []) {
+      if (!byName.has(e.subject_name)) {
+        byName.set(e.subject_name, { id: e.subject_id, name: e.subject_name })
+      }
+    }
+    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, "fr"))
+  }, [evaluations])
+
+  const selectedSubjectName = useMemo(
+    () => subjectOptions.find((s) => s.id === subjectId)?.name ?? null,
+    [subjectOptions, subjectId],
+  )
+
+  // Périmètre = évaluations filtrées par matière + trimestre (hors onglet).
+  // Sert de base aux compteurs d'onglets ET aux KPIs, qui suivent donc les filtres.
+  const scoped = useMemo(() => {
+    return (evaluations ?? []).filter((e) => {
+      if (selectedSubjectName && e.subject_name !== selectedSubjectName) return false
       if (trimester && e.trimester !== trimester) return false
+      return true
+    })
+  }, [evaluations, selectedSubjectName, trimester])
+
+  const filtered = useMemo(() => {
+    return scoped.filter((e) => {
       if (tab === "todo" && isDone(e)) return false
       if (tab === "overdue" && !isOverdue(e)) return false
       if (tab === "done" && !isDone(e)) return false
       return true
     })
-  }, [evaluations, subjectId, trimester, tab])
+  }, [scoped, tab])
 
   const stats = useMemo(() => {
-    const list = evaluations ?? []
-    const total = list.length
-    const done = list.filter(isDone).length
-    const overdue = list.filter(isOverdue).length
+    const total = scoped.length
+    const done = scoped.filter(isDone).length
+    const overdue = scoped.filter(isOverdue).length
     const todo = total - done
-    const totalGraded = list.reduce((sum, e) => sum + e.graded_students, 0)
-    const totalExpected = list.reduce((sum, e) => sum + e.total_students, 0)
+    const totalGraded = scoped.reduce((sum, e) => sum + e.graded_students, 0)
+    const totalExpected = scoped.reduce((sum, e) => sum + e.total_students, 0)
     const completionRate = totalExpected > 0 ? Math.round((totalGraded / totalExpected) * 100) : 0
     return { total, done, overdue, todo, completionRate }
-  }, [evaluations])
+  }, [scoped])
 
   const dash = "—"
   const kpis = [
@@ -110,19 +131,34 @@ export function GradesSupervisor() {
   // Relevé de notes rempli : n'a de sens que par matière ET trimestre précis.
   const reportReady = classId != null && subjectId != null && trimester != null && ayId != null
   const reportClassName = classes.find((c) => c.id === classId)?.name
-  const reportSubjectName = subjects.find((s) => s.id === subjectId)?.name
-  const reportLabel = `le relevé de notes${
-    reportClassName ? ` de la classe ${reportClassName}` : ""
-  }${reportSubjectName ? ` en ${reportSubjectName}` : ""}${trimester ? ` (T${trimester})` : ""}`
+  const reportSubjectName = selectedSubjectName
   const reportFilename = `releve-notes-${fileSafeName(
     reportClassName ?? "classe",
   )}-${fileSafeName(reportSubjectName ?? "matiere")}-T${trimester}.pdf`
-  const reportHint = "Choisir une classe, une matière et un trimestre"
+  const sheetFilename = `feuille-notes-vierge-${fileSafeName(reportClassName ?? "classe")}.pdf`
 
   const fetchGradeReport = () =>
     apiFetchBlob(
       `/reports/classes/${classId}/grade-report?subject_id=${subjectId}&trimester=${trimester}&academic_year_id=${ayId}`,
     )
+
+  const fetchGradeSheet = () => {
+    const params = new URLSearchParams()
+    if (subjectId) params.set("subject_id", String(subjectId))
+    if (trimester) params.set("trimester", String(trimester))
+    const qs = params.toString()
+    return apiFetchBlob(`/admin/classes/${classId}/grade-sheet${qs ? `?${qs}` : ""}`)
+  }
+
+  async function handlePreview() {
+    if (!reportReady) return
+    setPreviewing(true)
+    try {
+      await openPdfPreview(fetchGradeReport)
+    } finally {
+      setPreviewing(false)
+    }
+  }
 
   async function handleGradeReport() {
     if (!reportReady) return
@@ -138,14 +174,21 @@ export function GradesSupervisor() {
     }
   }
 
-  const exportFilters = (() => {
-    const parts: string[] = []
-    if (reportClassName) parts.push(`Classe ${reportClassName}`)
-    if (reportSubjectName) parts.push(reportSubjectName)
-    if (trimester) parts.push(`T${trimester}`)
-    if (tab !== "all") parts.push(TAB_LABELS[tab])
-    return parts.length > 0 ? parts.join(" · ") : undefined
-  })()
+  async function handleGradeSheet() {
+    if (noClass) return
+    setDownloadingSheet(true)
+    try {
+      triggerBlobDownload(await fetchGradeSheet(), sheetFilename)
+    } catch (err) {
+      toast.error("Téléchargement impossible", {
+        description: err instanceof Error ? err.message : "Erreur lors de la génération du PDF",
+      })
+    } finally {
+      setDownloadingSheet(false)
+    }
+  }
+
+  const anyDocBusy = downloadingReport || downloadingSheet || previewing
 
   const tabsOrder: { key: FilterTab; count: number }[] = [
     { key: "all", count: stats.total },
@@ -185,7 +228,7 @@ export function GradesSupervisor() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <GradesFilters
               classes={classes}
-              subjects={subjects}
+              subjects={subjectOptions}
               classId={classId}
               subjectId={subjectId}
               trimester={trimester}
@@ -196,43 +239,56 @@ export function GradesSupervisor() {
               onSubjectChange={setSubjectId}
               onTrimesterChange={setTrimester}
             />
-            <div
-              className="flex flex-wrap items-center gap-2"
-              title={reportReady ? undefined : reportHint}
-            >
-              <PdfPreviewButton
-                fetchBlob={fetchGradeReport}
-                label={reportLabel}
-                disabled={!reportReady}
-                className="h-11 sm:h-10"
-              />
-              <Button
-                variant="outline"
-                onClick={handleGradeReport}
-                disabled={!reportReady || downloadingReport}
-                aria-label="Télécharger le relevé de notes"
-                title={reportReady ? undefined : reportHint}
-                className="h-11 sm:h-10"
-              >
-                {downloadingReport ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                ) : (
-                  <FileText className="mr-2 h-4 w-4" aria-hidden="true" />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={noClass}
+                  className="h-11 sm:h-10"
+                  aria-label="Relevé de notes"
+                >
+                  {anyDocBusy ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <FileText className="mr-2 h-4 w-4" aria-hidden="true" />
+                  )}
+                  Relevé de notes
+                  <ChevronDown className="ml-2 h-4 w-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuLabel>Relevé rempli</DropdownMenuLabel>
+                <DropdownMenuItem disabled={!reportReady || previewing} onClick={handlePreview}>
+                  <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Aperçu du relevé
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!reportReady || downloadingReport}
+                  onClick={handleGradeReport}
+                >
+                  <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Télécharger le relevé (PDF)
+                </DropdownMenuItem>
+                {!reportReady && (
+                  <p className="px-2 py-1.5 text-[11px] leading-snug text-muted-foreground">
+                    Choisissez une classe, une matière et un trimestre pour le relevé rempli.
+                  </p>
                 )}
-                Relevé (PDF)
-              </Button>
-              <ExportMenu
-                filename="notes"
-                disabled={noClass || filtered.length === 0}
-                getPayload={() =>
-                  buildGradesExportPayload({
-                    evaluations: filtered,
-                    settings,
-                    filters: exportFilters,
-                  })
-                }
-              />
-            </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Feuille vierge</DropdownMenuLabel>
+                <DropdownMenuItem
+                  disabled={noClass || downloadingSheet}
+                  onClick={handleGradeSheet}
+                >
+                  <FileText className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Feuille de notes vierge (PDF)
+                </DropdownMenuItem>
+                <p className="px-2 py-1.5 text-[11px] leading-snug text-muted-foreground">
+                  Liste des élèves à remplir à la main. Matière et trimestre pré-remplis si choisis.
+                </p>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {noClass && (
