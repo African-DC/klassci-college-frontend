@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Session : on n'est plus déconnecté pendant qu'on utilise l'application. Un renouvellement de session simultané pouvait éjecter un utilisateur pourtant actif ; seule une vraie inactivité prolongée déconnecte désormais *(tous)*.
 - Mode dictée : la saisie vocale des notes fonctionne à nouveau. Le micro était bloqué par une politique de sécurité du site trop stricte, même quand l'enseignant l'avait autorisé dans le navigateur *(enseignant, admin)*.
 - Déconnexion : le bouton « Se déconnecter » renvoie désormais vers la page de connexion du site (college.klassci.com) au lieu d'une adresse locale invalide *(tous)*.
 - Mode dictée : le micro est demandé directement par le navigateur au clic (plus fiable). Quand la reconnaissance vocale est bloquée par le navigateur (fréquent sur Microsoft Edge), le message invite à utiliser Google Chrome ou à saisir au clavier au lieu d'afficher « micro refusé » à tort. Après avoir autorisé le micro dans les réglages, un bouton « Recharger la page » applique le changement. Sur une adresse non sécurisée (http), un message explique que la dictée vocale exige le site sécurisé https *(enseignant, admin)*.
