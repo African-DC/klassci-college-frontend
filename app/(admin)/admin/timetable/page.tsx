@@ -1,8 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react"
-import { Calendar, CalendarRange, FileDown, Wand2, Loader2 } from "lucide-react"
+import { CalendarRange, FileDown, Wand2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+import { PageHero, heroAccentBtn } from "@/components/shared/PageHero"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -150,131 +153,129 @@ export default function TimetablePage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Calendar aria-hidden="true" className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Emploi du temps</h1>
-            <p className="text-sm text-muted-foreground">Gérez les créneaux horaires par classe</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <PdfPreviewButton
-            fetchBlob={() => timetableApi.exportPdf(selectedClassId as number)}
-            label="l'emploi du temps"
-            disabled={!selectedClassId}
-            className="h-11 sm:h-10"
-          />
-          <Button
-            variant="outline"
-            onClick={handleExportPdf}
-            disabled={!selectedClassId || exportingPdf}
-            aria-label="Télécharger l'emploi du temps en PDF"
-            className="h-11 sm:h-10"
-          >
-            {exportingPdf ? (
-              <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <FileDown aria-hidden="true" className="mr-2 h-4 w-4" />
-            )}
-            Exporter PDF
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleGenerateClick}
-            disabled={!selectedClassId || isGenerating}
-            className="h-11 sm:h-10"
-          >
-            {isGenerating ? (
-              <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Wand2 aria-hidden="true" className="mr-2 h-4 w-4" />
-            )}
-            Générer automatiquement
-          </Button>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-            Classe :
-          </label>
-          <Select
-            value={selectedClassId?.toString() ?? ""}
-            onValueChange={(v) => setSelectedClassId(v ? Number(v) : null)}
-          >
-            <SelectTrigger
-              aria-label="Sélectionner une classe"
-              className="h-11 w-full sm:h-10 sm:w-56"
-            >
-              <SelectValue placeholder="Sélectionner une classe" />
-            </SelectTrigger>
-            <SelectContent>
-              {classes.map((c) => (
-                <SelectItem key={c.id} value={c.id.toString()}>
-                  {c.name} {c.level_name ? `(${c.level_name})` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div
-          className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground"
-          title="L'emploi du temps est un modèle hebdomadaire valable toute l'année scolaire."
-        >
-          <CalendarRange aria-hidden="true" className="h-4 w-4 text-primary" />
-          <span>
+    <div className="space-y-5">
+      <PageHero
+        icon={CalendarRange}
+        title="Emploi du temps"
+        subtitle={
+          <>
             Semaine type
             {currentYearName ? (
               <>
                 {" · "}
-                <span className="font-medium text-foreground">Année {currentYearName}</span>
+                <span className="font-medium text-white">Année {currentYearName}</span>
               </>
             ) : null}
-          </span>
-        </div>
-      </div>
+            {" · modèle hebdomadaire valable toute l'année"}
+          </>
+        }
+        actions={
+          <button
+            type="button"
+            onClick={handleGenerateClick}
+            disabled={!selectedClassId || isGenerating}
+            className={cn(
+              heroAccentBtn,
+              (!selectedClassId || isGenerating) && "pointer-events-none opacity-60",
+            )}
+          >
+            {isGenerating ? (
+              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+            ) : (
+              <Wand2 aria-hidden="true" className="h-4 w-4" />
+            )}
+            Générer automatiquement
+          </button>
+        }
+      />
 
-      {/* Class tabs */}
-      {classes.length > 0 && (
-        <div className="flex gap-1 overflow-x-auto pb-1">
-          {classes.slice(0, 15).map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                selectedClassId === c.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted hover:bg-muted/80 text-muted-foreground"
-              }`}
-              onClick={() => setSelectedClassId(c.id)}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Contrôles : sélection de classe + actions PDF */}
+      <Card className="border-0 shadow-sm ring-1 ring-border">
+        <CardContent className="space-y-3 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <label className="whitespace-nowrap text-sm font-medium text-muted-foreground">
+                Classe :
+              </label>
+              <Select
+                value={selectedClassId?.toString() ?? ""}
+                onValueChange={(v) => setSelectedClassId(v ? Number(v) : null)}
+              >
+                <SelectTrigger
+                  aria-label="Sélectionner une classe"
+                  className="h-11 w-full sm:h-10 sm:w-56"
+                >
+                  <SelectValue placeholder="Sélectionner une classe" />
+                </SelectTrigger>
+                <SelectContent>
+                  {classes.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
+                      {c.name} {c.level_name ? `(${c.level_name})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <PdfPreviewButton
+                fetchBlob={() => timetableApi.exportPdf(selectedClassId as number)}
+                label="l'emploi du temps"
+                disabled={!selectedClassId}
+                className="h-11 sm:h-10"
+              />
+              <Button
+                variant="outline"
+                onClick={handleExportPdf}
+                disabled={!selectedClassId || exportingPdf}
+                aria-label="Télécharger l'emploi du temps en PDF"
+                className="h-11 sm:h-10"
+              >
+                {exportingPdf ? (
+                  <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <FileDown aria-hidden="true" className="mr-2 h-4 w-4" />
+                )}
+                Exporter PDF
+              </Button>
+            </div>
+          </div>
+
+          {/* Sélection rapide de classe (chips) */}
+          {classes.length > 0 && (
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {classes.slice(0, 15).map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={cn(
+                    "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                    selectedClassId === c.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80",
+                  )}
+                  onClick={() => setSelectedClassId(c.id)}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Grid + Sidebar */}
       {selectedClassId ? (
-        <div className="flex gap-4 items-start">
-          <div className="flex-1 min-w-0">
+        <div className="flex items-start gap-4">
+          <div className="min-w-0 flex-1">
             <TimetableGrid classId={selectedClassId} />
           </div>
           <TimetableHoursSidebar classId={selectedClassId} />
         </div>
       ) : (
-        <div className="flex h-64 items-center justify-center rounded-lg border border-dashed bg-muted/20">
-          <p className="text-sm text-muted-foreground">
-            Sélectionnez une classe pour afficher l'emploi du temps
-          </p>
+        <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-xl border border-dashed bg-muted/20 text-muted-foreground">
+          <CalendarRange className="h-8 w-8 opacity-40" aria-hidden="true" />
+          <p className="text-sm">Sélectionnez une classe pour afficher l&apos;emploi du temps</p>
         </div>
       )}
 
