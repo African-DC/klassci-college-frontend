@@ -17,12 +17,19 @@ interface CouncilValidateButtonProps {
   minutesId: number | undefined
   classId: number
   trimester: string
+  academicYearId: number
   disabled?: boolean
 }
 
-export function CouncilValidateButton({ minutesId, classId, trimester, disabled }: CouncilValidateButtonProps) {
+export function CouncilValidateButton({
+  minutesId,
+  classId,
+  trimester,
+  academicYearId,
+  disabled,
+}: CouncilValidateButtonProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const { mutate, isPending } = useValidateCouncil(classId, trimester)
+  const { mutate, isPending } = useValidateCouncil(classId, trimester, academicYearId)
 
   function handleValidate() {
     if (!minutesId) return

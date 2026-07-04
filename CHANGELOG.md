@@ -8,6 +8,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Conseil de classe : le procès-verbal se charge à nouveau pour une classe et un trimestre ; s'il n'existe pas encore, un bouton « Générer le procès-verbal » le crée à partir des bulletins. Les décisions s'enregistrent, le procès-verbal se valide et se télécharge en PDF *(admin)*.
+- Statistiques DREN : les boutons Excel et PDF téléchargent désormais un vrai fichier (classeur Excel ou document PDF) au lieu d'ouvrir des données brutes *(admin)*.
+
 ### Added
 
 - Tableau de bord dédié au personnel (secrétariat) : indicateurs orientés inscriptions à valider, prospects à inscrire, paiements en attente et élèves inscrits, avec des actions rapides adaptées (inscription, encaissement, présences, classes, congés) *(personnel)*.
