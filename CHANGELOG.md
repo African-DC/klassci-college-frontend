@@ -45,6 +45,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
+- Onglet Documents de la fiche élève : les pièces jointes ajoutées sont désormais nettement séparées du formulaire d'envoi (section « Documents ajoutés »), avec un bouton Aperçu pour prévisualiser le PDF ou l'image en plus du téléchargement *(admin)*.
+- Onglet Notifications des Paramètres : les options sont plus compactes, la page est moins haute et ne provoque plus de défilement inutile *(admin)*.
 - Fiche parent : les enfants liés ne s'affichaient plus (lignes vides, « on ne voit rien ») ; ils réapparaissent avec leur nom, leur classe et leur situation *(admin)*.
 - La session ne se ferme plus pendant l'utilisation : tant que vous êtes actif, elle reste ouverte et se prolonge automatiquement. Elle n'expire désormais qu'après une période d'inactivité (mode veille), pas après un délai fixe *(tous)*.
 - Mode dictée des notes : le bouton « Mode dictée » de la saisie déléguée admin renvoyait vers le tableau de bord au lieu d'ouvrir la dictée. Il ouvre désormais la saisie vocale et revient à la bonne page en sortie *(admin, enseignant)*.

@@ -6,6 +6,7 @@ import {
   FileText,
   Image as ImageIcon,
   Download,
+  Eye,
   Trash2,
   Loader2,
   Upload,
@@ -111,60 +112,74 @@ export function StudentAttachmentsSection({ studentId }: { studentId: number }) 
         </Button>
       </div>
 
-      {/* Liste */}
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Chargement…</p>
-      ) : !docs || docs.length === 0 ? (
-        <EmptyState
-          icon={<FilePlus className="h-5 w-5" />}
-          title="Aucune pièce jointe"
-          message="Ajoutez l'extrait de naissance, un certificat médical ou tout autre document via le formulaire ci-dessus."
-        />
-      ) : (
-        <div className="space-y-2">
-          {docs.map((d) => {
-            const isPdf = d.mime_type === "application/pdf"
-            const Icon = isPdf ? FileText : ImageIcon
-            const url = getUploadUrl(d.file_url) ?? d.file_url
-            return (
-              <div
-                key={d.id}
-                className="flex items-center gap-3 rounded-lg border border-border/60 bg-card p-3"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Icon className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{d.document_type}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {d.file_name ? `${d.file_name} · ` : ""}
-                    {new Date(d.created_at).toLocaleDateString("fr-FR")}
-                  </p>
+      {/* Documents ajoutés — séparés du formulaire d'ajout */}
+      <div className="space-y-2 border-t pt-4">
+        <p className="text-sm font-semibold">
+          Documents ajoutés{docs && docs.length > 0 ? ` (${docs.length})` : ""}
+        </p>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Chargement…</p>
+        ) : !docs || docs.length === 0 ? (
+          <EmptyState
+            icon={<FilePlus className="h-5 w-5" />}
+            title="Aucune pièce jointe"
+            message="Ajoutez l'extrait de naissance, un certificat médical ou tout autre document via le formulaire ci-dessus."
+          />
+        ) : (
+          <div className="space-y-2">
+            {docs.map((d) => {
+              const isPdf = d.mime_type === "application/pdf"
+              const Icon = isPdf ? FileText : ImageIcon
+              const url = getUploadUrl(d.file_url) ?? d.file_url
+              return (
+                <div
+                  key={d.id}
+                  className="flex items-center gap-3 rounded-lg border border-border/60 bg-card p-3"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{d.document_type}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {d.file_name ? `${d.file_name} · ` : ""}
+                      {new Date(d.created_at).toLocaleDateString("fr-FR")}
+                    </p>
+                  </div>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-primary hover:bg-primary/10"
+                    aria-label={`Aperçu de ${d.document_type}`}
+                    title="Aperçu"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </a>
+                  <a
+                    href={url}
+                    download={d.file_name ?? undefined}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                    aria-label={`Télécharger ${d.document_type}`}
+                    title="Télécharger"
+                  >
+                    <Download className="h-4 w-4" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(d.id)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-destructive hover:bg-destructive/10"
+                    aria-label={`Supprimer ${d.document_type}`}
+                    title="Supprimer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md text-primary hover:bg-primary/10"
-                  aria-label={`Ouvrir ${d.document_type}`}
-                  title="Ouvrir"
-                >
-                  <Download className="h-4 w-4" />
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setDeleteTarget(d.id)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md text-destructive hover:bg-destructive/10"
-                  aria-label={`Supprimer ${d.document_type}`}
-                  title="Supprimer"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            )
-          })}
-        </div>
-      )}
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       <AlertDialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
