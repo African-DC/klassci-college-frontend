@@ -28,6 +28,11 @@ const SAVE_DEBOUNCE_MS = 1500
 /** Délai après lequel un cellStatus « saved » repasse en « idle » (visuel). */
 const SAVED_INDICATOR_MS = 2500
 
+type GradeSnapshotEntry = {
+  student_id: number
+  value: number | null
+}
+
 export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntryGridProps) {
   const { data: grades, isLoading, error } = useGrades(evaluationId)
   const { data: evals } = useEvaluations(classId ?? 0)
@@ -41,69 +46,103 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
   const [cellStatus, setCellStatus] = useState<Map<number, CellStatus>>(new Map())
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const dirtyStudentsRef = useRef<Set<number>>(new Set())
+  const localGradesRef = useRef<Map<number, number | null>>(new Map())
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveInFlightRef = useRef(false)
 
   // ─── Sync depuis serveur ───────────────────────────────────────────────
   useEffect(() => {
     if (grades) {
-      const map = new Map<number, number | null>()
-      grades.forEach((g) => map.set(g.student_id, g.value !== null ? Number(g.value) : null))
-      setLocalGrades(map)
+      setLocalGrades((prev) => {
+        const map = new Map(prev)
+        grades.forEach((g) => {
+          if (!dirtyStudentsRef.current.has(g.student_id)) {
+            map.set(g.student_id, g.value !== null ? Number(g.value) : null)
+          }
+        })
+        localGradesRef.current = map
+        return map
+      })
     }
   }, [grades])
 
   // ─── Save logic ────────────────────────────────────────────────────────
-  const flushSave = useCallback(() => {
+  const flushSave = useCallback(async () => {
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current)
       saveTimerRef.current = null
     }
     if (dirtyStudentsRef.current.size === 0 || !grades) return
+    if (saveInFlightRef.current) return
 
-    const dirtySet = dirtyStudentsRef.current
-    const payload = Array.from(dirtySet).map((studentId) => ({
+    const payload: GradeSnapshotEntry[] = Array.from(dirtyStudentsRef.current).map((studentId) => ({
       student_id: studentId,
-      value: localGrades.get(studentId) ?? null,
+      value: localGradesRef.current.get(studentId) ?? null,
     }))
+    const snapshotByStudent = new Map(payload.map((entry) => [entry.student_id, entry.value]))
 
     setCellStatus((prev) => {
       const next = new Map(prev)
-      dirtySet.forEach((id) => next.set(id, "pending"))
+      payload.forEach((entry) => next.set(entry.student_id, "pending"))
       return next
     })
 
-    updateMutation.mutate(
-      { grades: payload },
-      {
-        onSuccess: () => {
-          setLastSaved(new Date())
-          dirtyStudentsRef.current.clear()
-          setCellStatus((prev) => {
-            const next = new Map(prev)
-            dirtySet.forEach((id) => next.set(id, "saved"))
-            return next
+    saveInFlightRef.current = true
+
+    try {
+      await updateMutation.mutateAsync({ grades: payload })
+      const confirmedStudentIds: number[] = []
+
+      snapshotByStudent.forEach((sentValue, studentId) => {
+        const currentValue = localGradesRef.current.get(studentId) ?? null
+        if (Object.is(currentValue, sentValue)) {
+          dirtyStudentsRef.current.delete(studentId)
+          confirmedStudentIds.push(studentId)
+        }
+      })
+
+      if (confirmedStudentIds.length > 0) {
+        setLastSaved(new Date())
+      }
+
+      setCellStatus((prev) => {
+        const next = new Map(prev)
+        snapshotByStudent.forEach((sentValue, studentId) => {
+          const currentValue = localGradesRef.current.get(studentId) ?? null
+          next.set(studentId, Object.is(currentValue, sentValue) ? "saved" : "dirty")
+        })
+        return next
+      })
+
+      setTimeout(() => {
+        setCellStatus((prev) => {
+          const next = new Map(prev)
+          confirmedStudentIds.forEach((id) => {
+            if (next.get(id) === "saved") next.set(id, "idle")
           })
-          setTimeout(() => {
-            setCellStatus((prev) => {
-              const next = new Map(prev)
-              dirtySet.forEach((id) => {
-                if (next.get(id) === "saved") next.set(id, "idle")
-              })
-              return next
-            })
-          }, SAVED_INDICATOR_MS)
-        },
-        onError: () => {
-          setCellStatus((prev) => {
-            const next = new Map(prev)
-            dirtySet.forEach((id) => next.set(id, "error"))
-            return next
-          })
-          toast.error("Échec de la sauvegarde — réessaie")
-        },
-      },
-    )
-  }, [grades, localGrades, updateMutation])
+          return next
+        })
+      }, SAVED_INDICATOR_MS)
+    } catch {
+      setCellStatus((prev) => {
+        const next = new Map(prev)
+        payload.forEach((entry) => {
+          const currentValue = localGradesRef.current.get(entry.student_id) ?? null
+          next.set(entry.student_id, Object.is(currentValue, entry.value) ? "error" : "dirty")
+        })
+        return next
+      })
+      toast.error("Échec de la sauvegarde, réessaie")
+    } finally {
+      saveInFlightRef.current = false
+      if (dirtyStudentsRef.current.size > 0) {
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = setTimeout(() => {
+          void flushSave()
+        }, SAVE_DEBOUNCE_MS)
+      }
+    }
+  }, [grades, updateMutation])
 
   const scheduleSave = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
@@ -131,7 +170,9 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
   const handleGradeChange = useCallback(
     (studentId: number, rawValue: string) => {
       const result = parseGradeInput(rawValue)
-      setLocalGrades((prev) => new Map(prev).set(studentId, result.value))
+      const nextGrades = new Map(localGradesRef.current).set(studentId, result.value)
+      localGradesRef.current = nextGrades
+      setLocalGrades(nextGrades)
       dirtyStudentsRef.current.add(studentId)
       setCellStatus((prev) => new Map(prev).set(studentId, "dirty"))
       scheduleSave()

@@ -99,7 +99,9 @@ export function useUpdateGrades(evaluationId: number) {
       if (prev) {
         const updated = prev.map((g) => {
           const match = batch.grades.find((bg) => bg.student_id === g.student_id)
-          return match ? { ...g, value: match.value } : g
+          return match
+            ? { ...g, value: match.value, status: match.value !== null ? "entered" : "pending" }
+            : g
         })
         queryClient.setQueryData(gradeKeys.grades(evaluationId), updated)
       }
@@ -110,6 +112,9 @@ export function useUpdateGrades(evaluationId: number) {
         queryClient.setQueryData(gradeKeys.grades(evaluationId), context.prev)
       }
       toast.error("Erreur de sauvegarde", { description: _err.message })
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(gradeKeys.grades(evaluationId), data)
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: gradeKeys.grades(evaluationId) })

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   AlertCircle,
   AlertTriangle,
@@ -12,6 +12,10 @@ import { cn } from "@/lib/utils"
 import { categorizeGrade } from "@/lib/utils/grade-parser"
 
 export type CellStatus = "idle" | "dirty" | "pending" | "saved" | "error"
+
+function formatGradeInput(value: number | null): string {
+  return value !== null ? String(value).replace(".", ",") : ""
+}
 
 interface GradeRowProps {
   index: number
@@ -43,9 +47,13 @@ export function GradeRow({
 }: GradeRowProps) {
   // rawInput = source de vérité de ce que l'utilisateur tape (états transitoires
   // « 12, »). Init UNE fois depuis le serveur, puis l'user contrôle.
-  const [rawInput, setRawInput] = useState<string>(
-    initialValue !== null ? String(initialValue).replace(".", ",") : "",
-  )
+  const [rawInput, setRawInput] = useState<string>(formatGradeInput(initialValue))
+
+  useEffect(() => {
+    if (status === "idle") {
+      setRawInput(formatGradeInput(initialValue))
+    }
+  }, [initialValue, status])
 
   const category = categorizeGrade(value, originalStatus)
   const colorTone = useMemo(() => {
