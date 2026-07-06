@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Plus, Pencil, Trash2 } from "lucide-react"
+import { CalendarDays, Clock, MapPin, Pencil, Plus, Trash2, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TimetableSlotForm } from "@/components/forms/TimetableSlotForm"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
@@ -65,6 +66,19 @@ function minutesToPx(minutes: number): number {
   return ((minutes - START_HOUR * 60) / 60) * PX_PER_HOUR
 }
 
+function sortSlotsByTime(slots: TimetableSlot[]): TimetableSlot[] {
+  return [...slots].sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time))
+}
+
+function formatDuration(start: string, end: string): string {
+  const minutes = timeToMinutes(end) - timeToMinutes(start)
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  if (hours > 0 && rest > 0) return `${hours}h${String(rest).padStart(2, "0")}`
+  if (hours > 0) return `${hours}h`
+  return `${rest} min`
+}
+
 interface TimetableGridProps {
   classId: number
 }
@@ -77,7 +91,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
   const [selectedSlot, setSelectedSlot] = useState<TimetableSlot | null>(null)
   const [editSlot, setEditSlot] = useState<TimetableSlot | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
-  const [dragOverCell, setDragOverCell] = useState<string | null>(null)
+  const [, setDragOverCell] = useState<string | null>(null)
 
   // Group slots by day
   const slotsByDay = useMemo(() => {
@@ -118,19 +132,35 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border bg-card overflow-x-auto">
-        <div className="min-w-[900px]">
-          <div className="flex border-b bg-muted/30">
-            <div className="w-[55px] p-2" />
-            {DAYS.map((d) => (
-              <div key={d} className="flex-1 p-2 text-center">
-                <Skeleton className="h-4 w-16 mx-auto" />
-              </div>
+      <>
+        <div className="space-y-3 lg:hidden">
+          <div className="flex gap-2 overflow-hidden">
+            {DAYS.slice(0, 4).map((d) => (
+              <Skeleton key={d} className="h-11 w-24 shrink-0 rounded-lg" />
             ))}
           </div>
-          <Skeleton className="h-[400px] m-4 rounded-lg" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-lg border bg-card p-4">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="mt-3 h-5 w-44" />
+              <Skeleton className="mt-2 h-4 w-32" />
+            </div>
+          ))}
         </div>
-      </div>
+        <div className="hidden rounded-lg border bg-card overflow-x-auto lg:block">
+          <div className="min-w-[900px]">
+            <div className="flex border-b bg-muted/30">
+              <div className="w-[55px] p-2" />
+              {DAYS.map((d) => (
+                <div key={d} className="flex-1 p-2 text-center">
+                  <Skeleton className="h-4 w-16 mx-auto" />
+                </div>
+              ))}
+            </div>
+            <Skeleton className="h-[400px] m-4 rounded-lg" />
+          </div>
+        </div>
+      </>
     )
   }
 
@@ -140,9 +170,96 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
     hourLines.push({ hour: h, label: `${String(h).padStart(2, "0")}:00` })
   }
 
+  const totalSlots = slots?.length ?? 0
+
+  function renderMobileSlot(slot: TimetableSlot) {
+    return (
+      <button
+        key={slot.id}
+        type="button"
+        onClick={() => setSelectedSlot(slot)}
+        className={cn(
+          "w-full rounded-lg border p-4 text-left shadow-sm transition-colors active:scale-[0.99]",
+          getSlotColor(slot.subject_color),
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">{slot.subject_name}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs opacity-80">
+              <span className="inline-flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                {slot.start_time} - {slot.end_time}
+              </span>
+              <span>{formatDuration(slot.start_time, slot.end_time)}</span>
+            </div>
+          </div>
+          <Pencil className="h-4 w-4 shrink-0 opacity-60" aria-hidden="true" />
+        </div>
+        <div className="mt-3 grid gap-1.5 text-xs opacity-75">
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">{slot.teacher_name}</span>
+          </span>
+          {slot.room && (
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">{slot.room}</span>
+            </span>
+          )}
+        </div>
+      </button>
+    )
+  }
+
+  function renderMobileDay(day: string) {
+    const daySlots = sortSlotsByTime(slotsByDay.get(day) ?? [])
+    if (daySlots.length === 0) {
+      return (
+        <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+          Aucun cours planifié pour {DAY_LABELS[day].toLowerCase()}.
+        </div>
+      )
+    }
+    return <div className="space-y-3">{daySlots.map(renderMobileSlot)}</div>
+  }
+
   return (
     <>
-      <div className="rounded-lg border bg-card overflow-x-auto">
+      <div className="space-y-3 lg:hidden">
+        <div className="rounded-lg border bg-card p-4">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <CalendarDays className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Vue mobile de consultation</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {totalSlots} créneau{totalSlots > 1 ? "x" : ""} cette semaine. La grille complète reste disponible sur ordinateur.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <Tabs defaultValue="lundi" className="space-y-3">
+          <div className="-mx-1 overflow-x-auto px-1 pb-1">
+            <TabsList className="h-11 w-max">
+              {DAYS.map((day) => (
+                <TabsTrigger key={day} value={day} className="h-9 min-w-20">
+                  {DAY_LABELS[day].slice(0, 3)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+          {DAYS.map((day) => (
+            <TabsContent key={day} value={day} className="mt-0">
+              {renderMobileDay(day)}
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+
+      <div className="hidden rounded-lg border bg-card overflow-x-auto lg:block">
         <div className="min-w-[900px]">
           {/* Header */}
           <div className="flex border-b bg-muted/30">

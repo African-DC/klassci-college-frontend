@@ -13,9 +13,10 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { KpiStrip } from "@/components/shared/list/KpiStrip"
 import { useTenantsList } from "@/lib/hooks/super-admin/useTenants"
 import { isSystemTenant, tenantUrl } from "@/lib/super-admin/tenant-display"
-import { ExternalLink } from "lucide-react"
+import { Building2, Database, ExternalLink, Server } from "lucide-react"
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -31,6 +32,8 @@ function formatBytes(bytes: number): string {
 
 export function TenantsTable() {
   const { data, isLoading, isError, error, refetch } = useTenantsList()
+  const tenants = data?.items ?? []
+  const totalDbSize = tenants.reduce((sum, tenant) => sum + tenant.db_size_bytes, 0)
 
   if (isError) {
     return (
@@ -45,8 +48,87 @@ export function TenantsTable() {
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
+    <div className="space-y-4">
+      {!isLoading && (
+        <KpiStrip
+          items={[
+            {
+              label: "Établissements",
+              value: data?.total ?? tenants.length,
+              icon: Building2,
+              tone: "primary",
+            },
+            {
+              label: "Tenants système",
+              value: tenants.filter((tenant) => isSystemTenant(tenant.slug)).length,
+              icon: Server,
+            },
+            {
+              label: "Stockage DB",
+              value: formatBytes(totalDbSize),
+              icon: Database,
+              tone: "accent",
+            },
+          ]}
+          columns={3}
+        />
+      )}
+
+      <div className="space-y-3 md:hidden">
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-lg border bg-card p-4">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="mt-3 h-4 w-full" />
+              <Skeleton className="mt-2 h-4 w-24" />
+            </div>
+          ))
+        ) : tenants.length === 0 ? (
+          <div className="rounded-lg border border-dashed bg-card p-6 text-center text-sm text-muted-foreground">
+            Aucun établissement pour le moment.
+            <Link href={"/super-admin/tenants/new" as Route} className="ml-1 text-primary hover:underline">
+              Créer le premier
+            </Link>
+          </div>
+        ) : (
+          tenants.map((tenant) => (
+            <div key={tenant.slug} className="rounded-lg border bg-card p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/super-admin/tenants/${tenant.slug}` as Route}
+                      className="truncate font-semibold text-primary hover:underline"
+                    >
+                      {tenant.slug}
+                    </Link>
+                    {isSystemTenant(tenant.slug) && (
+                      <Badge variant="secondary" className="text-[10px] uppercase">
+                        système
+                      </Badge>
+                    )}
+                  </div>
+                  <a
+                    href={tenantUrl(tenant.slug)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex max-w-full items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+                  >
+                    <span className="truncate">{tenantUrl(tenant.slug)}</span>
+                    <ExternalLink aria-hidden="true" className="h-3 w-3 shrink-0" />
+                  </a>
+                </div>
+                <span className="shrink-0 text-xs font-semibold tabular-nums">
+                  {formatBytes(tenant.db_size_bytes)}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="hidden rounded-lg border bg-card md:block">
+        <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Slug</TableHead>
@@ -71,7 +153,7 @@ export function TenantsTable() {
                   <TableCell />
                 </TableRow>
               ))
-            : (data?.items ?? []).length === 0
+            : tenants.length === 0
               ? (
                   <TableRow>
                     <TableCell colSpan={4} className="py-12 text-center text-sm text-muted-foreground">
@@ -82,7 +164,7 @@ export function TenantsTable() {
                     </TableCell>
                   </TableRow>
                 )
-              : data!.items.map((tenant) => (
+              : tenants.map((tenant) => (
                   <TableRow key={tenant.slug} className="hover:bg-muted/50">
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -118,7 +200,8 @@ export function TenantsTable() {
                   </TableRow>
                 ))}
         </TableBody>
-      </Table>
+        </Table>
+      </div>
     </div>
   )
 }

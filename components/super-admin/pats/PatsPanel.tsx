@@ -4,12 +4,12 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +20,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Trash2, Copy, Check } from "lucide-react"
+import { Check, Copy, KeyRound, Trash2 } from "lucide-react"
+import { PageHero } from "@/components/shared/PageHero"
 import { useCreatePat, usePatsList, useRevokePat } from "@/lib/hooks/super-admin/usePats"
 
 const formSchema = z.object({
@@ -45,10 +46,7 @@ export function PatsPanel() {
   })
 
   function onSubmit(values: FormData) {
-    const scopes = values.scopes
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
+    const scopes = values.scopes.split(",").map((s) => s.trim()).filter(Boolean)
     create.mutate(
       { name: values.name, scopes, expires_in_days: values.expires_in_days },
       {
@@ -61,14 +59,16 @@ export function PatsPanel() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Personal Access Tokens</h1>
-        <p className="text-sm text-muted-foreground">
-          Pour le CLI <code className="rounded bg-muted px-1 text-xs">klassci</code> et les agents IA.
-          Le token clair n'est affiché qu'une seule fois — copie-le immédiatement.
-        </p>
-      </div>
+    <div className="space-y-5">
+      <PageHero
+        icon={KeyRound}
+        title="Tokens d'accès"
+        subtitle={
+          <>
+            Pour le CLI <code className="rounded bg-white/15 px-1 text-xs">klassci</code> et les agents IA. Le token clair n'est affiché qu'une seule fois.
+          </>
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -81,15 +81,11 @@ export function PatsPanel() {
               <Input id="name" placeholder="dev-laptop" {...form.register("name")} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="scopes">Scopes (séparés par virgule)</Label>
-              <Input
-                id="scopes"
-                placeholder="super-admin:tenants:read"
-                {...form.register("scopes")}
-              />
+              <Label htmlFor="scopes">Scopes séparés par virgule</Label>
+              <Input id="scopes" placeholder="super-admin:tenants:read" {...form.register("scopes")} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="expires_in_days">Expire dans (jours)</Label>
+              <Label htmlFor="expires_in_days">Expire dans</Label>
               <Input
                 id="expires_in_days"
                 type="number"
@@ -99,16 +95,16 @@ export function PatsPanel() {
               />
             </div>
             <div className="md:col-span-3">
-              <Button type="submit" disabled={create.isPending}>
-                {create.isPending ? "Création…" : "Créer le token"}
+              <Button type="submit" disabled={create.isPending} className="h-11 sm:h-10">
+                {create.isPending ? "Création..." : "Créer le token"}
               </Button>
             </div>
           </form>
 
           {createdPlaintext && (
-            <div className="mt-4 rounded-md border border-emerald-300 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950">
+            <div className="mt-4 rounded-lg border border-emerald-300 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950">
               <p className="text-xs font-medium text-emerald-900 dark:text-emerald-100">
-                Token créé. Copie-le maintenant — il ne sera plus jamais affiché.
+                Token créé. Copie-le maintenant, il ne sera plus jamais affiché.
               </p>
               <div className="mt-2 flex items-center gap-2 rounded bg-background px-3 py-2 font-mono text-xs">
                 <span className="flex-1 break-all">{createdPlaintext}</span>
@@ -120,18 +116,12 @@ export function PatsPanel() {
                     setCopied(true)
                     setTimeout(() => setCopied(false), 2000)
                   }}
+                  aria-label="Copier le token"
                 >
-                  {copied
-                    ? <Check aria-hidden="true" className="h-3 w-3" />
-                    : <Copy aria-hidden="true" className="h-3 w-3" />}
+                  {copied ? <Check aria-hidden="true" className="h-3 w-3" /> : <Copy aria-hidden="true" className="h-3 w-3" />}
                 </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setCreatedPlaintext(null)}
-                className="mt-2 text-xs"
-              >
+              <Button variant="ghost" size="sm" onClick={() => setCreatedPlaintext(null)} className="mt-2 text-xs">
                 J'ai copié, masquer
               </Button>
             </div>
@@ -139,63 +129,62 @@ export function PatsPanel() {
         </CardContent>
       </Card>
 
-      <div className="rounded-md border">
-        <div className="border-b bg-muted/30 px-4 py-2 text-sm font-medium">Tokens existants</div>
-        <div className="divide-y">
-          {isLoading ? (
-            <div className="p-4">
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : (data?.items ?? []).length === 0 ? (
-            <div className="p-6 text-center text-sm text-muted-foreground">Aucun token</div>
-          ) : (
-            data!.items.map((pat) => {
-              const isRevoked = pat.revoked_at !== null
-              const isExpired = new Date(pat.expires_at) < new Date()
-              const inactive = isRevoked || isExpired
-              return (
-                <div key={pat.id} className="flex items-center gap-4 p-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium truncate">{pat.name}</p>
-                      {isRevoked && <Badge variant="destructive">Révoqué</Badge>}
-                      {!isRevoked && isExpired && <Badge variant="secondary">Expiré</Badge>}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Tokens existants</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y">
+            {isLoading ? (
+              <div className="p-4">
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : (data?.items ?? []).length === 0 ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">Aucun token</div>
+            ) : (
+              data!.items.map((pat) => {
+                const isRevoked = pat.revoked_at !== null
+                const isExpired = new Date(pat.expires_at) < new Date()
+                const inactive = isRevoked || isExpired
+                return (
+                  <div key={pat.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium">{pat.name}</p>
+                        {isRevoked && <Badge variant="destructive">Révoqué</Badge>}
+                        {!isRevoked && isExpired && <Badge variant="secondary">Expiré</Badge>}
+                      </div>
+                      <p className="font-mono text-xs text-muted-foreground">{pat.token_prefix}...</p>
+                      <p className="text-xs text-muted-foreground">
+                        Scopes : {pat.scopes.join(", ")} · Expire : {new Date(pat.expires_at).toLocaleDateString("fr-FR")}
+                        {pat.last_used_at && ` · Dernière utilisation : ${new Date(pat.last_used_at).toLocaleString("fr-FR")}`}
+                      </p>
                     </div>
-                    <p className="font-mono text-xs text-muted-foreground">
-                      {pat.token_prefix}…
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Scopes : {pat.scopes.join(", ")} · Expire :{" "}
-                      {new Date(pat.expires_at).toLocaleDateString("fr-FR")}
-                      {pat.last_used_at &&
-                        ` · Dernière utilisation : ${new Date(pat.last_used_at).toLocaleString("fr-FR")}`}
-                    </p>
+                    {!inactive && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setRevokeId(pat.id)}
+                        aria-label={`Révoquer le token ${pat.name}`}
+                        className="h-11 w-11 self-end text-destructive hover:text-destructive sm:self-auto"
+                      >
+                        <Trash2 aria-hidden="true" className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
-                  {!inactive && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setRevokeId(pat.id)}
-                      aria-label={`Révoquer le token ${pat.name}`}
-                      className="h-11 w-11 sm:h-10 sm:w-10"
-                    >
-                      <Trash2 aria-hidden="true" className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              )
-            })
-          )}
-        </div>
-      </div>
+                )
+              })
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <AlertDialog open={revokeId !== null} onOpenChange={(open) => !open && setRevokeId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Révoquer ce token ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est définitive. Toute machine ou agent qui utilise ce token sera
-              déconnecté immédiatement.
+              Cette action est définitive. Toute machine ou agent qui utilise ce token sera déconnecté immédiatement.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

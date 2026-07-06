@@ -59,18 +59,18 @@ export default function TimetablePage() {
     }
   }, [])
 
-  // Clear polling when class changes
-  useEffect(() => {
-    stopPolling()
-  }, [selectedClassId])
-
-  function stopPolling() {
+  const stopPolling = useCallback(() => {
     if (pollingRef.current) clearInterval(pollingRef.current)
     pollingRef.current = null
     setIsPolling(false)
-  }
+  }, [])
 
-  function startPolling(taskId: string) {
+  // Clear polling when class changes
+  useEffect(() => {
+    stopPolling()
+  }, [selectedClassId, stopPolling])
+
+  const startPolling = useCallback((taskId: string) => {
     setIsPolling(true)
     pollCountRef.current = 0
     pollFnRef.current = async () => {
@@ -95,7 +95,7 @@ export default function TimetablePage() {
       }
     }
     pollingRef.current = setInterval(() => { pollFnRef.current?.() }, 3000)
-  }
+  }, [queryClient, stopPolling])
 
   // Step 1: Run diagnostic before generating
   async function handleGenerateClick() {
@@ -131,7 +131,7 @@ export default function TimetablePage() {
       },
       onError: (error) => toast.error("Erreur", { description: error.message }),
     })
-  }, [selectedClassId, generateMutation, queryClient])
+  }, [selectedClassId, generateMutation, startPolling])
 
   const isGenerating = generateMutation.isPending || isPolling || loadingDiagnostic
 
@@ -266,7 +266,7 @@ export default function TimetablePage() {
 
       {/* Grid + Sidebar */}
       {selectedClassId ? (
-        <div className="flex items-start gap-4">
+        <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1">
             <TimetableGrid classId={selectedClassId} />
           </div>
