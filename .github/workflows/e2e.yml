@@ -68,7 +68,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: African-DC/klassci-college-backend
-          ref: main
+          ref: develop
           path: be-repo
 
       # ─── Toolchains ────────────────────────────────────────────────────
