@@ -1,6 +1,18 @@
-import { AlertTriangle, BadgeCheck, CalendarDays, GraduationCap, Hash, School, ShieldAlert, User } from "lucide-react"
+import {
+  AlertTriangle,
+  BadgeCheck,
+  CalendarDays,
+  Clock3,
+  GraduationCap,
+  KeyRound,
+  RefreshCcw,
+  School,
+  ShieldAlert,
+  ShieldX,
+} from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import type { VerifiedDocument } from "@/lib/api/verify"
+import { FileIntegrityCheck } from "./file-integrity-check"
 
 // Vues de résultat partagées entre la page scannée (/verifier/[tenant]/[token])
 // et le formulaire de saisie manuelle (/verifier). Composants purement
@@ -23,7 +35,7 @@ function DetailRow({
   value,
   mono,
 }: {
-  icon: typeof User
+  icon: typeof School
   label: string
   value: string
   mono?: boolean
@@ -47,19 +59,58 @@ function DetailRow({
   )
 }
 
-export function AuthenticView({ doc }: { doc: VerifiedDocument }) {
+const statusPresentation = {
+  active: {
+    title: "Sceau actif dans le registre",
+    subtitle: "Comparez le PDF pour confirmer l'intégrité du fichier",
+    className: "bg-emerald-600",
+    Icon: BadgeCheck,
+  },
+  revoked: {
+    title: "Document révoqué",
+    subtitle: "L'établissement a retiré la validité de ce document",
+    className: "bg-red-600",
+    Icon: ShieldX,
+  },
+  superseded: {
+    title: "Document remplacé",
+    subtitle: "Une version plus récente a été émise",
+    className: "bg-amber-600",
+    Icon: RefreshCcw,
+  },
+  expired: {
+    title: "Document expiré",
+    subtitle: "La période de validité du sceau est terminée",
+    className: "bg-amber-600",
+    Icon: Clock3,
+  },
+} as const
+
+export function RecognizedDocumentView({
+  doc,
+  tenant,
+  token,
+  sealCode,
+}: {
+  doc: VerifiedDocument
+  tenant: string
+  token?: string
+  sealCode?: string
+}) {
+  const presentation = statusPresentation[doc.status]
+  const StatusIcon = presentation.Icon
+
   return (
     <Card className="overflow-hidden">
-      {/* Sceau de validité — vert réservé à l'authenticité, l'identité reste bleue. */}
-      <div className="flex flex-col items-center gap-3 bg-emerald-600 px-6 py-7 text-center text-white">
+      <div
+        className={`flex flex-col items-center gap-3 px-6 py-7 text-center text-white ${presentation.className}`}
+      >
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/30">
-          <BadgeCheck className="h-8 w-8" aria-hidden="true" />
+          <StatusIcon className="h-8 w-8" aria-hidden="true" />
         </div>
         <div className="space-y-1">
-          <p className="text-lg font-semibold tracking-tight">Document authentique</p>
-          <p className="text-sm text-white/85">
-            Vérifié dans les registres de l&apos;établissement
-          </p>
+          <p className="text-lg font-semibold tracking-tight">{presentation.title}</p>
+          <p className="text-sm text-white/90">{presentation.subtitle}</p>
         </div>
       </div>
 
@@ -82,26 +133,27 @@ export function AuthenticView({ doc }: { doc: VerifiedDocument }) {
         {/* Récapitulatif du document. */}
         <div className="rounded-xl border bg-muted/30 px-4">
           <DetailRow icon={GraduationCap} label="Type de document" value={doc.document_type} />
-          <DetailRow icon={User} label="Élève" value={doc.student_name} />
-          <DetailRow icon={School} label="Classe" value={doc.class_name ?? "Non précisée"} />
-          <DetailRow
-            icon={CalendarDays}
-            label="Année scolaire"
-            value={doc.academic_year ?? "Non précisée"}
-          />
           <DetailRow
             icon={CalendarDays}
             label="Date d'émission"
             value={formatIssuedAt(doc.issued_at)}
           />
-          <DetailRow icon={Hash} label="Référence" value={doc.reference} mono />
+          <DetailRow
+            icon={KeyRound}
+            label="Protection"
+            value={doc.signature_algorithm ? `${doc.signature_algorithm} · ${doc.scheme}` : doc.scheme}
+            mono
+          />
         </div>
 
-        {/* Mention légale. */}
         <p className="text-[12px] leading-relaxed text-muted-foreground">
-          Ce document a été émis par {doc.school_name} via KLASSCI. Toute falsification est
-          passible de poursuites.
+          Sceau numérique institutionnel émis par {doc.school_name} via KLASSCI. Il ne constitue
+          pas un cachet électronique qualifié délivré par un prestataire de confiance agréé.
         </p>
+
+        {doc.file_verification_available ? (
+          <FileIntegrityCheck tenant={tenant} token={token} sealCode={sealCode} />
+        ) : null}
       </CardContent>
     </Card>
   )
@@ -137,6 +189,30 @@ export function NotRecognizedView() {
         <p className="text-sm leading-relaxed text-muted-foreground">
           Si vous pensez qu&apos;il s&apos;agit d&apos;une erreur, contactez directement
           l&apos;établissement qui a délivré le document pour confirmer son authenticité.
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function VerificationUnavailableView() {
+  return (
+    <Card className="overflow-hidden border-border">
+      <div className="flex flex-col items-center gap-3 bg-muted px-6 py-7 text-center text-foreground">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-background ring-1 ring-border">
+          <ShieldAlert className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-lg font-semibold tracking-tight">Vérification indisponible</p>
+          <p className="text-sm text-muted-foreground">
+            Le service ne peut pas répondre pour le moment
+          </p>
+        </div>
+      </div>
+      <CardContent className="p-6">
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Aucun verdict n&apos;a été établi sur ce document. Réessayez plus tard ou contactez
+          directement l&apos;établissement émetteur.
         </p>
       </CardContent>
     </Card>

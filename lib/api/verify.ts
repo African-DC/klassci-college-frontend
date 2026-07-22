@@ -21,22 +21,60 @@ function getBaseUrl(): string {
   return url
 }
 
+const DocumentStatusSchema = z.enum(["active", "revoked", "superseded", "expired"])
+
 export const VerifiedDocumentSchema = z.object({
-  valid: z.literal(true),
+  valid: z.boolean(),
+  status: DocumentStatusSchema,
+  scheme: z.string(),
   document_type: z.string(),
-  reference: z.string(),
-  student_name: z.string(),
-  class_name: z.string().nullable().default(null),
-  academic_year: z.string().nullable().default(null),
   issued_at: z.string(),
+  expires_at: z.string().nullable().default(null),
   school_name: z.string(),
-})
+  signature_algorithm: z.string().nullable().default(null),
+  key_id: z.string().nullable().default(null),
+  file_verification_available: z.boolean().default(false),
+}).strict()
 
 export type VerifiedDocument = z.infer<typeof VerifiedDocumentSchema>
 
 export type VerifyResult =
-  | { status: "valid"; document: VerifiedDocument }
+  | { status: "recognized"; document: VerifiedDocument }
   | { status: "not_found" }
+  | { status: "unavailable" }
+
+const FileVerificationSchema = z.discriminatedUnion("status", [
+  z
+    .object({
+      valid: z.boolean(),
+      matches: z.boolean(),
+      status: z.literal("matching"),
+      signature_valid: z.boolean(),
+      document_status: DocumentStatusSchema,
+    })
+    .strict(),
+  z
+    .object({
+      valid: z.boolean(),
+      matches: z.boolean(),
+      status: z.literal("modified"),
+      signature_valid: z.boolean(),
+      document_status: DocumentStatusSchema,
+    })
+    .strict(),
+  z
+    .object({
+      valid: z.literal(false),
+      matches: z.literal(false),
+      status: z.literal("unavailable"),
+      code: z.literal("FILE_VERIFICATION_UNAVAILABLE"),
+      signature_valid: z.boolean(),
+      document_status: DocumentStatusSchema,
+    })
+    .strict(),
+])
+
+export type FileVerificationResult = z.infer<typeof FileVerificationSchema>
 
 /**
  * Interroge GET {BASE}/public/verify/{tenant}/{token} sans authentification.
@@ -57,28 +95,29 @@ export async function verifyDocument(tenant: string, token: string): Promise<Ver
       },
     )
   } catch {
-    return { status: "not_found" }
+    return { status: "unavailable" }
   }
 
+  if (res.status === 404) return { status: "not_found" }
   if (!res.ok) {
-    return { status: "not_found" }
+    return { status: "unavailable" }
   }
 
   const json = (await res.json().catch(() => null)) as unknown
   const parsed = VerifiedDocumentSchema.safeParse(json)
   if (!parsed.success) {
     console.error("[verify] réponse inattendue du serveur:", parsed.error.issues)
-    return { status: "not_found" }
+    return { status: "unavailable" }
   }
 
-  return { status: "valid", document: parsed.data }
+  return { status: "recognized", document: parsed.data }
 }
 
 /**
  * Interroge GET {BASE}/public/verify-code/{tenant}/{code} sans authentification.
  *
  * Pendant que verifyDocument() vérifie via le token scanné (Datamatrix), cette
- * variante vérifie via le code CEV saisi manuellement (au dos du document). Le
+ * variante vérifie via le code du sceau saisi manuellement. Le
  * contrat de réponse est IDENTIQUE : même validation Zod, même politique
  * d'échec. Tout statut non-200, tout shape inattendu, toute erreur réseau →
  * "not_found".
@@ -95,19 +134,47 @@ export async function verifyDocumentByCode(tenant: string, code: string): Promis
       },
     )
   } catch {
-    return { status: "not_found" }
+    return { status: "unavailable" }
   }
 
+  if (res.status === 404) return { status: "not_found" }
   if (!res.ok) {
-    return { status: "not_found" }
+    return { status: "unavailable" }
   }
 
   const json = (await res.json().catch(() => null)) as unknown
   const parsed = VerifiedDocumentSchema.safeParse(json)
   if (!parsed.success) {
     console.error("[verify] réponse inattendue du serveur:", parsed.error.issues)
-    return { status: "not_found" }
+    return { status: "unavailable" }
   }
 
-  return { status: "valid", document: parsed.data }
+  return { status: "recognized", document: parsed.data }
+}
+
+export async function verifyDocumentFile(
+  tenant: string,
+  file: File,
+  identifier: { token: string } | { sealCode: string },
+): Promise<FileVerificationResult | null> {
+  const endpoint =
+    "token" in identifier
+      ? `/public/verify-file/${encodeURIComponent(tenant)}/${encodeURIComponent(identifier.token)}`
+      : `/public/verify-file-code/${encodeURIComponent(tenant)}/${encodeURIComponent(identifier.sealCode)}`
+  const formData = new FormData()
+  formData.append("document", file)
+
+  try {
+    const response = await fetch(`${getBaseUrl()}${endpoint}`, {
+      method: "POST",
+      body: formData,
+      cache: "no-store",
+    })
+    if (!response.ok && response.status !== 409) return null
+    const json = (await response.json().catch(() => null)) as unknown
+    const parsed = FileVerificationSchema.safeParse(json)
+    return parsed.success ? parsed.data : null
+  } catch {
+    return null
+  }
 }

@@ -18,6 +18,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Vérification publique enrichie du Sceau numérique institutionnel KLASSCI : état actif, révoqué, remplacé ou expiré, aucune identité d'élève exposée et comparaison du PDF avec l'empreinte signée conservée par KLASSCI *(public)*.
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
