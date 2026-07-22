@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     env:
-      NEXT_PUBLIC_API_URL: https://college.klassci.com/api-be
+      NEXT_PUBLIC_API_URL: https://college.klassci.com/svc
       NEXT_PUBLIC_EXTRA_ALLOWED_HOSTS: ""
       NEXTAUTH_SECRET: ci-secret-not-real
       NEXTAUTH_URL: http://localhost:3000
