@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Déploiement : l'ancien workflow EC2 est retiré, la production KLASSCI College reste publiée sur le serveur Windows natif.
 - Fiche inscription et onglet Paiements repensés en premium : en-tête avec bandeau de marque (classe, année, statut), synthèse claire des frais (payé, reste à payer, progression), détail de chaque frais avec sa barre d'avancement et son statut, et historique des versements montrant la répartition sur les frais avec le reçu téléchargeable pour chacun *(admin)*.
 - Onglet Paiements de la fiche élève : même bandeau de synthèse premium des frais (payé, reste à payer) *(admin)*.
 - Fiches élève, enseignant et personnel : la carte « Compte de connexion » passe en bas de page, ce n'est pas l'information principale à l'ouverture de la fiche *(admin)*.
@@ -18,6 +19,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Vérification publique enrichie du Sceau numérique institutionnel KLASSCI : état actif, révoqué, remplacé ou expiré, aucune identité d'élève exposée et comparaison du PDF avec l'empreinte signée conservée par KLASSCI *(public)*.
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed

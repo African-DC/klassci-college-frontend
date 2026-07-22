@@ -1,6 +1,10 @@
 import type { Metadata } from "next"
 import { verifyDocument } from "@/lib/api/verify"
-import { AuthenticView, NotRecognizedView } from "../../_components/result-views"
+import {
+  NotRecognizedView,
+  RecognizedDocumentView,
+  VerificationUnavailableView,
+} from "../../_components/result-views"
 
 // Jamais indexé : un document de vérification nominatif ne doit pas remonter
 // dans les moteurs de recherche.
@@ -16,8 +20,12 @@ export default async function VerifierPage({
   const { tenant, token } = await params
   const result = await verifyDocument(tenant, token)
 
-  if (result.status === "valid") {
-    return <AuthenticView doc={result.document} />
+  if (result.status === "recognized") {
+    return <RecognizedDocumentView doc={result.document} tenant={tenant} token={token} />
+  }
+
+  if (result.status === "unavailable") {
+    return <VerificationUnavailableView />
   }
 
   return <NotRecognizedView />
