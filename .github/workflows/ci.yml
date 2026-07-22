@@ -36,10 +36,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     env:
-      NEXT_PUBLIC_API_URL: https://api-staging.klassci.com
-      NEXT_PUBLIC_WS_URL: wss://api-staging.klassci.com
+      NEXT_PUBLIC_API_URL: https://college.klassci.com/svc
+      NEXT_PUBLIC_EXTRA_ALLOWED_HOSTS: ""
       NEXTAUTH_SECRET: ci-secret-not-real
       NEXTAUTH_URL: http://localhost:3000
+      SKIP_ENV_VALIDATION: "1"
 
     steps:
       - uses: actions/checkout@v4
@@ -58,6 +59,21 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Package Windows production artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        run: |
+          cp -r public .next/standalone/
+          cp -r .next/static .next/standalone/.next/
+          tar czf standalone.tgz -C .next/standalone .
+
+      - name: Upload Windows production artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        uses: actions/upload-artifact@v7
+        with:
+          name: klassci-college-frontend-${{ github.sha }}
+          path: standalone.tgz
+          retention-days: 7
 
   test:
     name: Unit Tests
