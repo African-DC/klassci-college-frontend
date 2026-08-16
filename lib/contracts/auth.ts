@@ -14,6 +14,10 @@ export const UserRoleSchema = z.enum([
 ])
 
 export const LoginRequestSchema = z.object({
+  school_code: z
+    .string({ required_error: "Le code établissement est requis" })
+    .trim()
+    .min(2, "Indiquez le code de votre établissement"),
   email: z
     .string({ required_error: "L'email est requis" })
     .email("Email invalide"),

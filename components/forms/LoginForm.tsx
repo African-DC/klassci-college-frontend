@@ -6,8 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff, Clock } from "lucide-react"
+import { Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff, Clock, Building2 } from "lucide-react"
 import { LoginRequestSchema, type LoginRequest } from "@/lib/contracts/auth"
+import { resolveSchoolLoginCode } from "@/lib/utils/tenant-slug"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -19,34 +20,22 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 
-// Cookie used to remember the tenant slug between visits (so the user
-// who first arrived via a WhatsApp link doesn't need the ?c= every time).
-// Not HttpOnly: the slug is non-sensitive (also visible in the URL) and
-// must be readable from client JS to pre-fill the signIn call.
 const TENANT_CODE_COOKIE = "tenant_code"
-// RFC 1123 slug : 2-63 lowercase alnum + hyphen, no leading/trailing hyphen.
-// Mirror of the BE regex in app/core/slug.py.
-const TENANT_SLUG_REGEX = /^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/
+const SCHOOL_CODE_COOKIE = "school_code"
 
-function isValidTenantSlug(value: string): boolean {
-  return TENANT_SLUG_REGEX.test(value)
-}
-
-function readTenantCookie(): string | null {
+function readCookie(name: string): string | null {
   if (typeof document === "undefined") return null
   const match = document.cookie
     .split("; ")
-    .find((row) => row.startsWith(`${TENANT_CODE_COOKIE}=`))
+    .find((row) => row.startsWith(`${name}=`))
   if (!match) return null
-  const value = decodeURIComponent(match.slice(TENANT_CODE_COOKIE.length + 1))
-  return isValidTenantSlug(value) ? value : null
+  return decodeURIComponent(match.slice(name.length + 1))
 }
 
-function writeTenantCookie(slug: string): void {
+function writeCookie(name: string, value: string): void {
   if (typeof document === "undefined") return
-  if (!isValidTenantSlug(slug)) return
   const secure = window.location.protocol === "https:" ? "; Secure" : ""
-  document.cookie = `${TENANT_CODE_COOKIE}=${encodeURIComponent(slug)}; path=/; max-age=31536000; SameSite=Lax${secure}`
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax${secure}`
 }
 
 export function LoginForm() {
@@ -57,33 +46,42 @@ export function LoginForm() {
   const sessionExpired = searchParams.get("expired") === "1"
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
-  const [tenantCode, setTenantCode] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fromUrl = searchParams.get("c")
-    if (fromUrl && isValidTenantSlug(fromUrl)) {
-      setTenantCode(fromUrl)
-      return
-    }
-    setTenantCode(readTenantCookie())
-  }, [searchParams])
+  const [resolvedSchool, setResolvedSchool] = useState<string | null>(null)
 
   const form = useForm<LoginRequest>({
     resolver: zodResolver(LoginRequestSchema),
     defaultValues: {
+      school_code: "",
       email: "",
       password: "",
     },
   })
 
+  useEffect(() => {
+    const fromUrl = searchParams.get("c")
+    const rememberedSchool = readCookie(SCHOOL_CODE_COOKIE)
+    const rememberedTenant = readCookie(TENANT_CODE_COOKIE)
+    const initial = fromUrl || rememberedSchool || rememberedTenant || ""
+    const resolved = resolveSchoolLoginCode(initial)
+    if (initial) {
+      form.setValue("school_code", fromUrl ? fromUrl.toUpperCase() : rememberedSchool || initial.toUpperCase())
+    }
+    setResolvedSchool(resolved)
+  }, [form, searchParams])
+
   async function onSubmit(data: LoginRequest) {
     setError(null)
+    const tenantCode = resolveSchoolLoginCode(data.school_code)
+    if (!tenantCode) {
+      setError("Code établissement inconnu. Exemple : ROSTAN")
+      return
+    }
 
     try {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
-        tenant_code: tenantCode ?? "",
+        tenant_code: tenantCode,
         redirect: false,
       })
 
@@ -92,7 +90,8 @@ export function LoginForm() {
         return
       }
 
-      if (tenantCode) writeTenantCookie(tenantCode)
+      writeCookie(TENANT_CODE_COOKIE, tenantCode)
+      writeCookie(SCHOOL_CODE_COOKIE, data.school_code.trim().toUpperCase())
 
       router.push(callbackUrl as Route)
       router.refresh()
@@ -122,12 +121,39 @@ export function LoginForm() {
           </div>
         )}
 
-        {tenantCode && (
-          <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
-            <span className="text-muted-foreground">Établissement : </span>
-            <span className="font-mono font-medium text-primary">{tenantCode}</span>
-          </div>
-        )}
+        <FormField
+          control={form.control}
+          name="school_code"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-sm font-medium">Code établissement</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Building2 aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="ROSTAN"
+                    autoComplete="organization"
+                    inputMode="text"
+                    aria-required="true"
+                    className="h-11 pl-10 uppercase"
+                    {...field}
+                    onChange={(event) => {
+                      field.onChange(event.target.value.toUpperCase())
+                      setResolvedSchool(resolveSchoolLoginCode(event.target.value))
+                    }}
+                  />
+                </div>
+              </FormControl>
+              <p className="text-xs text-muted-foreground">
+                {resolvedSchool
+                  ? `École reconnue : ${resolvedSchool}`
+                  : "Le code donné par KLASSCI, pas l'adresse complète."}
+              </p>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
@@ -140,7 +166,7 @@ export function LoginForm() {
                   <Mail aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="email"
-                    placeholder="nom@etablissement.cd"
+                    placeholder="nom@etablissement.ci"
                     autoComplete="email"
                     inputMode="email"
                     aria-required="true"
