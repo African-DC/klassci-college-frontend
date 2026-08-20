@@ -120,6 +120,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
           statusName="assignment_status"
           decisionName="assignment_decision_number"
           status={assignmentStatus}
+          onDecisionCleared={() => form.setValue("assignment_decision_number", null)}
         />
 
         <FormField
