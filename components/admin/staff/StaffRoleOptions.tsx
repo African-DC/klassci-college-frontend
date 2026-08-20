@@ -19,7 +19,11 @@ export function StaffRoleOptions() {
         <SelectItem key={option.value} value={option.value} className="py-2.5">
           <span className="flex flex-col gap-0.5">
             <span className="font-medium">{option.label}</span>
-            <span className="text-xs text-muted-foreground">{option.hint}</span>
+            {/* `opacity` plutôt que `text-muted-foreground` : la ligne survolée
+                ou sélectionnée passe sur fond accent, et une couleur figée y
+                perdrait son contraste. En héritant du texte courant, la phrase
+                reste lisible sur les deux fonds, y compris en plein soleil. */}
+            <span className="text-xs opacity-70">{option.hint}</span>
           </span>
         </SelectItem>
       ))}
