@@ -1,20 +1,11 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Search } from "lucide-react"
 import { useSubjects, useDeleteSubject } from "@/lib/hooks/useSubjects"
 import { useLevels } from "@/lib/hooks/useLevels"
+import { useSeriesList } from "@/lib/hooks/useSeries"
 import type { Subject } from "@/lib/contracts/subject"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,20 +17,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { SubjectEditModal } from "./SubjectEditModal"
-import { SubjectGroupRow, SUBJECT_GRID_COLS, type SubjectGroup } from "./SubjectGroupRow"
+import { SubjectAssignModal, type AssignTarget } from "./SubjectAssignModal"
+import { SubjectGroupRow, SUBJECT_GRID_COLS } from "./SubjectGroupRow"
+import type { SubjectGroup } from "@/lib/contracts/subject-group"
+import { SubjectMobileCard } from "./SubjectMobileCard"
+import { SubjectsTableToolbar } from "./SubjectsTableToolbar"
 import { useDebounce } from "@/lib/hooks/useDebounce"
+import { filterSubjectGroups, groupSubjects } from "@/lib/utils/subject-groups"
 
 export function SubjectsTable() {
   const [search, setSearch] = useState("")
-  const [levelFilter, setLevelFilter] = useState<string>("all")
-  const [teacherFilter, setTeacherFilter] = useState<string>("all")
+  const [levelFilter, setLevelFilter] = useState("all")
+  const [teacherFilter, setTeacherFilter] = useState("all")
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [editId, setEditId] = useState<number | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Subject | null>(null)
+  const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null)
 
   const debouncedSearch = useDebounce(search)
   const { data: subjectsData, isLoading } = useSubjects({ size: 100 })
   const { data: levelsData } = useLevels({ size: 100 })
+  const { data: seriesData } = useSeriesList({ size: 100 })
   const deleteMutation = useDeleteSubject()
 
   const subjects = useMemo(() => subjectsData?.items ?? [], [subjectsData])
@@ -47,75 +45,12 @@ export function SubjectsTable() {
     () => levelsData?.items?.slice().sort((a, b) => a.order - b.order) ?? [],
     [levelsData],
   )
-
-  // Group subjects by name. Catalogue (level_id null) is the anchor;
-  // every level-scoped row of the same name becomes an instance under it.
-  const groups = useMemo<SubjectGroup[]>(() => {
-    const levelOrder = new Map(levels.map((l, i) => [l.id, l.order ?? i]))
-    const map = new Map<string, SubjectGroup>()
-
-    for (const s of subjects) {
-      const existing = map.get(s.name)
-      const isCatalogue = s.level_id === null
-
-      if (!existing) {
-        map.set(s.name, {
-          name: s.name,
-          catalogue: isCatalogue ? s : null,
-          instances: isCatalogue ? [] : [s],
-          totalHours: isCatalogue ? 0 : s.hours_per_week,
-        })
-      } else if (isCatalogue) {
-        existing.catalogue = s
-      } else {
-        existing.instances.push(s)
-        existing.totalHours += s.hours_per_week
-      }
-    }
-
-    for (const group of map.values()) {
-      group.instances.sort(
-        (a, b) =>
-          (levelOrder.get(a.level_id ?? 0) ?? 99) -
-          (levelOrder.get(b.level_id ?? 0) ?? 99),
-      )
-    }
-
-    return Array.from(map.values()).sort((a, b) =>
-      a.name.localeCompare(b.name, "fr"),
-    )
-  }, [subjects, levels])
-
-  const filteredGroups = useMemo(() => {
-    const query = debouncedSearch.trim().toLowerCase()
-    return groups.filter((group) => {
-      if (query) {
-        const matchName = group.name.toLowerCase().includes(query)
-        const matchTeacher = group.instances.some((inst) =>
-          inst.teacher_name?.toLowerCase().includes(query),
-        )
-        if (!matchName && !matchTeacher) return false
-      }
-
-      if (levelFilter === "catalogue") {
-        if (group.catalogue === null) return false
-      } else if (levelFilter !== "all") {
-        const lid = Number(levelFilter)
-        if (!group.instances.some((inst) => inst.level_id === lid)) return false
-      }
-
-      if (teacherFilter === "with") {
-        if (!group.instances.some((inst) => inst.teacher_id !== null && inst.teacher_id !== undefined)) {
-          return false
-        }
-      } else if (teacherFilter === "without") {
-        if (group.instances.length === 0) return false
-        if (!group.instances.some((inst) => !inst.teacher_id)) return false
-      }
-
-      return true
-    })
-  }, [groups, debouncedSearch, levelFilter, teacherFilter])
+  const series = seriesData?.items ?? []
+  const groups = useMemo(() => groupSubjects(subjects, levels), [subjects, levels])
+  const filteredGroups = useMemo(
+    () => filterSubjectGroups(groups, debouncedSearch, levelFilter, teacherFilter),
+    [groups, debouncedSearch, levelFilter, teacherFilter],
+  )
 
   function toggleExpanded(name: string) {
     setExpanded((prev) => {
@@ -126,11 +61,13 @@ export function SubjectsTable() {
     })
   }
 
-  function expandAll() {
-    setExpanded(new Set(filteredGroups.filter((g) => g.instances.length > 0).map((g) => g.name)))
-  }
-  function collapseAll() {
-    setExpanded(new Set())
+  function startAssign(catalogue: Subject) {
+    setAssignTarget({
+      subjectId: catalogue.id,
+      subjectName: catalogue.name,
+      defaultCoef: catalogue.coefficient,
+      defaultHours: catalogue.hours_per_week,
+    })
   }
 
   if (isLoading) {
@@ -148,60 +85,40 @@ export function SubjectsTable() {
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[240px] flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher matière ou enseignant..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-10"
-            aria-label="Rechercher une matière"
-          />
-        </div>
+      <SubjectsTableToolbar
+        value={{ search, levelFilter, teacherFilter }}
+        levels={levels}
+        handlers={{
+          onSearchChange: setSearch,
+          onLevelFilterChange: setLevelFilter,
+          onTeacherFilterChange: setTeacherFilter,
+          onExpandAll: () => setExpanded(new Set(filteredGroups.filter((g) => g.instances.length > 0).map((g) => g.name))),
+          onCollapseAll: () => setExpanded(new Set()),
+        }}
+      />
 
-        <Select value={levelFilter} onValueChange={setLevelFilter}>
-          <SelectTrigger className="h-10 min-w-[170px]" aria-label="Filtrer par niveau">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous niveaux</SelectItem>
-            <SelectItem value="catalogue">Catalogue seul</SelectItem>
-            {levels.map((l) => (
-              <SelectItem key={l.id} value={String(l.id)}>
-                {l.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={teacherFilter} onValueChange={setTeacherFilter}>
-          <SelectTrigger className="h-10 min-w-[180px]" aria-label="Filtrer par enseignant">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous enseignants</SelectItem>
-            <SelectItem value="with">Avec enseignant</SelectItem>
-            <SelectItem value="without">Sans enseignant</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <div className="ml-auto flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={expandAll}>
-            Tout déplier
-          </Button>
-          <Button variant="ghost" size="sm" onClick={collapseAll}>
-            Tout replier
-          </Button>
-        </div>
+      <div className="space-y-2 md:hidden">
+        {filteredGroups.length === 0 ? (
+          <p className="rounded-lg border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+            Aucune matière ne correspond à ces filtres.
+          </p>
+        ) : (
+          filteredGroups.map((group) => (
+            <SubjectMobileCard
+              key={group.name}
+              group={group}
+              expanded={expanded.has(group.name)}
+              onToggle={() => toggleExpanded(group.name)}
+              onEdit={setEditId}
+              onAssign={startAssign}
+              onDelete={setDeleteTarget}
+            />
+          ))
+        )}
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
-        <div
-          className={`grid ${SUBJECT_GRID_COLS} gap-3 border-b bg-muted/40 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground`}
-        >
+      <div className="hidden overflow-hidden rounded-lg border bg-card shadow-sm md:block">
+        <div className={`grid ${SUBJECT_GRID_COLS} gap-3 border-b bg-muted/40 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground`}>
           <div />
           <div>Matière</div>
           <div className="text-center">Coef.</div>
@@ -209,20 +126,20 @@ export function SubjectsTable() {
           <div>Statut / Enseignant</div>
           <div className="text-right">Actions</div>
         </div>
-
         {filteredGroups.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-muted-foreground">
             Aucune matière ne correspond à ces filtres.
           </div>
         ) : (
           <ul className="divide-y">
-            {filteredGroups.map((group) => (
+            {filteredGroups.map((group: SubjectGroup) => (
               <SubjectGroupRow
                 key={group.name}
                 group={group}
                 expanded={expanded.has(group.name)}
                 onToggle={() => toggleExpanded(group.name)}
                 onEdit={setEditId}
+                onAssign={startAssign}
                 onDelete={setDeleteTarget}
               />
             ))}
@@ -230,18 +147,18 @@ export function SubjectsTable() {
         )}
       </div>
 
-      <SubjectEditModal
-        subjectId={editId}
-        open={editId !== null}
-        onClose={() => setEditId(null)}
+      <SubjectAssignModal
+        target={assignTarget}
+        levels={levels}
+        series={series}
+        instances={subjects}
+        open={assignTarget !== null}
+        onClose={() => setAssignTarget(null)}
+        onAssigned={(name) => setExpanded((prev) => new Set(prev).add(name))}
       />
+      <SubjectEditModal subjectId={editId} open={editId !== null} onClose={() => setEditId(null)} />
 
-      <AlertDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null)
-        }}
-      >
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la matière</AlertDialogTitle>
@@ -257,9 +174,7 @@ export function SubjectsTable() {
               disabled={deleteMutation.isPending}
               onClick={() => {
                 if (deleteTarget) {
-                  deleteMutation.mutate(deleteTarget.id, {
-                    onSuccess: () => setDeleteTarget(null),
-                  })
+                  deleteMutation.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) })
                 }
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
