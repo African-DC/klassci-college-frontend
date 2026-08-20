@@ -8,6 +8,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Added
+
+- Écran « Ma caisse » pour le caissier : ce qu'il a encaissé aujourd'hui, ventilé par moyen de paiement, et la clôture de journée. Il compte son tiroir, saisit le montant, l'écart s'affiche avant validation et la journée se verrouille *(caissier)*.
+- Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
+
 ### Changed
 
 - Fiche Personnel : le rôle d'accès propose désormais six métiers (secrétariat, caissier, éducateur, comptable, directeur des études, directeur), chacun accompagné d'une phrase qui dit ce que la personne pourra faire. « Personnel administratif » devient « Secrétariat » *(admin, directeur)*.

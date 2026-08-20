@@ -28,6 +28,8 @@ import {
   ShieldCheck,
   Settings,
   X,
+  Banknote,
+  ClipboardCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
@@ -36,6 +38,8 @@ import { usePermissions } from "@/lib/hooks/usePermissions"
 import { filterAdminNavigation } from "@/lib/navigation/adminNav"
 
 const ICONS = {
+  Banknote,
+  ClipboardCheck,
   ArrowUpFromLine,
   LayoutDashboard,
   UserPlus,
