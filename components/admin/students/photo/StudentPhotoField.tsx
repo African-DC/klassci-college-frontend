@@ -64,7 +64,7 @@ export function StudentPhotoField({ value, onChange, disabled = false }: Student
               ? "Ouvrez la caméra, vérifiez l'aperçu, puis enregistrez. L'import reste disponible."
               : "La caméra n'est pas disponible ici. Importez une photo JPEG, PNG ou WebP."}
           </p>
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Button
               type="button"
               className="h-11"
