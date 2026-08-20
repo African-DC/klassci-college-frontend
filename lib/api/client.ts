@@ -110,6 +110,34 @@ async function authHeaders(): Promise<Record<string, string>> {
 }
 
 /** Fetch authentifié retournant un Blob (pour téléchargement PDF, Excel, etc.) */
+/**
+ * Erreur HTTP portant le `detail` du backend tel quel.
+ *
+ * FastAPI renvoie soit une chaine (`{detail: "..."}`), soit un objet quand le
+ * front doit pouvoir agir dessus, par exemple un montant a payer et le droit
+ * de deroger. On garde l'objet intact ici : le client HTTP n'a pas a connaitre
+ * la semantique de chaque code, chaque module la lit lui-meme.
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly detail: unknown,
+  ) {
+    super(message)
+    this.name = "ApiError"
+  }
+}
+
+function apiErrorFrom(status: number, detail: unknown, fallback: string): ApiError {
+  if (typeof detail === "string") return new ApiError(detail, status, detail)
+  if (detail !== null && typeof detail === "object") {
+    const message = (detail as { message?: unknown }).message
+    return new ApiError(typeof message === "string" ? message : fallback, status, detail)
+  }
+  return new ApiError(fallback, status, detail)
+}
+
 export async function apiFetchBlob(path: string): Promise<Blob> {
   const headers = await authHeaders()
   delete headers["Content-Type"]
@@ -130,11 +158,12 @@ export async function apiFetchBlob(path: string): Promise<Blob> {
     // Surface the BE detail when available so the caller can toast a useful
     // message — see app/routers/_pdf_helpers.py for the JSON {detail} contract.
     const contentType = res.headers.get("content-type") ?? ""
+    const fallback = `Erreur ${res.status} lors du téléchargement`
     if (contentType.includes("application/json")) {
-      const body = (await res.json().catch(() => null)) as { detail?: string } | null
-      if (body?.detail) throw new Error(body.detail)
+      const body = (await res.json().catch(() => null)) as { detail?: unknown } | null
+      if (body?.detail) throw apiErrorFrom(res.status, body.detail, fallback)
     }
-    throw new Error(`Erreur ${res.status} lors du téléchargement`)
+    throw new Error(fallback)
   }
   return res.blob()
 }

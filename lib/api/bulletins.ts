@@ -76,7 +76,13 @@ export const bulletinsApi = {
     })
   },
 
-  downloadPdf: async (id: number): Promise<Blob> => {
-    return apiFetchBlob(`/reports/bulletins/${id}/pdf`)
+  /**
+   * Le bulletin est retenu quand la famille est en retard sur son échéancier.
+   * `overrideReason` lève la retenue, à condition d'avoir le droit de déroger.
+   */
+  downloadPdf: async (id: number, overrideReason?: string): Promise<Blob> => {
+    const reason = overrideReason?.trim()
+    const query = reason ? `?override_reason=${encodeURIComponent(reason)}` : ""
+    return apiFetchBlob(`/reports/bulletins/${id}/pdf${query}`)
   },
 }

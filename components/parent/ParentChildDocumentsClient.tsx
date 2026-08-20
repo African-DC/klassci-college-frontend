@@ -11,6 +11,9 @@ import { studentDocumentsApi } from "@/lib/api/student-documents"
 import { downloadBlob } from "@/lib/utils"
 import { useParentChildren } from "@/lib/hooks/useParentPortal"
 import { isEnrolledFromClassName } from "@/lib/utils/enrollment-status"
+import { useDocumentReleaseStatus } from "@/lib/hooks/useDocumentRelease"
+import { DocumentLockNotice } from "@/components/shared/documents/DocumentLockNotice"
+import { asDocumentBlocked } from "@/lib/contracts/document-release"
 
 interface ParentChildDocumentsClientProps {
   childId: number
@@ -61,6 +64,15 @@ export function ParentChildDocumentsClient({
   // pour ne pas masquer l'UI pendant le fetch initial — le guard apparaît
   // une fois la donnée arrivée si pertinent.
 
+  // Retenue pour impayé. On l'interroge avant d'afficher les boutons : voir le
+  // montant et où le régler vaut mieux que cliquer et se prendre un refus.
+  // Inutile de demander pour un enfant pas encore inscrit — ce cas relève des
+  // règles d'inscription, pas du recouvrement.
+  const { data: release, refetch: refetchRelease } = useDocumentReleaseStatus(
+    isEnrolled ? childId : null,
+  )
+  const isBlocked = release?.blocked ?? false
+
   async function handleDownload(doc: (typeof DOCS)[number]) {
     setDownloading(doc.kind)
     try {
@@ -68,6 +80,10 @@ export function ParentChildDocumentsClient({
       downloadBlob(blob, `${doc.filenameBase}_enfant_${childId}.pdf`)
       toast.success(`${doc.title} téléchargé(e)`)
     } catch (err) {
+      // Un versement encaissé au secrétariat il y a deux minutes peut avoir
+      // levé la retenue : on resynchronise plutôt que de laisser le bandeau
+      // mentir dans un sens ou dans l'autre.
+      if (asDocumentBlocked(err)) void refetchRelease()
       const message =
         err instanceof Error
           ? err.message
@@ -114,11 +130,18 @@ export function ParentChildDocumentsClient({
         </Card>
       )}
 
+      {isEnrolled && isBlocked && release ? (
+        <DocumentLockNotice
+          lateAmount={release.late_amount}
+          studentName={child?.full_name}
+        />
+      ) : null}
+
       <div className="space-y-3">
         {DOCS.map((doc) => {
           const Icon = doc.icon
           const isDownloading = downloading === doc.kind
-          const disabled = isDownloading || !isEnrolled
+          const disabled = isDownloading || !isEnrolled || isBlocked
           return (
             <div
               key={doc.kind}
@@ -157,6 +180,8 @@ export function ParentChildDocumentsClient({
                     </>
                   ) : !isEnrolled ? (
                     "Disponible après inscription"
+                  ) : isBlocked ? (
+                    "Retenu jusqu'au règlement"
                   ) : (
                     "Télécharger PDF"
                   )}
