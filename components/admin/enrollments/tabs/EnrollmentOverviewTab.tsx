@@ -5,10 +5,12 @@ import {
   CalendarDays,
   FileText,
   ClipboardCheck,
+  Landmark,
   User,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { AssignmentStatusBadge } from "@/components/shared/AssignmentStatusBadge"
 import type { Enrollment } from "@/lib/contracts/enrollment"
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -102,6 +104,23 @@ export function EnrollmentOverviewTab({ enrollment }: EnrollmentOverviewTabProps
               </p>
               <div>
                 <Badge variant={status.variant}>{status.label}</Badge>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <Landmark className="h-3.5 w-3.5" />
+                Affectation
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <AssignmentStatusBadge status={enrollment.assignment_status} />
+                {/* Le numéro de décision ne vaut que pour un élève pris en
+                    charge par l'État : on ne l'affiche que s'il existe. */}
+                {enrollment.assignment_decision_number ? (
+                  <span className="text-sm font-medium tabular-nums">
+                    {enrollment.assignment_decision_number}
+                  </span>
+                ) : null}
               </div>
             </div>
 

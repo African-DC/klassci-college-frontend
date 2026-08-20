@@ -399,6 +399,7 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
               statusName="assignment_status"
               decisionName="assignment_decision_number"
               status={newForm.watch("assignment_status")}
+              onDecisionCleared={() => newForm.setValue("assignment_decision_number", null)}
             />
           ) : (
             <AssignmentStatusField
@@ -406,6 +407,7 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
               statusName="assignment_status"
               decisionName="assignment_decision_number"
               status={reForm.watch("assignment_status")}
+              onDecisionCleared={() => reForm.setValue("assignment_decision_number", null)}
             />
           )}
         </div>

@@ -18,6 +18,12 @@ interface AssignmentStatusFieldProps<T extends FieldValues> {
   decisionName: Path<T>
   /** Statut courant, pour n'afficher le numéro de décision que s'il sert. */
   status: string | null | undefined
+  /**
+   * Appelé quand le statut cesse d'être subventionné : le formulaire parent
+   * doit alors vider le numéro de décision, sans quoi une valeur périmée
+   * continue de voyager.
+   */
+  onDecisionCleared?: () => void
 }
 
 /**
@@ -36,6 +42,7 @@ export function AssignmentStatusField<T extends FieldValues>({
   statusName,
   decisionName,
   status,
+  onDecisionCleared,
 }: AssignmentStatusFieldProps<T>) {
   const subsidised = status === "affecte" || status === "reaffecte"
 
@@ -49,7 +56,17 @@ export function AssignmentStatusField<T extends FieldValues>({
             <FormLabel>Affectation</FormLabel>
             <Select
               value={field.value ?? "non_renseigne"}
-              onValueChange={(v) => field.onChange(v === "non_renseigne" ? null : v)}
+              onValueChange={(v) => {
+                const next = v === "non_renseigne" ? null : v
+                field.onChange(next)
+                // Repasser en « non affecté » masque le numéro de décision
+                // mais laissait sa valeur dans le formulaire : un numéro
+                // périmé partait alors au serveur, rattaché à un élève qui
+                // n'est plus affecté. On le vide avec le statut.
+                if (next !== "affecte" && next !== "reaffecte") {
+                  onDecisionCleared?.()
+                }
+              }}
             >
               <FormControl>
                 <SelectTrigger className="h-11 sm:h-10">

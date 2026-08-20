@@ -4,6 +4,7 @@ import { useEnrollment } from "@/lib/hooks/useEnrollments"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
+import { AssignmentStatusBadge } from "@/components/shared/AssignmentStatusBadge"
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   prospect: { label: "Prospect", variant: "secondary" },
@@ -65,6 +66,20 @@ function ViewContent({ enrollmentId }: { enrollmentId: number }) {
           </Badge>
         </div>
       </div>
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-muted-foreground">Affectation</p>
+        <div>
+          <AssignmentStatusBadge status={enrollment.assignment_status} />
+        </div>
+      </div>
+      {/* Le numéro n'existe que pour un affecté ou un réaffecté : afficher un
+          tiret pour les autres laisserait croire à une saisie oubliée. */}
+      {enrollment.assignment_decision_number ? (
+        <DetailField
+          label="Numéro de décision"
+          value={enrollment.assignment_decision_number}
+        />
+      ) : null}
       <DetailField label="Notes" value={enrollment.notes ?? "—"} />
       <DetailField label="Créé le" value={formatDate(enrollment.created_at)} />
     </div>
