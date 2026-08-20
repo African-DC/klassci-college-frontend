@@ -55,8 +55,11 @@ export function useArchiveEntity() {
       archiveApi.archive(entity, id, reason),
     onSuccess: (_data, variables) => {
       invalidate(variables.entity)
-      toast.success("Fiche archivée", {
-        description: "Elle a quitté les écrans. Rien n'est perdu, la corbeille la garde.",
+      // Le message nomme l'endroit exact où la fiche est retrouvable : sans
+      // cela, la personne qui vient de la voir disparaître croit l'avoir
+      // perdue et appelle le secrétariat.
+      toast.success("Fiche placée dans la corbeille", {
+        description: "Vous pouvez la restaurer depuis Système › Corbeille.",
       })
     },
     onError: (error) => {

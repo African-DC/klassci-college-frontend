@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import {
+  Archive,
   Pencil,
   Trash2,
   Users,
@@ -41,6 +42,8 @@ import { DataError } from "@/components/shared/DataError"
 import { DetailHero } from "@/components/shared/DetailHero"
 import { AccountSection } from "@/components/shared/account/AccountSection"
 import { ContactActions } from "@/components/shared/ContactActions"
+import { ArchiveActionDialog, ARCHIVE_MENU_LABEL } from "@/components/shared/ArchiveActionDialog"
+import { useArchiveAction } from "@/lib/hooks/useArchiveAction"
 import type { HeroKpi } from "@/components/shared/PageHero"
 import { useParent, useParentFull, useDeleteParent, useUnlinkParent } from "@/lib/hooks/useParents"
 import { formatXof } from "@/lib/export/format"
@@ -61,6 +64,11 @@ export function ParentDetailClient({ parentId }: { parentId: number }) {
   const { data: full } = useParentFull(parentId)
   const { mutate: deleteParent, isPending: deleting } = useDeleteParent()
   const { mutate: unlink, isPending: unlinking } = useUnlinkParent()
+  const archiveAction = useArchiveAction({
+    entity: "parent",
+    id: parentId,
+    listRoute: "/admin/parents",
+  })
 
   if (isLoading) return <DetailSkeleton />
   if (isError) return <DataError message="Impossible de charger la fiche parent." onRetry={() => refetch()} />
@@ -136,6 +144,14 @@ export function ParentDetailClient({ parentId }: { parentId: number }) {
                 Lier un enfant
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              {/* Archiver d'abord : c'est le geste réversible, donc celui que
+                  l'on veut voir avant la suppression définitive. */}
+              {archiveAction.canArchive && (
+                <DropdownMenuItem onClick={archiveAction.open}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  {ARCHIVE_MENU_LABEL.parent}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
                 className="text-destructive focus:bg-destructive/10 focus:text-destructive"
@@ -212,6 +228,9 @@ export function ParentDetailClient({ parentId }: { parentId: number }) {
       <AccountSection entityType="parent" entityId={parentId} />
 
       <ParentEditModal parentId={parentId} open={editOpen} onClose={() => setEditOpen(false)} />
+
+      {/* Archivage — hors du menu déroulant, qui se démonte à la fermeture */}
+      <ArchiveActionDialog action={archiveAction} entity="parent" subject={fullName} />
       <ParentLinkChildModal
         parentId={parentId}
         linkedStudentIds={children.map((c) => c.student_id)}

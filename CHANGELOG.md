@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Bouton « Archiver » sur les fiches élève, parent, enseignant, personnel et inscription : la fiche quitte les listes après un motif et cinq secondes de maintien, et reste récupérable dans la corbeille *(admin, directeur)*.
 - Écran « Corbeille » : les fiches retirées des écrans restent conservées, avec qui les a archivées, quand et pourquoi, et se restaurent en un clic *(admin, directeur)*.
 - Les gestes qui ne se rattrapent pas demandent un motif et se confirment en maintenant le bouton appuyé, cinq secondes pour archiver, dix pour supprimer définitivement. Le motif part au journal et à la direction *(admin, directeur)*.
 - Affectation de l'élève à l'inscription : affecté, réaffecté ou non affecté, avec le numéro de décision demandé uniquement quand il sert. Le montant des frais suit automatiquement *(secrétariat, éducateur)*.

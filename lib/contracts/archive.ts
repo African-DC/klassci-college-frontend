@@ -41,17 +41,51 @@ export interface ArchiveQuery {
  * Le type d'entité renvoyé par la corbeille commande l'URL d'appel : on ne
  * devine pas un chemin en collant un « s » derrière le type, une faute de
  * pluriel enverrait une purge sur la mauvaise ressource.
+ *
+ * `apiBase` porte le chemin complet, préfixe compris, parce qu'il n'est pas
+ * uniforme : les personnes vivent sous `/admin`, les inscriptions non. Le
+ * reconstruire à partir d'un préfixe commun enverrait les inscriptions sur une
+ * route qui n'existe pas.
+ *
+ * `deletePermission` est le droit exigé par le backend pour archiver ou
+ * restaurer. On le déclare ici pour que le bouton et l'appel parlent du même
+ * droit : un bouton visible qui finit en 403 est pire que pas de bouton.
  */
 export const ARCHIVABLE_ENTITIES = {
-  student: { path: "students", label: "Élève", plural: "Élèves", queryKey: "students" },
-  parent: { path: "parents", label: "Parent", plural: "Parents", queryKey: "parents" },
-  teacher: { path: "teachers", label: "Enseignant", plural: "Enseignants", queryKey: "teachers" },
-  staff: { path: "staff", label: "Personnel", plural: "Personnel", queryKey: "staff" },
+  student: {
+    apiBase: "/admin/students",
+    label: "Élève",
+    plural: "Élèves",
+    queryKey: "students",
+    deletePermission: "admin:students:delete",
+  },
+  parent: {
+    apiBase: "/admin/parents",
+    label: "Parent",
+    plural: "Parents",
+    queryKey: "parents",
+    deletePermission: "admin:parents:delete",
+  },
+  teacher: {
+    apiBase: "/admin/teachers",
+    label: "Enseignant",
+    plural: "Enseignants",
+    queryKey: "teachers",
+    deletePermission: "admin:teachers:delete",
+  },
+  staff: {
+    apiBase: "/admin/staff",
+    label: "Personnel",
+    plural: "Personnel",
+    queryKey: "staff",
+    deletePermission: "admin:staff:delete",
+  },
   enrollment: {
-    path: "enrollments",
+    apiBase: "/enrollments",
     label: "Inscription",
     plural: "Inscriptions",
     queryKey: "enrollments",
+    deletePermission: "enrollments:delete",
   },
 } as const
 
