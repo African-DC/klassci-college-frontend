@@ -6,7 +6,8 @@ import type { Route } from "next"
 import type { ColumnDef } from "@tanstack/react-table"
 import { Phone, MessageCircle, Mail } from "lucide-react"
 import { useTeachers, useDeleteTeacher } from "@/lib/hooks/useTeachers"
-import type { Teacher } from "@/lib/contracts/teacher"
+import { teacherContractLabel, type Teacher } from "@/lib/contracts/teacher"
+import { Badge } from "@/components/ui/badge"
 import { CrudTable, type FilterConfig } from "@/components/shared/CrudTable"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
 import { useDebounce } from "@/lib/hooks/useDebounce"
@@ -134,6 +135,21 @@ export function TeachersTable() {
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground tabular-nums">{row.original.phone ?? "—"}</span>
       ),
+    },
+    {
+      accessorKey: "contract_type",
+      header: "Contrat",
+      cell: ({ row }) => {
+        const label = teacherContractLabel(row.original.contract_type)
+        if (!label) {
+          return <span className="text-sm text-muted-foreground">—</span>
+        }
+        return (
+          <Badge variant="secondary" className="text-xs font-normal">
+            {label}
+          </Badge>
+        )
+      },
     },
     {
       id: "actions_contact",
