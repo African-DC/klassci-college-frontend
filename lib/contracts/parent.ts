@@ -46,17 +46,23 @@ export const ParentChildSchema = z.object({
   class_name: z.string().nullish(),
   enrollment_status: z.string().nullish(),
   is_enrolled: z.boolean(),
-  fees_expected: z.coerce.number(),
-  fees_paid: z.coerce.number(),
-  fees_balance: z.coerce.number(),
+  // `.nullish()` sans coercition : `z.coerce.number()` transformerait un `null`
+  // en `0`, et l'ecran afficherait « ne doit rien » a qui n'a simplement pas le
+  // droit de voir le montant.
+  fees_expected: z.coerce.number().nullish(),
+  fees_paid: z.coerce.number().nullish(),
+  fees_balance: z.coerce.number().nullish(),
+  /** `a_jour`, `en_retard` ou `sans_echeancier` — sans aucun montant. */
+  fee_status: z.string().nullish(),
+  last_payment_date: z.string().nullish(),
 })
 
 export const ParentSummarySchema = z.object({
   children_count: z.number(),
   enrolled_count: z.number(),
-  total_expected: z.coerce.number(),
-  total_paid: z.coerce.number(),
-  total_balance: z.coerce.number(),
+  total_expected: z.coerce.number().nullish(),
+  total_paid: z.coerce.number().nullish(),
+  total_balance: z.coerce.number().nullish(),
   academic_year_name: z.string().nullish(),
 })
 
