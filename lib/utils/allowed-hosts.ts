@@ -33,7 +33,7 @@ const EXTRA_ALLOWED_HOSTS = (process.env.NEXT_PUBLIC_EXTRA_ALLOWED_HOSTS ?? "")
  *   - hostnames matchant le pattern (ex: lycee-x.college.klassci.com)
  *   - hostnames listés explicitement dans EXTRA_ALLOWED_HOSTS
  *   - hôtes locaux (localhost, 127.0.0.1) en dev
- *   - IPs numériques (16.58.132.68) en dev
+ *   - IPs numériques (94.72.96.119) en démo
  */
 export function isHostAllowed(hostname: string): boolean {
   if (LOCAL_HOSTS.has(hostname)) return true

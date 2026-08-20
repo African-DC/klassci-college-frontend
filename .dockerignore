@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.env
+.env.local
+.env.development.local
+*.png
+_build_prod.bat
+_reinstall.bat
+_start_prod.bat
+.claude
+.github
+e2e
+tests

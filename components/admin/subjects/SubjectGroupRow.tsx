@@ -1,37 +1,30 @@
 "use client"
 
-import { ChevronRight, GraduationCap, Pencil, Trash2, UserX } from "lucide-react"
+import { ChevronRight, GraduationCap, UserX } from "lucide-react"
 import type { Subject } from "@/lib/contracts/subject"
+import type { SubjectGroup } from "@/lib/contracts/subject-group"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { getSubjectColor, teacherInitials } from "@/lib/utils/subject-colors"
-
-export interface SubjectGroup {
-  name: string
-  catalogue: Subject | null
-  instances: Subject[]
-  totalHours: number
-}
+import { SubjectRowActions } from "./SubjectRowActions"
 
 interface Props {
   group: SubjectGroup
   expanded: boolean
   onToggle: () => void
   onEdit: (id: number) => void
+  onAssign: (catalogue: Subject) => void
   onDelete: (subject: Subject) => void
 }
 
-// Layout grid réutilisé entre header et instance rows pour alignement parfait.
 const GRID_COLS = "grid-cols-[36px_minmax(0,2fr)_72px_96px_minmax(0,1.6fr)_104px]"
 
-export function SubjectGroupRow({ group, expanded, onToggle, onEdit, onDelete }: Props) {
+export function SubjectGroupRow({ group, expanded, onToggle, onEdit, onAssign, onDelete }: Props) {
   const color = getSubjectColor(group.catalogue?.color)
   const hasInstances = group.instances.length > 0
   const catalogue = group.catalogue
 
   return (
     <li className="border-b last:border-b-0">
-      {/* Catalogue header row */}
       <div
         role={hasInstances ? "button" : undefined}
         tabIndex={hasInstances ? 0 : undefined}
@@ -56,11 +49,11 @@ export function SubjectGroupRow({ group, expanded, onToggle, onEdit, onDelete }:
               className={`h-4 w-4 text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`}
             />
           ) : (
-            <span className="text-muted-foreground/30">—</span>
+            <span className="text-muted-foreground/30">-</span>
           )}
         </div>
 
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex min-w-0 items-center gap-3">
           <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color.badge}`} aria-hidden />
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold">{group.name}</div>
@@ -85,7 +78,7 @@ export function SubjectGroupRow({ group, expanded, onToggle, onEdit, onDelete }:
           )}
         </div>
 
-        <div className="text-center tabular-nums text-sm">
+        <div className="text-center text-sm tabular-nums">
           {catalogue ? (
             <>
               <span className="font-medium">{catalogue.hours_per_week}h</span>
@@ -94,7 +87,7 @@ export function SubjectGroupRow({ group, expanded, onToggle, onEdit, onDelete }:
               )}
             </>
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-muted-foreground">-</span>
           )}
         </div>
 
@@ -110,45 +103,30 @@ export function SubjectGroupRow({ group, expanded, onToggle, onEdit, onDelete }:
           onKeyDown={(e) => e.stopPropagation()}
         >
           {catalogue && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                aria-label={`Modifier ${group.name}`}
-                onClick={() => onEdit(catalogue.id)}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                aria-label={`Supprimer ${group.name}`}
-                onClick={() => onDelete(catalogue)}
-              >
-                <Trash2 className="h-3.5 w-3.5 text-destructive" />
-              </Button>
-            </>
+            <SubjectRowActions
+              name={group.name}
+              onEdit={() => onEdit(catalogue.id)}
+              onAssign={() => onAssign(catalogue)}
+              onDelete={() => onDelete(catalogue)}
+            />
           )}
         </div>
       </div>
 
-      {/* Instance rows */}
       {expanded && hasInstances && (
         <ul className="border-t bg-muted/15">
           {group.instances.map((inst) => (
             <li
               key={inst.id}
-              className={`grid ${GRID_COLS} items-center gap-3 px-4 py-2.5 border-t border-border/40 first:border-t-0`}
+              className={`grid ${GRID_COLS} items-center gap-3 border-t border-border/40 px-4 py-2.5 first:border-t-0`}
             >
-              <div className="flex items-center justify-center text-muted-foreground/50 text-base leading-none">
-                └
+              <div className="flex items-center justify-center text-base leading-none text-muted-foreground/50">
+                -
               </div>
 
-              <div className="flex items-center gap-2 pl-3 min-w-0">
+              <div className="flex min-w-0 items-center gap-2 pl-3">
                 <GraduationCap className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="truncate text-sm font-medium">{inst.level_name ?? "—"}</span>
+                <span className="truncate text-sm font-medium">{inst.level_name ?? "-"}</span>
                 {inst.series_name && (
                   <Badge variant="outline" className="text-[10px]">
                     Série {inst.series_name}
@@ -162,13 +140,13 @@ export function SubjectGroupRow({ group, expanded, onToggle, onEdit, onDelete }:
                 </Badge>
               </div>
 
-              <div className="text-center tabular-nums text-sm font-medium">
+              <div className="text-center text-sm font-medium tabular-nums">
                 {inst.hours_per_week}h
               </div>
 
               <div className="min-w-0">
                 {inst.teacher_name ? (
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex min-w-0 items-center gap-2">
                     <div
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white ${color.badge}`}
                       aria-hidden
@@ -186,24 +164,11 @@ export function SubjectGroupRow({ group, expanded, onToggle, onEdit, onDelete }:
               </div>
 
               <div className="flex justify-end gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  aria-label={`Modifier ${group.name} ${inst.level_name ?? ""}`}
-                  onClick={() => onEdit(inst.id)}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  aria-label={`Supprimer ${group.name} ${inst.level_name ?? ""}`}
-                  onClick={() => onDelete(inst)}
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                </Button>
+                <SubjectRowActions
+                  name={`${group.name} ${inst.level_name ?? ""}`}
+                  onEdit={() => onEdit(inst.id)}
+                  onDelete={() => onDelete(inst)}
+                />
               </div>
             </li>
           ))}

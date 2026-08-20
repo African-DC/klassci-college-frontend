@@ -12,7 +12,13 @@ interface EnrollmentCreateModalProps {
 
 export function EnrollmentCreateModal({ open, onClose, preselectedStudentId }: EnrollmentCreateModalProps) {
   return (
-    <CreateModal open={open} onClose={onClose} title="Nouvelle inscription" className="max-w-2xl">
+    <CreateModal
+      open={open}
+      onClose={onClose}
+      title="Nouvelle inscription"
+      persistOnOutsideClick
+      className="flex max-h-[92dvh] w-[calc(100vw-1.5rem)] max-w-2xl flex-col gap-4 overflow-y-auto p-4 sm:p-6"
+    >
       <EnrollmentForm onSuccess={onClose} preselectedStudentId={preselectedStudentId} />
     </CreateModal>
   )
