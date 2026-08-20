@@ -23,6 +23,7 @@ import type { Class } from "@/lib/contracts/class"
 import { useCreateWithStudent, useReEnroll, useFeeVariants } from "@/lib/hooks/useEnrollments"
 import { useStudents } from "@/lib/hooks/useStudents"
 import { useClasses } from "@/lib/hooks/useClasses"
+import { AssignmentStatusField } from "@/components/forms/AssignmentStatusField"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -86,6 +87,8 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
       commune: null,
       parent: null,
       class_id: undefined,
+      assignment_status: null,
+      assignment_decision_number: null,
       fee_variant_id: null,
       notes: null,
     },
@@ -98,6 +101,8 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
       type: "re-enrollment",
       student_id: undefined,
       class_id: undefined,
+      assignment_status: null,
+      assignment_decision_number: null,
       fee_variant_id: null,
       notes: null,
     },
@@ -383,6 +388,24 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
               onFeeVariantChange={(id) => reForm.setValue("fee_variant_id", id)}
               onNotesChange={(val) => reForm.setValue("notes", val)}
               classError={reForm.formState.errors.class_id?.message}
+            />
+          )}
+
+          {/* L'affectation decide du tarif : elle se saisit ici, avec la
+              classe, et non apres coup sur une inscription deja creee. */}
+          {enrollmentType === "new" ? (
+            <AssignmentStatusField
+              control={newForm.control}
+              statusName="assignment_status"
+              decisionName="assignment_decision_number"
+              status={newForm.watch("assignment_status")}
+            />
+          ) : (
+            <AssignmentStatusField
+              control={reForm.control}
+              statusName="assignment_status"
+              decisionName="assignment_decision_number"
+              status={reForm.watch("assignment_status")}
             />
           )}
         </div>

@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Affectation de l'élève à l'inscription : affecté, réaffecté ou non affecté, avec le numéro de décision demandé uniquement quand il sert. Le montant des frais suit automatiquement *(secrétariat, éducateur)*.
+- Un montant de frais peut ne valoir que pour les affectés ou que pour les non affectés. L'arbre des frais affiche la portée, si bien que deux montants sur le même niveau ne passent plus pour un doublon *(comptable)*.
 
 - Écran « Tranches de paiement » : l'établissement découpe le total des frais obligatoires en tranches exprimées en part du total, avec leur date limite. Le total des parts doit faire 100 %, et l'écran le signale en direct tant que ce n'est pas le cas *(comptable)*.
 - Échéancier sur la fiche inscription, sous la synthèse des frais : ce qui est dû, à quelle date, ce qui est déjà exigible, et la prochaine échéance. Une famille qui respecte son calendrier est affichée « à jour », même si elle n'a pas encore tout versé *(admin, comptable)*.
