@@ -43,6 +43,7 @@ export const ADMIN_NAVIGATION: AdminNavSection[] = [
     items: [
       { label: "Frais", href: "/admin/fees", iconName: "Wallet", anyOf: ["admin:fee-categories:read", "admin:fee-variants:read"] },
       { label: "Paiements", href: "/admin/payments", iconName: "CreditCard", anyOf: ["payments:read"] },
+      { label: "Tranches", href: "/admin/installments" as Route, iconName: "CalendarClock", anyOf: ["admin:fee-installments:read"] },
       // Ma caisse : réservée à qui tient un guichet. Le comptable ne l'a pas,
       // il supervise depuis le point journalier.
       { label: "Ma caisse", href: "/admin/cash" as Route, iconName: "Banknote", anyOf: ["cash-session:manage"] },
