@@ -55,9 +55,10 @@ const SECURITY_HEADERS = [
     // micro pour NOTRE origine. `microphone=()` le bloquait au niveau document,
     // AU-DESSUS de la permission utilisateur → `not-allowed` partout. `(self)`
     // est le défaut navigateur (origine propre seulement, pas les iframes tiers).
-    // camera / geolocation restent bloqués (non utilisés).
+    // camera=(self) : prise de photo à l'inscription (caméra frontale).
+    // geolocation reste bloquée.
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(self), geolocation=(), interest-cohort=()',
+    value: 'camera=(self), microphone=(self), geolocation=(), interest-cohort=()',
   },
 ];
 

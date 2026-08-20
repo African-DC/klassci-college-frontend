@@ -10,8 +10,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Wizard Nouvelle inscription : le modal ne se ferme plus si on appuie hors du cadre (la saisie n'est plus perdue). L'étape élève et la sélection de classe sont lisibles sur téléphone, avec des boutons assez grands. La liste des classes montre les places encore disponibles, pas seulement le maximum *(admin)*.
 - Publication Windows : le frontend standalone est désormais compilé hors production par la CI puis livré comme artefact versionné.
-- Déploiement : l'ancien workflow EC2 est retiré, la production KLASSCI College reste publiée sur le serveur Windows natif.
+- Déploiement : l'ancien workflow EC2 est retiré. La démo reste sur le serveur Windows, la production vise le VPS Contabo (artefact + restart, aucun build sur le serveur).
 - Fiche inscription et onglet Paiements repensés en premium : en-tête avec bandeau de marque (classe, année, statut), synthèse claire des frais (payé, reste à payer, progression), détail de chaque frais avec sa barre d'avancement et son statut, et historique des versements montrant la répartition sur les frais avec le reçu téléchargeable pour chacun *(admin)*.
 - Onglet Paiements de la fiche élève : même bandeau de synthèse premium des frais (payé, reste à payer) *(admin)*.
 - Fiches élève, enseignant et personnel : la carte « Compte de connexion » passe en bas de page, ce n'est pas l'information principale à l'ouverture de la fiche *(admin)*.
@@ -20,6 +21,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Inscription élève : prise de photo directe (caméra, aperçu, reprise) avec import de fichier en repli. La photo est enregistrée sur le profil après création. Sur HTTP, la caméra live n'est pas disponible : utiliser HTTPS (`college.klassci.com`) ou l'import. États permission refusée, chargement, erreur et succès couverts *(admin)*.
 - Vérification publique enrichie du Sceau numérique institutionnel KLASSCI : état actif, révoqué, remplacé ou expiré, aucune identité d'élève exposée et comparaison du PDF avec l'empreinte signée conservée par KLASSCI *(public)*.
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 

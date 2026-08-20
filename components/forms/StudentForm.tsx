@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { StudentCreateSchema, type StudentCreate } from "@/lib/contracts/student"
@@ -21,12 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
+import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
 
 interface StudentFormProps {
   onSuccess: () => void
 }
 
 export function StudentForm({ onSuccess }: StudentFormProps) {
+  const [photo, setPhoto] = useState<File | null>(null)
   const form = useForm<StudentCreate>({
     resolver: zodResolver(StudentCreateSchema),
     defaultValues: {
@@ -43,11 +47,14 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
   })
 
   const { mutate, isPending, error } = useCreateStudent()
+  const attachPhoto = useAttachStudentPhoto()
 
   function onSubmit(data: StudentCreate) {
     mutate(data, {
-      onSuccess: () => {
+      onSuccess: async (student) => {
+        await attachPhoto.mutateAsync({ studentId: student.id, photo })
         form.reset()
+        setPhoto(null)
         onSuccess()
       },
     })
@@ -56,6 +63,8 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <StudentPhotoField value={photo} onChange={setPhoto} disabled={isPending || attachPhoto.isPending} />
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -204,8 +213,8 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
           </div>
         )}
 
-        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending ? "Enregistrement..." : "Enregistrer l'élève"}
+        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending || attachPhoto.isPending}>
+          {attachPhoto.isPending ? "Envoi de la photo..." : isPending ? "Enregistrement..." : "Enregistrer l'élève"}
         </Button>
       </form>
     </Form>
