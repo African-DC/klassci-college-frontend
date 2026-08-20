@@ -9,6 +9,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Bouton « Demande de dossier scolaire » sur la fiche élève : le courrier réclamant le dossier à l'établissement d'origine se télécharge en un clic, scellé pour être vérifiable *(admin)*.
+- Billet d'entrée depuis l'écran des présences : sur une absence non régularisée, l'éducateur saisit la date de reprise et le motif, l'absence passe en excusée dans le cahier d'appel et le billet s'imprime *(admin)*.
+- Écran « Convocations de parent » : le registre montre qui a été convoqué, quand, et qui est venu. Une convocation s'émet en trois champs, la suite donnée se consigne après le rendez-vous, la convocation se télécharge pour la famille *(admin)*.
+- Écran « Autorisations de reprise » : le billet d'annulation de zéro lève le zéro d'office des évaluations manquées pour absence justifiée. Seules les évaluations réellement manquées sur la période sont proposées, le billet se télécharge *(admin)*.
+- Case « Abs. » sur la feuille de saisie des notes : un élève absent le jour de l'épreuve reçoit un zéro qui compte dans la moyenne, distinct d'une case laissée vide qui veut dire « pas encore corrigé ». Le mode dictée enregistre désormais la même chose quand on dit « absent » *(enseignant)*.
 - Bouton « Archiver » sur les fiches élève, parent, enseignant, personnel et inscription : la fiche quitte les listes après un motif et cinq secondes de maintien, et reste récupérable dans la corbeille *(admin, directeur)*.
 - Écran « Corbeille » : les fiches retirées des écrans restent conservées, avec qui les a archivées, quand et pourquoi, et se restaurent en un clic *(admin, directeur)*.
 - Les gestes qui ne se rattrapent pas demandent un motif et se confirment en maintenant le bouton appuyé, cinq secondes pour archiver, dix pour supprimer définitivement. Le motif part au journal et à la direction *(admin, directeur)*.
