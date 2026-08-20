@@ -47,6 +47,7 @@ import { DataError } from "@/components/shared/DataError"
 import { DetailHero } from "@/components/shared/DetailHero"
 import { AccountSection } from "@/components/shared/account/AccountSection"
 import type { HeroKpi } from "@/components/shared/PageHero"
+import { PaymentStatusBadge } from "@/components/shared/finance/PaymentStatusBadge"
 import { StudentEditModal } from "./StudentEditModal"
 import { StudentJourneyTimeline } from "./StudentJourneyTimeline"
 import { StudentAcademicCharts } from "./StudentAcademicCharts"
@@ -135,15 +136,33 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
   const heroKpis: HeroKpi[] = [
     { label: "Classe", value: (f?.current_class_name as string | undefined) ?? "—", icon: GraduationCap },
     { label: "Présence", value: `${(f?.attendance_rate as number | undefined) ?? 0}%`, icon: ClipboardCheck },
-    {
+  ]
+  const feesRemainingRaw = f?.fees_remaining as number | null | undefined
+  // `null` signifie « vous n'avez pas le droit de lire ce montant » ; `undefined`
+  // signifie « pas encore charge ». Le premier merite le badge, pas le second.
+  const amountsHidden = f !== undefined && feesRemainingRaw === null
+  if (amountsHidden) {
+    heroKpis.push({
+      label: "Paiement",
+      value: (
+        <PaymentStatusBadge
+          status={f?.fee_status as string | null | undefined}
+          lastPaymentDate={f?.last_payment_date as string | null | undefined}
+          onHero
+        />
+      ),
+      icon: Wallet,
+    })
+  } else {
+    heroKpis.push({
       label: "Reste à payer",
-      value: formatFCFA((f?.fees_remaining as number | undefined) ?? 0),
+      value: formatFCFA(feesRemainingRaw ?? 0),
       icon: Wallet,
       hint: (f?.current_academic_year as string | undefined)
         ? `Année ${f?.current_academic_year as string}`
         : undefined,
-    },
-  ]
+    })
+  }
   const genreLabel = student.genre === "M" ? "Masculin" : student.genre === "F" ? "Féminin" : null
 
   return (
@@ -255,10 +274,12 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
               <BookOpen className="mr-1.5 h-3.5 w-3.5" />
               Vue d&apos;ensemble
             </TabsTrigger>
-            <TabsTrigger value="paiements">
-              <Wallet className="mr-1.5 h-3.5 w-3.5" />
-              Paiements
-            </TabsTrigger>
+            {amountsHidden ? null : (
+              <TabsTrigger value="paiements">
+                <Wallet className="mr-1.5 h-3.5 w-3.5" />
+                Paiements
+              </TabsTrigger>
+            )}
             <TabsTrigger value="parents">
               <Users className="mr-1.5 h-3.5 w-3.5" />
               Parents
@@ -291,9 +312,11 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
           <OverviewTab studentId={studentId} student={student} onTabChange={setActiveTab} />
         </TabsContent>
 
-        <TabsContent value="paiements">
-          <PaymentsTab studentId={studentId} fullData={full ?? undefined} />
-        </TabsContent>
+        {amountsHidden ? null : (
+          <TabsContent value="paiements">
+            <PaymentsTab studentId={studentId} fullData={full ?? undefined} />
+          </TabsContent>
+        )}
 
         <TabsContent value="parents">
           <ParentsTab studentId={studentId} />

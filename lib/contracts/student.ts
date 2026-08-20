@@ -110,10 +110,16 @@ export const StudentFullSchema = z.object({
   attendance_absent: z.number(),
   attendance_late: z.number(),
   attendance_rate: z.number(),
-  fees_expected: z.number(),
-  fees_paid: z.number(),
-  fees_remaining: z.number(),
-  fees_rate: z.number(),
+  // `null` quand l'appelant n'a pas le droit de lire les montants. Le backend
+  // renvoie volontairement `null` et pas `0` : un zéro se lirait « la famille
+  // ne doit rien », ce qui serait faux.
+  fees_expected: z.number().nullish(),
+  fees_paid: z.number().nullish(),
+  fees_remaining: z.number().nullish(),
+  fees_rate: z.number().nullish(),
+  /** `a_jour`, `en_retard` ou `sans_echeancier` — sans aucun montant. */
+  fee_status: z.string().nullish(),
+  last_payment_date: z.string().nullish(),
   trimester_grades: z.array(StudentTrimesterGradesSchema),
   trimester_absences: z.array(StudentTrimesterAbsencesSchema),
 })

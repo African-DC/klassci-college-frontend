@@ -3,6 +3,7 @@
 import Link from "next/link"
 import type { Route } from "next"
 import { GraduationCap, MoreVertical, Unlink, ArrowUpRight } from "lucide-react"
+import { PaymentStatusBadge } from "@/components/shared/finance/PaymentStatusBadge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import {
@@ -34,9 +35,15 @@ export function ParentChildCard({
   const initials = `${child.last_name?.[0] ?? ""}${child.first_name?.[0] ?? ""}`.toUpperCase()
   const photo = getUploadUrl(child.photo_url)
   const rel = RELATIONSHIP_LABEL[child.relationship_type] ?? child.relationship_type
-  const paidRatio =
-    child.fees_expected > 0 ? Math.min(100, (child.fees_paid / child.fees_expected) * 100) : 0
-  const settled = child.fees_expected > 0 && child.fees_balance <= 0
+  // Le solde vaut `null` quand l'appelant n'a pas le droit de lire les
+  // montants : on affiche alors l'état de paiement, jamais une somme. On
+  // resserre le type une seule fois ici plutôt qu'à chaque affichage.
+  const amountsHidden = child.fees_balance == null
+  const expected = child.fees_expected ?? 0
+  const paid = child.fees_paid ?? 0
+  const balance = child.fees_balance ?? 0
+  const paidRatio = expected > 0 ? Math.min(100, (paid / expected) * 100) : 0
+  const settled = !amountsHidden && expected > 0 && balance <= 0
 
   return (
     <div className="rounded-lg border bg-card p-3 transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-12px_rgba(4,83,203,0.35)]">
@@ -95,7 +102,14 @@ export function ParentChildCard({
       </div>
 
       {/* Situation financière (année courante) */}
-      {child.is_enrolled && child.fees_expected > 0 ? (
+      {child.is_enrolled && amountsHidden ? (
+        <div className="mt-3 rounded-md border border-border/60 bg-muted/40 p-2.5">
+          <PaymentStatusBadge
+            status={child.fee_status}
+            lastPaymentDate={child.last_payment_date}
+          />
+        </div>
+      ) : child.is_enrolled && expected > 0 ? (
         <div className="mt-3 rounded-md border border-border/60 bg-muted/40 p-2.5">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Scolarité</span>
@@ -103,7 +117,7 @@ export function ParentChildCard({
               <span className="font-semibold text-emerald-600 dark:text-emerald-400">À jour</span>
             ) : (
               <span className="font-semibold text-accent">
-                Reste {formatXof(child.fees_balance)}
+                Reste {formatXof(balance)}
               </span>
             )}
           </div>
@@ -113,7 +127,7 @@ export function ParentChildCard({
             aria-label={`${Math.round(paidRatio)}% payé`}
           />
           <p className="mt-1 text-[11px] tabular-nums text-muted-foreground">
-            {formatXof(child.fees_paid)} / {formatXof(child.fees_expected)}
+            {formatXof(paid)} / {formatXof(expected)}
           </p>
         </div>
       ) : child.is_enrolled ? (

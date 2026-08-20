@@ -75,15 +75,23 @@ export function ParentDetailClient({ parentId }: { parentId: number }) {
     ? new Date(parent.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
     : null
 
+  // `null` signifie « vous n'avez pas le droit de lire ce montant » ; `undefined`
+  // signifie « pas encore chargé ». Seul le premier justifie de masquer.
+  const amountsHidden = summary !== undefined && summary?.total_balance === null
+
   const kpis: HeroKpi[] = [
     { label: "Enfants", value: summary?.children_count ?? children.length, icon: Users },
-    { label: "Total payé", value: formatXof(summary?.total_paid ?? 0), icon: Coins },
-    {
-      label: "Reste à payer",
-      value: formatXof(summary?.total_balance ?? 0),
-      icon: Wallet,
-      hint: summary?.academic_year_name ? `Année ${summary.academic_year_name}` : undefined,
-    },
+    ...(amountsHidden
+      ? []
+      : [
+          { label: "Total payé", value: formatXof(summary?.total_paid ?? 0), icon: Coins },
+          {
+            label: "Reste à payer",
+            value: formatXof(summary?.total_balance ?? 0),
+            icon: Wallet,
+            hint: summary?.academic_year_name ? `Année ${summary.academic_year_name}` : undefined,
+          },
+        ]),
   ]
 
   const handleDelete = () =>
