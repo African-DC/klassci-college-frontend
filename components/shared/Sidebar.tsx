@@ -25,6 +25,7 @@ import {
   FileText,
   Gauge,
   Bell,
+  ScrollText,
   ShieldCheck,
   Settings,
   X,
@@ -61,6 +62,7 @@ const ICONS = {
   FileText,
   Gauge,
   Bell,
+  ScrollText,
   ShieldCheck,
   Settings,
 } as const

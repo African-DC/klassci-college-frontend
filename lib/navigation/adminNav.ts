@@ -66,6 +66,7 @@ export const ADMIN_NAVIGATION: AdminNavSection[] = [
     items: [
       { label: "Notifications", href: "/admin/notifications", iconName: "Bell", anyOf: [] },
       { label: "Rôles & Permissions", href: "/admin/roles", iconName: "ShieldCheck", anyOf: ["admin:roles:read"] },
+      { label: "Journal d'audit", href: "/admin/audit" as Route, iconName: "ScrollText", anyOf: ["audit:read", "audit:read:financial"] },
       { label: "Paramètres", href: "/admin/settings" as Route, iconName: "Settings", anyOf: ["admin:academic-years:read"] },
     ],
   },
