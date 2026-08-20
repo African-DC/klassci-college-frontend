@@ -5,6 +5,7 @@ import { Copy, Loader2, ArrowRight } from "lucide-react"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
@@ -15,6 +16,16 @@ import {
 } from "@/components/ui/select"
 import { useCreateFeeVariant } from "@/lib/hooks/useFees"
 import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
+
+/**
+ * Un niveau peut porter plusieurs montants pour la même catégorie, un par
+ * portée d'affectation. La clé les distingue, sinon copier une grille
+ * « affecté + non affecté » n'en retiendrait qu'une moitié en croyant à un
+ * doublon.
+ */
+function variantKey(levelId: number, scope: string | null | undefined): string {
+  return `${levelId}:${scope ?? "tous"}`
+}
 
 interface FeeVariantCopyModalProps {
   open: boolean
@@ -67,9 +78,17 @@ export function FeeVariantCopyModal({
     }
   }, [open])
 
-  // Niveaux déjà configurés sur la cible : on évite de proposer un doublon.
-  const targetLevelIds = useMemo(
-    () => new Set(targetId ? variants.filter((v) => v.fee_category_id === targetId).map((v) => v.level_id) : []),
+  // Couples niveau + portée déjà configurés sur la cible : on évite de
+  // proposer un doublon.
+  const targetKeys = useMemo(
+    () =>
+      new Set(
+        targetId
+          ? variants
+              .filter((v) => v.fee_category_id === targetId)
+              .map((v) => variantKey(v.level_id, v.assignment_scope))
+          : [],
+      ),
     [targetId, variants],
   )
 
@@ -83,7 +102,7 @@ export function FeeVariantCopyModal({
   }
 
   const chosen = sourceVariants.filter((v) => selected.has(v.id))
-  const willSkip = chosen.filter((v) => targetLevelIds.has(v.level_id)).length
+  const willSkip = chosen.filter((v) => targetKeys.has(variantKey(v.level_id, v.assignment_scope))).length
   const willCopy = chosen.length - willSkip
   const canSubmit = !!sourceId && !!targetId && sourceId !== targetId && willCopy > 0 && !busy
 
@@ -93,11 +112,15 @@ export function FeeVariantCopyModal({
     let ok = 0
     let failed = 0
     for (const v of chosen) {
-      if (targetLevelIds.has(v.level_id)) continue // doublon niveau -> on saute
+      if (targetKeys.has(variantKey(v.level_id, v.assignment_scope))) continue // doublon -> on saute
       try {
         await mutateAsync({
           fee_category_id: targetId,
           level_id: v.level_id,
+          // Sans la portée, un montant réservé aux affectés serait recopié
+          // comme applicable à tous : les non affectés paieraient le tarif
+          // subventionné et l'école perdrait la différence.
+          assignment_scope: v.assignment_scope ?? null,
           amount: v.amount,
           academic_year_id: academicYearId,
         })
@@ -154,8 +177,24 @@ export function FeeVariantCopyModal({
                       className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted/50"
                     >
                       <Checkbox checked={selected.has(v.id)} onCheckedChange={() => toggle(v.id)} />
-                      <span className="flex-1 text-sm">{levelNameMap.get(v.level_id) ?? `#${v.level_id}`}</span>
-                      <span className="text-sm font-semibold tabular-nums">
+                      <span className="min-w-0 flex-1 truncate text-sm">
+                        {levelNameMap.get(v.level_id) ?? `#${v.level_id}`}
+                      </span>
+                      {v.assignment_scope ? (
+                        // Même repère que l'arbre des frais : deux lignes sur
+                        // le même niveau visent des élèves différents.
+                        <Badge
+                          variant="outline"
+                          className={
+                            v.assignment_scope === "affecte"
+                              ? "h-5 shrink-0 border-emerald-300 text-[10px] text-emerald-700 dark:border-emerald-800 dark:text-emerald-300"
+                              : "h-5 shrink-0 border-amber-300 text-[10px] text-amber-700 dark:border-amber-800 dark:text-amber-300"
+                          }
+                        >
+                          {v.assignment_scope === "affecte" ? "affecté" : "non affecté"}
+                        </Badge>
+                      ) : null}
+                      <span className="shrink-0 text-sm font-semibold tabular-nums">
                         {v.amount.toLocaleString("fr-FR")} FCFA
                       </span>
                     </label>

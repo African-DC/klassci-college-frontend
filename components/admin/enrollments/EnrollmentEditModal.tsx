@@ -29,6 +29,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { AssignmentStatusField } from "@/components/forms/AssignmentStatusField"
 
 interface EnrollmentEditModalProps {
   enrollmentId: number | null
@@ -63,10 +64,16 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
       ? {
           class_id: enrollment.class_id,
           status: enrollment.status,
+          assignment_status: enrollment.assignment_status ?? null,
+          assignment_decision_number: enrollment.assignment_decision_number ?? null,
           notes: enrollment.notes,
         }
       : undefined,
   })
+
+  // La décision d'affectation arrive parfois après l'inscription : on suit la
+  // valeur en direct pour révéler le numéro de décision dès qu'il devient utile.
+  const assignmentStatus = form.watch("assignment_status")
 
   if (isLoading || !enrollment) return <EditFormSkeleton />
 
@@ -106,6 +113,13 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
               <FormMessage />
             </FormItem>
           )}
+        />
+
+        <AssignmentStatusField
+          control={form.control}
+          statusName="assignment_status"
+          decisionName="assignment_decision_number"
+          status={assignmentStatus}
         />
 
         <FormField
