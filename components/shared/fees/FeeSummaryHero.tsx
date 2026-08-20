@@ -1,3 +1,4 @@
+import { formatFcfa } from "@/lib/utils/money"
 import { cn } from "@/lib/utils"
 
 /**
@@ -15,7 +16,7 @@ interface FeeSummaryHeroProps {
   className?: string
 }
 
-const fmt = (n: number) => `${n.toLocaleString("fr-FR")} FCFA`
+const fmt = formatFcfa
 
 export function FeeSummaryHero({
   totalExpected,

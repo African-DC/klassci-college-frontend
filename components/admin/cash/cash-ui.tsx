@@ -2,11 +2,9 @@
 
 import { Badge } from "@/components/ui/badge"
 import type { CashMethodTotal } from "@/lib/contracts/cash-session"
+import { formatFcfa } from "@/lib/utils/money"
 
-/** Montants en FCFA, séparateur de milliers français, jamais de décimales. */
-export function formatFcfa(amount: number): string {
-  return `${Math.round(amount).toLocaleString("fr-FR")} FCFA`
-}
+export { formatFcfa }
 
 /**
  * L'écart de caisse est l'information que le comptable cherche en premier.
