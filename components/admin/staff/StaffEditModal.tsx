@@ -2,7 +2,8 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { StaffUpdateSchema, STAFF_ROLE_OPTIONS, type StaffUpdate } from "@/lib/contracts/staff"
+import { StaffUpdateSchema, type StaffUpdate } from "@/lib/contracts/staff"
+import { StaffRoleOptions } from "./StaffRoleOptions"
 import { useStaffMember, useUpdateStaff } from "@/lib/hooks/useStaff"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -135,11 +136,7 @@ function EditForm({ staffId, onClose }: { staffId: number; onClose: () => void }
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {STAFF_ROLE_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
+                  <StaffRoleOptions />
                 </SelectContent>
               </Select>
               <FormMessage />

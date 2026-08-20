@@ -24,15 +24,22 @@ import {
 import { useLeaveRequests, useReviewLeaveRequest, useSetInterim } from "@/lib/hooks/useLeave"
 import { useTeachers } from "@/lib/hooks/useTeachers"
 import { leaveTypeLabel } from "@/lib/contracts/leave"
+import { staffRoleLabel } from "@/lib/contracts/staff"
 import { LeaveStatusBadge, formatDateRange, dayCount } from "@/components/shared/leave/leave-ui"
 import { cn } from "@/lib/utils"
 
-const ROLE_LABELS: Record<string, string> = {
+// Rôles qui ne sont pas assignables depuis la fiche Personnel. Tous les autres
+// (secrétariat, caissier, éducateur, comptable, directeur des études, directeur)
+// sont libellés par staffRoleLabel : une seule source de vérité, sinon un
+// nouveau rôle s'affiche ici sous son slug technique.
+const NON_STAFF_ROLE_LABELS: Record<string, string> = {
   teacher: "Enseignant",
-  staff: "Personnel",
   admin: "Administrateur",
-  director: "Directeur",
-  accountant: "Comptable",
+}
+
+function requesterRoleLabel(role?: string | null): string {
+  if (!role) return "—"
+  return NON_STAFF_ROLE_LABELS[role] ?? staffRoleLabel(role)
 }
 
 const FILTERS = [
@@ -114,7 +121,7 @@ export function LeaveManagementClient() {
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-medium">{r.requester_name ?? "—"}</p>
                       <span className="text-xs text-muted-foreground">
-                        {ROLE_LABELS[r.requester_role ?? ""] ?? r.requester_role ?? ""}
+                        {requesterRoleLabel(r.requester_role)}
                       </span>
                       <LeaveStatusBadge status={r.status} />
                     </div>

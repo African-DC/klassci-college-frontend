@@ -3,20 +3,21 @@ import { z } from "zod"
 // Rôles d'accès assignables à un membre du personnel (miroir de
 // STAFF_ASSIGNABLE_ROLES côté backend). Jamais admin / super_admin.
 export const STAFF_ROLE_OPTIONS = [
-  { value: "staff", label: "Personnel" },
-  { value: "accountant", label: "Comptable" },
-  { value: "director", label: "Directeur" },
+  { value: "staff", label: "Secrétariat", hint: "Inscriptions, élèves, parents, encaissements" },
+  { value: "cashier", label: "Caissier", hint: "Encaisse au guichet, ne voit que sa propre caisse" },
+  { value: "educator", label: "Éducateur", hint: "Monte et valide les inscriptions" },
+  { value: "accountant", label: "Comptable", hint: "Frais, tranches et point journalier de toutes les caisses" },
+  { value: "studies_director", label: "Directeur des études", hint: "Pédagogie uniquement, aucun accès aux finances" },
+  { value: "director", label: "Directeur", hint: "Accès complet à l'établissement" },
 ] as const
 
-const STAFF_ROLE_LABELS: Record<string, string> = {
-  staff: "Personnel",
-  accountant: "Comptable",
-  director: "Directeur",
-}
+const STAFF_ROLE_LABELS: Record<string, string> = Object.fromEntries(
+  STAFF_ROLE_OPTIONS.map((option) => [option.value, option.label]),
+)
 
-/** Libellé français du rôle d'accès (défaut : Personnel). */
+/** Libellé français du rôle d'accès (défaut : Secrétariat). */
 export function staffRoleLabel(role?: string | null): string {
-  if (!role) return "Personnel"
+  if (!role) return "Secrétariat"
   return STAFF_ROLE_LABELS[role] ?? role
 }
 
