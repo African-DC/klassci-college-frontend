@@ -13,6 +13,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Tranches de paiement » : l'établissement découpe le total des frais obligatoires en tranches exprimées en part du total, avec leur date limite. Le total des parts doit faire 100 %, et l'écran le signale en direct tant que ce n'est pas le cas *(comptable)*.
 - Échéancier sur la fiche inscription, sous la synthèse des frais : ce qui est dû, à quelle date, ce qui est déjà exigible, et la prochaine échéance. Une famille qui respecte son calendrier est affichée « à jour », même si elle n'a pas encore tout versé *(admin, comptable)*.
 - Écran « Ma caisse » pour le caissier : ce qu'il a encaissé aujourd'hui, ventilé par moyen de paiement, et la clôture de journée. Il compte son tiroir, saisit le montant, l'écart s'affiche avant validation et la journée se verrouille *(caissier)*.
+- Cadenas sur les documents officiels : quand des échéances arrivées à terme restent dues, le certificat de scolarité, l'attestation de fréquentation et le bulletin affichent le montant exact à régler au lieu d'un bouton qui échoue. Le parent voit où aller payer *(parent, admin)*.
+- Dérogation depuis la fiche élève : le chef d'établissement délivre le document malgré la dette après avoir saisi un motif, et l'écran prévient que la décision est enregistrée *(admin, directeur)*.
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
