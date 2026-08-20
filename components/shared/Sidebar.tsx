@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  Archive,
   ArrowUpFromLine,
   LayoutDashboard,
   UserPlus,
@@ -39,6 +40,7 @@ import { usePermissions } from "@/lib/hooks/usePermissions"
 import { filterAdminNavigation } from "@/lib/navigation/adminNav"
 
 const ICONS = {
+  Archive,
   Banknote,
   ClipboardCheck,
   ArrowUpFromLine,

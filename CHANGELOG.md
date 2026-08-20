@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Écran « Corbeille » : les fiches retirées des écrans restent conservées, avec qui les a archivées, quand et pourquoi, et se restaurent en un clic *(admin, directeur)*.
+- Les gestes qui ne se rattrapent pas demandent un motif et se confirment en maintenant le bouton appuyé, cinq secondes pour archiver, dix pour supprimer définitivement. Le motif part au journal et à la direction *(admin, directeur)*.
 - Affectation de l'élève à l'inscription : affecté, réaffecté ou non affecté, avec le numéro de décision demandé uniquement quand il sert. Le montant des frais suit automatiquement *(secrétariat, éducateur)*.
 - Un montant de frais peut ne valoir que pour les affectés ou que pour les non affectés. L'arbre des frais affiche la portée, si bien que deux montants sur le même niveau ne passent plus pour un doublon *(comptable)*.
 
