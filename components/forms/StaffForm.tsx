@@ -4,7 +4,8 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Eye, EyeOff, KeyRound } from "lucide-react"
-import { StaffCreateSchema, STAFF_ROLE_OPTIONS, type StaffCreate } from "@/lib/contracts/staff"
+import { StaffCreateSchema, type StaffCreate } from "@/lib/contracts/staff"
+import { StaffRoleOptions } from "@/components/admin/staff/StaffRoleOptions"
 import { useCreateStaff } from "@/lib/hooks/useStaff"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -131,11 +132,7 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {STAFF_ROLE_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
+                  <StaffRoleOptions />
                 </SelectContent>
               </Select>
               <FormDescription className="text-xs">

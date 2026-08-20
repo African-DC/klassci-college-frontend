@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Fiche Personnel : le rôle d'accès propose désormais six métiers (secrétariat, caissier, éducateur, comptable, directeur des études, directeur), chacun accompagné d'une phrase qui dit ce que la personne pourra faire. « Personnel administratif » devient « Secrétariat » *(admin, directeur)*.
 - Wizard Nouvelle inscription : le modal ne se ferme plus si on appuie hors du cadre (la saisie n'est plus perdue). L'étape élève et la sélection de classe sont lisibles sur téléphone, avec des boutons assez grands. La liste des classes montre les places encore disponibles, pas seulement le maximum *(admin)*.
 - Publication Windows : le frontend standalone est désormais compilé hors production par la CI puis livré comme artefact versionné.
 - Déploiement : l'ancien workflow EC2 est retiré. La démo reste sur le serveur Windows, la production vise le VPS Contabo (artefact + restart, aucun build sur le serveur).
