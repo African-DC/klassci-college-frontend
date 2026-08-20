@@ -10,6 +10,7 @@ import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
 import { EnrollmentFeesBreakdown, type EnrollmentFeeItem } from "@/components/admin/payments/EnrollmentFeesBreakdown"
 import { PaymentHistoryList } from "@/components/admin/payments/PaymentHistoryList"
 import { StudentPaymentModal } from "@/components/admin/students/tabs/StudentPaymentModal"
+import { EnrollmentScheduleCard } from "@/components/admin/installments/EnrollmentScheduleCard"
 
 interface EnrollmentPaymentsTabProps {
   enrollmentId: number
@@ -59,6 +60,11 @@ export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPa
   return (
     <div className="space-y-4">
       <FeeSummaryHero totalExpected={totalExpected} totalPaid={totalPaid} totalRemaining={totalRemaining} />
+
+      {/* Placé juste sous la synthèse : « combien reste-t-il ? » appelle
+          immédiatement « et pour quand ? ». Le retard affiché compare ce qui
+          est déjà exigible au versé, jamais le total de l'année. */}
+      <EnrollmentScheduleCard enrollmentId={enrollmentId} />
 
       {studentId && totalRemaining > 0 && (
         <div className="flex justify-end">
