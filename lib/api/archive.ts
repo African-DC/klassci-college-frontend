@@ -33,7 +33,9 @@ function unwrap(json: unknown): unknown {
 }
 
 function basePath(entity: ArchivableEntity, id: number): string {
-  return `/admin/${ARCHIVABLE_ENTITIES[entity].path}/${id}`
+  // Le préfixe vient du catalogue, il n'est pas déductible : les inscriptions
+  // sont servies hors de `/admin`, contrairement aux personnes.
+  return `${ARCHIVABLE_ENTITIES[entity].apiBase}/${id}`
 }
 
 export const archiveApi = {

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import {
+  Archive,
   Camera,
   Pencil,
   Trash2,
@@ -45,6 +46,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
 import { DetailHero } from "@/components/shared/DetailHero"
+import { ArchiveActionDialog, ARCHIVE_MENU_LABEL } from "@/components/shared/ArchiveActionDialog"
+import { useArchiveAction } from "@/lib/hooks/useArchiveAction"
 import { AccountSection } from "@/components/shared/account/AccountSection"
 import type { HeroKpi } from "@/components/shared/PageHero"
 import { PaymentStatusBadge } from "@/components/shared/finance/PaymentStatusBadge"
@@ -88,6 +91,11 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
   const { data: student, isLoading, isError, refetch } = useStudent(studentId)
   const { data: full } = useStudentFull(studentId)
   const { mutate: deleteStudent, isPending: deleting } = useDeleteStudent()
+  const archiveAction = useArchiveAction({
+    entity: "student",
+    id: studentId,
+    listRoute: "/admin/students",
+  })
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -203,6 +211,14 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
+              {/* Archiver est le geste courant, il précède donc la suppression
+                  définitive, qu'on ne veut pas rencontrer en premier. */}
+              {archiveAction.canArchive && (
+                <DropdownMenuItem onClick={archiveAction.open}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  {ARCHIVE_MENU_LABEL.student}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
                 className="text-destructive focus:bg-destructive/10 focus:text-destructive"
@@ -344,6 +360,15 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
 
       {/* Edit modal */}
       <StudentEditModal studentId={studentId} open={editOpen} onClose={() => setEditOpen(false)} />
+
+      {/* Archivage — hors du menu déroulant, qui se démonte à la fermeture */}
+      <ArchiveActionDialog
+        action={archiveAction}
+        entity="student"
+        subject={
+          student.enrollment_number ? `${fullName} · ${student.enrollment_number}` : fullName
+        }
+      />
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

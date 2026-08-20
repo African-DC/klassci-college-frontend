@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
+  Archive,
   BookOpen,
   Pencil,
   Trash2,
@@ -39,6 +40,8 @@ import { DataError } from "@/components/shared/DataError"
 import { DetailHero } from "@/components/shared/DetailHero"
 import { AccountSection } from "@/components/shared/account/AccountSection"
 import { ContactActions } from "@/components/shared/ContactActions"
+import { ArchiveActionDialog, ARCHIVE_MENU_LABEL } from "@/components/shared/ArchiveActionDialog"
+import { useArchiveAction } from "@/lib/hooks/useArchiveAction"
 import type { HeroKpi } from "@/components/shared/PageHero"
 import { TeacherEditModal } from "./TeacherEditModal"
 import { TeacherOverviewTab } from "./tabs/TeacherOverviewTab"
@@ -67,6 +70,11 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
   const { data: teacher, isLoading, isError, refetch } = useTeacher(teacherId)
   const { data: fullData } = useTeacherFull(teacherId)
   const { mutate: deleteTeacher, isPending: deleting } = useDeleteTeacher()
+  const archiveAction = useArchiveAction({
+    entity: "teacher",
+    id: teacherId,
+    listRoute: "/admin/teachers",
+  })
 
   const handleDelete = () => {
     deleteTeacher(teacherId, {
@@ -115,6 +123,14 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
                 Modifier les infos
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              {/* Archiver d'abord : c'est le geste réversible, donc celui que
+                  l'on veut voir avant la suppression définitive. */}
+              {archiveAction.canArchive && (
+                <DropdownMenuItem onClick={archiveAction.open}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  {ARCHIVE_MENU_LABEL.teacher}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
                 className="text-destructive focus:bg-destructive/10 focus:text-destructive"
@@ -214,6 +230,9 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
 
       {/* Edit modal */}
       <TeacherEditModal teacherId={teacherId} open={editOpen} onClose={() => setEditOpen(false)} />
+
+      {/* Archivage — hors du menu déroulant, qui se démonte à la fermeture */}
+      <ArchiveActionDialog action={archiveAction} entity="teacher" subject={fullName} />
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

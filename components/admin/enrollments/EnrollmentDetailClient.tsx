@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
+  Archive,
   ExternalLink,
   Pencil,
   Trash2,
@@ -34,6 +35,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
 import { DetailHero } from "@/components/shared/DetailHero"
+import { ArchiveActionDialog, ARCHIVE_MENU_LABEL } from "@/components/shared/ArchiveActionDialog"
+import { useArchiveAction } from "@/lib/hooks/useArchiveAction"
 import type { HeroKpi } from "@/components/shared/PageHero"
 import { EnrollmentEditModal } from "./EnrollmentEditModal"
 import { EnrollmentOverviewTab } from "./tabs/EnrollmentOverviewTab"
@@ -60,6 +63,11 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
 
   const { data: enrollment, isLoading, isError, refetch } = useEnrollment(enrollmentId)
   const { mutate: deleteEnrollment, isPending: deleting } = useDeleteEnrollment()
+  const archiveAction = useArchiveAction({
+    entity: "enrollment",
+    id: enrollmentId,
+    listRoute: "/admin/enrollments",
+  })
 
   const handleDelete = () => {
     deleteEnrollment(enrollmentId, {
@@ -119,6 +127,16 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
                 Modifier l&apos;inscription
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              {/* Archiver d'abord : c'est le geste réversible, donc celui que
+                  l'on veut voir avant la suppression définitive. Le serveur
+                  refuse par ailleurs d'archiver une inscription qui porte des
+                  versements, et explique pourquoi. */}
+              {archiveAction.canArchive && (
+                <DropdownMenuItem onClick={archiveAction.open}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  {ARCHIVE_MENU_LABEL.enrollment}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
                 className="text-destructive focus:bg-destructive/10 focus:text-destructive"
@@ -155,6 +173,13 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
 
       {/* Edit modal */}
       <EnrollmentEditModal enrollmentId={enrollmentId} open={editOpen} onClose={() => setEditOpen(false)} />
+
+      {/* Archivage — hors du menu déroulant, qui se démonte à la fermeture */}
+      <ArchiveActionDialog
+        action={archiveAction}
+        entity="enrollment"
+        subject={[studentName, className, academicYear].filter(Boolean).join(" · ")}
+      />
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
+  Archive,
   Pencil,
   Trash2,
   User,
@@ -36,6 +37,8 @@ import { DataError } from "@/components/shared/DataError"
 import { DetailHero } from "@/components/shared/DetailHero"
 import { AccountSection } from "@/components/shared/account/AccountSection"
 import { ContactActions } from "@/components/shared/ContactActions"
+import { ArchiveActionDialog, ARCHIVE_MENU_LABEL } from "@/components/shared/ArchiveActionDialog"
+import { useArchiveAction } from "@/lib/hooks/useArchiveAction"
 import type { HeroKpi } from "@/components/shared/PageHero"
 import { StaffEditModal } from "./StaffEditModal"
 import { StaffProfileTab } from "./tabs/StaffProfileTab"
@@ -56,6 +59,11 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
   const { data: staff, isLoading, isError, refetch } = useStaffMember(staffId)
   const { data: fullData } = useStaffFull(staffId)
   const { mutate: deleteStaff, isPending: deleting } = useDeleteStaff()
+  const archiveAction = useArchiveAction({
+    entity: "staff",
+    id: staffId,
+    listRoute: "/admin/staff",
+  })
 
   const handleDelete = () =>
     deleteStaff(staffId, { onSuccess: () => router.push("/admin/staff") })
@@ -120,6 +128,14 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
                 Modifier les infos
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              {/* Archiver d'abord : c'est le geste réversible, donc celui que
+                  l'on veut voir avant la suppression définitive. */}
+              {archiveAction.canArchive && (
+                <DropdownMenuItem onClick={archiveAction.open}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  {ARCHIVE_MENU_LABEL.staff}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
                 className="text-destructive focus:bg-destructive/10 focus:text-destructive"
@@ -170,6 +186,13 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
       <AccountSection entityType="staff" entityId={staffId} />
 
       <StaffEditModal staffId={staffId} open={editOpen} onClose={() => setEditOpen(false)} />
+
+      {/* Archivage — hors du menu déroulant, qui se démonte à la fermeture */}
+      <ArchiveActionDialog
+        action={archiveAction}
+        entity="staff"
+        subject={`${fullName} · ${staffRoleLabel(staff.role)}`}
+      />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
