@@ -31,6 +31,7 @@ const SAVED_INDICATOR_MS = 2500
 type GradeSnapshotEntry = {
   student_id: number
   value: number | null
+  absent: boolean
 }
 
 export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntryGridProps) {
@@ -45,8 +46,10 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
   const [localGrades, setLocalGrades] = useState<Map<number, number | null>>(new Map())
   const [cellStatus, setCellStatus] = useState<Map<number, CellStatus>>(new Map())
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [absentStudents, setAbsentStudents] = useState<Set<number>>(new Set())
   const dirtyStudentsRef = useRef<Set<number>>(new Set())
   const localGradesRef = useRef<Map<number, number | null>>(new Map())
+  const absentStudentsRef = useRef<Set<number>>(new Set())
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveInFlightRef = useRef(false)
 
@@ -63,8 +66,28 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
         localGradesRef.current = map
         return map
       })
+      // Les élèves déjà marqués absents côté serveur repartent cochés, sauf
+      // ceux que l'enseignant vient de modifier sans avoir encore sauvegardé.
+      setAbsentStudents((prev) => {
+        const next = new Set(prev)
+        grades.forEach((g) => {
+          if (dirtyStudentsRef.current.has(g.student_id)) return
+          if (g.status === "absent") next.add(g.student_id)
+          else next.delete(g.student_id)
+        })
+        absentStudentsRef.current = next
+        return next
+      })
     }
   }, [grades])
+
+  // Ce qui partira réellement au serveur pour cet élève. Sert à construire le
+  // lot ET à vérifier ensuite que rien n'a bougé pendant l'envoi : si les deux
+  // lectures divergent, la ligne resterait « à sauvegarder » indéfiniment.
+  const pendingValueFor = useCallback((studentId: number): number | null => {
+    if (absentStudentsRef.current.has(studentId)) return null
+    return localGradesRef.current.get(studentId) ?? null
+  }, [])
 
   // ─── Save logic ────────────────────────────────────────────────────────
   const flushSave = useCallback(async () => {
@@ -77,7 +100,10 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
 
     const payload: GradeSnapshotEntry[] = Array.from(dirtyStudentsRef.current).map((studentId) => ({
       student_id: studentId,
-      value: localGradesRef.current.get(studentId) ?? null,
+      // Absent : le backend force le zéro d'office, la valeur saisie ne compte
+      // plus. On n'envoie donc pas une note et un « absent » contradictoires.
+      value: pendingValueFor(studentId),
+      absent: absentStudentsRef.current.has(studentId),
     }))
     const snapshotByStudent = new Map(payload.map((entry) => [entry.student_id, entry.value]))
 
@@ -94,7 +120,7 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
       const confirmedStudentIds: number[] = []
 
       snapshotByStudent.forEach((sentValue, studentId) => {
-        const currentValue = localGradesRef.current.get(studentId) ?? null
+        const currentValue = pendingValueFor(studentId)
         if (Object.is(currentValue, sentValue)) {
           dirtyStudentsRef.current.delete(studentId)
           confirmedStudentIds.push(studentId)
@@ -108,7 +134,7 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
       setCellStatus((prev) => {
         const next = new Map(prev)
         snapshotByStudent.forEach((sentValue, studentId) => {
-          const currentValue = localGradesRef.current.get(studentId) ?? null
+          const currentValue = pendingValueFor(studentId)
           next.set(studentId, Object.is(currentValue, sentValue) ? "saved" : "dirty")
         })
         return next
@@ -127,7 +153,7 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
       setCellStatus((prev) => {
         const next = new Map(prev)
         payload.forEach((entry) => {
-          const currentValue = localGradesRef.current.get(entry.student_id) ?? null
+          const currentValue = pendingValueFor(entry.student_id)
           next.set(entry.student_id, Object.is(currentValue, entry.value) ? "error" : "dirty")
         })
         return next
@@ -142,7 +168,7 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
         }, SAVE_DEBOUNCE_MS)
       }
     }
-  }, [grades, updateMutation])
+  }, [grades, updateMutation, pendingValueFor])
 
   const scheduleSave = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
@@ -173,6 +199,20 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
       const nextGrades = new Map(localGradesRef.current).set(studentId, result.value)
       localGradesRef.current = nextGrades
       setLocalGrades(nextGrades)
+      dirtyStudentsRef.current.add(studentId)
+      setCellStatus((prev) => new Map(prev).set(studentId, "dirty"))
+      scheduleSave()
+    },
+    [scheduleSave],
+  )
+
+  const handleAbsentChange = useCallback(
+    (studentId: number, next: boolean) => {
+      const updated = new Set(absentStudentsRef.current)
+      if (next) updated.add(studentId)
+      else updated.delete(studentId)
+      absentStudentsRef.current = updated
+      setAbsentStudents(updated)
       dirtyStudentsRef.current.add(studentId)
       setCellStatus((prev) => new Map(prev).set(studentId, "dirty"))
       scheduleSave()
@@ -253,6 +293,12 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
         </Button>
       </div>
 
+      <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+        Cochez « Abs. » pour un élève absent le jour de l&apos;épreuve : la note vaut zéro et
+        compte dans la moyenne. Une case laissée vide veut seulement dire « pas encore corrigé ».
+        Pour lever un zéro d&apos;office, l&apos;administration délivre une autorisation de reprise.
+      </p>
+
       {/* ─── Grade entries — 1 colonne mobile, 2 colonnes desktop ─────── */}
       <div className="overflow-hidden rounded-xl border bg-card">
         <div className="grid grid-cols-1 lg:grid-cols-2">
@@ -273,6 +319,8 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
                 status={cellStatus.get(grade.student_id) ?? "idle"}
                 originalStatus={grade.status}
                 onChange={(rawValue) => handleGradeChange(grade.student_id, rawValue)}
+                absent={absentStudents.has(grade.student_id)}
+                onAbsentChange={(next) => handleAbsentChange(grade.student_id, next)}
                 className={cn(
                   "border-b border-border/60",
                   isLeftColumn && "lg:border-r",

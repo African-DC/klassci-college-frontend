@@ -99,9 +99,16 @@ export function useUpdateGrades(evaluationId: number) {
       if (prev) {
         const updated = prev.map((g) => {
           const match = batch.grades.find((bg) => bg.student_id === g.student_id)
-          return match
-            ? { ...g, value: match.value, status: match.value !== null ? "entered" : "pending" }
-            : g
+          if (!match) return g
+          // Absent : le backend inscrit un zéro d'office. L'affichage optimiste
+          // doit dire la même chose, sinon la case repasse « non saisie » une
+          // seconde avant que le serveur ne réponde le contraire.
+          if (match.absent) return { ...g, value: 0, status: "absent" }
+          return {
+            ...g,
+            value: match.value,
+            status: match.value !== null ? "entered" : "pending",
+          }
         })
         queryClient.setQueryData(gradeKeys.grades(evaluationId), updated)
       }

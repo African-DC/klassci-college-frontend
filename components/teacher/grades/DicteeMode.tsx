@@ -69,10 +69,10 @@ export function DicteeMode({ evaluationId, classId, returnHref }: DicteeModeProp
     if (grades) {
       const map = new Map<number, EntryValue>()
       grades.forEach((g) => {
-        if (g.value !== null) {
+        if (g.status === "absent") {
+          map.set(g.student_id, null) // zéro d'office déjà enregistré
+        } else if (g.value !== null) {
           map.set(g.student_id, Number(g.value))
-        } else if (g.status === "entered") {
-          map.set(g.student_id, null) // absent
         }
       })
       setEntries(map)
@@ -242,6 +242,10 @@ export function DicteeMode({ evaluationId, classId, returnHref }: DicteeModeProp
       .map(([studentId, value]) => ({
         student_id: studentId,
         value: value === undefined ? null : value,
+        // « Absent » dicté à voix haute vaut le même zéro d'office que la case
+        // cochée sur la feuille de saisie : les deux modes doivent enregistrer
+        // la même chose, sinon le rattrapage n'aura rien à rouvrir.
+        absent: value === null,
       }))
     updateMutation.mutate(
       { grades: payload },
