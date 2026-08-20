@@ -136,6 +136,21 @@ export function FeesByLevelTree({
                           série
                         </Badge>
                       )}
+                      {v.assignment_scope ? (
+                        // Sans ce repere, deux montants sur le meme niveau
+                        // passent pour un doublon alors qu'ils visent des
+                        // eleves differents.
+                        <Badge
+                          variant="outline"
+                          className={
+                            v.assignment_scope === "affecte"
+                              ? "h-5 border-emerald-300 text-[10px] text-emerald-700 dark:border-emerald-800 dark:text-emerald-300"
+                              : "h-5 border-amber-300 text-[10px] text-amber-700 dark:border-amber-800 dark:text-amber-300"
+                          }
+                        >
+                          {v.assignment_scope === "affecte" ? "affecté" : "non affecté"}
+                        </Badge>
+                      ) : null}
                       <span className="text-sm font-semibold tabular-nums">
                         {v.amount.toLocaleString("fr-FR")}{" "}
                         <span className="text-[11px] font-normal text-muted-foreground">FCFA</span>

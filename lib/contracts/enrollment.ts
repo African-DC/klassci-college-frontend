@@ -2,6 +2,26 @@ import { z } from "zod"
 
 // Miroir de app/schemas/enrollment.py (backend)
 
+/**
+ * Affectation par l'État. Un élève affecté dans un établissement privé est
+ * subventionné : sa famille paie sensiblement moins. Le réaffecté — réorienté
+ * vers un autre établissement — reste pris en charge, donc payé comme un
+ * affecté ; on garde la distinction parce que les dossiers du ministère et le
+ * rapport de fin de trimestre la réclament.
+ */
+export const AssignmentStatusSchema = z.enum(["affecte", "reaffecte", "non_affecte"])
+
+export const ASSIGNMENT_STATUSES = [
+  { value: "affecte" as const, label: "Affecté", hint: "Subventionné par l'État" },
+  { value: "reaffecte" as const, label: "Réaffecté", hint: "Réorienté, subventionné également" },
+  { value: "non_affecte" as const, label: "Non affecté", hint: "Scolarité à la charge de la famille" },
+]
+
+export function assignmentStatusLabel(status: string | null | undefined): string {
+  if (!status) return "Non renseigné"
+  return ASSIGNMENT_STATUSES.find((s) => s.value === status)?.label ?? status
+}
+
 export const EnrollmentStatusSchema = z.enum(["prospect", "en_validation", "valide", "rejete", "annule"])
 
 export const EnrollmentSchema = z.object({
@@ -11,6 +31,9 @@ export const EnrollmentSchema = z.object({
   academic_year_id: z.number(),
   academic_year_name: z.string(),
   status: EnrollmentStatusSchema,
+  /** `null` tant que l'école ne l'a pas renseigné : on ne devine pas. */
+  assignment_status: AssignmentStatusSchema.nullish(),
+  assignment_decision_number: z.string().nullish(),
   fee_variant_id: z.number().nullable(),
   notes: z.string().nullable(),
   created_by: z.number().nullable(),
@@ -24,6 +47,8 @@ export const EnrollmentSchema = z.object({
 export const EnrollmentCreateSchema = z.object({
   student_id: z.number({ required_error: "L'élève est requis" }).positive("L'élève est requis"),
   class_id: z.number({ required_error: "La classe est requise" }).positive("La classe est requise"),
+  assignment_status: AssignmentStatusSchema.nullable().optional(),
+  assignment_decision_number: z.string().nullable().optional(),
   academic_year_id: z.number({ required_error: "L'année académique est requise" }).positive("L'année académique est requise"),
   fee_variant_id: z.number().positive().optional().nullable(),
   notes: z.string().optional().nullable(),
@@ -31,6 +56,8 @@ export const EnrollmentCreateSchema = z.object({
 
 export const EnrollmentUpdateSchema = z.object({
   class_id: z.number().positive().optional(),
+  assignment_status: AssignmentStatusSchema.nullable().optional(),
+  assignment_decision_number: z.string().nullable().optional(),
   status: EnrollmentStatusSchema.optional(),
   notes: z.string().optional().nullable(),
 })
@@ -76,6 +103,9 @@ export const NewEnrollmentSchema = z.object({
   parent: ParentInputSchema.nullable().optional(),
   // Class
   class_id: z.number({ required_error: "La classe est requise" }).positive(),
+  // Decide du tarif applique : saisi a la creation, pas apres coup.
+  assignment_status: AssignmentStatusSchema.nullable().optional(),
+  assignment_decision_number: z.string().nullable().optional(),
   fee_variant_id: z.number().positive().nullable().optional(),
   notes: z.string().nullable().optional(),
 })
@@ -84,6 +114,9 @@ export const ReEnrollmentSchema = z.object({
   type: z.literal("re-enrollment"),
   student_id: z.number({ required_error: "L'eleve est requis" }).positive(),
   class_id: z.number({ required_error: "La classe est requise" }).positive(),
+  // Decide du tarif applique : saisi a la creation, pas apres coup.
+  assignment_status: AssignmentStatusSchema.nullable().optional(),
+  assignment_decision_number: z.string().nullable().optional(),
   fee_variant_id: z.number().positive().nullable().optional(),
   notes: z.string().nullable().optional(),
 })

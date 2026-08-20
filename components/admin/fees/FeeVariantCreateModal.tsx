@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2 } from "lucide-react"
+import { ASSIGNMENT_SCOPES } from "@/lib/contracts/fee"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -24,6 +25,9 @@ import { useQueryClient } from "@tanstack/react-query"
 
 const FormSchema = z.object({
   fee_category_id: z.number({ required_error: "La catégorie est requise" }).positive(),
+  // `null` = ce montant vaut pour tout le monde. Un montant réservé aux
+  // affectés et un autre aux non affectés coexistent sur le même niveau.
+  assignment_scope: z.enum(["affecte", "non_affecte"]).nullable().default(null),
   amount: z.number({ required_error: "Le montant est requis" }).positive("Le montant doit être positif"),
 })
 
@@ -80,6 +84,7 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
         await mutateAsync({
           fee_category_id: data.fee_category_id,
           level_id: levelId,
+          assignment_scope: data.assignment_scope,
           academic_year_id: academicYearId,
           amount: data.amount,
         })
@@ -169,6 +174,37 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
                 </p>
               )}
             </div>
+
+            <FormField
+              control={form.control}
+              name="assignment_scope"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>À qui s&apos;applique ce montant</FormLabel>
+                  <Select
+                    value={field.value ?? "tous"}
+                    onValueChange={(v) => field.onChange(v === "tous" ? null : v)}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-11 sm:h-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {ASSIGNMENT_SCOPES.map((scope) => (
+                        <SelectItem key={scope.value ?? "tous"} value={scope.value ?? "tous"}>
+                          {scope.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {ASSIGNMENT_SCOPES.find((s) => s.value === (field.value ?? null))?.hint}
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

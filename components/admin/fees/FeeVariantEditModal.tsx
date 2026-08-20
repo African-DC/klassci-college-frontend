@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { useForm } from "react-hook-form"
+import { ASSIGNMENT_SCOPES } from "@/lib/contracts/fee"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -30,6 +31,7 @@ export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalPro
       fee_category_id: variant.fee_category_id,
       level_id: variant.level_id,
       series_id: variant.series_id,
+      assignment_scope: variant.assignment_scope ?? null,
       amount: variant.amount,
       academic_year_id: variant.academic_year_id,
     } : undefined,
@@ -121,6 +123,34 @@ export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalPro
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="assignment_scope"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>À qui s&apos;applique ce montant</FormLabel>
+                  <Select
+                    value={field.value ?? "tous"}
+                    onValueChange={(v) => field.onChange(v === "tous" ? null : v)}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-11 sm:h-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {ASSIGNMENT_SCOPES.map((scope) => (
+                        <SelectItem key={scope.value ?? "tous"} value={scope.value ?? "tous"}>
+                          {scope.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="amount"
