@@ -67,6 +67,10 @@ export const ADMIN_NAVIGATION: AdminNavSection[] = [
       { label: "Notifications", href: "/admin/notifications", iconName: "Bell", anyOf: [] },
       { label: "Rôles & Permissions", href: "/admin/roles", iconName: "ShieldCheck", anyOf: ["admin:roles:read"] },
       { label: "Journal d'audit", href: "/admin/audit" as Route, iconName: "ScrollText", anyOf: ["audit:read", "audit:read:financial"] },
+      // La corbeille n'a de sens que pour qui peut la lire : la donner à tout
+      // le monde laisserait croire qu'une fiche disparue est récupérable par
+      // n'importe qui, alors que restaurer et purger sont des droits distincts.
+      { label: "Corbeille", href: "/admin/archive" as Route, iconName: "Archive", anyOf: ["archive:read"] },
       { label: "Paramètres", href: "/admin/settings" as Route, iconName: "Settings", anyOf: ["admin:academic-years:read"] },
     ],
   },
