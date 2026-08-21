@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Chaque tranche de paiement se saisit au choix en pourcentage ou en montant fixe, dans la même grille : « Inscription 37 000 FCFA à la rentrée », puis 35 / 35 / 30 % du reste *(admin, comptable)*
+- Simulation en direct sous la grille : on choisit un niveau et la situation de l'élève, affecté ou non, et l'on voit les francs que recevra chaque famille avant d'enregistrer *(admin, comptable)*
 - Rapport de fin de trimestre de la DEEP téléchargeable depuis Rapports : on choisit l'année et le trimestre, on obtient le canevas officiel des vingt-sept tableaux, avec aperçu avant impression *(admin, directeur)*
 - Bouton « Demande de dossier scolaire » sur la fiche élève : le courrier réclamant le dossier à l'établissement d'origine se télécharge en un clic, scellé pour être vérifiable *(admin)*.
 - Billet d'entrée depuis l'écran des présences : sur une absence non régularisée, l'éducateur saisit la date de reprise et le motif, l'absence passe en excusée dans le cahier d'appel et le billet s'imprime *(admin)*.
@@ -59,6 +61,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Taper « absent » dans la case de note marque enfin l’absence, comme la case cochée et comme le mot dit à voix haute *(enseignant)*.
 - Le mode dictée ne demande plus « Quitter sans enregistrer ? » alors que rien n’a été touché, dès qu’un élève est absent *(enseignant)*.
 - Registre des convocations : « Suite donnée » reste éteint tant que le rendez-vous n’a pas eu lieu, avec la raison affichée, au lieu d’échouer au clic *(éducateur)*.
+- Les écrans réservés à certains rôles s'ouvraient sur « Accès refusé » pendant une fraction de seconde, y compris pour un administrateur, le temps que la session s'établisse *(admin, éducateur, directeur des études)*
 - La grille des frais n'affichait que les vingt premiers montants et donnait le reste pour inexistant : des niveaux apparaissaient avec moins de frais qu'ils n'en portent, le total par élève était faux, et recréer un montant manquant se soldait par « doublon possible ». Tous les montants sont désormais chargés *(admin, comptable)*
 - Le motif d'une suppression définitive n'apparaît plus dans l'adresse de la requête, donc plus dans les journaux du serveur ni chez les intermédiaires. « Élève exclu pour vol » n'a rien à y faire *(admin)*
 
