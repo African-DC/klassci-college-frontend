@@ -89,7 +89,7 @@ export function SettingsPageClient() {
 function SettingsSkeleton() {
   return (
     <div className="space-y-6">
-      <Skeleton className="h-10 w-80" />
+      <Skeleton className="h-10 w-full max-w-xs" />
       <div className="space-y-4">
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-12 w-full" />
