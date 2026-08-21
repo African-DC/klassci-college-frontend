@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import type { Route } from "next"
-import { FileText, Gavel, BarChart3 } from "lucide-react"
+import { FileText, Gavel, BarChart3, FileCheck2 } from "lucide-react"
 
 interface ReportsNavLink {
   href: Route
@@ -14,9 +14,10 @@ const LINKS: ReportsNavLink[] = [
   { href: "/admin/reports" as Route, icon: FileText, label: "Bulletins" },
   { href: "/admin/reports/council" as Route, icon: Gavel, label: "Conseil de classe" },
   { href: "/admin/reports/dren" as Route, icon: BarChart3, label: "Statistiques DREN" },
+  { href: "/admin/reports/deep" as Route, icon: FileCheck2, label: "Fin de trimestre" },
 ]
 
-export function ReportsNav({ current }: { current: "bulletins" | "council" | "dren" }) {
+export function ReportsNav({ current }: { current: "bulletins" | "council" | "dren" | "deep" }) {
   const currentHref = current === "bulletins" ? "/admin/reports" : `/admin/reports/${current}`
 
   return (
