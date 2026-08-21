@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import type { Route } from "next"
 import { Download, FileText, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { downloadBlob } from "@/lib/utils"
 import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
+import { BulletinWithheldNotice } from "@/components/shared/documents/BulletinWithheldNotice"
 import { useStudentBulletins } from "@/lib/hooks/useStudentPortal"
 import { studentPortalApi } from "@/lib/api/student-portal"
 import { DataError } from "@/components/shared/DataError"
@@ -67,63 +69,95 @@ function BulletinCard({ bulletin }: { bulletin: StudentBulletin }) {
   }, [bulletin.id, bulletin.trimester, bulletin.academic_year])
 
   const isPublished = bulletin.status === "publie"
+  const isWithheld = bulletin.is_withheld
 
   return (
     <Card className="border-0 shadow-sm ring-1 ring-border">
-      <CardContent className="flex items-center justify-between gap-3 p-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <FileText aria-hidden="true" className="h-5 w-5 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{bulletin.trimester}</p>
-            <p className="text-xs text-muted-foreground">{bulletin.academic_year}</p>
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-              {bulletin.general_average !== null && (
-                <span className={`text-xs font-medium tabular-nums ${bulletin.general_average >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
-                  Moy. {bulletin.general_average.toFixed(2)}/20
-                </span>
-              )}
-              {bulletin.rank !== null && (
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  Rang {bulletin.rank}
-                  {bulletin.total_students !== null && `/${bulletin.total_students}`}
-                </span>
-              )}
+      <CardContent className="space-y-3 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${isWithheld ? "bg-muted" : "bg-primary/10"}`}
+            >
+              <FileText
+                aria-hidden="true"
+                className={`h-5 w-5 ${isWithheld ? "text-muted-foreground" : "text-primary"}`}
+              />
             </div>
+            <div className="min-w-0">
+              <p
+                className={`truncate text-sm font-semibold ${isWithheld ? "text-muted-foreground" : ""}`}
+              >
+                {bulletin.trimester}
+              </p>
+              <p className="text-xs text-muted-foreground">{bulletin.academic_year}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                {isWithheld ? (
+                  // Un tiret, pas un zéro : la moyenne n'est pas connue, elle
+                  // n'est pas nulle.
+                  <span className="text-xs text-muted-foreground tabular-nums">Moy. —</span>
+                ) : (
+                  <>
+                    {bulletin.general_average !== null && (
+                      <span className={`text-xs font-medium tabular-nums ${bulletin.general_average >= 10 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                        Moy. {bulletin.general_average.toFixed(2)}/20
+                      </span>
+                    )}
+                    {bulletin.rank !== null && (
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        Rang {bulletin.rank}
+                        {bulletin.total_students !== null && `/${bulletin.total_students}`}
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            {!isPublished && (
+              <Badge variant="secondary" className="text-[10px]">Brouillon</Badge>
+            )}
+            {isWithheld && (
+              <Badge variant="secondary" className="text-[10px]">Retenu</Badge>
+            )}
+            {/* Aucun bouton quand le bulletin est retenu : un téléchargement
+                qui échoue en 402 vaut moins qu'un bouton absent et expliqué. */}
+            {isPublished && !isWithheld && (
+              <>
+                <PdfPreviewButton
+                  fetchBlob={() => studentPortalApi.downloadBulletin(bulletin.id)}
+                  label={`le bulletin ${bulletin.trimester}`}
+                  size="sm"
+                  className="h-11 sm:h-9"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  aria-label={`Télécharger le bulletin ${bulletin.trimester} en PDF`}
+                  className="h-11 sm:h-9"
+                >
+                  {isDownloading ? (
+                    <Loader2 aria-hidden="true" className="mr-1 h-4 w-4 animate-spin sm:h-3 sm:w-3" />
+                  ) : (
+                    <Download aria-hidden="true" className="mr-1 h-4 w-4 sm:h-3 sm:w-3" />
+                  )}
+                  PDF
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          {!isPublished && (
-            <Badge variant="secondary" className="text-[10px]">Brouillon</Badge>
-          )}
-          {isPublished && (
-            <>
-              <PdfPreviewButton
-                fetchBlob={() => studentPortalApi.downloadBulletin(bulletin.id)}
-                label={`le bulletin ${bulletin.trimester}`}
-                size="sm"
-                className="h-11 sm:h-9"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleDownload}
-                disabled={isDownloading}
-                aria-label={`Télécharger le bulletin ${bulletin.trimester} en PDF`}
-                className="h-11 sm:h-9"
-              >
-                {isDownloading ? (
-                  <Loader2 aria-hidden="true" className="mr-1 h-4 w-4 animate-spin sm:h-3 sm:w-3" />
-                ) : (
-                  <Download aria-hidden="true" className="mr-1 h-4 w-4 sm:h-3 sm:w-3" />
-                )}
-                PDF
-              </Button>
-            </>
-          )}
-        </div>
+        {isWithheld && (
+          <BulletinWithheldNotice
+            reason={bulletin.withheld_reason}
+            gradesHref={"/student/grades" as Route}
+          />
+        )}
       </CardContent>
     </Card>
   )

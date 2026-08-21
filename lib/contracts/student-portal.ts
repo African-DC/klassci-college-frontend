@@ -82,6 +82,9 @@ export const StudentFeesResponseSchema = z.object({
 // Bulletins publiés
 // `total_students` reste facultatif : la liste du portail élève ne porte pas
 // l'effectif de la classe, et l'affichage se contente alors du rang seul.
+// `is_withheld` marque un bulletin retenu pour impayé : il existe, il est
+// publié, mais son contenu revient vide du serveur. `withheld_reason` porte
+// la phrase à afficher, montant compris.
 export const StudentBulletinSchema = z.object({
   id: z.number(),
   trimester: z.string(),
@@ -91,6 +94,9 @@ export const StudentBulletinSchema = z.object({
   total_students: z.number().nullable(),
   status: z.enum(["brouillon", "publie"]),
   published_at: z.string().nullish(),
+  is_withheld: z.boolean(),
+  withheld_reason: z.string().nullable(),
+  withheld_amount: z.coerce.number().nullable(),
 })
 
 export type StudentNextCourse = z.infer<typeof StudentNextCourseSchema>
