@@ -1,9 +1,21 @@
 import { z } from "zod"
+import {
+  ALL_PAYMENT_METHODS,
+  SELECTABLE_PAYMENT_METHODS,
+} from "@/lib/payment-methods"
 
 // Miroir de app/schemas/payment.py (backend)
 // Refactor 2026-05-17 : Payment cible enrollment_id + PaymentAllocation breakdown.
 
-export const PaymentMethodSchema = z.enum(["cash", "mobile_money", "bank_transfer", "cheque"])
+// Ce qu'un versement DEJA enregistre peut porter. `mobile_money` en fait
+// partie : la valeur a precede la distinction des quatre operateurs ivoiriens
+// et reste sur les anciens versements. La retirer d'ici ferait echouer la
+// validation de tout l'historique d'une ecole, et donc vider ses ecrans.
+export const PaymentMethodSchema = z.enum([...ALL_PAYMENT_METHODS])
+
+// Ce qu'un formulaire peut soumettre. Plus restreint : on ne saisit plus
+// `mobile_money`, on nomme l'operateur.
+export const PaymentMethodInputSchema = z.enum([...SELECTABLE_PAYMENT_METHODS])
 
 export const PaymentStatusSchema = z.enum([
   "pending",
@@ -55,7 +67,7 @@ export const PaymentCreateSchema = z.object({
     .number({ required_error: "Le frais d'inscription est requis" })
     .positive(),
   amount: z.string({ required_error: "Le montant est requis" }),
-  method: PaymentMethodSchema,
+  method: PaymentMethodInputSchema,
   reference: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
 })
@@ -68,7 +80,7 @@ export const EnrollmentPaymentCreateSchema = z.object({
       invalid_type_error: "Montant invalide",
     })
     .positive("Le montant doit être supérieur à zéro"),
-  method: PaymentMethodSchema,
+  method: PaymentMethodInputSchema,
   reference: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
 })
@@ -137,3 +149,21 @@ export type AllocationPreviewLine = z.infer<typeof AllocationPreviewLineSchema>
 export type AllocationPreview = z.infer<typeof AllocationPreviewSchema>
 export type FinancialSummary = z.infer<typeof FinancialSummarySchema>
 export type PaymentListParams = z.infer<typeof PaymentListParamsSchema>
+
+
+// ---------------------------------------------------------------------------
+// Moyens de paiement disponibles pour l'utilisateur courant
+// ---------------------------------------------------------------------------
+
+/** Une entree du selecteur d'encaissement, telle que le serveur la renvoie. */
+export const PaymentMethodOptionSchema = z.object({
+  key: PaymentMethodInputSchema,
+  label: z.string(),
+})
+
+/** L'ordre vient du serveur : l'ecran ne le recalcule pas. */
+export const PaymentMethodListSchema = z.object({
+  items: z.array(PaymentMethodOptionSchema),
+})
+
+export type PaymentMethodOption = z.infer<typeof PaymentMethodOptionSchema>

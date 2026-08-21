@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Onglet « Moyens de paiement » dans Paramètres : pour chaque profil qui encaisse, on coche les moyens qu'il a le droit de saisir. Retirer les espèces au comptable prend deux clics, et l'écran prévient qu'autoriser les espèces engage une journée de caisse à ouvrir et à compter *(admin, directeur)*
+- Wave, MTN MoMo, Orange Money et Moov Money se choisissent séparément au guichet, au lieu d'un « Mobile Money » unique qui obligeait le comptable à démêler ses relevés *(caissier, comptable, secrétariat)*
 - Colonne « Encaissé par » sur l'écran des versements, dans le tableau comme sur les cartes du téléphone, et filtre par caisse pour la comptabilité qui veut contrôler un guichet *(comptable, directeur, caissier)*
 - Aperçu avant impression du journal des versements, comme sur les autres écrans qui produisent un document *(comptable, caissier)*
 - Après avoir corrigé le montant d'un frais, l'écran demande s'il faut le répercuter sur les inscriptions déjà enregistrées, et montre l'impact chiffré avant de trancher : lignes à mettre à jour, lignes conservées parce qu'un versement y est imputé, écart de dette en francs. Répondre non ne change rien, et la question se repose depuis la grille des frais *(admin, comptable)*
@@ -48,6 +50,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
+- Le mode de paiement du formulaire d'encaissement ne montre que les moyens que la personne connectée peut réellement utiliser : plus de choix proposé puis refusé au moment d'enregistrer *(caissier, comptable, secrétariat)*
+- Les versements enregistrés autrefois en « Mobile Money » gardent ce libellé partout et restent filtrables dans le journal des versements : l'historique d'une école ne change pas de sens *(comptable, parent)*
 - Le journal des versements s'exporte désormais depuis le serveur : le PDF sort au gabarit officiel de l'établissement, et le classeur Excel porte les couleurs, le logo, la période et les filtres appliqués, au lieu d'un tableau sans identité *(comptable, caissier)*
 - La période choisie sur l'écran des versements est appliquée par le serveur : elle portait jusqu'ici sur la seule page affichée, ce qui pouvait masquer des versements de la période *(comptable, caissier)*
 
