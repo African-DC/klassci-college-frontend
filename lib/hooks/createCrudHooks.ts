@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import type { CrudApi } from "@/lib/api/createCrudApi"
 import type { PaginatedResponse } from "@/lib/contracts"
+import { dashboardKeys } from "./useDashboard"
 
 interface CrudLabels {
   created: string
@@ -78,6 +79,9 @@ export function createCrudHooks<
       },
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey: keys.all })
+        // Les compteurs en tête de page viennent du résumé, pas de la liste :
+        // sans cela, l'écran affiche six lignes sous une carte qui annonce cinq.
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.summary })
       },
     })
   }
@@ -123,6 +127,7 @@ export function createCrudHooks<
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey: keys.all })
         queryClient.invalidateQueries({ queryKey: keys.detail(id) })
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.summary })
       },
     })
   }
@@ -160,6 +165,9 @@ export function createCrudHooks<
       },
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey: keys.all })
+        // Les compteurs en tête de page viennent du résumé, pas de la liste :
+        // sans cela, l'écran affiche six lignes sous une carte qui annonce cinq.
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.summary })
       },
     })
   }

@@ -58,6 +58,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- Le formulaire de nouvelle inscription plantait en arrivant à l'étape de la classe, sur un message technique, et il fallait tout recommencer *(secrétariat, admin)*
+- Les compteurs en tête de page ne suivaient plus après une création ou une suppression : l'écran des classes affichait six lignes sous une carte qui en annonçait cinq *(admin)*
 - L'éducateur et le secrétariat peuvent enfin délivrer un billet d'annulation de zéro : l'écran cherchait les évaluations manquées dans le cahier de notes de la classe, qu'ils n'ont pas le droit de lire, et répondait « Réessayez dans un instant » à une erreur de droits qui ne se résolvait jamais *(éducateur, secrétariat)*
 - Les quatre compteurs du registre des convocations décrivent l'année consultée et non le filtre en cours : cliquer « Tuteur absent » affichait « Convocations 8, Tuteur venu 0, Tuteur absent 8 » *(éducateur)*
 - Quand la liste des évaluations manquées ne peut pas être lue, le formulaire affiche enfin la raison au lieu d'inviter à réessayer *(éducateur, secrétariat)*

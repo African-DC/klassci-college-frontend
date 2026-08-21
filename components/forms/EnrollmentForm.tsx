@@ -23,6 +23,7 @@ import type { Class } from "@/lib/contracts/class"
 import { useCreateWithStudent, useReEnroll, useFeeVariants } from "@/lib/hooks/useEnrollments"
 import { useStudents } from "@/lib/hooks/useStudents"
 import { useClasses } from "@/lib/hooks/useClasses"
+import { Form } from "@/components/ui/form"
 import { AssignmentStatusField } from "@/components/forms/AssignmentStatusField"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -394,21 +395,25 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
           {/* L'affectation decide du tarif : elle se saisit ici, avec la
               classe, et non apres coup sur une inscription deja creee. */}
           {enrollmentType === "new" ? (
-            <AssignmentStatusField
-              control={newForm.control}
-              statusName="assignment_status"
-              decisionName="assignment_decision_number"
-              status={newForm.watch("assignment_status")}
-              onDecisionCleared={() => newForm.setValue("assignment_decision_number", null)}
-            />
+            <Form {...newForm}>
+              <AssignmentStatusField
+                control={newForm.control}
+                statusName="assignment_status"
+                decisionName="assignment_decision_number"
+                status={newForm.watch("assignment_status")}
+                onDecisionCleared={() => newForm.setValue("assignment_decision_number", null)}
+              />
+            </Form>
           ) : (
-            <AssignmentStatusField
-              control={reForm.control}
-              statusName="assignment_status"
-              decisionName="assignment_decision_number"
-              status={reForm.watch("assignment_status")}
-              onDecisionCleared={() => reForm.setValue("assignment_decision_number", null)}
-            />
+            <Form {...reForm}>
+              <AssignmentStatusField
+                control={reForm.control}
+                statusName="assignment_status"
+                decisionName="assignment_decision_number"
+                status={reForm.watch("assignment_status")}
+                onDecisionCleared={() => reForm.setValue("assignment_decision_number", null)}
+              />
+            </Form>
           )}
         </div>
       )}
