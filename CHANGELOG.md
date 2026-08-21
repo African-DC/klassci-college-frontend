@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Colonne « Encaissé par » sur l'écran des versements, dans le tableau comme sur les cartes du téléphone, et filtre par caisse pour la comptabilité qui veut contrôler un guichet *(comptable, directeur, caissier)*
+- Aperçu avant impression du journal des versements, comme sur les autres écrans qui produisent un document *(comptable, caissier)*
 - Bandeau « Ma caisse » qui signale les journées clôturées d'office pendant la nuit et permet de les régulariser en saisissant ce qui avait été compté *(caissier)*
 - Une journée non comptée affiche « Écart inconnu » et non un écart nul : le comptable voit la différence entre une caisse qui tombe juste et une caisse que personne n'a ouverte *(caissier, comptable)*
 - Chaque tranche de paiement se saisit au choix en pourcentage ou en montant fixe, dans la même grille : « Inscription 37 000 FCFA à la rentrée », puis 35 / 35 / 30 % du reste *(admin, comptable)*
@@ -39,6 +41,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
+- Le journal des versements s'exporte désormais depuis le serveur : le PDF sort au gabarit officiel de l'établissement, et le classeur Excel porte les couleurs, le logo, la période et les filtres appliqués, au lieu d'un tableau sans identité *(comptable, caissier)*
+- La période choisie sur l'écran des versements est appliquée par le serveur : elle portait jusqu'ici sur la seule page affichée, ce qui pouvait masquer des versements de la période *(comptable, caissier)*
 
 - Bulletin retenu pour impayé : la carte reste affichée mais grisée, la moyenne montre un tiret plutôt qu'un chiffre, et une phrase dit le trimestre concerné, le montant en retard et d'aller au secrétariat. Le bouton de téléchargement disparaît au lieu d'échouer au clic *(élève, parent)*
 - Un lien « Consulter les notes publiées » figure sur chaque bulletin retenu : les notes restent accessibles, et la famille voit que ce n'est pas une panne *(élève, parent)*
