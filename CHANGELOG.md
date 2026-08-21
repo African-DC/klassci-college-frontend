@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Chaque tranche de paiement se saisit au choix en pourcentage ou en montant fixe, dans la même grille : « Inscription 37 000 FCFA à la rentrée », puis 35 / 35 / 30 % du reste *(admin, comptable)*
+- Simulation en direct sous la grille : on choisit un niveau et la situation de l'élève, affecté ou non, et l'on voit les francs que recevra chaque famille avant d'enregistrer *(admin, comptable)*
 - Rapport de fin de trimestre de la DEEP téléchargeable depuis Rapports : on choisit l'année et le trimestre, on obtient le canevas officiel des vingt-sept tableaux, avec aperçu avant impression *(admin, directeur)*
 - Bouton « Demande de dossier scolaire » sur la fiche élève : le courrier réclamant le dossier à l'établissement d'origine se télécharge en un clic, scellé pour être vérifiable *(admin)*.
 - Billet d'entrée depuis l'écran des présences : sur une absence non régularisée, l'éducateur saisit la date de reprise et le motif, l'absence passe en excusée dans le cahier d'appel et le billet s'imprime *(admin)*.

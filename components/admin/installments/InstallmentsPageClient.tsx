@@ -14,7 +14,8 @@ import {
 import { useState } from "react"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { useInstallmentGrid } from "@/lib/hooks/useInstallments"
-import { percentageTotal } from "@/lib/contracts/installment"
+import { fixedTotal, hasPercentageLine, percentageTotal } from "@/lib/contracts/installment"
+import { formatFcfa } from "@/lib/utils/money"
 import { InstallmentGridEditor } from "./InstallmentGridEditor"
 
 /**
@@ -32,10 +33,27 @@ export function InstallmentsPageClient() {
   const yearId = selectedId ?? currentYear?.id
   const { data: grid } = useInstallmentGrid(yearId)
 
-  const total = grid ? percentageTotal(grid) : 0
+  const lignes = grid ?? []
+  const total = percentageTotal(lignes)
+  const francs = fixedTotal(lignes)
+  const avecPourcentage = hasPercentageLine(lignes)
+
+  // Une grille faite uniquement de montants fixes n'a pas de « couverture » en
+  // pourcentage : annoncer 0 % la ferait passer pour incomplète alors qu'elle
+  // est valide. On montre alors la somme en francs, qui est l'information.
   const kpis: HeroKpi[] = [
-    { label: "Tranches", value: grid?.length ?? 0, icon: CalendarClock },
-    { label: "Couverture", value: `${total} %`, hint: total === 100 ? "Grille complète" : "À compléter" },
+    { label: "Tranches", value: lignes.length, icon: CalendarClock },
+    avecPourcentage
+      ? {
+          label: "Pourcentages",
+          value: `${total} %`,
+          hint: total === 100 ? "Grille complète" : "À compléter",
+        }
+      : {
+          label: "Montants fixes",
+          value: formatFcfa(francs),
+          hint: lignes.length > 0 ? "Grille en francs" : "Aucune tranche",
+        },
   ]
 
   return (
