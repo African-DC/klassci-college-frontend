@@ -23,6 +23,9 @@ export const StudentSchema = z.object({
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
   current_enrollment: CurrentEnrollmentInfoSchema.nullish(),
+  // Inscription engagée mais pas encore validée. La confondre avec l'absence
+  // d'inscription faisait proposer d'en créer une seconde.
+  pending_enrollment: CurrentEnrollmentInfoSchema.nullish(),
 }).passthrough()
 
 // Counts pour la barre de filtre-chips.

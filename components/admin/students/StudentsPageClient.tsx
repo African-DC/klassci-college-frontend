@@ -16,7 +16,7 @@ import { useState } from "react"
  * - Replacement par un sous-titre compact « N élèves au total · M à inscrire »
  *   où M est cliquable pour filtrer la liste aux élèves sans inscription
  *   valide cette année — Wave style, chaque info = 1 tap vers l'action.
- * - La barre de chips (Tous + une chip par classe + À inscrire) vit dans
+ * - La barre de chips (Tous + une chip par classe + sans inscription validée) vit dans
  *   StudentsTable, alimentée par useStudentFilters().
  */
 export function StudentsPageClient() {
@@ -28,10 +28,14 @@ export function StudentsPageClient() {
   const noCurrent = filters?.no_current_enrollment_count ?? 0
   const classesCount = filters?.by_class?.length ?? 0
 
+  // `no_current_enrollment_count` compte tout ce qui n'est pas une inscription
+  // VALIDÉE : les dossiers en cours de validation y sont mêlés aux élèves sans
+  // aucun dossier. Le libellé le dit, plutôt que de laisser croire qu'aucune
+  // démarche n'a été faite pour des élèves déjà en classe.
   const kpis: HeroKpi[] = [
     { label: "Élèves au total", value: total, icon: Users },
-    { label: "Inscrits", value: Math.max(total - noCurrent, 0), icon: UserCheck },
-    { label: "À inscrire", value: noCurrent, icon: UserPlus },
+    { label: "Inscriptions validées", value: Math.max(total - noCurrent, 0), icon: UserCheck },
+    { label: "En attente de validation", value: noCurrent, icon: UserPlus },
     { label: "Classes", value: classesCount, icon: School },
   ]
 

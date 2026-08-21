@@ -62,6 +62,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- Un élève dont l'inscription attendait sa validation s'affichait « à inscrire », et le raccourci menait à en créer une seconde. Il porte maintenant « Inscription en cours », sa classe est visible, et le raccourci ouvre le dossier existant *(secrétariat, admin)*
+- Les compteurs de la page Élèves annonçaient « Inscrits » et « À inscrire » sans dire que le premier ne compte que les inscriptions validées *(admin)*
 - Le parent n'avait aucun moyen d'atteindre les bulletins de son enfant : la page existait, aucun lien n'y menait. Un bouton « Bulletins » figure désormais sur la carte de chaque enfant *(parent)*
 - Le bouton « PDF » du bulletin fonctionne enfin dans les portails élève et parent : il appelait la page réservée à l'administration et répondait « accès refusé » à une famille qui voyait pourtant le bulletin à l'écran *(élève, parent)*
 - La liste « Mes bulletins » de l'élève ne s'affichait pas du tout : l'écran attendait une réponse d'une autre forme que celle envoyée par le serveur *(élève)*

@@ -57,7 +57,7 @@ function StudentAvatar({ student, size = "md" }: { student: Student; size?: "sm"
   )
 }
 
-// Badge "À inscrire" actionable — tap → ouvre le formulaire d'inscription
+// Badge "Sans inscription" actionable — tap → ouvre le formulaire d'inscription
 // pré-rempli avec ce student_id (Wave-style : chaque info = 1 tap vers action).
 function ToInscribeBadge({ studentId }: { studentId: number }) {
   return (
@@ -66,7 +66,29 @@ function ToInscribeBadge({ studentId }: { studentId: number }) {
       onClick={(e) => e.stopPropagation()}
       className="inline-flex h-6 items-center rounded-full border border-amber-300 bg-amber-50 px-2.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100"
     >
-      À inscrire
+      Sans inscription
+    </Link>
+  )
+}
+
+// L'élève a déjà un dossier ouvert, il attend sa validation. Le tap mène à
+// CETTE inscription, jamais vers la création d'une seconde : c'est l'erreur
+// que l'ancien badge unique provoquait.
+function PendingEnrollmentBadge({
+  enrollmentId,
+  className,
+}: {
+  enrollmentId: number
+  className?: string
+}) {
+  return (
+    <Link
+      href={`/admin/enrollments/${enrollmentId}` as Route}
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex h-6 items-center rounded-full border border-sky-300 bg-sky-50 px-2.5 text-[11px] font-medium text-sky-800 hover:bg-sky-100"
+      title={`Inscription en ${className ?? "cours"}, en attente de validation`}
+    >
+      Inscription en cours
     </Link>
   )
 }
@@ -162,7 +184,7 @@ export function StudentsTable({
   const exportFilters = useMemo(() => {
     const parts: string[] = []
     if (activeChip === "unenrolled") {
-      parts.push("À inscrire")
+      parts.push("Sans inscription validée")
     } else if (activeChip.startsWith("class:")) {
       const classId = Number(activeChip.split(":")[1])
       const name = filters?.by_class?.find((c) => c.class_id === classId)?.class_name
@@ -216,6 +238,14 @@ export function StudentsTable({
               </Badge>
             )
           }
+          const pe = row.original.pending_enrollment
+          if (pe) {
+            return (
+              <Badge variant="outline" className="text-xs font-medium text-muted-foreground">
+                {pe.class_name}
+              </Badge>
+            )
+          }
           return <ToInscribeBadge studentId={row.original.id} />
         },
       },
@@ -225,6 +255,10 @@ export function StudentsTable({
         cell: ({ row }) => {
           const ce = row.original.current_enrollment
           if (!ce) {
+            const pe = row.original.pending_enrollment
+            if (pe) {
+              return <PendingEnrollmentBadge enrollmentId={pe.enrollment_id} className={pe.class_name} />
+            }
             return <span className="text-xs text-muted-foreground">—</span>
           }
           return (
@@ -255,7 +289,7 @@ export function StudentsTable({
           />
           {(filters?.no_current_enrollment_count ?? 0) > 0 && (
             <FilterChip
-              label="À inscrire"
+              label="Sans inscription validée"
               count={filters!.no_current_enrollment_count}
               isActive={activeChip === "unenrolled"}
               onClick={() => handleChipClick("unenrolled")}
@@ -334,8 +368,10 @@ export function StudentsTable({
             secondary={
               s.current_enrollment ? (
                 s.current_enrollment.class_name
+              ) : s.pending_enrollment ? (
+                <span className="text-muted-foreground">{s.pending_enrollment.class_name}</span>
               ) : (
-                <span className="text-amber-700">À inscrire</span>
+                <span className="text-amber-700">Sans inscription</span>
               )
             }
             status={
