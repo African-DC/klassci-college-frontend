@@ -61,14 +61,14 @@ export const archiveApi = {
   /**
    * Suppression définitive, sans retour possible.
    *
-   * Le motif voyage en paramètre d'URL, pas dans un corps : c'est le contrat
-   * du backend pour un DELETE. Il est encodé, un motif contenant « & » ou un
-   * accent ne doit pas casser la requête ni tronquer la justification.
+   * Le motif voyage dans le corps, jamais dans l'URL : une URL finit dans les
+   * journaux d'accès du serveur et chez les intermédiaires, et « exclu pour
+   * vol » n'a rien à y faire.
    */
   purge: async (entity: ArchivableEntity, id: number, reason: string): Promise<void> => {
-    const params = new URLSearchParams({ reason })
-    await apiFetch<unknown>(`${basePath(entity, id)}?${params.toString()}`, {
+    await apiFetch<unknown>(basePath(entity, id), {
       method: "DELETE",
+      body: JSON.stringify({ reason }),
     })
   },
 }
