@@ -7,6 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { FeeEntitlementsField } from "@/components/admin/fees/FeeEntitlementsField"
 import { useUpdateFeeCategory } from "@/lib/hooks/useFees"
 import { FeeCategoryUpdateSchema, type FeeCategory, type FeeCategoryUpdate } from "@/lib/contracts/fee"
 
@@ -18,7 +19,15 @@ interface FeeCategoryEditModalProps {
 export function FeeCategoryEditModal({ category, onClose }: FeeCategoryEditModalProps) {
   const form = useForm<FeeCategoryUpdate>({
     resolver: zodResolver(FeeCategoryUpdateSchema),
-    values: category ? { name: category.name, description: category.description } : undefined,
+    //  fait partie des valeurs même vide : le champ absent laisse
+    // la contrepartie intacte côté backend, ce qui empêcherait de la vider ici.
+    values: category
+      ? {
+          name: category.name,
+          description: category.description,
+          entitlements: category.entitlements ?? [],
+        }
+      : undefined,
   })
 
   const { mutate, isPending } = useUpdateFeeCategory()
@@ -33,7 +42,7 @@ export function FeeCategoryEditModal({ category, onClose }: FeeCategoryEditModal
 
   return (
     <Dialog open={!!category} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="max-w-md" aria-describedby={undefined}>
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Modifier la catégorie</DialogTitle>
         </DialogHeader>
@@ -64,6 +73,18 @@ export function FeeCategoryEditModal({ category, onClose }: FeeCategoryEditModal
                       {...field}
                       value={field.value ?? ""}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="entitlements"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FeeEntitlementsField value={field.value} onChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

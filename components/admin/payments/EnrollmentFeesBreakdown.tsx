@@ -3,11 +3,15 @@
 import { CheckCircle2, CircleDot, Circle, MinusCircle, ListChecks } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { SectionTitle } from "@/components/shared/PageHero"
+import { EntitlementsPopover } from "@/components/shared/fees/FeeEntitlements"
 import { cn } from "@/lib/utils"
+import type { FeeEntitlement } from "@/lib/contracts/fee"
 
 export interface EnrollmentFeeItem {
   id: number
   category_name: string
+  /** Ce que ce frais ouvre à la famille, tel que le backend le renvoie. */
+  entitlements?: FeeEntitlement[]
   amount: number
   paid: number
   remaining: number
@@ -67,9 +71,15 @@ export function EnrollmentFeesBreakdown({ fees }: { fees: EnrollmentFeeItem[] })
                       </span>
                     )}
                   </div>
-                  <span className={cn("shrink-0 text-[11px] font-semibold uppercase tracking-wide", st.text)}>
-                    {st.label}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <EntitlementsPopover
+                      categoryName={name}
+                      entitlements={fee.entitlements}
+                    />
+                    <span className={cn("text-[11px] font-semibold uppercase tracking-wide", st.text)}>
+                      {st.label}
+                    </span>
+                  </div>
                 </div>
                 <div className="mt-2 flex items-center gap-3">
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">

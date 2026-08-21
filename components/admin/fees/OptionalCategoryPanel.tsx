@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { EntitlementsPopover } from "@/components/shared/fees/FeeEntitlements"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import {
@@ -104,6 +105,12 @@ export function OptionalCategoryPanel({
             </span>
             <div>
               <h3 className="text-sm font-semibold">{category.name}</h3>
+              <EntitlementsPopover
+                categoryName={category.name}
+                entitlements={category.entitlements}
+                fallbackNote={category.description}
+                className="-ml-2"
+              />
               {category.description && (
                 <p className="line-clamp-1 text-[11px] text-muted-foreground">{category.description}</p>
               )}

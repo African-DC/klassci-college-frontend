@@ -2,6 +2,37 @@ import { z } from "zod"
 
 // Miroir de app/schemas/fee.py (backend)
 
+// Ce qu'une famille reçoit en échange d'un frais : un objet qu'on lui remet
+// au guichet, ou un droit qui s'ouvre le jour du versement. La distinction
+// n'est pas cosmétique : « remis » est une dette physique dont un parent peut
+// revenir réclamer l'exécution, « accès » ne se retire pas au guichet.
+export const FeeEntitlementSchema = z.object({
+  label: z.string().min(1),
+  quantity: z.number().int().positive().nullish(),
+  // Pas de .default() : ce schéma alimente aussi le formulaire, et un défaut
+  // Zod fait diverger le type d'entrée du type de sortie. Le composant de
+  // saisie pose « objet remis » lui-même quand on ajoute une ligne.
+  kind: z.enum(["item", "access"]),
+})
+
+export type FeeEntitlement = z.infer<typeof FeeEntitlementSchema>
+
+/** Nombre maximum d'éléments par catégorie, aligné sur le backend. */
+export const MAX_ENTITLEMENTS = 15
+
+export const ENTITLEMENT_KINDS: { value: "item" | "access"; label: string; hint: string }[] = [
+  {
+    value: "item",
+    label: "Objet remis",
+    hint: "La famille vient le retirer : tenue, polo, macaron, manuel",
+  },
+  {
+    value: "access",
+    label: "Droit d'accès",
+    hint: "Le droit s'ouvre au versement : infirmerie, bibliothèque, activités",
+  },
+]
+
 // Categorie de frais (ex: Scolarite, Inscription, Cantine, Transport)
 // is_mandatory=true  → frais obligatoires, montants via FeeVariant (par level+series)
 // is_mandatory=false → frais optionnels, options nommees via OptionalFeeOption
@@ -9,7 +40,13 @@ export const FeeCategorySchema = z.object({
   id: z.number(),
   name: z.string(),
   description: z.string().nullable(),
+  // .optional() et pas .default([]) : `safeValidate` infère le type d'entrée du
+  // schéma, et un défaut Zod y fait diverger entrée et sortie. L'absence est
+  // normalisée à l'affichage, au même endroit que le frontend déployé avant
+  // le backend qui renvoie ce champ.
+  entitlements: z.array(FeeEntitlementSchema).optional(),
   is_mandatory: z.boolean(),
+  priority: z.number().int().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 })
@@ -36,6 +73,7 @@ export const FeeVariantSchema = z.object({
 export const FeeCategoryCreateSchema = z.object({
   name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
   description: z.string().nullable().optional(),
+  entitlements: z.array(FeeEntitlementSchema).max(MAX_ENTITLEMENTS).optional(),
   is_mandatory: z.boolean().default(true),
   /** Ordre d'imputation des versements : plus petit = servi en premier. */
   priority: z.number().int().min(0).max(999).optional(),
