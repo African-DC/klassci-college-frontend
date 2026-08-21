@@ -105,6 +105,17 @@ export function EnrollmentScheduleCard({ enrollmentId }: { enrollmentId: number 
           ))}
         </ul>
 
+        {(data.unscheduled_amount ?? 0) > 0 && (
+          <p
+            role="note"
+            className="rounded-lg border border-border/60 bg-muted/40 p-3 text-sm text-muted-foreground"
+          >
+            {formatFcfa(data.unscheduled_amount ?? 0)} des frais de cet élève ne sont couverts par
+            aucune tranche. Cette part n&apos;a donc pas de date limite et ne compte pas dans le
+            retard. Complétez la grille de l&apos;année pour l&apos;échelonner.
+          </p>
+        )}
+
         {data.next_due_date && data.next_due_amount !== null && (
           <p className="border-t pt-3 text-sm text-muted-foreground">
             Prochaine échéance : {formatFcfa(data.next_due_amount ?? 0)} avant le{" "}

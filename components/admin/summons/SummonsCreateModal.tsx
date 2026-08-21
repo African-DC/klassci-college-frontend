@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Loader2, Megaphone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { useStudents } from "@/lib/hooks/useStudents"
+import { StudentPicker } from "@/components/shared/StudentPicker"
 import { useStudentParents } from "@/lib/hooks/useParents"
 import { useCreateSummons } from "@/lib/hooks/useSummons"
 import { ParentSummonsCreateSchema } from "@/lib/contracts/school-life"
@@ -40,7 +40,7 @@ function today(): string {
  * guichet, parce qu'un tuteur n'a pas toujours de fiche.
  */
 export function SummonsCreateModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [studentId, setStudentId] = useState("")
+  const [student, setStudent] = useState<Student | null>(null)
   const [parentChoice, setParentChoice] = useState(OTHER_PARENT)
   const [parentName, setParentName] = useState("")
   const [summonsDate, setSummonsDate] = useState(today)
@@ -49,16 +49,12 @@ export function SummonsCreateModal({ open, onClose }: { open: boolean; onClose: 
   const [reason, setReason] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const { data: studentsData, isLoading: loadingStudents } = useStudents({ size: 100 })
-  const students: Student[] = useMemo(() => studentsData?.items ?? [], [studentsData])
-  const { data: parents, isLoading: loadingParents } = useStudentParents(
-    studentId ? Number(studentId) : undefined,
-  )
+  const { data: parents, isLoading: loadingParents } = useStudentParents(student?.id)
   const { mutate: create, isPending } = useCreateSummons()
 
   useEffect(() => {
     if (open) {
-      setStudentId("")
+      setStudent(null)
       setParentChoice(OTHER_PARENT)
       setParentName("")
       setSummonsDate(today())
@@ -76,14 +72,9 @@ export function SummonsCreateModal({ open, onClose }: { open: boolean; onClose: 
     else setParentChoice(OTHER_PARENT)
   }, [parents])
 
-  const selectedStudent = useMemo(
-    () => students.find((student) => String(student.id) === studentId),
-    [students, studentId],
-  )
-
   function handleSubmit() {
     const payload = {
-      student_id: studentId ? Number(studentId) : 0,
+      student_id: student?.id ?? 0,
       parent_id: parentChoice === OTHER_PARENT ? null : Number(parentChoice),
       parent_name: parentChoice === OTHER_PARENT ? parentName : undefined,
       summons_date: summonsDate,
@@ -123,34 +114,18 @@ export function SummonsCreateModal({ open, onClose }: { open: boolean; onClose: 
         <div className="max-h-[60vh] space-y-4 overflow-y-auto py-2 pr-1">
           <div className="space-y-1.5">
             <Label htmlFor="summons-student">Élève</Label>
-            <Select value={studentId} onValueChange={setStudentId}>
-              <SelectTrigger id="summons-student" className="h-11 sm:h-10">
-                <SelectValue
-                  placeholder={loadingStudents ? "Chargement…" : "Choisir un élève"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {students.map((student) => (
-                  <SelectItem key={student.id} value={String(student.id)}>
-                    {student.last_name} {student.first_name}
-                    {student.current_enrollment?.class_name
-                      ? ` · ${student.current_enrollment.class_name}`
-                      : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {!loadingStudents && students.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                Aucun élève enregistré. Créez d&apos;abord une fiche élève.
-              </p>
-            )}
+            <StudentPicker
+              inputId="summons-student"
+              selected={student}
+              onSelect={setStudent}
+              onClear={() => setStudent(null)}
+            />
             {errors.student_id && <p className="text-sm text-destructive">{errors.student_id}</p>}
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="summons-parent">Tuteur convoqué</Label>
-            <Select value={parentChoice} onValueChange={setParentChoice} disabled={!studentId}>
+            <Select value={parentChoice} onValueChange={setParentChoice} disabled={!student}>
               <SelectTrigger id="summons-parent" className="h-11 sm:h-10">
                 <SelectValue placeholder={loadingParents ? "Chargement…" : "Choisir le tuteur"} />
               </SelectTrigger>
@@ -163,10 +138,9 @@ export function SummonsCreateModal({ open, onClose }: { open: boolean; onClose: 
                 <SelectItem value={OTHER_PARENT}>Autre personne (saisir le nom)</SelectItem>
               </SelectContent>
             </Select>
-            {studentId && !loadingParents && (parents ?? []).length === 0 && (
+            {student && !loadingParents && (parents ?? []).length === 0 && (
               <p className="text-xs text-muted-foreground">
-                Aucun parent lié à {selectedStudent?.first_name ?? "cet élève"} : saisissez le nom
-                du tuteur ci-dessous.
+                Aucun parent lié à {student.first_name} : saisissez le nom du tuteur ci-dessous.
               </p>
             )}
           </div>

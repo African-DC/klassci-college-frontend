@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Chaque tranche de paiement se saisit au choix en pourcentage ou en montant fixe, dans la même grille : « Inscription 37 000 FCFA à la rentrée », puis 35 / 35 / 30 % du reste *(admin, comptable)*
+- Simulation en direct sous la grille : on choisit un niveau et la situation de l'élève, affecté ou non, et l'on voit les francs que recevra chaque famille avant d'enregistrer *(admin, comptable)*
 - Rapport de fin de trimestre de la DEEP téléchargeable depuis Rapports : on choisit l'année et le trimestre, on obtient le canevas officiel des vingt-sept tableaux, avec aperçu avant impression *(admin, directeur)*
 - Bouton « Demande de dossier scolaire » sur la fiche élève : le courrier réclamant le dossier à l'établissement d'origine se télécharge en un clic, scellé pour être vérifiable *(admin)*.
 - Billet d'entrée depuis l'écran des présences : sur une absence non régularisée, l'éducateur saisit la date de reprise et le motif, l'absence passe en excusée dans le cahier d'appel et le billet s'imprime *(admin)*.
@@ -38,6 +40,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 - Les écrans « Convocations de parent » et « Autorisations de reprise » ouvrent sur l'année scolaire en cours et se lisent par pages de vingt : ils affichaient jusqu'ici tout l'historique de l'établissement, qui n'est jamais purgé *(éducateur, secrétariat)*
 - Formulaire du billet d'annulation de zéro : les évaluations manquées ne se cherchent plus à chaque caractère tapé dans les dates, mais une fois la saisie posée *(éducateur, secrétariat)*
+- Le choix de l’élève se fait par recherche, dans les convocations, les autorisations de reprise et les versements : on tape deux lettres, nom ou matricule, au lieu de faire défiler une liste tronquée aux cent premiers *(admin, secrétariat, caissier)*.
 - Fiche Personnel : le rôle d'accès propose désormais six métiers (secrétariat, caissier, éducateur, comptable, directeur des études, directeur), chacun accompagné d'une phrase qui dit ce que la personne pourra faire. « Personnel administratif » devient « Secrétariat » *(admin, directeur)*.
 - Wizard Nouvelle inscription : le modal ne se ferme plus si on appuie hors du cadre (la saisie n'est plus perdue). L'étape élève et la sélection de classe sont lisibles sur téléphone, avec des boutons assez grands. La liste des classes montre les places encore disponibles, pas seulement le maximum *(admin)*.
 - Publication Windows : le frontend standalone est désormais compilé hors production par la CI puis livré comme artefact versionné.
@@ -58,6 +61,12 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - L'éducateur et le secrétariat peuvent enfin délivrer un billet d'annulation de zéro : l'écran cherchait les évaluations manquées dans le cahier de notes de la classe, qu'ils n'ont pas le droit de lire, et répondait « Réessayez dans un instant » à une erreur de droits qui ne se résolvait jamais *(éducateur, secrétariat)*
 - Les quatre compteurs du registre des convocations décrivent l'année consultée et non le filtre en cours : cliquer « Tuteur absent » affichait « Convocations 8, Tuteur venu 0, Tuteur absent 8 » *(éducateur)*
 - Quand la liste des évaluations manquées ne peut pas être lue, le formulaire affiche enfin la raison au lieu d'inviter à réessayer *(éducateur, secrétariat)*
+- Décocher « Abs. » sur la feuille de notes ne transforme plus le zéro d’office en note de 0/20, et ne le fait plus disparaître du bulletin. La case explique désormais qu’un billet de reprise est nécessaire *(enseignant, admin)*.
+- Cocher « Abs. » sur un élève déjà noté demande confirmation : sa note ne disparaît plus sans avertissement *(enseignant)*.
+- Taper « absent » dans la case de note marque enfin l’absence, comme la case cochée et comme le mot dit à voix haute *(enseignant)*.
+- Le mode dictée ne demande plus « Quitter sans enregistrer ? » alors que rien n’a été touché, dès qu’un élève est absent *(enseignant)*.
+- Registre des convocations : « Suite donnée » reste éteint tant que le rendez-vous n’a pas eu lieu, avec la raison affichée, au lieu d’échouer au clic *(éducateur)*.
+- Les écrans réservés à certains rôles s'ouvraient sur « Accès refusé » pendant une fraction de seconde, y compris pour un administrateur, le temps que la session s'établisse *(admin, éducateur, directeur des études)*
 - La grille des frais n'affichait que les vingt premiers montants et donnait le reste pour inexistant : des niveaux apparaissaient avec moins de frais qu'ils n'en portent, le total par élève était faux, et recréer un montant manquant se soldait par « doublon possible ». Tous les montants sont désormais chargés *(admin, comptable)*
 - Le motif d'une suppression définitive n'apparaît plus dans l'adresse de la requête, donc plus dans les journaux du serveur ni chez les intermédiaires. « Élève exclu pour vol » n'a rien à y faire *(admin)*
 
