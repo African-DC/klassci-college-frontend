@@ -8,10 +8,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { cn } from "@/lib/utils"
 import { usePermissions } from "@/lib/hooks/usePermissions"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import {
   useDownloadRetakeAuthorization,
   useRetakeAuthorizations,
 } from "@/lib/hooks/useRetakes"
+import { RegisterPagination } from "@/components/shared/school-life/RegisterPagination"
 import { RetakeCreateModal } from "./RetakeCreateModal"
 import { RetakesList } from "./RetakesList"
 import type { RetakeAuthorization } from "@/lib/contracts/school-life"
@@ -23,28 +25,48 @@ const TRIMESTER_FILTERS = [
   { key: 3, label: "T3" },
 ]
 
+const PAGE_SIZE = 20
+
 export function RetakesPageClient() {
   const [trimester, setTrimester] = useState(0)
+  const [page, setPage] = useState(1)
   const [createOpen, setCreateOpen] = useState(false)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
 
   const { has, isLoading: loadingPermissions } = usePermissions()
   const canManage = has("documents:zero-cancellation")
 
+  // Le registre n'est jamais purgé : sans borne sur l'année courante, l'écran
+  // ouvrait sur toute l'histoire de l'établissement pour n'en montrer que le
+  // haut.
+  const { data: yearsData } = useAcademicYears()
+  const years = yearsData?.items ?? []
+  const currentYearId = (years.find((year) => year.is_current) ?? years[0])?.id
+
   const { data, isLoading, error, refetch } = useRetakeAuthorizations(
-    trimester ? { trimester } : {},
-    canManage,
+    {
+      ...(currentYearId ? { academic_year_id: currentYearId } : {}),
+      ...(trimester ? { trimester } : {}),
+      page,
+      size: PAGE_SIZE,
+    },
+    canManage && Boolean(currentYearId),
   )
   const { mutate: download } = useDownloadRetakeAuthorization()
 
-  const items = data ?? []
-  const reopened = items.reduce((total, item) => total + item.evaluations.length, 0)
+  const items = data?.items ?? []
+  const total = data?.total ?? 0
+
+  function changeTrimester(next: number) {
+    setTrimester(next)
+    setPage(1)
+  }
 
   const kpis: HeroKpi[] = [
-    { label: "Billets délivrés", value: isLoading ? "—" : items.length, icon: FileCheck2 },
+    { label: "Billets délivrés", value: isLoading ? "—" : total, icon: FileCheck2 },
     {
       label: "Évaluations rouvertes",
-      value: isLoading ? "—" : reopened,
+      value: isLoading ? "—" : (data?.reopened_evaluations ?? 0),
       icon: ClipboardList,
     },
   ]
@@ -75,7 +97,7 @@ export function RetakesPageClient() {
       <PageHero
         icon={RotateCcw}
         title="Autorisations de reprise"
-        subtitle="Les évaluations manquées rouvertes, et pour quel motif"
+        subtitle="Les évaluations rouvertes cette année, et pour quel motif"
         kpis={kpis}
         actions={
           <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
@@ -90,7 +112,7 @@ export function RetakesPageClient() {
           <button
             key={filter.key}
             type="button"
-            onClick={() => setTrimester(filter.key)}
+            onClick={() => changeTrimester(filter.key)}
             aria-pressed={trimester === filter.key}
             className={cn(
               "h-11 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors sm:h-9",
@@ -127,11 +149,20 @@ export function RetakesPageClient() {
           </CardContent>
         </Card>
       ) : (
-        <RetakesList
-          items={items}
-          onDownload={handleDownload}
-          downloadingId={downloadingId}
-        />
+        <div className="space-y-4">
+          <RetakesList
+            items={items}
+            onDownload={handleDownload}
+            downloadingId={downloadingId}
+          />
+          <RegisterPagination
+            total={total}
+            page={data?.page ?? page}
+            size={data?.size ?? PAGE_SIZE}
+            onPageChange={setPage}
+            noun="billet"
+          />
+        </div>
       )}
 
       <RetakeCreateModal open={createOpen} onClose={() => setCreateOpen(false)} />

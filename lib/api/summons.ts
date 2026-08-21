@@ -13,6 +13,8 @@ export interface SummonsRegisterFilters {
   trimester?: number
   student_id?: number
   outcome?: string
+  page?: number
+  size?: number
 }
 
 function toQuery(filters: SummonsRegisterFilters): string {

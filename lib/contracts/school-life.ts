@@ -54,9 +54,15 @@ export const SummonsRegisterSummarySchema = z.object({
   pending: z.number(),
 })
 
+// `summary` décrit tout le registre consulté (année, trimestre, élève), jamais
+// la page rendue ni la suite filtrée : les quatre compteurs sont un tableau de
+// bord d'établissement, pas un écho du filtre en cours.
 export const ParentSummonsRegisterSchema = z.object({
   items: z.array(ParentSummonsSchema),
   summary: SummonsRegisterSummarySchema,
+  total: z.number(),
+  page: z.number(),
+  size: z.number(),
 })
 
 // Le backend exige un tuteur : sa fiche quand elle existe, sinon le nom dicté
@@ -122,6 +128,17 @@ export const RetakeAuthorizationSchema = z.object({
   created_at: z.string(),
 })
 
+// `total` et `reopened_evaluations` portent sur toute la période consultée, pas
+// sur la page rendue : les compter à l'écran les ferait varier avec la
+// pagination.
+export const RetakeAuthorizationListSchema = z.object({
+  items: z.array(RetakeAuthorizationSchema),
+  total: z.number(),
+  reopened_evaluations: z.number(),
+  page: z.number(),
+  size: z.number(),
+})
+
 export const RetakeAuthorizationCreateSchema = z
   .object({
     student_id: z.number({ required_error: "L'élève est requis" }).positive("L'élève est requis"),
@@ -160,5 +177,6 @@ export type ParentSummonsCreate = z.infer<typeof ParentSummonsCreateSchema>
 export type SummonsOutcomeUpdate = z.infer<typeof SummonsOutcomeUpdateSchema>
 export type RetakeTarget = z.infer<typeof RetakeTargetSchema>
 export type RetakeAuthorization = z.infer<typeof RetakeAuthorizationSchema>
+export type RetakeAuthorizationList = z.infer<typeof RetakeAuthorizationListSchema>
 export type RetakeAuthorizationCreate = z.infer<typeof RetakeAuthorizationCreateSchema>
 export type EntrySlipRequest = z.infer<typeof EntrySlipRequestSchema>
