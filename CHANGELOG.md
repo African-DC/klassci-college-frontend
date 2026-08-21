@@ -36,6 +36,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Le choix de l’élève se fait par recherche, dans les convocations, les autorisations de reprise et les versements : on tape deux lettres, nom ou matricule, au lieu de faire défiler une liste tronquée aux cent premiers *(admin, secrétariat, caissier)*.
 - Fiche Personnel : le rôle d'accès propose désormais six métiers (secrétariat, caissier, éducateur, comptable, directeur des études, directeur), chacun accompagné d'une phrase qui dit ce que la personne pourra faire. « Personnel administratif » devient « Secrétariat » *(admin, directeur)*.
 - Wizard Nouvelle inscription : le modal ne se ferme plus si on appuie hors du cadre (la saisie n'est plus perdue). L'étape élève et la sélection de classe sont lisibles sur téléphone, avec des boutons assez grands. La liste des classes montre les places encore disponibles, pas seulement le maximum *(admin)*.
 - Publication Windows : le frontend standalone est désormais compilé hors production par la CI puis livré comme artefact versionné.
@@ -53,6 +54,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- Décocher « Abs. » sur la feuille de notes ne transforme plus le zéro d’office en note de 0/20, et ne le fait plus disparaître du bulletin. La case explique désormais qu’un billet de reprise est nécessaire *(enseignant, admin)*.
+- Cocher « Abs. » sur un élève déjà noté demande confirmation : sa note ne disparaît plus sans avertissement *(enseignant)*.
+- Taper « absent » dans la case de note marque enfin l’absence, comme la case cochée et comme le mot dit à voix haute *(enseignant)*.
+- Le mode dictée ne demande plus « Quitter sans enregistrer ? » alors que rien n’a été touché, dès qu’un élève est absent *(enseignant)*.
+- Registre des convocations : « Suite donnée » reste éteint tant que le rendez-vous n’a pas eu lieu, avec la raison affichée, au lieu d’échouer au clic *(éducateur)*.
 - La grille des frais n'affichait que les vingt premiers montants et donnait le reste pour inexistant : des niveaux apparaissaient avec moins de frais qu'ils n'en portent, le total par élève était faux, et recréer un montant manquant se soldait par « doublon possible ». Tous les montants sont désormais chargés *(admin, comptable)*
 - Le motif d'une suppression définitive n'apparaît plus dans l'adresse de la requête, donc plus dans les journaux du serveur ni chez les intermédiaires. « Élève exclu pour vol » n'a rien à y faire *(admin)*
 
