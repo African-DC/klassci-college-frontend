@@ -70,6 +70,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- Le portail se construisait avec une mémoire plafonnée pour un serveur qui n'existe plus, ce qui faisait échouer des mises en ligne au hasard *(devops)*
 - L'application saluait chacun par le début de son adresse e-mail : le caissier Ibrahim Tanoh lisait « Bonjour, Cashier3 » alors que l'écran juste en dessous affichait son vrai nom. Le prénom et le nom sont désormais repris de la connexion *(admin, personnel, enseignant, parent, élève)*
 - Le bandeau affichait le rôle technique, « Staff », au lieu d'un libellé français *(admin, personnel)*
 - Le parent n'avait aucun moyen d'atteindre les bulletins de son enfant : la page existait, aucun lien n'y menait. Un bouton « Bulletins » figure désormais sur la carte de chaque enfant *(parent)*
