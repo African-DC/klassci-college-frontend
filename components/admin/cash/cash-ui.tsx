@@ -1,10 +1,21 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import type { CashMethodTotal } from "@/lib/contracts/cash-session"
+import { CASH_STATUS, type CashMethodTotal } from "@/lib/contracts/cash-session"
 import { formatFcfa } from "@/lib/utils/money"
 
 export { formatFcfa }
+
+/**
+ * « 2026-08-20 » devient « 20/08/2026 ». Découpage manuel plutôt que `new
+ * Date(iso)` : ce dernier interprète une date nue comme minuit UTC et affiche
+ * la veille dans les fuseaux négatifs.
+ */
+export function formatBusinessDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-")
+  if (!year || !month || !day) return isoDate
+  return `${day}/${month}/${year}`
+}
 
 /**
  * L'écart de caisse est l'information que le comptable cherche en premier.
@@ -13,7 +24,9 @@ export { formatFcfa }
  */
 export function VarianceBadge({ variance }: { variance: number | null | undefined }) {
   if (variance === null || variance === undefined) {
-    return <span className="text-sm text-muted-foreground">—</span>
+    // Écart inconnu, faute de comptage. Le tiret dit « on ne sait pas » ;
+    // afficher « Juste » ou « 0 » affirmerait que le tiroir tombait juste.
+    return <span className="text-sm text-muted-foreground">Inconnu</span>
   }
   if (variance === 0) {
     return <Badge className="bg-emerald-600 text-white hover:bg-emerald-600/90">Juste</Badge>
@@ -30,8 +43,16 @@ export function VarianceBadge({ variance }: { variance: number | null | undefine
 }
 
 export function CashStatusBadge({ status }: { status: string }) {
-  if (status === "closed") {
+  if (status === CASH_STATUS.CLOSED) {
     return <Badge variant="secondary">Clôturée</Badge>
+  }
+  if (status === CASH_STATUS.AUTO_CLOSED) {
+    // Ambre et non gris : la journée est arrêtée, mais il reste un geste à
+    // faire. La confondre visuellement avec une clôture normale la ferait
+    // oublier.
+    return (
+      <Badge className="bg-amber-500 text-white hover:bg-amber-500/90">Clôturée d&apos;office</Badge>
+    )
   }
   return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">Ouverte</Badge>
 }

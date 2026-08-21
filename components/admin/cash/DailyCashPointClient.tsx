@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDailyCashPoint } from "@/lib/hooks/useCashSessions"
+import { hasBeenCounted, isLocked } from "@/lib/contracts/cash-session"
 import { CashStatusBadge, VarianceBadge, formatFcfa } from "./cash-ui"
 
 function todayIso(): string {
@@ -32,7 +33,18 @@ export function DailyCashPointClient() {
     { label: "Total encaissé", value: formatFcfa(data?.total_collected ?? 0), icon: Wallet },
     { label: "Dont espèces", value: formatFcfa(data?.cash_collected ?? 0), icon: Banknote },
     { label: "Caisses ouvertes", value: data?.open_count ?? 0, icon: ClipboardCheck },
-    { label: "Écart cumulé", value: formatFcfa(data?.total_variance ?? 0), icon: Scale },
+    {
+      // L'écart cumulé ne couvre QUE les caisses réellement comptées. Le
+      // compteur des clôtures d'office est ce qui empêche de le lire comme
+      // un solde complet.
+      label: "Écart cumulé",
+      value: formatFcfa(data?.total_variance ?? 0),
+      icon: Scale,
+      hint:
+        (data?.auto_closed_count ?? 0) > 0
+          ? `${data?.auto_closed_count} caisse${(data?.auto_closed_count ?? 0) > 1 ? "s" : ""} clôturée${(data?.auto_closed_count ?? 0) > 1 ? "s" : ""} d'office, écart inconnu`
+          : undefined,
+    },
   ]
 
   return (
@@ -101,7 +113,7 @@ export function DailyCashPointClient() {
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-medium">{session.cashier_name}</p>
                       <CashStatusBadge status={session.status} />
-                      {session.status === "closed" && <VarianceBadge variance={session.variance} />}
+                      {hasBeenCounted(session) && <VarianceBadge variance={session.variance} />}
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {session.payments_count} versement{session.payments_count > 1 ? "s" : ""} ·{" "}
@@ -121,11 +133,12 @@ export function DailyCashPointClient() {
                   </div>
                 </div>
 
-                {session.status !== "closed" && (
+                {!hasBeenCounted(session) && (
                   <p className="mt-3 flex items-center gap-2 border-t pt-3 text-xs text-muted-foreground">
                     <Lock aria-hidden="true" className="h-3.5 w-3.5" />
-                    Journée non clôturée : le montant compté et l&apos;écart ne sont pas encore
-                    connus.
+                    {isLocked(session)
+                      ? "Clôturée d'office à minuit : le tiroir n'a pas été compté, l'écart reste inconnu tant que le caissier n'a pas régularisé."
+                      : "Journée non clôturée : le montant compté et l'écart ne sont pas encore connus."}
                   </p>
                 )}
               </CardContent>
