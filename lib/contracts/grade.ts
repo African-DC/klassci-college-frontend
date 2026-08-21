@@ -56,6 +56,10 @@ export const GradeBatchUpdateSchema = z.object({
   grades: z.array(z.object({
     student_id: z.number(),
     value: z.number().nullable(),
+    // Élève absent le jour de l'épreuve : zéro d'office qui compte dans la
+    // moyenne. Distinct d'une case vide, qui veut seulement dire « pas encore
+    // corrigé ». C'est ce marquage qu'un billet d'annulation de zéro lève.
+    absent: z.boolean().optional(),
   })),
 })
 

@@ -7,8 +7,10 @@ import {
   CheckCircle2,
   CircleSlash,
   Loader2,
+  RotateCcw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Checkbox } from "@/components/ui/checkbox"
 import { categorizeGrade } from "@/lib/utils/grade-parser"
 
 export type CellStatus = "idle" | "dirty" | "pending" | "saved" | "error"
@@ -27,6 +29,9 @@ interface GradeRowProps {
   status: CellStatus
   originalStatus: string
   onChange: (rawValue: string) => void
+  /** Élève absent le jour de l'épreuve : zéro d'office, la note compte. */
+  absent: boolean
+  onAbsentChange: (next: boolean) => void
   /** Bordures de cellule dans la grille (mono-colonne mobile, 2 colonnes desktop). */
   className?: string
 }
@@ -43,6 +48,8 @@ export function GradeRow({
   status,
   originalStatus,
   onChange,
+  absent,
+  onAbsentChange,
   className,
 }: GradeRowProps) {
   // rawInput = source de vérité de ce que l'utilisateur tape (états transitoires
@@ -55,9 +62,14 @@ export function GradeRow({
     }
   }, [initialValue, status])
 
-  const category = categorizeGrade(value, originalStatus)
+  // Coché « absent », la ligne se lit comme un zéro d'office même avant
+  // l'enregistrement : l'enseignant voit tout de suite ce qu'il vient de
+  // décider, sans attendre le retour du serveur.
+  const category = absent ? "absent" : categorizeGrade(value, originalStatus)
   const colorTone = useMemo(() => {
     switch (category) {
+      case "rattrapage":
+        return { text: "text-primary", border: "border-primary/40", bg: "bg-primary/10", Icon: RotateCcw, label: "Rattrapage autorisé" }
       case "difficulte":
         return { text: "text-rose-700 dark:text-rose-300", border: "border-rose-200 dark:border-rose-900", bg: "bg-rose-50/60 dark:bg-rose-950/40", Icon: AlertTriangle, label: "En difficulté" }
       case "moyen":
@@ -89,6 +101,19 @@ export function GradeRow({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
+        <label
+          htmlFor={`grade-absent-${index}`}
+          className="flex h-12 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60"
+        >
+          <Checkbox
+            id={`grade-absent-${index}`}
+            checked={absent}
+            onCheckedChange={(next) => onAbsentChange(next === true)}
+            aria-label={`Marquer ${studentName} absent à cette évaluation`}
+          />
+          Abs.
+        </label>
+
         {category !== "non_saisi" && colorTone.Icon && (
           <span
             className={cn(
@@ -108,7 +133,8 @@ export function GradeRow({
             type="text"
             inputMode="decimal"
             pattern="[0-9]*[,.]?[0-9]*"
-            value={rawInput}
+            value={absent ? "0" : rawInput}
+            disabled={absent}
             onChange={(e) => {
               setRawInput(e.target.value)
               onChange(e.target.value)
@@ -117,6 +143,7 @@ export function GradeRow({
             className={cn(
               "h-12 w-24 rounded-lg border-2 bg-background px-3 text-center text-base font-semibold tabular-nums transition-colors",
               "placeholder:font-normal placeholder:text-muted-foreground/40",
+              absent && "cursor-not-allowed bg-muted",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
               status === "saved" && "border-emerald-400",
               status === "error" && "border-destructive",

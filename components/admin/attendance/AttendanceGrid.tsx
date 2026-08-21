@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Save, CheckCircle, XCircle, Clock, ShieldCheck } from "lucide-react"
+import { Save, CheckCircle, XCircle, Clock, ShieldCheck, DoorOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -13,8 +13,13 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { AttendanceStatusBadge } from "./AttendanceStatusBadge"
+import { EntrySlipModal } from "./EntrySlipModal"
 import { useAttendanceSession, useSaveAttendance } from "@/lib/hooks/useAttendance"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import type { AttendanceStatus } from "@/lib/contracts/attendance"
+
+/** Statuts qu'un billet d'entrée peut régulariser, côté backend comme ici. */
+const CLOSEABLE_STATUSES: AttendanceStatus[] = ["absent", "late"]
 
 interface AttendanceGridProps {
   classId: number
@@ -35,6 +40,16 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
 
   // État local des modifications
   const [localStatuses, setLocalStatuses] = useState<Map<number, AttendanceStatus>>(new Map())
+
+  // Billet d'entrée : réservé à l'éducateur, et seulement sur une absence
+  // déjà enregistrée côté serveur (un pointage non sauvegardé n'existe pas
+  // encore dans le cahier d'appel, il n'y a rien à régulariser).
+  const { has } = usePermissions()
+  const canIssueEntrySlip = has("documents:entry-slip")
+  const [entrySlipTarget, setEntrySlipTarget] = useState<{
+    recordId: number
+    studentLabel: string
+  } | null>(null)
 
   // Index O(1) pour les records serveur
   const recordsByStudent = useMemo(() => {
@@ -165,11 +180,14 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
               <TableHead>Élève</TableHead>
               <TableHead className="text-center">Statut</TableHead>
               <TableHead className="text-center">Pointage</TableHead>
+              {canIssueEntrySlip && <TableHead className="text-center">Régularisation</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {session.records.map((record, index) => {
               const currentStatus = getStatus(record.student_id)
+              const studentLabel = `Élève #${record.student_id}`
+              const isCloseable = CLOSEABLE_STATUSES.includes(record.status)
               return (
                 <TableRow key={record.id}>
                   <TableCell className="text-muted-foreground">{index + 1}</TableCell>
@@ -193,6 +211,26 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
                       ))}
                     </div>
                   </TableCell>
+                  {canIssueEntrySlip && (
+                    <TableCell className="text-center">
+                      {isCloseable ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-11 gap-1.5 sm:h-9"
+                          onClick={() =>
+                            setEntrySlipTarget({ recordId: record.id, studentLabel })
+                          }
+                          aria-label={`Délivrer un billet d'entrée pour ${studentLabel}`}
+                        >
+                          <DoorOpen className="h-4 w-4" aria-hidden="true" />
+                          <span className="hidden sm:inline">Billet d&apos;entrée</span>
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               )
             })}
@@ -214,6 +252,14 @@ export function AttendanceGrid({ classId, slotId, date }: AttendanceGridProps) {
           {isSaving ? "Enregistrement..." : "Enregistrer les présences"}
         </Button>
       </div>
+
+      <EntrySlipModal
+        open={entrySlipTarget !== null}
+        onClose={() => setEntrySlipTarget(null)}
+        recordId={entrySlipTarget?.recordId ?? null}
+        studentLabel={entrySlipTarget?.studentLabel ?? ""}
+        absenceDate={date}
+      />
     </div>
   )
 }

@@ -138,11 +138,30 @@ function apiErrorFrom(status: number, detail: unknown, fallback: string): ApiErr
   return new ApiError(fallback, status, detail)
 }
 
-export async function apiFetchBlob(path: string): Promise<Blob> {
+interface BlobRequestOptions {
+  method?: string
+  /** Corps JSON déjà sérialisé. Sa présence conserve le Content-Type. */
+  body?: string
+}
+
+/**
+ * Certains documents sont délivrés par un POST et non un GET : le billet
+ * d'entrée ferme l'absence dans le cahier d'appel en même temps qu'il
+ * s'imprime. Le verbe et le corps sont donc paramétrables, le contrat 401 et
+ * la lecture du `detail` backend restent les mêmes.
+ */
+export async function apiFetchBlob(
+  path: string,
+  options: BlobRequestOptions = {},
+): Promise<Blob> {
   const headers = await authHeaders()
-  delete headers["Content-Type"]
+  if (options.body === undefined) delete headers["Content-Type"]
   const hadToken = "Authorization" in headers
-  const res = await fetch(`${getBaseUrl()}${path}`, { headers })
+  const res = await fetch(`${getBaseUrl()}${path}`, {
+    method: options.method ?? "GET",
+    body: options.body,
+    headers,
+  })
   if (res.status === 401) {
     // We sent a Bearer that the BE rejected → JWT expired or revoked.
     // Gate on the header we actually sent (not a re-read of the session)

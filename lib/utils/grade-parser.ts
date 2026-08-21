@@ -59,10 +59,20 @@ export function parseGradeInput(input: string): GradeParseResult {
  * Catégorie sémantique d'une note /20 — pour color-coding + icône + texte.
  * WCAG-compliant : on ne se repose JAMAIS sur la couleur seule.
  */
-export type GradeCategory = "difficulte" | "moyen" | "bon" | "absent" | "non_saisi"
+export type GradeCategory =
+  | "difficulte"
+  | "moyen"
+  | "bon"
+  | "absent"
+  | "rattrapage"
+  | "non_saisi"
 
 export function categorizeGrade(value: number | null, status: string): GradeCategory {
-  if (value === null && status === "entered") return "absent"
+  // Le statut prime sur la valeur : un zéro d'office vaut bien 0, mais il se
+  // lit « absent », pas « en difficulté ». Et une épreuve rouverte par un
+  // billet d'annulation de zéro attend sa note, elle n'est pas « non saisie ».
+  if (status === "absent") return "absent"
+  if (status === "retake_allowed") return "rattrapage"
   if (value === null) return "non_saisi"
   if (value < 10) return "difficulte"
   if (value < 14) return "moyen"
@@ -79,6 +89,8 @@ export function gradeCategoryLabel(category: GradeCategory): string {
       return "Bon"
     case "absent":
       return "Absent"
+    case "rattrapage":
+      return "Rattrapage autorisé"
     case "non_saisi":
       return "Non saisi"
   }

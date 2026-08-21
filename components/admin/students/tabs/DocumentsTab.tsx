@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Award, FileCheck2, FileText, Loader2, Download, Lock } from "lucide-react"
+import { Award, FileCheck2, FileText, Loader2, Download, Lock, Mailbox } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { StudentAttachmentsSection } from "../attachments/StudentAttachmentsSection"
 import { studentDocumentsApi } from "@/lib/api/student-documents"
+import { schoolLifeDocumentsApi } from "@/lib/api/school-life-documents"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { downloadBlob } from "@/lib/utils"
 import { SectionCard, StatusPill } from "./_primitives"
 import { DocumentLockNotice } from "@/components/shared/documents/DocumentLockNotice"
@@ -19,7 +21,7 @@ interface DocumentsTabProps {
   studentLastName?: string
 }
 
-type DocKind = "certificate" | "attendance"
+type DocKind = "certificate" | "attendance" | "school-file-request"
 
 const DOCS: {
   kind: DocKind
@@ -29,6 +31,10 @@ const DOCS: {
   download: (id: number, overrideReason?: string) => Promise<Blob>
   filenameBase: string
   tone: "primary" | "accent"
+  /** Slug requis pour voir la carte. Absent : visible par tout lecteur de la fiche. */
+  permission?: string
+  /** Retenu tant que la famille doit de l'argent. Faux pour un courrier interne. */
+  heldForUnpaid: boolean
 }[] = [
   {
     kind: "certificate",
@@ -38,6 +44,7 @@ const DOCS: {
     download: studentDocumentsApi.downloadCertificateScolarite,
     filenameBase: "certificat_scolarite",
     tone: "primary",
+    heldForUnpaid: true,
   },
   {
     kind: "attendance",
@@ -47,6 +54,21 @@ const DOCS: {
     download: studentDocumentsApi.downloadAttestationFrequentation,
     filenameBase: "attestation_frequentation",
     tone: "accent",
+    heldForUnpaid: true,
+  },
+  {
+    kind: "school-file-request",
+    title: "Demande de dossier scolaire",
+    description:
+      "Courrier réclamant le dossier de l'élève à son établissement d'origine. Scellé, pour que l'établissement destinataire vérifie qu'il vient bien de l'administration.",
+    icon: Mailbox,
+    // Courrier entre établissements : il ne part pas à la famille, la retenue
+    // pour impayé ne s'y applique donc pas.
+    download: (id: number) => schoolLifeDocumentsApi.downloadSchoolFileRequest(id),
+    filenameBase: "demande_dossier_scolaire",
+    tone: "primary",
+    permission: "documents:school-file-request",
+    heldForUnpaid: false,
   },
 ]
 
@@ -60,6 +82,12 @@ export function DocumentsTab({ studentId, studentLastName }: DocumentsTabProps) 
   const { data: release, refetch: refetchRelease } = useDocumentReleaseStatus(studentId)
   const isBlocked = release?.blocked ?? false
   const canOverride = release?.can_override ?? false
+
+  // Les actes réservés à un métier (la demande de dossier est du ressort du
+  // directeur des études) ne s'affichent pas aux autres : un bouton qui
+  // renvoie 403 est pire qu'un bouton absent.
+  const { has } = usePermissions()
+  const visibleDocs = DOCS.filter((doc) => !doc.permission || has(doc.permission))
 
   async function runDownload(doc: (typeof DOCS)[number], overrideReason?: string) {
     setDownloading(doc.kind)
@@ -90,7 +118,7 @@ export function DocumentsTab({ studentId, studentLastName }: DocumentsTabProps) 
   function handleDownload(doc: (typeof DOCS)[number]) {
     // Retenu et on peut déroger : on demande le motif avant de générer quoi
     // que ce soit, plutôt que de laisser le backend refuser puis rejouer.
-    if (isBlocked && canOverride) {
+    if (doc.heldForUnpaid && isBlocked && canOverride) {
       setOverrideTarget(doc)
       return
     }
@@ -124,9 +152,10 @@ export function DocumentsTab({ studentId, studentLastName }: DocumentsTabProps) 
         ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {DOCS.map((doc) => {
+          {visibleDocs.map((doc) => {
             const Icon = doc.icon
             const isDownloading = downloading === doc.kind
+            const held = doc.heldForUnpaid && isBlocked
             const iconBg = doc.tone === "primary"
               ? "bg-primary/10 text-primary"
               : "bg-[rgba(245,130,32,0.12)] text-[#F58220]"
@@ -154,14 +183,14 @@ export function DocumentsTab({ studentId, studentLastName }: DocumentsTabProps) 
                     fetchBlob={() => doc.download(studentId)}
                     label={doc.title}
                     size="sm"
-                    disabled={isBlocked}
+                    disabled={held}
                     className="h-11 flex-1 sm:h-10"
                   />
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => handleDownload(doc)}
-                    disabled={isDownloading || (isBlocked && !canOverride)}
+                    disabled={isDownloading || (held && !canOverride)}
                     aria-label={`Télécharger ${doc.title}`}
                     className="h-11 flex-1 gap-2 sm:h-10"
                   >
@@ -170,7 +199,7 @@ export function DocumentsTab({ studentId, studentLastName }: DocumentsTabProps) 
                         <Loader2 className="h-4 w-4 animate-spin" />
                         Génération…
                       </>
-                    ) : isBlocked ? (
+                    ) : held ? (
                       <>
                         <Lock className="h-4 w-4" />
                         {canOverride ? "Déroger" : "Retenu"}

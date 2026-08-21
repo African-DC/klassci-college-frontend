@@ -56,6 +56,10 @@ export const ADMIN_NAVIGATION: AdminNavSection[] = [
       { label: "Emploi du temps", href: "/admin/timetable", iconName: "CalendarDays", anyOf: ["timetable:read"] },
       { label: "Notes", href: "/admin/grades", iconName: "ClipboardList", anyOf: ["grades:read"] },
       { label: "Présences", href: "/admin/attendance", iconName: "UserCheck", anyOf: ["attendance:read"] },
+      // Actes de vie scolaire : chacun n'apparaît qu'au métier qui le délivre
+      // (éducateur pour les convocations, directeur des études pour les reprises).
+      { label: "Convocations", href: "/admin/summons" as Route, iconName: "Megaphone", anyOf: ["documents:parent-summons"] },
+      { label: "Autorisations de reprise", href: "/admin/retakes" as Route, iconName: "RotateCcw", anyOf: ["documents:zero-cancellation"] },
       { label: "Bulletins", href: "/admin/reports", iconName: "FileText", anyOf: ["reports:read", "bulletins:generate"] },
       { label: "Performance", href: "/admin/performance" as Route, iconName: "Gauge", anyOf: ["performance:read"] },
       { label: "Congés", href: "/admin/leave" as Route, iconName: "CalendarClock", anyOf: ["leave:approve"] },

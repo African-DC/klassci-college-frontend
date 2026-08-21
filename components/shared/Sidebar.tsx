@@ -32,6 +32,8 @@ import {
   X,
   Banknote,
   ClipboardCheck,
+  Megaphone,
+  RotateCcw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
@@ -67,6 +69,8 @@ const ICONS = {
   ScrollText,
   ShieldCheck,
   Settings,
+  Megaphone,
+  RotateCcw,
 } as const
 
 interface SidebarProps {
