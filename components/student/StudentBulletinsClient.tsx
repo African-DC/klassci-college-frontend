@@ -86,7 +86,8 @@ function BulletinCard({ bulletin }: { bulletin: StudentBulletin }) {
               )}
               {bulletin.rank !== null && (
                 <span className="text-xs text-muted-foreground tabular-nums">
-                  Rang {bulletin.rank}/{bulletin.total_students}
+                  Rang {bulletin.rank}
+                  {bulletin.total_students !== null && `/${bulletin.total_students}`}
                 </span>
               )}
             </div>

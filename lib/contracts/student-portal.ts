@@ -80,13 +80,15 @@ export const StudentFeesResponseSchema = z.object({
 })
 
 // Bulletins publiés
+// `total_students` reste facultatif : la liste du portail élève ne porte pas
+// l'effectif de la classe, et l'affichage se contente alors du rang seul.
 export const StudentBulletinSchema = z.object({
   id: z.number(),
   trimester: z.string(),
   academic_year: z.string(),
   general_average: z.coerce.number().nullable(),
   rank: z.number().nullable(),
-  total_students: z.number(),
+  total_students: z.number().nullable(),
   status: z.enum(["brouillon", "publie"]),
   published_at: z.string().nullish(),
 })

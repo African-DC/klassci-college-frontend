@@ -25,7 +25,7 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
   const handleDownload = useCallback(async (bulletinId: number) => {
     setDownloadingId(bulletinId)
     try {
-      const blob = await parentPortalApi.downloadChildBulletinPdf(bulletinId)
+      const blob = await parentPortalApi.downloadChildBulletinPdf(childId, bulletinId)
       downloadBlob(blob, `bulletin-${bulletinId}.pdf`)
     } catch (err) {
       toast.error("Erreur lors du téléchargement", {
@@ -34,7 +34,7 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
     } finally {
       setDownloadingId(null)
     }
-  }, [])
+  }, [childId])
 
   if (error) {
     return <DataError message="Impossible de charger les bulletins." onRetry={refetch} />
@@ -106,7 +106,7 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
                 {bulletin.is_published && (
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <PdfPreviewButton
-                      fetchBlob={() => parentPortalApi.downloadChildBulletinPdf(bulletin.id)}
+                      fetchBlob={() => parentPortalApi.downloadChildBulletinPdf(childId, bulletin.id)}
                       label={`le bulletin du trimestre ${bulletin.trimester}`}
                       className="h-11 w-full sm:h-9 sm:flex-1"
                     />

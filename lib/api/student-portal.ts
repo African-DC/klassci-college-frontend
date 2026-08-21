@@ -3,7 +3,6 @@ import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
   StudentDashboardSchema,
   StudentGradesResponseSchema,
-  StudentBulletinSchema,
   StudentAttendanceResponseSchema,
   type StudentDashboard,
   type StudentGradesResponse,
@@ -17,7 +16,26 @@ import {
 } from "@/lib/contracts/timetable"
 
 const TimetableSlotArraySchema = z.array(TimetableSlotSchema)
-const StudentBulletinArraySchema = z.array(StudentBulletinSchema)
+
+// Le BE /student/bulletins renvoie {items:[{id, trimester:number, average,
+// rank, mention, class_name, academic_year_name, file_url, generated_at}],
+// total}. On valide cette forme réelle avant de la normaliser vers le
+// contrat consommé par l'UI.
+const StudentBulletinRawSchema = z.object({
+  id: z.number(),
+  trimester: z.number(),
+  average: z.coerce.number().nullable(),
+  rank: z.number().nullable(),
+  mention: z.string().nullable(),
+  class_name: z.string(),
+  academic_year_name: z.string(),
+  file_url: z.string().nullable(),
+  generated_at: z.string().nullable(),
+})
+const StudentBulletinsRawSchema = z.object({
+  items: z.array(StudentBulletinRawSchema),
+  total: z.number(),
+})
 
 // Le BE /student/fees renvoie {total_due, total_paid, balance, fees:[{id,
 // fee_category_name, amount, status: paid|partial|pending, payments}]}. On
@@ -133,14 +151,32 @@ export const studentPortalApi = {
     }
   },
 
-  // Bulletins publiés
+  // Bulletins publiés — normalise l'enveloppe BE vers le contrat UI.
   getBulletins: async (): Promise<StudentBulletin[]> => {
     const res = await apiFetch<unknown>("/student/bulletins")
-    const arr = Array.isArray(res) ? res : unwrapResponse<StudentBulletin[]>(res)
-    return safeValidate(StudentBulletinArraySchema, arr, "GET /student/bulletins")
+    const raw = safeValidate(StudentBulletinsRawSchema, res, "GET /student/bulletins")
+    return raw.items.map((b) => ({
+      id: b.id,
+      trimester: `Trimestre ${b.trimester}`,
+      academic_year: b.academic_year_name,
+      general_average: b.average,
+      rank: b.rank,
+      // L'effectif de la classe n'est pas porté par cette réponse : le rang
+      // s'affiche seul plutôt que suivi d'un dénominateur inventé.
+      total_students: null,
+      // L'endpoint ne rend que les bulletins publiés.
+      status: "publie" as const,
+      published_at: b.generated_at,
+    }))
   },
 
-  // Télécharger un bulletin en PDF (via apiFetchBlob centralisé)
+  /**
+   * Télécharger son bulletin en PDF.
+   *
+   * Route du portail, pas `/reports/bulletins/{id}/pdf` : cette dernière est
+   * gardée par `reports:read`, un droit qui ouvre les bulletins de toute
+   * l'école et qu'un élève n'a pas. Ici la garde est l'appartenance.
+   */
   downloadBulletin: async (bulletinId: number): Promise<Blob> => {
     return apiFetchBlob(`/student/bulletins/${bulletinId}/pdf`)
   },
