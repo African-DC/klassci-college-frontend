@@ -17,7 +17,8 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { StudentPicker } from "@/components/shared/StudentPicker"
-import { useAbsentEvaluations, useCreateRetakeAuthorization } from "@/lib/hooks/useRetakes"
+import { useDebounce } from "@/lib/hooks/useDebounce"
+import { useCreateRetakeAuthorization, useMissedEvaluations } from "@/lib/hooks/useRetakes"
 import { RetakeAuthorizationCreateSchema } from "@/lib/contracts/school-life"
 import { formatSchoolDate } from "@/components/shared/school-life/school-life-ui"
 import type { Student } from "@/lib/contracts/student"
@@ -42,17 +43,22 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
 
   const { mutate: create, isPending } = useCreateRetakeAuthorization()
 
-  const classId = student?.current_enrollment?.class_id
+  const enrolled = Boolean(student?.current_enrollment)
+
+  // Un champ date se saisit caractère par caractère : sans ce délai, chaque
+  // frappe relançait la recherche des évaluations manquées.
+  const searchedStart = useDebounce(periodStart, 400)
+  const searchedEnd = useDebounce(periodEnd, 400)
 
   const {
     data: evaluations,
     isLoading: loadingEvaluations,
     isError: evaluationsFailed,
-  } = useAbsentEvaluations({
+    error: evaluationsError,
+  } = useMissedEvaluations({
     studentId: student?.id,
-    classId,
-    periodStart: periodStart || undefined,
-    periodEnd: periodEnd || undefined,
+    periodStart: searchedStart || undefined,
+    periodEnd: searchedEnd || undefined,
   })
 
   useEffect(() => {
@@ -70,7 +76,7 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
   // cochées qui ne s'affichent plus enverrait des évaluations invisibles.
   useEffect(() => {
     setSelected([])
-  }, [student, periodStart, periodEnd])
+  }, [student, searchedStart, searchedEnd])
 
   function toggle(evaluationId: number) {
     setSelected((prev) =>
@@ -101,7 +107,7 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
     create(parsed.data, { onSuccess: () => onClose() })
   }
 
-  const periodChosen = Boolean(student && periodStart && periodEnd)
+  const periodChosen = Boolean(student && searchedStart && searchedEnd)
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
@@ -127,7 +133,7 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
               onClear={() => setStudent(null)}
             />
             {errors.student_id && <p className="text-sm text-destructive">{errors.student_id}</p>}
-            {student && !classId && (
+            {student && !enrolled && (
               <p className="text-sm text-destructive">
                 Cet élève n&apos;a pas d&apos;inscription pour l&apos;année courante : aucune
                 évaluation ne peut être rouverte.
@@ -178,8 +184,9 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
               </div>
             ) : evaluationsFailed ? (
               <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-xs text-destructive">
-                Les évaluations de la classe n&apos;ont pas pu être lues. Réessayez dans un
-                instant.
+                Les évaluations manquées n&apos;ont pas pu être lues.{" "}
+                {(evaluationsError as Error | null)?.message ??
+                  "Réessayez, et prévenez l'administration si cela persiste."}
               </p>
             ) : (evaluations ?? []).length === 0 ? (
               <p className="rounded-lg border border-dashed p-4 text-xs text-muted-foreground">
@@ -190,14 +197,14 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
               <div className="space-y-2">
                 {(evaluations ?? []).map((evaluation) => (
                   <label
-                    key={evaluation.id}
-                    htmlFor={`retake-eval-${evaluation.id}`}
+                    key={evaluation.evaluation_id}
+                    htmlFor={`retake-eval-${evaluation.evaluation_id}`}
                     className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/60"
                   >
                     <Checkbox
-                      id={`retake-eval-${evaluation.id}`}
-                      checked={selected.includes(evaluation.id)}
-                      onCheckedChange={() => toggle(evaluation.id)}
+                      id={`retake-eval-${evaluation.evaluation_id}`}
+                      checked={selected.includes(evaluation.evaluation_id)}
+                      onCheckedChange={() => toggle(evaluation.evaluation_id)}
                       className="mt-0.5"
                     />
                     <span className="min-w-0 flex-1">
@@ -205,7 +212,8 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
                         {evaluation.title}
                       </span>
                       <span className="block text-xs text-muted-foreground">
-                        {evaluation.subject_name} · {formatSchoolDate(evaluation.date)} ·
+                        {evaluation.subject_name ?? "Matière non renseignée"} ·{" "}
+                        {formatSchoolDate(evaluation.date)} ·
                         coefficient {evaluation.coefficient} · T{evaluation.trimester}
                       </span>
                     </span>

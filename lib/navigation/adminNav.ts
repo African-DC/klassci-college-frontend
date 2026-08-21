@@ -56,8 +56,10 @@ export const ADMIN_NAVIGATION: AdminNavSection[] = [
       { label: "Emploi du temps", href: "/admin/timetable", iconName: "CalendarDays", anyOf: ["timetable:read"] },
       { label: "Notes", href: "/admin/grades", iconName: "ClipboardList", anyOf: ["grades:read"] },
       { label: "Présences", href: "/admin/attendance", iconName: "UserCheck", anyOf: ["attendance:read"] },
-      // Actes de vie scolaire : chacun n'apparaît qu'au métier qui le délivre
-      // (éducateur pour les convocations, directeur des études pour les reprises).
+      // Actes de vie scolaire : les deux entrées vont ensemble, portées par le
+      // bureau de la vie scolaire, éducateur et secrétariat. Le directeur des
+      // études ne les a pas : il signe la demande de dossier scolaire, l'acte
+      // qui correspond avec l'établissement d'origine.
       { label: "Convocations", href: "/admin/summons" as Route, iconName: "Megaphone", anyOf: ["documents:parent-summons"] },
       { label: "Autorisations de reprise", href: "/admin/retakes" as Route, iconName: "RotateCcw", anyOf: ["documents:zero-cancellation"] },
       { label: "Bulletins", href: "/admin/reports", iconName: "FileText", anyOf: ["reports:read", "bulletins:generate"] },

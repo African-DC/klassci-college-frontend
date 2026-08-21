@@ -38,6 +38,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- Les écrans « Convocations de parent » et « Autorisations de reprise » ouvrent sur l'année scolaire en cours et se lisent par pages de vingt : ils affichaient jusqu'ici tout l'historique de l'établissement, qui n'est jamais purgé *(éducateur, secrétariat)*
+- Formulaire du billet d'annulation de zéro : les évaluations manquées ne se cherchent plus à chaque caractère tapé dans les dates, mais une fois la saisie posée *(éducateur, secrétariat)*
 - Le choix de l’élève se fait par recherche, dans les convocations, les autorisations de reprise et les versements : on tape deux lettres, nom ou matricule, au lieu de faire défiler une liste tronquée aux cent premiers *(admin, secrétariat, caissier)*.
 - Fiche Personnel : le rôle d'accès propose désormais six métiers (secrétariat, caissier, éducateur, comptable, directeur des études, directeur), chacun accompagné d'une phrase qui dit ce que la personne pourra faire. « Personnel administratif » devient « Secrétariat » *(admin, directeur)*.
 - Wizard Nouvelle inscription : le modal ne se ferme plus si on appuie hors du cadre (la saisie n'est plus perdue). L'étape élève et la sélection de classe sont lisibles sur téléphone, avec des boutons assez grands. La liste des classes montre les places encore disponibles, pas seulement le maximum *(admin)*.
@@ -56,6 +58,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- L'éducateur et le secrétariat peuvent enfin délivrer un billet d'annulation de zéro : l'écran cherchait les évaluations manquées dans le cahier de notes de la classe, qu'ils n'ont pas le droit de lire, et répondait « Réessayez dans un instant » à une erreur de droits qui ne se résolvait jamais *(éducateur, secrétariat)*
+- Les quatre compteurs du registre des convocations décrivent l'année consultée et non le filtre en cours : cliquer « Tuteur absent » affichait « Convocations 8, Tuteur venu 0, Tuteur absent 8 » *(éducateur)*
+- Quand la liste des évaluations manquées ne peut pas être lue, le formulaire affiche enfin la raison au lieu d'inviter à réessayer *(éducateur, secrétariat)*
 - Décocher « Abs. » sur la feuille de notes ne transforme plus le zéro d’office en note de 0/20, et ne le fait plus disparaître du bulletin. La case explique désormais qu’un billet de reprise est nécessaire *(enseignant, admin)*.
 - Cocher « Abs. » sur un élève déjà noté demande confirmation : sa note ne disparaît plus sans avertissement *(enseignant)*.
 - Taper « absent » dans la case de note marque enfin l’absence, comme la case cochée et comme le mot dit à voix haute *(enseignant)*.

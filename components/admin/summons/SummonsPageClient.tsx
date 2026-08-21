@@ -8,7 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { cn } from "@/lib/utils"
 import { usePermissions } from "@/lib/hooks/usePermissions"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { useDownloadSummons, useSummonsRegister } from "@/lib/hooks/useSummons"
+import { RegisterPagination } from "@/components/shared/school-life/RegisterPagination"
 import { SummonsCreateModal } from "./SummonsCreateModal"
 import { SummonsOutcomeModal } from "./SummonsOutcomeModal"
 import { SummonsRegisterList } from "./SummonsRegisterList"
@@ -28,9 +30,12 @@ const TRIMESTER_FILTERS = [
   { key: 3, label: "T3" },
 ]
 
+const PAGE_SIZE = 20
+
 export function SummonsPageClient() {
   const [outcome, setOutcome] = useState("")
   const [trimester, setTrimester] = useState(0)
+  const [page, setPage] = useState(1)
   const [createOpen, setCreateOpen] = useState(false)
   const [outcomeTarget, setOutcomeTarget] = useState<ParentSummons | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
@@ -38,15 +43,38 @@ export function SummonsPageClient() {
   const { has, isLoading: loadingPermissions } = usePermissions()
   const canManage = has("documents:parent-summons")
 
+  // Un bureau qui convoque cinq tuteurs par jour écrit neuf cents lignes par
+  // an, et le registre n'est jamais purgé : on ouvre sur l'année courante, par
+  // pages.
+  const { data: yearsData } = useAcademicYears()
+  const years = yearsData?.items ?? []
+  const currentYearId = (years.find((year) => year.is_current) ?? years[0])?.id
+
   const filters = {
+    ...(currentYearId ? { academic_year_id: currentYearId } : {}),
     ...(outcome ? { outcome } : {}),
     ...(trimester ? { trimester } : {}),
+    page,
+    size: PAGE_SIZE,
   }
-  const { data, isLoading, error, refetch } = useSummonsRegister(filters, canManage)
+  const { data, isLoading, error, refetch } = useSummonsRegister(
+    filters,
+    canManage && Boolean(currentYearId),
+  )
   const { mutate: download } = useDownloadSummons()
 
   const items = data?.items ?? []
   const summary = data?.summary
+
+  function changeOutcome(next: string) {
+    setOutcome(next)
+    setPage(1)
+  }
+
+  function changeTrimester(next: number) {
+    setTrimester(next)
+    setPage(1)
+  }
 
   const kpis: HeroKpi[] = [
     { label: "Convocations", value: summary?.total ?? "—", icon: Users },
@@ -81,7 +109,7 @@ export function SummonsPageClient() {
       <PageHero
         icon={Megaphone}
         title="Convocations de parent"
-        subtitle="Qui a été convoqué, quand, et qui est venu"
+        subtitle="Le registre de l'année en cours : qui a été convoqué, et qui est venu"
         kpis={kpis}
         actions={
           <button
@@ -101,7 +129,7 @@ export function SummonsPageClient() {
             <button
               key={filter.key || "all"}
               type="button"
-              onClick={() => setOutcome(filter.key)}
+              onClick={() => changeOutcome(filter.key)}
               aria-pressed={outcome === filter.key}
               className={cn(
                 "h-11 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors sm:h-9",
@@ -120,7 +148,7 @@ export function SummonsPageClient() {
             <button
               key={filter.key}
               type="button"
-              onClick={() => setTrimester(filter.key)}
+              onClick={() => changeTrimester(filter.key)}
               aria-pressed={trimester === filter.key}
               className={cn(
                 "h-11 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors sm:h-9",
@@ -159,12 +187,21 @@ export function SummonsPageClient() {
           </CardContent>
         </Card>
       ) : (
-        <SummonsRegisterList
-          items={items}
-          onRecordOutcome={setOutcomeTarget}
-          onDownload={handleDownload}
-          downloadingId={downloadingId}
-        />
+        <div className="space-y-4">
+          <SummonsRegisterList
+            items={items}
+            onRecordOutcome={setOutcomeTarget}
+            onDownload={handleDownload}
+            downloadingId={downloadingId}
+          />
+          <RegisterPagination
+            total={data?.total ?? 0}
+            page={data?.page ?? page}
+            size={data?.size ?? PAGE_SIZE}
+            onPageChange={setPage}
+            noun="convocation"
+          />
+        </div>
       )}
 
       <SummonsCreateModal open={createOpen} onClose={() => setCreateOpen(false)} />
