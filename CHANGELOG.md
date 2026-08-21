@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Colonne « Encaissé par » sur l'écran des versements, dans le tableau comme sur les cartes du téléphone, et filtre par caisse pour la comptabilité qui veut contrôler un guichet *(comptable, directeur, caissier)*
+- Aperçu avant impression du journal des versements, comme sur les autres écrans qui produisent un document *(comptable, caissier)*
 - Après avoir corrigé le montant d'un frais, l'écran demande s'il faut le répercuter sur les inscriptions déjà enregistrées, et montre l'impact chiffré avant de trancher : lignes à mettre à jour, lignes conservées parce qu'un versement y est imputé, écart de dette en francs. Répondre non ne change rien, et la question se repose depuis la grille des frais *(admin, comptable)*
 - Champ « Lieu de naissance » à côté de la date, à la création d'un élève, à sa modification et à l'étape élève de l'inscription. Il s'affiche sur la fiche détail et part sur le certificat de scolarité, que l'administration refuse sans la mention « né(e) le ... à ... » *(secrétariat, admin)*
 - L'export de la liste des élèves emporte le lieu de naissance à côté de la date *(secrétariat, admin)*
@@ -44,6 +46,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
+- Le journal des versements s'exporte désormais depuis le serveur : le PDF sort au gabarit officiel de l'établissement, et le classeur Excel porte les couleurs, le logo, la période et les filtres appliqués, au lieu d'un tableau sans identité *(comptable, caissier)*
+- La période choisie sur l'écran des versements est appliquée par le serveur : elle portait jusqu'ici sur la seule page affichée, ce qui pouvait masquer des versements de la période *(comptable, caissier)*
 
 - L'écran des évaluations et celui des bulletins s'ouvrent en une fraction de seconde : ils réclamaient toute l'année scolaire au serveur pour n'afficher qu'une vingtaine de lignes, et mettaient plus de quatre secondes à répondre *(admin, directeur des études, enseignant)*
 - Le pied de la liste des bulletins annonce le nombre de la classe entière et les flèches de page fonctionnent enfin : elles affichaient « Page 1/1 » quel que soit l'effectif *(admin)*
