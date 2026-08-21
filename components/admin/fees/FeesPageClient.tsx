@@ -16,6 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { EntitlementsPopover } from "@/components/shared/fees/FeeEntitlements"
 import { FeeCategoryCreateModal } from "./FeeCategoryCreateModal"
 import { FeeCategoryEditModal } from "./FeeCategoryEditModal"
 import { FeeVariantCreateModal } from "./FeeVariantCreateModal"
@@ -164,6 +165,12 @@ export function FeesPageClient() {
                         </Button>
                       </div>
                     </div>
+                    <EntitlementsPopover
+                      categoryName={cat.name}
+                      entitlements={cat.entitlements}
+                      fallbackNote={cat.description}
+                      className="-ml-2 mb-1"
+                    />
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
                         <span className="font-medium text-foreground">{catVariants.length}</span> niveau(x)

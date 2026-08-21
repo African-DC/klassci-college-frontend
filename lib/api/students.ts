@@ -4,6 +4,7 @@ import type { Student, StudentCreate, StudentFilters, StudentFull, StudentUpdate
 import { createCrudApi } from "./createCrudApi"
 import { apiFetch, handleExpiredSession, safeValidate } from "./client"
 import { z } from "zod"
+import { FeeEntitlementSchema } from "@/lib/contracts/fee"
 
 function getBaseUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_URL
@@ -17,6 +18,7 @@ const StudentEnrollmentFeeSchema = z.object({
   id: z.number(),
   enrollment_id: z.number(),
   category_name: z.string(),
+  entitlements: z.array(FeeEntitlementSchema).optional(),
   amount: z.number(),
   paid: z.number(),
   remaining: z.number(),
