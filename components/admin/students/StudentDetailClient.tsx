@@ -281,7 +281,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
       {/* Tabs — reordered by usage frequency, scroll-x on mobile, controlled for cross-tab links */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-          <TabsList className="w-max">
+          <TabsList className="w-max max-w-none">
             <TabsTrigger value="parcours">
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
               Parcours

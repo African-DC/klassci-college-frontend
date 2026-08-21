@@ -159,7 +159,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
       {/* Tabs — controlled + scroll-x mobile (pattern principe 13/14) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-        <TabsList className="w-max">
+        <TabsList className="w-max max-w-none">
           <TabsTrigger value="overview">
             <BookOpen className="mr-1.5 h-3.5 w-3.5" />
             Vue d&apos;ensemble

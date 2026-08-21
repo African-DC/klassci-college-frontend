@@ -131,7 +131,7 @@ export function ClassDetailClient({ classId }: ClassDetailClientProps) {
 
       <Tabs defaultValue="overview" className="space-y-4">
         <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
-          <TabsList className="inline-flex h-auto w-max gap-1 p-1">
+          <TabsList className="inline-flex h-auto w-max max-w-none gap-1 p-1">
             <TabsTrigger value="overview" className="h-9 whitespace-nowrap">
               <School className="mr-1.5 h-4 w-4" aria-hidden="true" />
               Aperçu
