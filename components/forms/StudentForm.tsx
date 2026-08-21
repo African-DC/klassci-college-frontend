@@ -40,6 +40,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
       password: "",
       enrollment_number: "",
       birth_date: "",
+      birth_place: "",
       genre: undefined,
       city: "",
       commune: "",
@@ -163,19 +164,35 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="birth_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Date de naissance</FormLabel>
-              <FormControl>
-                <Input type="date" className="h-11" {...field} value={field.value ?? ""} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="birth_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Date de naissance</FormLabel>
+                <FormControl>
+                  <Input type="date" className="h-11" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="birth_place"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lieu de naissance</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex : Bouaké" className="h-11" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <FormField

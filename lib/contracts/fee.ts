@@ -125,3 +125,57 @@ export const ASSIGNMENT_SCOPES: {
 export function assignmentScopeLabel(scope: string | null | undefined): string {
   return ASSIGNMENT_SCOPES.find((s) => s.value === (scope ?? null))?.label ?? "Tous les élèves"
 }
+
+// ---------------------------------------------------------------------------
+// Répercussion d'un tarif modifié sur les inscriptions existantes
+// ---------------------------------------------------------------------------
+
+/**
+ * Les compteurs communs à l'aperçu et au résultat.
+ *
+ * Mêmes noms des deux côtés : c'est ce qui permet à l'école de comparer ce
+ * qu'on lui avait annoncé et ce qui a été fait. `amount` et `debt_delta`
+ * passent par `coerce` parce que le serveur sérialise ses décimales en
+ * chaînes, et qu'un `z.number()` nu ferait échouer la validation.
+ */
+const feePropagationShape = {
+  variant_id: z.number(),
+  fee_category_id: z.number(),
+  category_name: z.string(),
+  academic_year_id: z.number(),
+  amount: z.coerce.number(),
+  /** Somme des quatre paquets : une catégorie ne produit qu'une ligne par inscription. */
+  enrollments_concerned: z.number(),
+  fees_already_up_to_date: z.number(),
+  fees_kept_with_payments: z.number(),
+  fees_waived: z.number(),
+  /** Écart total de dette en francs, négatif quand le tarif baisse. */
+  debt_delta: z.coerce.number(),
+  message: z.string(),
+}
+
+export const FeePropagationPreviewSchema = z.object({
+  ...feePropagationShape,
+  fees_to_update: z.number(),
+})
+
+export const FeePropagationResultSchema = z.object({
+  ...feePropagationShape,
+  fees_updated: z.number(),
+})
+
+export type FeePropagationPreview = z.infer<typeof FeePropagationPreviewSchema>
+export type FeePropagationResult = z.infer<typeof FeePropagationResultSchema>
+
+/**
+ * L'écart de dette, signé et en francs.
+ *
+ * Le signe est explicite des deux côtés : « 81 000 F » seul ne dit pas si
+ * l'école va réclamer davantage ou rendre de l'argent, et c'est la seule
+ * chose que la comptable veut savoir en lisant cette ligne.
+ */
+export function formatDebtDelta(delta: number): string {
+  if (delta === 0) return "0 F"
+  const signe = delta > 0 ? "+" : "\u2212"
+  return `${signe}${Math.abs(delta).toLocaleString("fr-FR")} F`
+}

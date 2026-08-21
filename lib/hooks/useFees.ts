@@ -10,6 +10,7 @@ export const feeKeys = {
   categories: ["fees", "categories"] as const,
   variants: (academicYearId?: number) => ["fees", "variants", academicYearId] as const,
   options: (categoryId: number) => ["fees", "options", categoryId] as const,
+  propagation: (variantId: number) => ["fees", "propagation", variantId] as const,
 }
 
 // --- Catégories ---
@@ -144,6 +145,43 @@ export function useDeleteFeeVariant() {
       toast.error("Erreur", { description: err.message })
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["fees", "variants"] }),
+  })
+}
+
+// --- Répercussion d'un tarif sur les inscriptions existantes ---
+
+/**
+ * L'impact chiffré de la répercussion, relu à chaque ouverture du dialogue.
+ *
+ * `staleTime: 0` : entre deux ouvertures, une inscription a pu être créée ou
+ * un versement encaissé. Montrer un aperçu tiré du cache ferait confirmer un
+ * chiffre qui n'est plus vrai, et c'est précisément ce que l'aperçu existe
+ * pour éviter.
+ */
+export function useFeePropagationPreview(variantId: number | null) {
+  return useQuery({
+    queryKey: feeKeys.propagation(variantId ?? 0),
+    queryFn: () => feesApi.propagationPreview(variantId as number),
+    enabled: variantId !== null,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  })
+}
+
+export function usePropagateFeeVariant() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (variantId: number) => feesApi.propagate(variantId),
+    onSuccess: (result) => {
+      toast.success("Répercussion effectuée", { description: result.message })
+      // Les dettes ont bougé : tout ce qui affiche un solde d'élève ou un
+      // total d'école est périmé, pas seulement la grille des frais.
+      queryClient.invalidateQueries({ queryKey: feeKeys.all })
+      queryClient.invalidateQueries({ queryKey: ["enrollments"] })
+      queryClient.invalidateQueries({ queryKey: ["payments"] })
+    },
+    onError: (err) => toast.error("Répercussion impossible", { description: err.message }),
   })
 }
 

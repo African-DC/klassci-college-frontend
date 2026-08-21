@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { ChevronRight, Pencil, Trash2, GraduationCap, Coins } from "lucide-react"
+import { ArrowRightLeft, ChevronRight, Pencil, Trash2, GraduationCap, Coins } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -18,6 +18,14 @@ interface FeesByLevelTreeProps {
   categoryNameMap: Map<number, string>
   onEditVariant: (variant: FeeVariant) => void
   onDeleteVariant: (variant: FeeVariant) => void
+  /**
+   * Rouvre la question de la répercussion sur les inscriptions existantes.
+   *
+   * Elle est posée d'elle-même après une modification de montant. La reposer
+   * ici est ce qui rend le refus sans conséquence : dire non sur le moment ne
+   * ferme pas la porte, on revient quand la décision est prise.
+   */
+  onPropagateVariant: (variant: FeeVariant) => void
 }
 
 /**
@@ -33,6 +41,7 @@ export function FeesByLevelTree({
   categoryNameMap,
   onEditVariant,
   onDeleteVariant,
+  onPropagateVariant,
 }: FeesByLevelTreeProps) {
   // Regroupe les variantes par niveau.
   const byLevel = useMemo(() => {
@@ -164,6 +173,16 @@ export function FeesByLevelTree({
                           aria-label={`Modifier ${catName}`}
                         >
                           <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => onPropagateVariant(v)}
+                          aria-label={`Répercuter ${catName} sur les inscriptions`}
+                          title="Répercuter sur les inscriptions"
+                        >
+                          <ArrowRightLeft className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           size="icon"

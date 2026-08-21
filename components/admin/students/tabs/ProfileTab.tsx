@@ -45,7 +45,9 @@ export function ProfileTab({ student, fullData }: ProfileTabProps) {
   const email = (f.email as string | null | undefined) ?? null
   const isActive = f.is_active as boolean | undefined
   const lastLogin = (f.last_login as string | null | undefined) ?? null
-  const birthPlace = (f.birth_place as string | null | undefined) ?? null
+  // Lu sur l'élève typé, pas sur le sac `fullData` non typé : c'est ce sac
+  // qui laissait la ligne vide quand le backend n'envoyait pas la clé.
+  const birthPlace = student.birth_place ?? null
   const nationality = (f.nationality as string | null | undefined) ?? null
 
   const age = useMemo(() => computeAge(student.birth_date), [student.birth_date])
