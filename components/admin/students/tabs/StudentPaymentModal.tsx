@@ -21,13 +21,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
@@ -43,18 +36,12 @@ import {
 } from "@/lib/contracts/payment"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { AllocationPreviewCard } from "@/components/admin/payments/AllocationPreviewCard"
+import { PaymentMethodSelect } from "@/components/admin/payments/PaymentMethodSelect"
 
 interface StudentPaymentModalProps {
   studentId: number
   open: boolean
   onClose: () => void
-}
-
-const METHOD_LABELS: Record<EnrollmentPaymentCreate["method"], string> = {
-  cash: "Espèces",
-  mobile_money: "Mobile Money (Wave / Orange / MTN)",
-  bank_transfer: "Virement bancaire",
-  cheque: "Chèque",
 }
 
 function formatFcfa(value: number): string {
@@ -198,20 +185,14 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Mode de paiement *</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger className="h-11">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.entries(METHOD_LABELS).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <PaymentMethodSelect
+                        value={field.value}
+                        onChange={(v) =>
+                          field.onChange(v as EnrollmentPaymentCreate["method"])
+                        }
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

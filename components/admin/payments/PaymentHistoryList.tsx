@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Receipt, Banknote, Smartphone, Building2, FileText, Loader2, ArrowRight } from "lucide-react"
+import { Receipt, Loader2, ArrowRight } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,16 +10,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { SectionTitle } from "@/components/shared/PageHero"
 import { useEnrollmentPayments } from "@/lib/hooks/usePayments"
 import { paymentsApi } from "@/lib/api/payments"
-import type { Payment, PaymentMethod } from "@/lib/contracts/payment"
+import type { Payment } from "@/lib/contracts/payment"
+import { paymentMethodLabel } from "@/lib/payment-methods"
+import { paymentMethodIcon } from "@/components/admin/payments/method-icon"
 
 const fmt = (n: number) => `${Number(n).toLocaleString("fr-FR")} FCFA`
-
-const METHOD: Record<PaymentMethod, { label: string; icon: typeof Banknote }> = {
-  cash: { label: "Espèces", icon: Banknote },
-  mobile_money: { label: "Mobile Money", icon: Smartphone },
-  bank_transfer: { label: "Virement", icon: Building2 },
-  cheque: { label: "Chèque", icon: FileText },
-}
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   completed: { label: "Validé", cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
@@ -83,8 +78,7 @@ export function PaymentHistoryList({ enrollmentId }: { enrollmentId: number }) {
         ) : (
           <div className="space-y-2.5">
             {list.map((p) => {
-              const method = METHOD[p.method]
-              const MethodIcon = method.icon
+              const MethodIcon = paymentMethodIcon(p.method)
               const st = STATUS_LABEL[p.status] ?? { label: p.status, cls: "border-border bg-muted text-muted-foreground" }
               const allocations = p.allocations ?? []
               return (
@@ -97,7 +91,7 @@ export function PaymentHistoryList({ enrollmentId }: { enrollmentId: number }) {
                         <span>{formatDate(p.created_at)}</span>
                         <span className="inline-flex items-center gap-1">
                           <MethodIcon className="h-3 w-3" />
-                          {method.label}
+                          {paymentMethodLabel(p.method)}
                         </span>
                         {p.reference && <span className="font-mono">{p.reference}</span>}
                       </p>

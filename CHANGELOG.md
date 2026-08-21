@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Onglet « Moyens de paiement » dans Paramètres : pour chaque profil qui encaisse, on coche les moyens qu'il a le droit de saisir. Retirer les espèces au comptable prend deux clics, et l'écran prévient qu'autoriser les espèces engage une journée de caisse à ouvrir et à compter *(admin, directeur)*
+- Wave, MTN MoMo, Orange Money et Moov Money se choisissent séparément au guichet, au lieu d'un « Mobile Money » unique qui obligeait le comptable à démêler ses relevés *(caissier, comptable, secrétariat)*
 - Bandeau « Ma caisse » qui signale les journées clôturées d'office pendant la nuit et permet de les régulariser en saisissant ce qui avait été compté *(caissier)*
 - Une journée non comptée affiche « Écart inconnu » et non un écart nul : le comptable voit la différence entre une caisse qui tombe juste et une caisse que personne n'a ouverte *(caissier, comptable)*
 - Chaque tranche de paiement se saisit au choix en pourcentage ou en montant fixe, dans la même grille : « Inscription 37 000 FCFA à la rentrée », puis 35 / 35 / 30 % du reste *(admin, comptable)*
@@ -39,7 +41,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
-
+- Le mode de paiement du formulaire d'encaissement ne montre que les moyens que la personne connectée peut réellement utiliser : plus de choix proposé puis refusé au moment d'enregistrer *(caissier, comptable, secrétariat)*
+- Les versements enregistrés autrefois en « Mobile Money » gardent ce libellé partout et restent filtrables dans le journal des versements : l'historique d'une école ne change pas de sens *(comptable, parent)*
 - Bulletin retenu pour impayé : la carte reste affichée mais grisée, la moyenne montre un tiret plutôt qu'un chiffre, et une phrase dit le trimestre concerné, le montant en retard et d'aller au secrétariat. Le bouton de téléchargement disparaît au lieu d'échouer au clic *(élève, parent)*
 - Un lien « Consulter les notes publiées » figure sur chaque bulletin retenu : les notes restent accessibles, et la famille voit que ce n'est pas une panne *(élève, parent)*
 - Les écrans « Convocations de parent » et « Autorisations de reprise » ouvrent sur l'année scolaire en cours et se lisent par pages de vingt : ils affichaient jusqu'ici tout l'historique de l'établissement, qui n'est jamais purgé *(éducateur, secrétariat)*

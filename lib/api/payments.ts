@@ -2,6 +2,7 @@ import { z } from "zod"
 import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
   AllocationPreviewSchema,
+  PaymentMethodListSchema,
   FinancialSummarySchema,
   PaymentSchema,
   type AllocationPreview,
@@ -10,6 +11,7 @@ import {
   type Payment,
   type PaymentCreate,
   type PaymentListParams,
+  type PaymentMethodOption,
 } from "@/lib/contracts/payment"
 import { PaginatedResponseSchema, type PaginatedResponse } from "@/lib/contracts"
 
@@ -34,6 +36,15 @@ function unwrapPayment(json: unknown): unknown {
 }
 
 export const paymentsApi = {
+  // Les moyens de paiement que l'utilisateur courant peut reellement saisir.
+  // Croise ce que l'ecole accepte et ce que son profil autorise : le selecteur
+  // se remplit d'ici plutot que d'une liste figee, pour ne jamais proposer un
+  // choix qui sera refuse a l'enregistrement.
+  myMethods: async (): Promise<PaymentMethodOption[]> => {
+    const json = await apiFetch<unknown>("/payments/methods")
+    return safeValidate(PaymentMethodListSchema, json, "GET /payments/methods").items
+  },
+
   // Liste paginée des paiements
   list: async (params: PaymentListParams = {}): Promise<PaginatedResponse<Payment>> => {
     const query = new URLSearchParams(

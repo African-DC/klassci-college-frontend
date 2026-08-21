@@ -7,13 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useStudentFees } from "@/lib/hooks/useStudents"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
@@ -22,7 +15,8 @@ import { StudentPicker } from "@/components/shared/StudentPicker"
 import type { Student } from "@/lib/contracts/student"
 import type { Enrollment } from "@/lib/contracts/enrollment"
 import type { StudentEnrollmentFee } from "@/lib/api/students"
-import type { PaymentMethod } from "@/lib/contracts/payment"
+import type { SelectablePaymentMethod } from "@/lib/payment-methods"
+import { PaymentMethodSelect } from "@/components/admin/payments/PaymentMethodSelect"
 
 // --- Types internes ---
 
@@ -39,13 +33,6 @@ const STEP_LABELS = [
   "Choisir le frais",
   "Saisir le paiement",
 ] as const
-
-const METHOD_OPTIONS: { value: PaymentMethod; label: string }[] = [
-  { value: "cash", label: "Especes" },
-  { value: "cheque", label: "Cheque" },
-  { value: "bank_transfer", label: "Virement bancaire" },
-  { value: "mobile_money", label: "Mobile Money" },
-]
 
 function formatCurrency(amount: number): string {
   return `${amount.toLocaleString("fr-FR")} FCFA`
@@ -338,7 +325,7 @@ function StepPaymentForm({
   onSuccess: () => void
 }) {
   const [amount, setAmount] = useState(String(fee.remaining))
-  const [method, setMethod] = useState<PaymentMethod>("cash")
+  const [method, setMethod] = useState<SelectablePaymentMethod>("cash")
   const [reference, setReference] = useState("")
   const { mutate, isPending } = useCreatePayment()
 
@@ -404,18 +391,10 @@ function StepPaymentForm({
       {/* Method */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Methode de paiement *</label>
-        <Select value={method} onValueChange={(v) => setMethod(v as PaymentMethod)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {METHOD_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <PaymentMethodSelect
+          value={method}
+          onChange={(v) => setMethod(v as SelectablePaymentMethod)}
+        />
       </div>
 
       {/* Reference */}

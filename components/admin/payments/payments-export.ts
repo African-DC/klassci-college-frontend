@@ -1,14 +1,10 @@
-import type { Payment, PaymentMethod, PaymentStatus } from "@/lib/contracts/payment"
+import { paymentMethodLabel } from "@/lib/payment-methods"
+import type { Payment, PaymentStatus } from "@/lib/contracts/payment"
 import type { SchoolSettings } from "@/lib/contracts/settings"
 import type { ExportPayload } from "@/lib/export"
 import { brandingFromSettings } from "@/lib/export/branding"
 
-const METHOD_LABELS: Record<PaymentMethod, string> = {
-  cash: "Espèces",
-  mobile_money: "Mobile Money",
-  bank_transfer: "Virement",
-  cheque: "Chèque",
-}
+
 
 const STATUS_LABELS: Record<PaymentStatus, string> = {
   pending: "En attente",
@@ -59,7 +55,7 @@ export function buildPaymentsExportPayload({
       reference: p.reference ?? "",
       eleve: p.student_name ?? "",
       frais: p.fee_name ?? "",
-      methode: METHOD_LABELS[p.method],
+      methode: paymentMethodLabel(p.method),
       statut: STATUS_LABELS[p.status],
       montant: p.amount,
     })),

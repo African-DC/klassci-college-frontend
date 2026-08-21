@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from "react"
 import {
   Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp,
   AlertCircle, Banknote, CreditCard, Search, X, Eye,
-  Receipt, Coins, Smartphone, Building2, FileText, CalendarDays,
+  Receipt, CalendarDays,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -51,6 +51,8 @@ import { usePayments, useFinancialSummary, useValidatePayment, useCancelPayment 
 import { useFeeCategories } from "@/lib/hooks/useFees"
 import { useSettings } from "@/lib/hooks/useSettings"
 import { paymentsApi } from "@/lib/api/payments"
+import { ALL_PAYMENT_METHODS, paymentMethodLabel } from "@/lib/payment-methods"
+import { paymentMethodIcon } from "@/components/admin/payments/method-icon"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@/lib/contracts/payment"
 import { buildPaymentsExportPayload } from "./payments-export"
@@ -63,20 +65,6 @@ const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" |
   failed: { label: "Échoué", variant: "destructive", dot: "bg-red-500" },
   refunded: { label: "Remboursé", variant: "outline", dot: "bg-blue-500" },
   cancelled: { label: "Annulé", variant: "destructive", dot: "bg-rose-500" },
-}
-
-const METHOD_LABELS: Record<PaymentMethod, string> = {
-  cash: "Espèces",
-  mobile_money: "Mobile Money",
-  bank_transfer: "Virement",
-  cheque: "Chèque",
-}
-
-const METHOD_ICON_MAP: Record<PaymentMethod, React.ComponentType<{ className?: string }>> = {
-  cash: Coins,
-  mobile_money: Smartphone,
-  bank_transfer: Building2,
-  cheque: FileText,
 }
 
 export function PaymentsPageClient() {
@@ -128,7 +116,7 @@ export function PaymentsPageClient() {
   const exportFilters = useMemo(() => {
     const parts: string[] = []
     if (statusFilter) parts.push(`Statut : ${STATUS_CONFIG[statusFilter].label}`)
-    if (methodFilter) parts.push(`Méthode : ${METHOD_LABELS[methodFilter]}`)
+    if (methodFilter) parts.push(`Méthode : ${paymentMethodLabel(methodFilter)}`)
     if (categoryFilter) {
       const name = feeCategories?.find((c) => String(c.id) === categoryFilter)?.name
       if (name) parts.push(`Catégorie : ${name}`)
@@ -294,10 +282,14 @@ export function PaymentsPageClient() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes méthodes</SelectItem>
-                <SelectItem value="cash">Espèces</SelectItem>
-                <SelectItem value="mobile_money">Mobile Money</SelectItem>
-                <SelectItem value="bank_transfer">Virement</SelectItem>
-                <SelectItem value="cheque">Chèque</SelectItem>
+                {/* Le filtre porte sur l'historique, valeur « Mobile Money »
+                    comprise : sans elle, une école ne retrouverait plus les
+                    versements enregistrés avant la distinction des opérateurs. */}
+                {ALL_PAYMENT_METHODS.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {paymentMethodLabel(m)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -396,7 +388,7 @@ export function PaymentsPageClient() {
               <TableBody>
                 {payments.map((payment: Payment) => {
                   const statusCfg = STATUS_CONFIG[payment.status]
-                  const MethodIcon = METHOD_ICON_MAP[payment.method]
+                  const MethodIcon = paymentMethodIcon(payment.method)
                   const initials = payment.student_name
                     ? payment.student_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
                     : "?"
@@ -438,7 +430,7 @@ export function PaymentsPageClient() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <MethodIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-sm">{METHOD_LABELS[payment.method]}</span>
+                          <span className="text-sm">{paymentMethodLabel(payment.method)}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -504,7 +496,7 @@ export function PaymentsPageClient() {
             <div className="space-y-2 p-3 md:hidden">
               {payments.map((payment: Payment) => {
                 const statusCfg = STATUS_CONFIG[payment.status]
-                const MethodIcon = METHOD_ICON_MAP[payment.method]
+                const MethodIcon = paymentMethodIcon(payment.method)
                 const initials = payment.student_name
                   ? payment.student_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
                   : "?"
@@ -530,7 +522,7 @@ export function PaymentsPageClient() {
                         <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <MethodIcon className="h-3 w-3" aria-hidden="true" />
-                            {METHOD_LABELS[payment.method]}
+                            {paymentMethodLabel(payment.method)}
                           </span>
                           <span className="tabular-nums">
                             {new Date(payment.created_at).toLocaleDateString("fr-FR", {
