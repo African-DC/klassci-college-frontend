@@ -733,7 +733,7 @@ function DetailSkeleton() {
           <Skeleton className="h-4 w-32" />
         </div>
       </div>
-      <Skeleton className="h-10 w-80 rounded-lg" />
+      <Skeleton className="h-10 w-full max-w-xs rounded-lg" />
       <Skeleton className="h-48 rounded-lg" />
     </div>
   )
