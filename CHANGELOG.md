@@ -45,6 +45,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed
 
+- L'écran des évaluations et celui des bulletins s'ouvrent en une fraction de seconde : ils réclamaient toute l'année scolaire au serveur pour n'afficher qu'une vingtaine de lignes, et mettaient plus de quatre secondes à répondre *(admin, directeur des études, enseignant)*
+- Le pied de la liste des bulletins annonce le nombre de la classe entière et les flèches de page fonctionnent enfin : elles affichaient « Page 1/1 » quel que soit l'effectif *(admin)*
+- Le bandeau « publiez-les » de la liste des bulletins compte les brouillons de toute la classe, plus seulement ceux de la page visible *(admin, directeur des études)*
 - Bulletin retenu pour impayé : la carte reste affichée mais grisée, la moyenne montre un tiret plutôt qu'un chiffre, et une phrase dit le trimestre concerné, le montant en retard et d'aller au secrétariat. Le bouton de téléchargement disparaît au lieu d'échouer au clic *(élève, parent)*
 - Un lien « Consulter les notes publiées » figure sur chaque bulletin retenu : les notes restent accessibles, et la famille voit que ce n'est pas une panne *(élève, parent)*
 - Les écrans « Convocations de parent » et « Autorisations de reprise » ouvrent sur l'année scolaire en cours et se lisent par pages de vingt : ils affichaient jusqu'ici tout l'historique de l'établissement, qui n'est jamais purgé *(éducateur, secrétariat)*

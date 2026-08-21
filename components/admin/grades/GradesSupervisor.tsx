@@ -63,7 +63,14 @@ export function GradesSupervisor() {
   const { has } = usePermissions()
   const canCreate = has("grades:write")
 
-  const { data: evaluations, isLoading, error } = useEvaluations(classId ?? 0)
+  const { data: page, isLoading, error } = useEvaluations(classId ?? 0)
+  // Une classe compte quelques dizaines d'évaluations par année : la page
+  // demandée les couvre. `total` vient de l'enveloppe et dit le compte de
+  // l'école ; s'il dépasse ce qui est chargé, l'écran le dit au lieu de
+  // laisser des compteurs faux passer pour la vérité.
+  const evaluations = page?.items
+  const schoolTotal = page?.total ?? 0
+  const isTruncated = schoolTotal > (evaluations?.length ?? 0)
 
   const noClass = classId === null
 
@@ -296,6 +303,17 @@ export function GradesSupervisor() {
               Choisissez d&apos;abord une classe pour filtrer les matières et afficher les
               évaluations.
             </p>
+          )}
+
+          {!noClass && isTruncated && (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+              <p>
+                Cette classe compte <strong>{schoolTotal}</strong> évaluations. Les{" "}
+                {evaluations?.length ?? 0} plus récentes sont affichées, et les compteurs
+                ci-dessus ne portent que sur celles-là.
+              </p>
+            </div>
           )}
 
           {!noClass && !canCreate && (
