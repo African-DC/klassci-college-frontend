@@ -47,6 +47,7 @@ function ViewContent({ studentId }: { studentId: number }) {
         value={student.genre === "M" ? "Masculin" : student.genre === "F" ? "Féminin" : "—"}
       />
       <DetailField label="Date de naissance" value={formatDate(student.birth_date)} />
+      <DetailField label="Lieu de naissance" value={student.birth_place ?? "—"} />
       <DetailField label="Créé le" value={formatDate(student.created_at)} />
     </div>
   )
