@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import type { Route } from "next"
-import { Users, GraduationCap, Wallet, AlertCircle, FileText, Calendar, Clock, UserCheck } from "lucide-react"
+import { Users, GraduationCap, Wallet, AlertCircle, FileText, FileBadge, Calendar, Clock, UserCheck } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -172,14 +172,21 @@ function ChildDetailCard({ child }: { child: ParentChild }) {
           </div>
         </div>
 
-        {/* Actions : 4 liens — Notes / Frais / EDT / Documents. Disabled si
-            pas inscrit (sauf Documents qui ont leur propre fallback côté
-            ParentChildDocumentsClient). */}
-        <div className="grid grid-cols-4 gap-2">
+        {/* Actions : 5 liens — Notes / Bulletins / Frais / EDT / Documents.
+            Disabled si pas inscrit (sauf Documents qui ont leur propre fallback
+            côté ParentChildDocumentsClient). Cinq colonnes tiennent sur 320 px
+            avec des libellés courts ; au-delà il faudrait passer en deux rangs. */}
+        <div className="grid grid-cols-5 gap-1.5">
           <ChildActionLink
             href={`/parent/children/${child.id}/grades` as Route}
             icon={GraduationCap}
             label="Notes"
+            disabled={!isEnrolled}
+          />
+          <ChildActionLink
+            href={`/parent/children/${child.id}/bulletins` as Route}
+            icon={FileBadge}
+            label="Bulletins"
             disabled={!isEnrolled}
           />
           <ChildActionLink
