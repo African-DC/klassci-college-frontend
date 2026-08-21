@@ -19,6 +19,7 @@ import {
 import { NotificationBell } from "@/components/shared/NotificationBell"
 import { AcademicYearBadge } from "@/components/shared/AcademicYearBadge"
 import { logout } from "@/lib/utils/logout"
+import { displayName, roleLabel } from "@/lib/utils/session-identity"
 
 interface NavbarProps {
   onMenuClick: () => void
@@ -27,10 +28,8 @@ interface NavbarProps {
 export function Navbar({ onMenuClick }: NavbarProps) {
   const { data: session } = useSession()
   const { theme, setTheme } = useTheme()
-  const initials = session?.user?.email
-    ?.split("@")[0]
-    .slice(0, 2)
-    .toUpperCase() ?? "AD"
+  const nom = displayName(session?.user)
+  const initials = nom.slice(0, 2).toUpperCase()
 
   const role = session?.user?.role
   const profilePortal =
@@ -82,8 +81,8 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium leading-none">{session?.user?.email?.split("@")[0] ?? "Admin"}</p>
-                <p className="text-xs text-muted-foreground capitalize">{session?.user?.role ?? "admin"}</p>
+                <p className="text-sm font-medium leading-none">{nom}</p>
+                <p className="text-xs text-muted-foreground">{roleLabel(session?.user?.role)}</p>
               </div>
               <ChevronDown className="hidden md:block h-4 w-4 text-muted-foreground" />
             </button>

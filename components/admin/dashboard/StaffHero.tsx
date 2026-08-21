@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react"
 import { ClipboardCheck, GraduationCap, UserPlus, Wallet } from "lucide-react"
 import { PageHero, type HeroKpi } from "@/components/shared/PageHero"
 import { useDashboardStats } from "@/lib/hooks/useDashboard"
+import { greetingName } from "@/lib/utils/session-identity"
 
 /** Hero du tableau de bord du personnel — KPIs orientés secrétariat. */
 export function StaffHero() {
@@ -16,8 +17,11 @@ export function StaffHero() {
     month: "long",
     year: "numeric",
   })
-  const rawName = session?.user?.email?.split("@")[0] ?? "Personnel"
-  const firstName = rawName.split(/[._]/)[0].replace(/^\w/, (c) => c.toUpperCase())
+  // Le prénom réel quand la session le porte ; sinon le début de l'adresse
+  // e-mail, mis en forme, pour les sessions ouvertes avant qu'il n'y transite.
+  const firstName = greetingName(session?.user)
+    .split(/[._]/)[0]
+    .replace(/^\w/, (c) => c.toUpperCase())
   const dash = (v: number | undefined) => (isLoading ? "—" : (v ?? 0))
 
   const kpis: HeroKpi[] = [
