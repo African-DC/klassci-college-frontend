@@ -195,7 +195,7 @@ export function FeesPageClient() {
           <CardContent className="space-y-3 p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <SectionTitle icon={Coins}>Grille par niveau</SectionTitle>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   size="sm"
                   variant="outline"

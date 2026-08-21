@@ -52,12 +52,15 @@ export function StudentPhotoField({ value, onChange, disabled = false }: Student
 
   return (
     <div className="space-y-3">
-      <div className="flex items-start gap-4">
-        <Avatar className="h-24 w-24 ring-1 ring-border">
+      {/* Sur un petit écran, l’avatar de 96px ne laissait que ~150px à la colonne
+          de droite : les libellés des boutons, en whitespace-nowrap, sortaient de
+          la boîte. On empile donc avatar puis actions sous le seuil sm. */}
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:gap-4">
+        <Avatar className="h-20 w-20 shrink-0 ring-1 ring-border sm:h-24 sm:w-24">
           {previewUrl ? <AvatarImage src={previewUrl} alt="Aperçu de la photo élève" className="object-cover" /> : null}
           <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">Photo</AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1 space-y-2">
+        <div className="w-full min-w-0 flex-1 space-y-2">
           <p className="text-sm font-medium">Photo de l&apos;élève</p>
           <p className="text-xs text-muted-foreground">
             {liveCamera

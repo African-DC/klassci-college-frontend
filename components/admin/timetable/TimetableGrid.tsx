@@ -243,7 +243,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
 
         <Tabs defaultValue="lundi" className="space-y-3">
           <div className="-mx-1 overflow-x-auto px-1 pb-1">
-            <TabsList className="h-11 w-max">
+            <TabsList className="h-11 w-max max-w-none">
               {DAYS.map((day) => (
                 <TabsTrigger key={day} value={day} className="h-9 min-w-20">
                   {DAY_LABELS[day].slice(0, 3)}

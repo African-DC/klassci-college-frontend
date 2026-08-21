@@ -242,7 +242,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
       {/* Photo preview dialog */}
       {photoSrc && (
         <Dialog open={photoPreview} onOpenChange={setPhotoPreview}>
-          <DialogContent className="max-w-md p-2">
+          <DialogContent className="max-w-md p-2 sm:p-2">
             <div className="relative aspect-square w-full overflow-hidden rounded-lg">
               <img
                 src={photoSrc}
@@ -281,7 +281,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
       {/* Tabs — reordered by usage frequency, scroll-x on mobile, controlled for cross-tab links */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-          <TabsList className="w-max">
+          <TabsList className="w-max max-w-none">
             <TabsTrigger value="parcours">
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
               Parcours
@@ -733,7 +733,7 @@ function DetailSkeleton() {
           <Skeleton className="h-4 w-32" />
         </div>
       </div>
-      <Skeleton className="h-10 w-80 rounded-lg" />
+      <Skeleton className="h-10 w-full max-w-xs rounded-lg" />
       <Skeleton className="h-48 rounded-lg" />
     </div>
   )

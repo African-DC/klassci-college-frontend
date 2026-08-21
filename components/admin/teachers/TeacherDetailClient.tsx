@@ -146,7 +146,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
       {/* Photo preview (lecture seule — gérée par l'enseignant sur son profil) */}
       {photoSrc && (
         <Dialog open={photoPreview} onOpenChange={setPhotoPreview}>
-          <DialogContent className="max-w-md p-2">
+          <DialogContent className="max-w-md p-2 sm:p-2">
             <div className="relative aspect-square w-full overflow-hidden rounded-lg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={photoSrc} alt={fullName} className="h-full w-full object-cover" />
@@ -159,7 +159,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
       {/* Tabs — controlled + scroll-x mobile (pattern principe 13/14) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-        <TabsList className="w-max">
+        <TabsList className="w-max max-w-none">
           <TabsTrigger value="overview">
             <BookOpen className="mr-1.5 h-3.5 w-3.5" />
             Vue d&apos;ensemble
@@ -267,7 +267,7 @@ function DetailSkeleton() {
           <Skeleton className="h-4 w-32" />
         </div>
       </div>
-      <Skeleton className="h-10 w-80 rounded-lg" />
+      <Skeleton className="h-10 w-full max-w-xs rounded-lg" />
       <Skeleton className="h-48 rounded-lg" />
     </div>
   )

@@ -28,7 +28,7 @@ export function BulletinPreviewModal({ bulletinId, onClose }: BulletinPreviewMod
 
   return (
     <Dialog open={bulletinId !== null} onOpenChange={onClose}>
-      <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto p-0">
+      <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto p-0 sm:p-0">
         <DialogHeader className="sr-only">
           <DialogTitle>Bulletin scolaire</DialogTitle>
           <DialogDescription>
