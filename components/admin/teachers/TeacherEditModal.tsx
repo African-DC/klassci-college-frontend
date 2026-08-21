@@ -2,11 +2,23 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { TeacherUpdateSchema, type TeacherUpdate } from "@/lib/contracts/teacher"
+import {
+  TeacherUpdateSchema,
+  TEACHER_CONTRACT_OPTIONS,
+  TEACHER_GENRE_OPTIONS,
+  type TeacherUpdate,
+} from "@/lib/contracts/teacher"
 import { useTeacher, useUpdateTeacher } from "@/lib/hooks/useTeachers"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Form,
@@ -43,6 +55,8 @@ function EditForm({ teacherId, onClose }: { teacherId: number; onClose: () => vo
           last_name: teacher.last_name,
           speciality: teacher.speciality ?? undefined,
           phone: teacher.phone ?? undefined,
+          genre: teacher.genre ?? undefined,
+          contract_type: teacher.contract_type ?? undefined,
         }
       : undefined,
   })
@@ -108,6 +122,60 @@ function EditForm({ teacherId, onClose }: { teacherId: number; onClose: () => vo
                 <FormControl>
                   <Input className="h-11" {...field} value={field.value ?? ""} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Sexe et type de contrat alimentent la répartition du personnel
+            enseignant du rapport de fin de trimestre de la DEEP. */}
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="genre"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Sexe</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Non renseigné" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {TEACHER_GENRE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="contract_type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Type de contrat</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Non renseigné" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {TEACHER_CONTRACT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
