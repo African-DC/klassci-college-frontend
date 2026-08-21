@@ -328,14 +328,14 @@ export function PaymentsPageClient() {
           </div>
 
           {/* Date range filter */}
-          <div className="flex items-center gap-2 mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="text-xs text-muted-foreground shrink-0">Période :</span>
             <Input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="h-8 text-xs w-[140px]"
+              className="h-8 w-[8.75rem] min-w-0 max-w-full flex-1 text-xs sm:flex-none"
               placeholder="Du"
             />
             <span className="text-xs text-muted-foreground">au</span>
@@ -343,7 +343,7 @@ export function PaymentsPageClient() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="h-8 text-xs w-[140px]"
+              className="h-8 w-[8.75rem] min-w-0 max-w-full flex-1 text-xs sm:flex-none"
               placeholder="Au"
             />
             {(dateFrom || dateTo) && (
