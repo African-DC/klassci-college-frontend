@@ -4,8 +4,7 @@ import { useState, useMemo, useCallback } from "react"
 import {
   Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp,
   AlertCircle, Banknote, CreditCard, Search, X, Eye,
-  Receipt, CalendarDays,
-  Receipt, Coins, Smartphone, Building2, FileText, CalendarDays,
+  Receipt, CalendarDays, Coins, Smartphone, Building2, FileText,
   FileSpreadsheet, Loader2, UserCheck,
 } from "lucide-react"
 import { toast } from "sonner"
