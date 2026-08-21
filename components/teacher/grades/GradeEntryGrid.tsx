@@ -8,8 +8,22 @@ import { useGrades, useUpdateGrades, useEvaluations } from "@/lib/hooks/useGrade
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { parseGradeInput, computeAverage } from "@/lib/utils/grade-parser"
+import {
+  absenceWouldOverwriteGrade,
+  canLiftAbsence,
+  gradeStatesEqual,
+  normalizeGradeState,
+  reconcileGradeSave,
+  toGradePayloadEntry,
+  type GradeEntryState,
+} from "@/lib/utils/grade-reconciliation"
 import { GradeEntryHero } from "./entry/GradeEntryHero"
 import { GradeRow, type CellStatus } from "./entry/GradeRow"
+import {
+  AbsenceGuardDialog,
+  ABSENCE_LIFT_RULE,
+  type AbsenceGuard,
+} from "./entry/AbsenceGuardDialog"
 
 interface GradeEntryGridProps {
   evaluationId: number
@@ -21,6 +35,12 @@ interface GradeEntryGridProps {
    * enseignant, on tombe sur la route enseignant.
    */
   dicteeHref?: string
+  /**
+   * Écran des autorisations de reprise, quand le portail y donne accès. Sert à
+   * renvoyer l'administration au bon endroit quand elle bute sur un zéro
+   * d'office. L'enseignant n'a pas ce droit : il reçoit l'explication seule.
+   */
+  retakesHref?: string
 }
 
 /** Délai debounce après la dernière modif avant envoi BE. */
@@ -28,13 +48,12 @@ const SAVE_DEBOUNCE_MS = 1500
 /** Délai après lequel un cellStatus « saved » repasse en « idle » (visuel). */
 const SAVED_INDICATOR_MS = 2500
 
-type GradeSnapshotEntry = {
-  student_id: number
-  value: number | null
-  absent: boolean
-}
-
-export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntryGridProps) {
+export function GradeEntryGrid({
+  evaluationId,
+  classId,
+  dicteeHref,
+  retakesHref,
+}: GradeEntryGridProps) {
   const { data: grades, isLoading, error } = useGrades(evaluationId)
   const { data: evals } = useEvaluations(classId ?? 0)
   const evaluation = useMemo(
@@ -47,15 +66,23 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
   const [cellStatus, setCellStatus] = useState<Map<number, CellStatus>>(new Map())
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [absentStudents, setAbsentStudents] = useState<Set<number>>(new Set())
+  const [absenceGuard, setAbsenceGuard] = useState<{
+    studentId: number
+    guard: AbsenceGuard
+  } | null>(null)
   const dirtyStudentsRef = useRef<Set<number>>(new Set())
   const localGradesRef = useRef<Map<number, number | null>>(new Map())
   const absentStudentsRef = useRef<Set<number>>(new Set())
+  // Statut réellement enregistré côté serveur, par élève. C'est lui qui décide
+  // si la case « Abs. » peut encore être décochée.
+  const serverStatusRef = useRef<Map<number, string>>(new Map())
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveInFlightRef = useRef(false)
 
   // ─── Sync depuis serveur ───────────────────────────────────────────────
   useEffect(() => {
     if (grades) {
+      serverStatusRef.current = new Map(grades.map((g) => [g.student_id, g.status]))
       setLocalGrades((prev) => {
         const map = new Map(prev)
         grades.forEach((g) => {
@@ -81,12 +108,15 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
     }
   }, [grades])
 
-  // Ce qui partira réellement au serveur pour cet élève. Sert à construire le
-  // lot ET à vérifier ensuite que rien n'a bougé pendant l'envoi : si les deux
-  // lectures divergent, la ligne resterait « à sauvegarder » indéfiniment.
-  const pendingValueFor = useCallback((studentId: number): number | null => {
-    if (absentStudentsRef.current.has(studentId)) return null
-    return localGradesRef.current.get(studentId) ?? null
+  // Ce qui partira réellement au serveur pour cet élève : la note ET le zéro
+  // d'office, jamais l'un sans l'autre. Sert à construire le lot ET à vérifier
+  // ensuite que rien n'a bougé pendant l'envoi. Comparer la seule valeur
+  // laisserait passer pour « enregistré » un décochage que le backend a refusé.
+  const pendingStateFor = useCallback((studentId: number): GradeEntryState => {
+    return normalizeGradeState({
+      value: localGradesRef.current.get(studentId) ?? null,
+      absent: absentStudentsRef.current.has(studentId),
+    })
   }, [])
 
   // ─── Save logic ────────────────────────────────────────────────────────
@@ -98,14 +128,12 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
     if (dirtyStudentsRef.current.size === 0 || !grades) return
     if (saveInFlightRef.current) return
 
-    const payload: GradeSnapshotEntry[] = Array.from(dirtyStudentsRef.current).map((studentId) => ({
-      student_id: studentId,
-      // Absent : le backend force le zéro d'office, la valeur saisie ne compte
-      // plus. On n'envoie donc pas une note et un « absent » contradictoires.
-      value: pendingValueFor(studentId),
-      absent: absentStudentsRef.current.has(studentId),
-    }))
-    const snapshotByStudent = new Map(payload.map((entry) => [entry.student_id, entry.value]))
+    const payload = Array.from(dirtyStudentsRef.current).map((studentId) =>
+      toGradePayloadEntry(studentId, pendingStateFor(studentId)),
+    )
+    const sentByStudent = new Map<number, GradeEntryState>(
+      payload.map((entry) => [entry.student_id, { value: entry.value, absent: entry.absent }]),
+    )
 
     setCellStatus((prev) => {
       const next = new Map(prev)
@@ -116,16 +144,46 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
     saveInFlightRef.current = true
 
     try {
-      await updateMutation.mutateAsync({ grades: payload })
+      const updated = await updateMutation.mutateAsync({ grades: payload })
+      const statusByStudent = new Map(updated.map((g) => [g.student_id, g.status]))
+      // Ce que le serveur vient d'écrire fait foi tout de suite : la case
+      // « Abs. » doit se verrouiller sans attendre le prochain rafraîchissement.
+      serverStatusRef.current = statusByStudent
       const confirmedStudentIds: number[] = []
+      const refusedStudentIds: number[] = []
+      const outcomes = new Map<number, CellStatus>()
 
-      snapshotByStudent.forEach((sentValue, studentId) => {
-        const currentValue = pendingValueFor(studentId)
-        if (Object.is(currentValue, sentValue)) {
+      sentByStudent.forEach((sent, studentId) => {
+        const outcome = reconcileGradeSave({
+          sent,
+          current: pendingStateFor(studentId),
+          serverStatus: statusByStudent.get(studentId),
+        })
+        if (outcome === "saved") {
           dirtyStudentsRef.current.delete(studentId)
           confirmedStudentIds.push(studentId)
+          outcomes.set(studentId, "saved")
+        } else if (outcome === "refused") {
+          // Le backend a gardé le zéro d'office. Renvoyer la même chose
+          // échouerait à l'identique : on sort la ligne de la file d'attente,
+          // on la marque en erreur et on dit pourquoi. Rien n'est vert.
+          dirtyStudentsRef.current.delete(studentId)
+          refusedStudentIds.push(studentId)
+          outcomes.set(studentId, "error")
+        } else {
+          outcomes.set(studentId, "dirty")
         }
       })
+
+      if (refusedStudentIds.length > 0) {
+        // La case doit redire ce qui est réellement enregistré, sinon l'écran
+        // laisse croire que le zéro d'office a été levé.
+        const restored = new Set(absentStudentsRef.current)
+        refusedStudentIds.forEach((id) => restored.add(id))
+        absentStudentsRef.current = restored
+        setAbsentStudents(restored)
+        toast.error("Zéro d'office conservé", { description: ABSENCE_LIFT_RULE })
+      }
 
       if (confirmedStudentIds.length > 0) {
         setLastSaved(new Date())
@@ -133,10 +191,7 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
 
       setCellStatus((prev) => {
         const next = new Map(prev)
-        snapshotByStudent.forEach((sentValue, studentId) => {
-          const currentValue = pendingValueFor(studentId)
-          next.set(studentId, Object.is(currentValue, sentValue) ? "saved" : "dirty")
-        })
+        outcomes.forEach((status, studentId) => next.set(studentId, status))
         return next
       })
 
@@ -152,9 +207,11 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
     } catch {
       setCellStatus((prev) => {
         const next = new Map(prev)
-        payload.forEach((entry) => {
-          const currentValue = pendingValueFor(entry.student_id)
-          next.set(entry.student_id, Object.is(currentValue, entry.value) ? "error" : "dirty")
+        sentByStudent.forEach((sent, studentId) => {
+          // Ligne inchangée depuis l'envoi : c'est bien celle qui a échoué.
+          // Retouchée entre-temps : elle repart au prochain envoi.
+          const stillTheSame = gradeStatesEqual(sent, pendingStateFor(studentId))
+          next.set(studentId, stillTheSame ? "error" : "dirty")
         })
         return next
       })
@@ -168,7 +225,7 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
         }, SAVE_DEBOUNCE_MS)
       }
     }
-  }, [grades, updateMutation, pendingValueFor])
+  }, [grades, updateMutation, pendingStateFor])
 
   const scheduleSave = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
@@ -193,20 +250,7 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
     return () => window.removeEventListener("beforeunload", handler)
   }, [])
 
-  const handleGradeChange = useCallback(
-    (studentId: number, rawValue: string) => {
-      const result = parseGradeInput(rawValue)
-      const nextGrades = new Map(localGradesRef.current).set(studentId, result.value)
-      localGradesRef.current = nextGrades
-      setLocalGrades(nextGrades)
-      dirtyStudentsRef.current.add(studentId)
-      setCellStatus((prev) => new Map(prev).set(studentId, "dirty"))
-      scheduleSave()
-    },
-    [scheduleSave],
-  )
-
-  const handleAbsentChange = useCallback(
+  const applyAbsent = useCallback(
     (studentId: number, next: boolean) => {
       const updated = new Set(absentStudentsRef.current)
       if (next) updated.add(studentId)
@@ -218,6 +262,59 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
       scheduleSave()
     },
     [scheduleSave],
+  )
+
+  const setGradeValue = useCallback(
+    (studentId: number, value: number | null) => {
+      const nextGrades = new Map(localGradesRef.current).set(studentId, value)
+      localGradesRef.current = nextGrades
+      setLocalGrades(nextGrades)
+      dirtyStudentsRef.current.add(studentId)
+      setCellStatus((prev) => new Map(prev).set(studentId, "dirty"))
+      scheduleSave()
+    },
+    [scheduleSave],
+  )
+
+  const handleGradeChange = useCallback(
+    (studentId: number, rawValue: string) => {
+      const result = parseGradeInput(rawValue)
+      if (result.absent) {
+        // Taper « absent » dans la case vaut la case cochée et vaut le mot dit
+        // à voix haute en dictée : les trois façons de l'exprimer doivent
+        // enregistrer la même chose. Pas de confirmation ici, l'enseignant
+        // écrit littéralement par-dessus la note qu'il remplace.
+        applyAbsent(studentId, true)
+        return
+      }
+      setGradeValue(studentId, result.value)
+    },
+    [applyAbsent, setGradeValue],
+  )
+
+  const handleAbsentChange = useCallback(
+    (studentId: number, studentName: string, next: boolean) => {
+      if (!next && !canLiftAbsence(serverStatusRef.current.get(studentId))) {
+        // Le zéro d'office est déjà enregistré : le backend refusera, et de
+        // deux façons également silencieuses. Autant nommer la règle ici.
+        setAbsenceGuard({ studentId, guard: { kind: "lift-blocked", studentName } })
+        return
+      }
+      const localValue = localGradesRef.current.get(studentId) ?? null
+      const wouldOverwrite = absenceWouldOverwriteGrade({
+        value: localValue,
+        absent: absentStudentsRef.current.has(studentId),
+      })
+      if (next && wouldOverwrite && localValue !== null) {
+        setAbsenceGuard({
+          studentId,
+          guard: { kind: "overwrite", studentName, value: localValue },
+        })
+        return
+      }
+      applyAbsent(studentId, next)
+    },
+    [applyAbsent],
   )
 
   // ─── Rendering ─────────────────────────────────────────────────────────
@@ -296,7 +393,8 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
       <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
         Cochez « Abs. » pour un élève absent le jour de l&apos;épreuve : la note vaut zéro et
         compte dans la moyenne. Une case laissée vide veut seulement dire « pas encore corrigé ».
-        Pour lever un zéro d&apos;office, l&apos;administration délivre une autorisation de reprise.
+        {" "}
+        {ABSENCE_LIFT_RULE}
       </p>
 
       {/* ─── Grade entries — 1 colonne mobile, 2 colonnes desktop ─────── */}
@@ -308,19 +406,22 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
             const liveValue = localGrades.has(grade.student_id)
               ? localGrades.get(grade.student_id) ?? null
               : serverValue
+            const studentName = grade.student_name ?? `Élève #${grade.student_id}`
             const isLeftColumn = index % 2 === 0
             return (
               <GradeRow
                 key={grade.student_id}
                 index={index}
-                studentName={grade.student_name ?? `Élève #${grade.student_id}`}
+                studentName={studentName}
                 initialValue={serverValue}
                 value={liveValue}
                 status={cellStatus.get(grade.student_id) ?? "idle"}
                 originalStatus={grade.status}
                 onChange={(rawValue) => handleGradeChange(grade.student_id, rawValue)}
                 absent={absentStudents.has(grade.student_id)}
-                onAbsentChange={(next) => handleAbsentChange(grade.student_id, next)}
+                onAbsentChange={(next) =>
+                  handleAbsentChange(grade.student_id, studentName, next)
+                }
                 className={cn(
                   "border-b border-border/60",
                   isLeftColumn && "lg:border-r",
@@ -330,6 +431,16 @@ export function GradeEntryGrid({ evaluationId, classId, dicteeHref }: GradeEntry
           })}
         </div>
       </div>
+
+      <AbsenceGuardDialog
+        guard={absenceGuard?.guard ?? null}
+        retakesHref={retakesHref}
+        onCancel={() => setAbsenceGuard(null)}
+        onConfirm={() => {
+          if (absenceGuard) applyAbsent(absenceGuard.studentId, true)
+          setAbsenceGuard(null)
+        }}
+      />
     </div>
   )
 }
