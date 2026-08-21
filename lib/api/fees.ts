@@ -19,12 +19,49 @@ const FeeCategoryArraySchema = z.array(FeeCategorySchema)
 const FeeVariantArraySchema = z.array(FeeVariantSchema)
 const OptionalFeeOptionArraySchema = z.array(OptionalFeeOptionSchema)
 
+/**
+ * Ramène TOUTES les pages d'une liste paginée.
+ *
+ * Le backend renvoie 20 éléments par défaut et plafonne à 100. Une grille de
+ * frais qui n'affiche que la première page ne se signale pas : elle montre des
+ * niveaux avec moins de lignes qu'ils n'en portent, et le total par élève est
+ * faux. C'est arrivé en production sur une école de sept niveaux, où les frais
+ * d'inscription de quatre niveaux étaient invisibles alors qu'ils existaient
+ * bel et bien, si bien que les recréer se soldait par « doublon possible ».
+ */
+async function fetchEveryPage<T>(path: string, params: URLSearchParams): Promise<T[]> {
+  const MAX_SIZE = 100
+  const tout: T[] = []
+  let page = 1
+
+  for (;;) {
+    params.set("page", String(page))
+    params.set("size", String(MAX_SIZE))
+    const json = await apiFetch<{ items?: T[]; data?: T[]; total?: number } | T[]>(
+      `${path}?${params.toString()}`,
+    )
+
+    if (Array.isArray(json)) return json // le point d'entrée ne pagine pas
+
+    const lot = json.items ?? json.data ?? []
+    tout.push(...lot)
+
+    const total = json.total
+    // S'arrêter sur une page incomplète autant que sur le total : si le
+    // backend cessait un jour de renvoyer `total`, la boucle doit finir quand
+    // même plutôt que de tourner sans fin.
+    if (lot.length < MAX_SIZE || (typeof total === "number" && tout.length >= total)) break
+    page += 1
+  }
+
+  return tout
+}
+
 export const feesApi = {
   // --- Catégories de frais ---
 
   listCategories: async (): Promise<FeeCategory[]> => {
-    const json = await apiFetch<{ items?: FeeCategory[]; data?: FeeCategory[] } | FeeCategory[]>("/admin/fee-categories")
-    const arr = Array.isArray(json) ? json : (json as { items?: FeeCategory[]; data?: FeeCategory[] }).items ?? (json as { data?: FeeCategory[] }).data ?? []
+    const arr = await fetchEveryPage<FeeCategory>("/admin/fee-categories", new URLSearchParams())
     return safeValidate(FeeCategoryArraySchema, arr, "GET /admin/fee-categories")
   },
 
@@ -53,9 +90,9 @@ export const feesApi = {
   // --- Variantes de frais ---
 
   listVariants: async (academicYearId?: number): Promise<FeeVariant[]> => {
-    const query = academicYearId ? `?academic_year_id=${academicYearId}` : ""
-    const json = await apiFetch<{ items?: FeeVariant[]; data?: FeeVariant[] } | FeeVariant[]>(`/admin/fee-variants${query}`)
-    const arr = Array.isArray(json) ? json : (json as { items?: FeeVariant[]; data?: FeeVariant[] }).items ?? (json as { data?: FeeVariant[] }).data ?? []
+    const params = new URLSearchParams()
+    if (academicYearId) params.set("academic_year_id", String(academicYearId))
+    const arr = await fetchEveryPage<FeeVariant>("/admin/fee-variants", params)
     return safeValidate(FeeVariantArraySchema, arr, "GET /admin/fee-variants")
   },
 
@@ -86,8 +123,7 @@ export const feesApi = {
   listOptions: async (categoryId: number, academicYearId?: number): Promise<OptionalFeeOption[]> => {
     const params = new URLSearchParams({ category_id: String(categoryId) })
     if (academicYearId) params.set("academic_year_id", String(academicYearId))
-    const json = await apiFetch<{ items?: OptionalFeeOption[] } | OptionalFeeOption[]>(`/admin/fee-options?${params}`)
-    const arr = Array.isArray(json) ? json : (json as { items?: OptionalFeeOption[] }).items ?? []
+    const arr = await fetchEveryPage<OptionalFeeOption>("/admin/fee-options", params)
     return safeValidate(OptionalFeeOptionArraySchema, arr, "GET /admin/fee-options")
   },
 

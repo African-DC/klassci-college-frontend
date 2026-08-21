@@ -53,6 +53,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- La grille des frais n'affichait que les vingt premiers montants et donnait le reste pour inexistant : des niveaux apparaissaient avec moins de frais qu'ils n'en portent, le total par élève était faux, et recréer un montant manquant se soldait par « doublon possible ». Tous les montants sont désormais chargés *(admin, comptable)*
 - Le motif d'une suppression définitive n'apparaît plus dans l'adresse de la requête, donc plus dans les journaux du serveur ni chez les intermédiaires. « Élève exclu pour vol » n'a rien à y faire *(admin)*
 
 - Page Paiements : le bouton « Exporter » est désormais bien visible sur le bandeau bleu (il était blanc sur blanc, invisible tant qu'on ne le survolait pas) *(admin)*.
