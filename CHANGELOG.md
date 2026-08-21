@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Après avoir corrigé le montant d'un frais, l'écran demande s'il faut le répercuter sur les inscriptions déjà enregistrées, et montre l'impact chiffré avant de trancher : lignes à mettre à jour, lignes conservées parce qu'un versement y est imputé, écart de dette en francs. Répondre non ne change rien, et la question se repose depuis la grille des frais *(admin, comptable)*
 - Bandeau « Ma caisse » qui signale les journées clôturées d'office pendant la nuit et permet de les régulariser en saisissant ce qui avait été compté *(caissier)*
 - Une journée non comptée affiche « Écart inconnu » et non un écart nul : le comptable voit la différence entre une caisse qui tombe juste et une caisse que personne n'a ouverte *(caissier, comptable)*
 - Chaque tranche de paiement se saisit au choix en pourcentage ou en montant fixe, dans la même grille : « Inscription 37 000 FCFA à la rentrée », puis 35 / 35 / 30 % du reste *(admin, comptable)*
