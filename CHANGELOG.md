@@ -9,6 +9,13 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Colonne « Encaissé par » sur l'écran des versements, dans le tableau comme sur les cartes du téléphone, et filtre par caisse pour la comptabilité qui veut contrôler un guichet *(comptable, directeur, caissier)*
+- Aperçu avant impression du journal des versements, comme sur les autres écrans qui produisent un document *(comptable, caissier)*
+- Après avoir corrigé le montant d'un frais, l'écran demande s'il faut le répercuter sur les inscriptions déjà enregistrées, et montre l'impact chiffré avant de trancher : lignes à mettre à jour, lignes conservées parce qu'un versement y est imputé, écart de dette en francs. Répondre non ne change rien, et la question se repose depuis la grille des frais *(admin, comptable)*
+- Champ « Lieu de naissance » à côté de la date, à la création d'un élève, à sa modification et à l'étape élève de l'inscription. Il s'affiche sur la fiche détail et part sur le certificat de scolarité, que l'administration refuse sans la mention « né(e) le ... à ... » *(secrétariat, admin)*
+- L'export de la liste des élèves emporte le lieu de naissance à côté de la date *(secrétariat, admin)*
+- Bouton « Bordereau du jour » sur le point journalier : le comptable édite la pièce comptable de la journée depuis l'écran où il la consulte, au lieu d'aller la chercher dans l'aperçu des paramètres *(comptable)*
+- Chaque caisse du point journalier montre sa ventilation par moyen de paiement, espèces, mobile money, virement et chèque : rapprocher un dépôt bancaire d'une caisse ne demande plus d'ouvrir le détail des versements *(comptable, directeur)*
 - Une catégorie de frais décrit ce qu'elle donne droit, ligne par ligne : ce que la famille vient retirer et ce à quoi elle accède. Un exemple guide la première saisie *(admin, comptable)*
 - Bouton « Ce que ça couvre » sur la grille des frais et sur le détail des frais d'un élève : le secrétariat répond à un parent sans chercher dans ses papiers *(admin, secrétariat)*
 - Bandeau « Ma caisse » qui signale les journées clôturées d'office pendant la nuit et permet de les régulariser en saisissant ce qui avait été compté *(caissier)*
@@ -41,7 +48,12 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
+- Le journal des versements s'exporte désormais depuis le serveur : le PDF sort au gabarit officiel de l'établissement, et le classeur Excel porte les couleurs, le logo, la période et les filtres appliqués, au lieu d'un tableau sans identité *(comptable, caissier)*
+- La période choisie sur l'écran des versements est appliquée par le serveur : elle portait jusqu'ici sur la seule page affichée, ce qui pouvait masquer des versements de la période *(comptable, caissier)*
 
+- L'écran des évaluations et celui des bulletins s'ouvrent en une fraction de seconde : ils réclamaient toute l'année scolaire au serveur pour n'afficher qu'une vingtaine de lignes, et mettaient plus de quatre secondes à répondre *(admin, directeur des études, enseignant)*
+- Le pied de la liste des bulletins annonce le nombre de la classe entière et les flèches de page fonctionnent enfin : elles affichaient « Page 1/1 » quel que soit l'effectif *(admin)*
+- Le bandeau « publiez-les » de la liste des bulletins compte les brouillons de toute la classe, plus seulement ceux de la page visible *(admin, directeur des études)*
 - Bulletin retenu pour impayé : la carte reste affichée mais grisée, la moyenne montre un tiret plutôt qu'un chiffre, et une phrase dit le trimestre concerné, le montant en retard et d'aller au secrétariat. Le bouton de téléchargement disparaît au lieu d'échouer au clic *(élève, parent)*
 - Un lien « Consulter les notes publiées » figure sur chaque bulletin retenu : les notes restent accessibles, et la famille voit que ce n'est pas une panne *(élève, parent)*
 - Les écrans « Convocations de parent » et « Autorisations de reprise » ouvrent sur l'année scolaire en cours et se lisent par pages de vingt : ils affichaient jusqu'ici tout l'historique de l'établissement, qui n'est jamais purgé *(éducateur, secrétariat)*
@@ -64,6 +76,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- Le portail se construisait avec une mémoire plafonnée pour un serveur qui n'existe plus, ce qui faisait échouer des mises en ligne au hasard *(devops)*
+- L'application saluait chacun par le début de son adresse e-mail : le caissier Ibrahim Tanoh lisait « Bonjour, Cashier3 » alors que l'écran juste en dessous affichait son vrai nom. Le prénom et le nom sont désormais repris de la connexion *(admin, personnel, enseignant, parent, élève)*
+- Le bandeau affichait le rôle technique, « Staff », au lieu d'un libellé français *(admin, personnel)*
 - Le parent n'avait aucun moyen d'atteindre les bulletins de son enfant : la page existait, aucun lien n'y menait. Un bouton « Bulletins » figure désormais sur la carte de chaque enfant *(parent)*
 - Le bouton « PDF » du bulletin fonctionne enfin dans les portails élève et parent : il appelait la page réservée à l'administration et répondait « accès refusé » à une famille qui voyait pourtant le bulletin à l'écran *(élève, parent)*
 - La liste « Mes bulletins » de l'élève ne s'affichait pas du tout : l'écran attendait une réponse d'une autre forme que celle envoyée par le serveur *(élève)*

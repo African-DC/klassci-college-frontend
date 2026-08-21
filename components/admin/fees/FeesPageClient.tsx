@@ -21,6 +21,7 @@ import { FeeCategoryCreateModal } from "./FeeCategoryCreateModal"
 import { FeeCategoryEditModal } from "./FeeCategoryEditModal"
 import { FeeVariantCreateModal } from "./FeeVariantCreateModal"
 import { FeeVariantEditModal } from "./FeeVariantEditModal"
+import { FeeVariantPropagationDialog } from "./FeeVariantPropagationDialog"
 import { FeeVariantCopyModal } from "./FeeVariantCopyModal"
 import { FeesByLevelTree } from "./FeesByLevelTree"
 import { OptionalCategoryPanel } from "./OptionalCategoryPanel"
@@ -35,6 +36,7 @@ export function FeesPageClient() {
   const [copyModalOpen, setCopyModalOpen] = useState(false)
   const [editCategory, setEditCategory] = useState<FeeCategory | null>(null)
   const [editVariant, setEditVariant] = useState<FeeVariant | null>(null)
+  const [propagateVariant, setPropagateVariant] = useState<FeeVariant | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: "category" | "variant"; id: number; name: string } | null>(null)
 
   const { data: academicYearsData } = useAcademicYears()
@@ -231,6 +233,7 @@ export function FeesPageClient() {
                 variants={variants ?? []}
                 categoryNameMap={categoryNameMap}
                 onEditVariant={(v) => setEditVariant(v)}
+                onPropagateVariant={(v) => setPropagateVariant(v)}
                 onDeleteVariant={(v) =>
                   setDeleteTarget({
                     type: "variant",
@@ -298,7 +301,16 @@ export function FeesPageClient() {
         </>
       )}
       <FeeCategoryEditModal category={editCategory} onClose={() => setEditCategory(null)} />
-      <FeeVariantEditModal key={editVariant?.id ?? "none"} variant={editVariant} onClose={() => setEditVariant(null)} />
+      <FeeVariantEditModal
+        key={editVariant?.id ?? "none"}
+        variant={editVariant}
+        onClose={() => setEditVariant(null)}
+        onAmountChanged={(updated) => setPropagateVariant(updated)}
+      />
+      <FeeVariantPropagationDialog
+        variant={propagateVariant}
+        onClose={() => setPropagateVariant(null)}
+      />
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>

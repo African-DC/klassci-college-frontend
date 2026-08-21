@@ -2,9 +2,10 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { gradesApi } from "@/lib/api/grades"
+import { gradesApi, type EvaluationListQuery } from "@/lib/api/grades"
 import type {
   Evaluation,
+  EvaluationListResponse,
   Grade,
   EvaluationCreate,
   GradeBatchUpdate,
@@ -12,25 +13,44 @@ import type {
 
 export const gradeKeys = {
   all: ["grades"] as const,
-  evaluations: (classId: number) => ["grades", "evaluations", classId] as const,
-  teacherEvaluations: (teacherId: number) => ["grades", "teacher-evaluations", teacherId] as const,
+  /** Racine des listes d'une classe : sert aux invalidations, toutes pages confondues. */
+  evaluationsRoot: (classId: number) => ["grades", "evaluations", classId] as const,
+  evaluations: (classId: number, query: EvaluationListQuery = {}) =>
+    ["grades", "evaluations", classId, query] as const,
+  teacherEvaluations: (teacherId: number, query: EvaluationListQuery = {}) =>
+    ["grades", "teacher-evaluations", teacherId, query] as const,
+  evaluation: (evaluationId: number) => ["grades", "evaluation", evaluationId] as const,
   grades: (evaluationId: number) => ["grades", "entries", evaluationId] as const,
 }
 
-export function useEvaluations(classId: number) {
+export function useEvaluations(classId: number, query: EvaluationListQuery = {}) {
   return useQuery({
-    queryKey: gradeKeys.evaluations(classId),
-    queryFn: () => gradesApi.listEvaluations(classId),
+    queryKey: gradeKeys.evaluations(classId, query),
+    queryFn: () => gradesApi.listEvaluations(classId, query),
     enabled: !!classId,
     staleTime: 1000 * 60 * 5,
   })
 }
 
-export function useTeacherEvaluations(teacherId: number) {
+export function useTeacherEvaluations(teacherId: number, query: EvaluationListQuery = {}) {
   return useQuery({
-    queryKey: gradeKeys.teacherEvaluations(teacherId),
-    queryFn: () => gradesApi.listByTeacher(teacherId),
+    queryKey: gradeKeys.teacherEvaluations(teacherId, query),
+    queryFn: () => gradesApi.listByTeacher(teacherId, query),
     enabled: !!teacherId,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+/**
+ * L'évaluation en cours de saisie, lue seule. Les écrans de notes
+ * parcouraient la liste de la classe pour y retrouver cette ligne, ce
+ * qu'une liste paginée ne garantit plus.
+ */
+export function useEvaluation(evaluationId: number | undefined) {
+  return useQuery({
+    queryKey: gradeKeys.evaluation(evaluationId ?? 0),
+    queryFn: () => gradesApi.getEvaluation(evaluationId as number),
+    enabled: !!evaluationId,
     staleTime: 1000 * 60 * 5,
   })
 }
@@ -49,8 +69,9 @@ export function useCreateEvaluation() {
   return useMutation({
     mutationFn: (data: EvaluationCreate) => gradesApi.createEvaluation(data),
     onMutate: async (newEval) => {
-      await queryClient.cancelQueries({ queryKey: gradeKeys.evaluations(newEval.class_id) })
-      const prev = queryClient.getQueryData<Evaluation[]>(gradeKeys.evaluations(newEval.class_id))
+      const root = { queryKey: gradeKeys.evaluationsRoot(newEval.class_id) }
+      await queryClient.cancelQueries(root)
+      const snapshot = queryClient.getQueriesData<EvaluationListResponse>(root)
       const optimistic: Evaluation = {
         id: -Date.now(),
         title: newEval.title,
@@ -69,22 +90,25 @@ export function useCreateEvaluation() {
         graded_students: 0,
         created_at: new Date().toISOString(),
       }
-      if (prev) {
-        queryClient.setQueryData(gradeKeys.evaluations(newEval.class_id), [...prev, optimistic])
-      }
-      return { prev, classId: newEval.class_id }
+      // La liste est triée par date décroissante : la nouvelle évaluation
+      // se place en tête. `total` suit, sinon le compteur d'écran mentirait
+      // d'une unité jusqu'au prochain rafraîchissement.
+      queryClient.setQueriesData<EvaluationListResponse>(root, (prev) =>
+        prev ? { ...prev, items: [optimistic, ...prev.items], total: prev.total + 1 } : prev,
+      )
+      return { snapshot }
     },
-    onError: (_err, _vars, context) => {
-      if (context?.prev) {
-        queryClient.setQueryData(gradeKeys.evaluations(context.classId), context.prev)
+    onError: (err, _vars, context) => {
+      for (const [key, data] of context?.snapshot ?? []) {
+        queryClient.setQueryData(key, data)
       }
-      toast.error("Erreur", { description: _err.message })
+      toast.error("Erreur", { description: err.message })
     },
     onSuccess: (data) => {
       toast.success("Evaluation creee", { description: data.title })
     },
     onSettled: (_data, _err, vars) => {
-      queryClient.invalidateQueries({ queryKey: gradeKeys.evaluations(vars.class_id) })
+      queryClient.invalidateQueries({ queryKey: gradeKeys.evaluationsRoot(vars.class_id) })
     },
   })
 }
@@ -122,6 +146,9 @@ export function useUpdateGrades(evaluationId: number) {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(gradeKeys.grades(evaluationId), data)
+      // Le « 12 / 35 » de l'évaluation change à chaque enregistrement et
+      // vient maintenant du serveur : la fiche doit être redemandée.
+      queryClient.invalidateQueries({ queryKey: gradeKeys.evaluation(evaluationId) })
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: gradeKeys.grades(evaluationId) })

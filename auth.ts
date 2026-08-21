@@ -50,6 +50,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             id: String(data.user.id),
             email: data.user.email,
             role: data.user.role,
+            // Le backend les renvoie depuis toujours ; les jeter forçait les
+            // écrans à afficher le début de l'adresse e-mail.
+            firstName: data.user.first_name,
+            lastName: data.user.last_name,
             accessToken: data.access_token,
             refreshToken: data.refreshToken ?? undefined,
             mustChangePassword: data.user.must_change_password,
@@ -67,6 +71,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id
         token.email = user.email!
         token.role = user.role
+        token.firstName = user.firstName
+        token.lastName = user.lastName
         token.accessToken = user.accessToken
         token.refreshToken = user.refreshToken
         token.mustChangePassword = user.mustChangePassword
@@ -140,6 +146,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.id = token.id
       session.user.email = token.email
       session.user.role = token.role
+      session.user.firstName = token.firstName
+      session.user.lastName = token.lastName
       session.user.mustChangePassword = token.mustChangePassword
       return session
     },

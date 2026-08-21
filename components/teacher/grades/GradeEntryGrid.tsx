@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Save, Loader2, CheckCircle2 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { useGrades, useUpdateGrades, useEvaluations } from "@/lib/hooks/useGrades"
+import { useGrades, useUpdateGrades, useEvaluation } from "@/lib/hooks/useGrades"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { parseGradeInput, computeAverage } from "@/lib/utils/grade-parser"
@@ -55,11 +55,7 @@ export function GradeEntryGrid({
   retakesHref,
 }: GradeEntryGridProps) {
   const { data: grades, isLoading, error } = useGrades(evaluationId)
-  const { data: evals } = useEvaluations(classId ?? 0)
-  const evaluation = useMemo(
-    () => evals?.find((e) => e.id === evaluationId),
-    [evals, evaluationId],
-  )
+  const { data: evaluation } = useEvaluation(evaluationId)
 
   const updateMutation = useUpdateGrades(evaluationId)
   const [localGrades, setLocalGrades] = useState<Map<number, number | null>>(new Map())

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import type { Route } from "next"
 import { Loader2, X } from "lucide-react"
 import { toast } from "sonner"
-import { useGrades, useUpdateGrades, useEvaluations } from "@/lib/hooks/useGrades"
+import { useGrades, useUpdateGrades, useEvaluation } from "@/lib/hooks/useGrades"
 import { useSpeechRecognition } from "@/lib/hooks/useSpeechRecognition"
 import { parseSpokenGrade, detectCommand } from "@/lib/utils/voice-grade-parser"
 import { dicteeEntryFromServer } from "@/lib/utils/grade-reconciliation"
@@ -50,11 +50,7 @@ export function DicteeMode({ evaluationId, classId, returnHref }: DicteeModeProp
   const router = useRouter()
   const backHref = returnHref ?? `/teacher/grades/${classId}/${evaluationId}`
   const { data: grades, isLoading } = useGrades(evaluationId)
-  const { data: evals } = useEvaluations(classId)
-  const evaluation = useMemo(
-    () => evals?.find((e) => e.id === evaluationId),
-    [evals, evaluationId],
-  )
+  const { data: evaluation } = useEvaluation(evaluationId)
 
   const updateMutation = useUpdateGrades(evaluationId)
 
