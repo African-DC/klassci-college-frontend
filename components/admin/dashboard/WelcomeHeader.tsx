@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react"
 import { CalendarDays } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { greetingName } from "@/lib/utils/session-identity"
 
 export function WelcomeHeader() {
   const { data: session, status } = useSession()
@@ -19,8 +20,11 @@ export function WelcomeHeader() {
     return <WelcomeHeaderSkeleton />
   }
 
-  const rawName = session?.user?.email?.split("@")[0] ?? "Administrateur"
-  const firstName = rawName.split(/[._]/)[0].replace(/^\w/, (c) => c.toUpperCase())
+  // Le prénom réel quand la session le porte ; sinon le début de l'adresse
+  // e-mail, mis en forme, pour les sessions ouvertes avant qu'il n'y transite.
+  const firstName = greetingName(session?.user)
+    .split(/[._]/)[0]
+    .replace(/^\w/, (c) => c.toUpperCase())
 
   return (
     <div className="space-y-4">

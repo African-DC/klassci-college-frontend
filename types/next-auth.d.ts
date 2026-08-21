@@ -17,6 +17,14 @@ declare module "next-auth" {
     email: string
     role: UserRole
     accessToken: string
+    /**
+     * Prénom et nom réels, renvoyés par `/auth/login`. Sans eux, les écrans
+     * retombaient sur le début de l'adresse e-mail : le caissier Ibrahim
+     * Tanoh était accueilli par « Bonjour, Cashier3 ». Facultatifs, car une
+     * session créée avant leur introduction n'en porte pas.
+     */
+    firstName?: string
+    lastName?: string
     /** Mot de passe temporaire à changer à la 1re connexion. */
     mustChangePassword?: boolean
     /**
@@ -33,6 +41,8 @@ declare module "next-auth" {
       id: string
       email: string
       role: UserRole
+      firstName?: string
+      lastName?: string
       mustChangePassword?: boolean
     }
     accessToken: string
@@ -46,6 +56,8 @@ declare module "next-auth/jwt" {
     email: string
     role: UserRole
     accessToken: string
+    firstName?: string
+    lastName?: string
     mustChangePassword?: boolean
     /** Refresh token BE — server-side only, jamais propagé à la session client. */
     refreshToken?: string

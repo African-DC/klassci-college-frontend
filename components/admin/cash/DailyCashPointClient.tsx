@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Banknote, ClipboardCheck, Lock, Scale, Wallet } from "lucide-react"
+import { Banknote, ClipboardCheck, FileText, Lock, Scale, Wallet } from "lucide-react"
 import { PageHero, type HeroKpi } from "@/components/shared/PageHero"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,9 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDailyCashPoint } from "@/lib/hooks/useCashSessions"
 import { hasBeenCounted, isLocked } from "@/lib/contracts/cash-session"
-import { CashStatusBadge, VarianceBadge, formatFcfa } from "./cash-ui"
+import { cashSessionsApi } from "@/lib/api/cash-sessions"
+import { openPdfPreview } from "@/lib/pdf/preview"
+import { CashStatusBadge, MethodBreakdown, VarianceBadge, formatFcfa } from "./cash-ui"
 
 function todayIso(): string {
   const now = new Date()
@@ -27,7 +29,20 @@ function todayIso(): string {
  */
 export function DailyCashPointClient() {
   const [businessDate, setBusinessDate] = useState(todayIso())
+  const [printing, setPrinting] = useState(false)
   const { data, isLoading, isError, error, refetch } = useDailyCashPoint(businessDate)
+
+  // Le point journalier se termine par une pièce qu'on archive. Le bordereau
+  // consolidé existait déjà côté serveur, mais aucun écran ne l'offrait : il
+  // n'était atteignable que depuis l'aperçu des paramètres PDF.
+  async function handlePrint() {
+    setPrinting(true)
+    try {
+      await openPdfPreview(() => cashSessionsApi.dailyCashBook(businessDate))
+    } finally {
+      setPrinting(false)
+    }
+  }
 
   const kpis: HeroKpi[] = [
     { label: "Total encaissé", value: formatFcfa(data?.total_collected ?? 0), icon: Wallet },
@@ -54,6 +69,17 @@ export function DailyCashPointClient() {
         title="Point journalier"
         subtitle="Toutes les caisses de la journée, clôturées ou non"
         kpis={kpis}
+        actions={
+          <button
+            type="button"
+            onClick={handlePrint}
+            disabled={printing || isLoading}
+            className="inline-flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-sm font-semibold text-accent-foreground ring-1 ring-white/40 transition-colors hover:bg-accent/90 disabled:opacity-60"
+          >
+            <FileText aria-hidden="true" className="h-4 w-4" />
+            {printing ? "Génération…" : "Bordereau du jour"}
+          </button>
+        }
       />
 
       <Card className="rounded-xl border shadow-sm">
@@ -132,6 +158,16 @@ export function DailyCashPointClient() {
                     </p>
                   </div>
                 </div>
+
+                {/* Ventilation par moyen : le comptable rapproche un dépôt
+                    bancaire d'une caisse précise, et « 20 000 F en espèces »
+                    ne suffit pas à savoir ce qui est arrivé par Wave ou par
+                    virement. La donnée était déjà chargée, jamais affichée. */}
+                {session.by_method.length > 0 && (
+                  <div className="mt-3 border-t pt-3">
+                    <MethodBreakdown methods={session.by_method} />
+                  </div>
+                )}
 
                 {!hasBeenCounted(session) && (
                   <p className="mt-3 flex items-center gap-2 border-t pt-3 text-xs text-muted-foreground">
