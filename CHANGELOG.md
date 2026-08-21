@@ -11,6 +11,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ### Added
 - Champ « Lieu de naissance » à côté de la date, à la création d'un élève, à sa modification et à l'étape élève de l'inscription. Il s'affiche sur la fiche détail et part sur le certificat de scolarité, que l'administration refuse sans la mention « né(e) le ... à ... » *(secrétariat, admin)*
 - L'export de la liste des élèves emporte le lieu de naissance à côté de la date *(secrétariat, admin)*
+- Bouton « Bordereau du jour » sur le point journalier : le comptable édite la pièce comptable de la journée depuis l'écran où il la consulte, au lieu d'aller la chercher dans l'aperçu des paramètres *(comptable)*
+- Chaque caisse du point journalier montre sa ventilation par moyen de paiement, espèces, mobile money, virement et chèque : rapprocher un dépôt bancaire d'une caisse ne demande plus d'ouvrir le détail des versements *(comptable, directeur)*
 - Bandeau « Ma caisse » qui signale les journées clôturées d'office pendant la nuit et permet de les régulariser en saisissant ce qui avait été compté *(caissier)*
 - Une journée non comptée affiche « Écart inconnu » et non un écart nul : le comptable voit la différence entre une caisse qui tombe juste et une caisse que personne n'a ouverte *(caissier, comptable)*
 - Chaque tranche de paiement se saisit au choix en pourcentage ou en montant fixe, dans la même grille : « Inscription 37 000 FCFA à la rentrée », puis 35 / 35 / 30 % du reste *(admin, comptable)*
@@ -64,6 +66,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- L'application saluait chacun par le début de son adresse e-mail : le caissier Ibrahim Tanoh lisait « Bonjour, Cashier3 » alors que l'écran juste en dessous affichait son vrai nom. Le prénom et le nom sont désormais repris de la connexion *(admin, personnel, enseignant, parent, élève)*
+- Le bandeau affichait le rôle technique, « Staff », au lieu d'un libellé français *(admin, personnel)*
 - Le parent n'avait aucun moyen d'atteindre les bulletins de son enfant : la page existait, aucun lien n'y menait. Un bouton « Bulletins » figure désormais sur la carte de chaque enfant *(parent)*
 - Le bouton « PDF » du bulletin fonctionne enfin dans les portails élève et parent : il appelait la page réservée à l'administration et répondait « accès refusé » à une famille qui voyait pourtant le bulletin à l'écran *(élève, parent)*
 - La liste « Mes bulletins » de l'élève ne s'affichait pas du tout : l'écran attendait une réponse d'une autre forme que celle envoyée par le serveur *(élève)*
