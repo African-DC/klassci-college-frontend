@@ -58,6 +58,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- Le bouton « PDF » du bulletin fonctionne enfin dans les portails élève et parent : il appelait la page réservée à l'administration et répondait « accès refusé » à une famille qui voyait pourtant le bulletin à l'écran *(élève, parent)*
+- La liste « Mes bulletins » de l'élève ne s'affichait pas du tout : l'écran attendait une réponse d'une autre forme que celle envoyée par le serveur *(élève)*
 - L'éducateur et le secrétariat peuvent enfin délivrer un billet d'annulation de zéro : l'écran cherchait les évaluations manquées dans le cahier de notes de la classe, qu'ils n'ont pas le droit de lire, et répondait « Réessayez dans un instant » à une erreur de droits qui ne se résolvait jamais *(éducateur, secrétariat)*
 - Les quatre compteurs du registre des convocations décrivent l'année consultée et non le filtre en cours : cliquer « Tuteur absent » affichait « Convocations 8, Tuteur venu 0, Tuteur absent 8 » *(éducateur)*
 - Quand la liste des évaluations manquées ne peut pas être lue, le formulaire affiche enfin la raison au lieu d'inviter à réessayer *(éducateur, secrétariat)*

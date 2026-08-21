@@ -99,9 +99,17 @@ export const parentPortalApi = {
     return safeValidate(ParentChildBulletinsResponseSchema, unwrapResponse(res), `GET /parent/children/${childId}/bulletins`)
   },
 
-  // Télécharger un bulletin en PDF
-  downloadChildBulletinPdf: async (bulletinId: number): Promise<Blob> => {
-    return apiFetchBlob(`/reports/bulletins/${bulletinId}/pdf`)
+  /**
+   * Télécharger le bulletin d'un enfant en PDF.
+   *
+   * Passe par le portail parent, pas par `/reports/bulletins/{id}/pdf` :
+   * cette route-là est gardée par `reports:read`, un droit qui ouvre les
+   * bulletins de toute l'école et qu'un parent n'a pas. Le téléchargement
+   * répondait donc 403 alors que le bulletin s'affichait bien. Ici, la garde
+   * est le lien de filiation, d'où l'identifiant de l'enfant dans l'adresse.
+   */
+  downloadChildBulletinPdf: async (childId: number, bulletinId: number): Promise<Blob> => {
+    return apiFetchBlob(`/parent/children/${childId}/bulletins/${bulletinId}/pdf`)
   },
 
   // Emploi du temps d'un enfant
