@@ -85,6 +85,12 @@ export const ParentChildBulletinSchema = z.object({
   academic_year_name: z.string(),
   is_published: z.boolean(),
   generated_at: z.string().nullable(),
+  // Retenue pour impayé : le bulletin existe et reste annoncé, mais moyenne,
+  // rang et mention reviennent vides. Facultatifs plutôt que requis, le front
+  // pouvant être déployé avant le serveur qui les pose.
+  is_withheld: z.boolean().optional(),
+  withheld_reason: z.string().nullable().optional(),
+  withheld_amount: z.coerce.number().nullable().optional(),
 })
 
 export const ParentChildBulletinsResponseSchema = z.object({

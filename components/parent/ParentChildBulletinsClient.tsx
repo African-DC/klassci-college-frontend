@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import type { Route } from "next"
 import { ArrowLeft, FileText, Award, Download, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -10,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
+import { BulletinWithheldNotice } from "@/components/shared/documents/BulletinWithheldNotice"
 import { useParentChildBulletins } from "@/lib/hooks/useParentPortal"
 import { parentPortalApi } from "@/lib/api/parent-portal"
 import { downloadBlob } from "@/lib/utils"
@@ -74,9 +76,13 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">Trimestre {bulletin.trimester}</CardTitle>
-                  <Badge variant={bulletin.is_published ? "default" : "secondary"}>
-                    {bulletin.is_published ? "Publié" : "Brouillon"}
-                  </Badge>
+                  {bulletin.is_withheld ? (
+                    <Badge variant="secondary">Retenu</Badge>
+                  ) : (
+                    <Badge variant={bulletin.is_published ? "default" : "secondary"}>
+                      {bulletin.is_published ? "Publié" : "Brouillon"}
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {bulletin.class_name} — {bulletin.academic_year_name}
@@ -103,7 +109,16 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
                     <span className="text-sm font-medium">{bulletin.mention}</span>
                   </div>
                 )}
-                {bulletin.is_published && (
+                {bulletin.is_withheld && (
+                  <BulletinWithheldNotice
+                    reason={bulletin.withheld_reason ?? null}
+                    gradesHref={`/parent/children/${childId}/grades` as Route}
+                  />
+                )}
+                {/* Aucun bouton quand le bulletin est retenu : un
+                    téléchargement qui échoue en 402 vaut moins qu'un bouton
+                    absent et expliqué. */}
+                {bulletin.is_published && !bulletin.is_withheld && (
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <PdfPreviewButton
                       fetchBlob={() => parentPortalApi.downloadChildBulletinPdf(childId, bulletin.id)}

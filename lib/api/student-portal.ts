@@ -31,6 +31,12 @@ const StudentBulletinRawSchema = z.object({
   academic_year_name: z.string(),
   file_url: z.string().nullable(),
   generated_at: z.string().nullable(),
+  // Retenue pour impayé. Facultatifs plutôt que requis : le front peut être
+  // déployé avant le serveur qui les pose, et une liste de bulletins ne doit
+  // pas tomber entière parce que trois champs manquent.
+  is_withheld: z.boolean().optional(),
+  withheld_reason: z.string().nullable().optional(),
+  withheld_amount: z.coerce.number().nullable().optional(),
 })
 const StudentBulletinsRawSchema = z.object({
   items: z.array(StudentBulletinRawSchema),
@@ -167,6 +173,9 @@ export const studentPortalApi = {
       // L'endpoint ne rend que les bulletins publiés.
       status: "publie" as const,
       published_at: b.generated_at,
+      is_withheld: b.is_withheld ?? false,
+      withheld_reason: b.withheld_reason ?? null,
+      withheld_amount: b.withheld_amount ?? null,
     }))
   },
 
