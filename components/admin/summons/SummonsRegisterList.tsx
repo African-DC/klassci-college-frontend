@@ -16,6 +16,10 @@ import {
   formatSchoolDate,
   formatSchoolTime,
 } from "@/components/shared/school-life/school-life-ui"
+import {
+  SUMMONS_OUTCOME_TOO_EARLY,
+  canRecordSummonsOutcome,
+} from "@/lib/utils/summons-schedule"
 import type { ParentSummons } from "@/lib/contracts/school-life"
 
 interface SummonsRegisterListProps {
@@ -36,18 +40,30 @@ function RowActions({
   onDownload: (summons: ParentSummons) => void
   downloading: boolean
 }) {
+  // Le rendez-vous n'a pas encore eu lieu : le backend refuse la consignation.
+  // Le registre étant trié du plus récent au plus ancien, ces lignes ouvrent
+  // l'écran ; mieux vaut un bouton éteint qui s'explique qu'un refus au clic.
+  const canRecord = canRecordSummonsOutcome(summons.summons_date)
+
   return (
     <div className="flex flex-wrap gap-2">
-      <Button
-        size="sm"
-        variant="outline"
-        className="h-11 gap-1.5 sm:h-9"
-        onClick={() => onRecordOutcome(summons)}
-        aria-label={`Consigner la suite donnée pour ${summons.student_name}`}
-      >
-        <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
-        Suite donnée
-      </Button>
+      <span title={canRecord ? undefined : SUMMONS_OUTCOME_TOO_EARLY}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-11 gap-1.5 sm:h-9"
+          onClick={() => onRecordOutcome(summons)}
+          disabled={!canRecord}
+          aria-label={
+            canRecord
+              ? `Consigner la suite donnée pour ${summons.student_name}`
+              : `Suite donnée indisponible pour ${summons.student_name} : ${SUMMONS_OUTCOME_TOO_EARLY}`
+          }
+        >
+          <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
+          Suite donnée
+        </Button>
+      </span>
       <Button
         size="sm"
         variant="outline"
@@ -63,6 +79,11 @@ function RowActions({
         )}
         PDF
       </Button>
+      {!canRecord && (
+        // L'infobulle ne s'ouvre pas au doigt : sur téléphone, la raison doit
+        // rester lisible sans survol.
+        <p className="w-full text-xs text-muted-foreground">{SUMMONS_OUTCOME_TOO_EARLY}</p>
+      )}
     </div>
   )
 }

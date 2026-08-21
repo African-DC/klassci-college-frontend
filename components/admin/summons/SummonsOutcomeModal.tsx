@@ -22,9 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useRecordSummonsOutcome } from "@/lib/hooks/useSummons"
 import { SUMMONS_OUTCOME_OPTIONS } from "@/lib/contracts/school-life"
-import type { ParentSummons } from "@/lib/contracts/school-life"
-
-type Outcome = "pending" | "attended" | "missed"
+import type { ParentSummons, SummonsOutcome } from "@/lib/contracts/school-life"
 
 /** Consigne au registre si le tuteur s'est présenté, et ce qui s'est dit. */
 export function SummonsOutcomeModal({
@@ -34,13 +32,13 @@ export function SummonsOutcomeModal({
   summons: ParentSummons | null
   onClose: () => void
 }) {
-  const [outcome, setOutcome] = useState<Outcome>("attended")
+  const [outcome, setOutcome] = useState<SummonsOutcome>("attended")
   const [notes, setNotes] = useState("")
   const { mutate: record, isPending } = useRecordSummonsOutcome()
 
   useEffect(() => {
     if (summons) {
-      setOutcome(summons.outcome === "pending" ? "attended" : (summons.outcome as Outcome))
+      setOutcome(summons.outcome === "pending" ? "attended" : summons.outcome)
       setNotes(summons.outcome_notes ?? "")
     }
   }, [summons])
@@ -68,7 +66,7 @@ export function SummonsOutcomeModal({
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label htmlFor="summons-outcome">Le tuteur s&apos;est-il présenté ?</Label>
-            <Select value={outcome} onValueChange={(value) => setOutcome(value as Outcome)}>
+            <Select value={outcome} onValueChange={(value) => setOutcome(value as SummonsOutcome)}>
               <SelectTrigger id="summons-outcome" className="h-11 sm:h-10">
                 <SelectValue />
               </SelectTrigger>
