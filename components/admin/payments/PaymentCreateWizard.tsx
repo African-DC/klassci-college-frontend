@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { ArrowLeft, Search, User, BookOpen, Receipt, Loader2, Check } from "lucide-react"
+import { ArrowLeft, BookOpen, Receipt, Loader2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -15,10 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useStudents, useStudentFees } from "@/lib/hooks/useStudents"
+import { useStudentFees } from "@/lib/hooks/useStudents"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
 import { useCreatePayment } from "@/lib/hooks/usePayments"
-import { useDebounce } from "@/lib/hooks/useDebounce"
+import { StudentPicker } from "@/components/shared/StudentPicker"
 import type { Student } from "@/lib/contracts/student"
 import type { Enrollment } from "@/lib/contracts/enrollment"
 import type { StudentEnrollmentFee } from "@/lib/api/students"
@@ -117,7 +117,7 @@ export function PaymentCreateWizard({ open, onClose }: PaymentCreateWizardProps)
         )}
 
         {/* Steps */}
-        {wizard.step === 1 && <StepSearchStudent onSelect={selectStudent} />}
+        {wizard.step === 1 && <StudentPicker onSelect={selectStudent} autoFocus />}
         {wizard.step === 2 && wizard.student && (
           <StepSelectEnrollment student={wizard.student} onSelect={selectEnrollment} />
         )}
@@ -174,82 +174,6 @@ function StepProgress({ currentStep }: { currentStep: number }) {
           )
         })}
       </div>
-    </div>
-  )
-}
-
-// --- Step 1: Search student ---
-
-function StepSearchStudent({ onSelect }: { onSelect: (s: Student) => void }) {
-  const [search, setSearch] = useState("")
-  const debouncedSearch = useDebounce(search, 300)
-
-  const { data, isLoading } = useStudents(
-    debouncedSearch.length >= 2 ? { search: debouncedSearch } : {},
-  )
-
-  const students = useMemo(() => data?.items ?? [], [data])
-
-  return (
-    <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Rechercher un eleve (nom, prenom, matricule)..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-          autoFocus
-        />
-      </div>
-
-      {search.length > 0 && search.length < 2 && (
-        <p className="text-sm text-muted-foreground text-center py-4">
-          Saisissez au moins 2 caracteres pour rechercher
-        </p>
-      )}
-
-      {isLoading && debouncedSearch.length >= 2 && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {!isLoading && debouncedSearch.length >= 2 && students.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          Aucun eleve trouve pour &laquo;{debouncedSearch}&raquo;
-        </p>
-      )}
-
-      {students.length > 0 && (
-        <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-          {students.map((student) => (
-            <Card
-              key={student.id}
-              className="cursor-pointer transition-colors hover:bg-muted/50"
-              onClick={() => onSelect(student)}
-            >
-              <CardContent className="flex items-center gap-3 p-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
-                  {student.first_name[0]}{student.last_name[0]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">
-                    {student.last_name} {student.first_name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {student.enrollment_number
-                      ? `Matricule : ${student.enrollment_number}`
-                      : "Pas de matricule"}
-                    {student.genre && ` - ${student.genre === "M" ? "Garcon" : "Fille"}`}
-                  </p>
-                </div>
-                <User className="h-4 w-4 text-muted-foreground shrink-0" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

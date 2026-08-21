@@ -60,6 +60,7 @@ export default async function AdminGradeEntryPage({
             ? `/admin/grades/${evaluationId}/dictee?classId=${classId}`
             : undefined
         }
+        retakesHref="/admin/retakes"
       />
     </div>
   )

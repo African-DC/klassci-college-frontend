@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { useGrades, useUpdateGrades, useEvaluations } from "@/lib/hooks/useGrades"
 import { useSpeechRecognition } from "@/lib/hooks/useSpeechRecognition"
 import { parseSpokenGrade, detectCommand } from "@/lib/utils/voice-grade-parser"
+import { dicteeEntryFromServer } from "@/lib/utils/grade-reconciliation"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -69,11 +70,8 @@ export function DicteeMode({ evaluationId, classId, returnHref }: DicteeModeProp
     if (grades) {
       const map = new Map<number, EntryValue>()
       grades.forEach((g) => {
-        if (g.status === "absent") {
-          map.set(g.student_id, null) // zéro d'office déjà enregistré
-        } else if (g.value !== null) {
-          map.set(g.student_id, Number(g.value))
-        }
+        const initial = dicteeEntryFromServer(g)
+        if (initial !== undefined) map.set(g.student_id, initial)
       })
       setEntries(map)
     }
@@ -213,15 +211,13 @@ export function DicteeMode({ evaluationId, classId, returnHref }: DicteeModeProp
   }, [])
 
   // ─── Quitter avec garde sur dirty ──────────────────────────────────────
+  // La référence est exactement ce que l'amorçage a mis dans `entries` : un
+  // absent vaut `null` à l'écran alors que le serveur renvoie le zéro d'office.
+  // Comparer à la valeur brute rendait le garde vrai en permanence dès qu'un
+  // seul élève était absent, et un garde qui crie à vide ne protège plus rien.
   const hasDirty = useMemo(() => {
     if (!grades) return false
-    for (const g of grades) {
-      const local = entries.get(g.student_id)
-      const server =
-        g.value !== null ? Number(g.value) : g.status === "entered" ? null : undefined
-      if (local !== server) return true
-    }
-    return false
+    return grades.some((g) => entries.get(g.student_id) !== dicteeEntryFromServer(g))
   }, [grades, entries])
 
   const performExit = useCallback(() => {

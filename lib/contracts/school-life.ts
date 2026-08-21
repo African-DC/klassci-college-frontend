@@ -8,7 +8,12 @@ import { z } from "zod"
 // Convocation de parent
 // ---------------------------------------------------------------------------
 
-export const SUMMONS_OUTCOME_OPTIONS = [
+// Miroir de app.models.school_life.SummonsOutcome. L'énumération est connue :
+// la typer ici évite aux écrans de recaster une réponse réseau à la main.
+export const SummonsOutcomeSchema = z.enum(["pending", "attended", "missed"])
+export type SummonsOutcome = z.infer<typeof SummonsOutcomeSchema>
+
+export const SUMMONS_OUTCOME_OPTIONS: readonly { value: SummonsOutcome; label: string }[] = [
   { value: "pending", label: "Non renseignée" },
   { value: "attended", label: "Tuteur présent" },
   { value: "missed", label: "Tuteur absent" },
@@ -38,7 +43,7 @@ export const ParentSummonsSchema = z.object({
   summons_time: z.string(),
   reason: z.string(),
   reference: z.string().nullish(),
-  outcome: z.string(),
+  outcome: SummonsOutcomeSchema,
   outcome_label: z.string(),
   outcome_notes: z.string().nullish(),
   outcome_recorded_at: z.string().nullish(),
@@ -84,7 +89,7 @@ export const ParentSummonsCreateSchema = z
   })
 
 export const SummonsOutcomeUpdateSchema = z.object({
-  outcome: z.enum(["pending", "attended", "missed"], {
+  outcome: z.enum(SummonsOutcomeSchema.options, {
     required_error: "La suite donnée est requise",
   }),
   notes: z.string().max(2000, "La note est trop longue").optional(),

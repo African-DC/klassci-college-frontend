@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { CalendarRange, Loader2, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -14,16 +14,9 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
-import { useStudents } from "@/lib/hooks/useStudents"
+import { StudentPicker } from "@/components/shared/StudentPicker"
 import { useAbsentEvaluations, useCreateRetakeAuthorization } from "@/lib/hooks/useRetakes"
 import { RetakeAuthorizationCreateSchema } from "@/lib/contracts/school-life"
 import { formatSchoolDate } from "@/components/shared/school-life/school-life-ui"
@@ -40,29 +33,23 @@ function today(): string {
  * une épreuve qu'il a passée, autant ne pas la lui proposer.
  */
 export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [studentId, setStudentId] = useState("")
+  const [student, setStudent] = useState<Student | null>(null)
   const [periodStart, setPeriodStart] = useState("")
   const [periodEnd, setPeriodEnd] = useState(today)
   const [reason, setReason] = useState("")
   const [selected, setSelected] = useState<number[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const { data: studentsData, isLoading: loadingStudents } = useStudents({ size: 100 })
-  const students: Student[] = useMemo(() => studentsData?.items ?? [], [studentsData])
   const { mutate: create, isPending } = useCreateRetakeAuthorization()
 
-  const selectedStudent = useMemo(
-    () => students.find((student) => String(student.id) === studentId),
-    [students, studentId],
-  )
-  const classId = selectedStudent?.current_enrollment?.class_id
+  const classId = student?.current_enrollment?.class_id
 
   const {
     data: evaluations,
     isLoading: loadingEvaluations,
     isError: evaluationsFailed,
   } = useAbsentEvaluations({
-    studentId: studentId ? Number(studentId) : undefined,
+    studentId: student?.id,
     classId,
     periodStart: periodStart || undefined,
     periodEnd: periodEnd || undefined,
@@ -70,7 +57,7 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
 
   useEffect(() => {
     if (open) {
-      setStudentId("")
+      setStudent(null)
       setPeriodStart("")
       setPeriodEnd(today())
       setReason("")
@@ -83,7 +70,7 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
   // cochées qui ne s'affichent plus enverrait des évaluations invisibles.
   useEffect(() => {
     setSelected([])
-  }, [studentId, periodStart, periodEnd])
+  }, [student, periodStart, periodEnd])
 
   function toggle(evaluationId: number) {
     setSelected((prev) =>
@@ -95,7 +82,7 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
 
   function handleSubmit() {
     const parsed = RetakeAuthorizationCreateSchema.safeParse({
-      student_id: studentId ? Number(studentId) : 0,
+      student_id: student?.id ?? 0,
       period_start: periodStart,
       period_end: periodEnd,
       reason,
@@ -114,7 +101,7 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
     create(parsed.data, { onSuccess: () => onClose() })
   }
 
-  const periodChosen = Boolean(studentId && periodStart && periodEnd)
+  const periodChosen = Boolean(student && periodStart && periodEnd)
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
@@ -133,23 +120,14 @@ export function RetakeCreateModal({ open, onClose }: { open: boolean; onClose: (
         <div className="max-h-[60vh] space-y-4 overflow-y-auto py-2 pr-1">
           <div className="space-y-1.5">
             <Label htmlFor="retake-student">Élève</Label>
-            <Select value={studentId} onValueChange={setStudentId}>
-              <SelectTrigger id="retake-student" className="h-11 sm:h-10">
-                <SelectValue placeholder={loadingStudents ? "Chargement…" : "Choisir un élève"} />
-              </SelectTrigger>
-              <SelectContent>
-                {students.map((student) => (
-                  <SelectItem key={student.id} value={String(student.id)}>
-                    {student.last_name} {student.first_name}
-                    {student.current_enrollment?.class_name
-                      ? ` · ${student.current_enrollment.class_name}`
-                      : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <StudentPicker
+              inputId="retake-student"
+              selected={student}
+              onSelect={setStudent}
+              onClear={() => setStudent(null)}
+            />
             {errors.student_id && <p className="text-sm text-destructive">{errors.student_id}</p>}
-            {studentId && !classId && (
+            {student && !classId && (
               <p className="text-sm text-destructive">
                 Cet élève n&apos;a pas d&apos;inscription pour l&apos;année courante : aucune
                 évaluation ne peut être rouverte.
