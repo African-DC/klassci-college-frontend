@@ -5,6 +5,8 @@ import {
   Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp,
   AlertCircle, Banknote, CreditCard, Search, X, Eye,
   Receipt, CalendarDays,
+  Receipt, Coins, Smartphone, Building2, FileText, CalendarDays,
+  FileSpreadsheet, Loader2, UserCheck,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -45,17 +47,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ExportMenu } from "@/components/export/ExportMenu"
 import { PaymentCreateWizard } from "./PaymentCreateWizard"
-import { usePayments, useFinancialSummary, useValidatePayment, useCancelPayment } from "@/lib/hooks/usePayments"
+import {
+  usePayments,
+  useFinancialSummary,
+  useValidatePayment,
+  useCancelPayment,
+  useCashiers,
+} from "@/lib/hooks/usePayments"
 import { useFeeCategories } from "@/lib/hooks/useFees"
-import { useSettings } from "@/lib/hooks/useSettings"
 import { paymentsApi } from "@/lib/api/payments"
 import { ALL_PAYMENT_METHODS, paymentMethodLabel } from "@/lib/payment-methods"
 import { paymentMethodIcon } from "@/components/admin/payments/method-icon"
 import { useDebounce } from "@/lib/hooks/useDebounce"
+import { openPdfPreview } from "@/lib/pdf/preview"
+import { downloadBlob } from "@/lib/utils"
 import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@/lib/contracts/payment"
-import { buildPaymentsExportPayload } from "./payments-export"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ""
 
@@ -73,20 +80,28 @@ export function PaymentsPageClient() {
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | undefined>(undefined)
   const [methodFilter, setMethodFilter] = useState<PaymentMethod | undefined>(undefined)
   const [categoryFilter, setCategoryFilter] = useState<string | undefined>(undefined)
+  const [cashierFilter, setCashierFilter] = useState<string | undefined>(undefined)
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [confirmAction, setConfirmAction] = useState<{ type: "validate" | "cancel"; payment: Payment } | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewPaymentId, setPreviewPaymentId] = useState<number | null>(null)
+  const [exporting, setExporting] = useState<"pdf" | "xlsx" | "preview" | null>(null)
 
   const debouncedSearch = useDebounce(search)
 
+  // La période part au serveur : la filtrer dans le navigateur ne trierait que
+  // la page affichée, et l'export qui suit ne dirait pas la même chose que
+  // l'écran.
   const params: PaymentListParams = {
     ...(statusFilter && { status: statusFilter }),
     ...(methodFilter && { method: methodFilter }),
     ...(debouncedSearch && { search: debouncedSearch }),
     ...(categoryFilter && { fee_category_id: Number(categoryFilter) }),
+    ...(cashierFilter && { received_by: Number(cashierFilter) }),
+    ...(dateFrom && { date_from: `${dateFrom}T00:00:00` }),
+    ...(dateTo && { date_to: `${dateTo}T23:59:59` }),
   }
 
   const { data, isLoading } = usePayments(params)
@@ -94,37 +109,51 @@ export function PaymentsPageClient() {
   const { mutate: validatePayment, isPending: validating } = useValidatePayment()
   const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
   const { data: feeCategories } = useFeeCategories()
-  const { data: settings } = useSettings()
+  const { data: cashiers } = useCashiers()
 
-  // Client-side date filtering (BE doesn't support date params yet)
-  const payments = useMemo(() => {
-    let items = data?.items ?? []
-    if (dateFrom) {
-      const from = new Date(dateFrom)
-      items = items.filter((p) => new Date(p.created_at) >= from)
-    }
-    if (dateTo) {
-      const to = new Date(dateTo + "T23:59:59")
-      items = items.filter((p) => new Date(p.created_at) <= to)
-    }
-    return items
-  }, [data, dateFrom, dateTo])
+  const payments = useMemo(() => data?.items ?? [], [data])
 
-  const activeFilterCount = [statusFilter, methodFilter, categoryFilter, dateFrom, dateTo].filter(Boolean).length
+  // Le filtre « Encaissé par » n'a de sens qu'avec plusieurs guichets à
+  // distinguer. Un caissier cloisonné ne reçoit que lui-même du serveur : lui
+  // proposer une liste d'un seul nom serait un faux choix.
+  const showCashierFilter = (cashiers?.length ?? 0) > 1
 
-  // Résumé lisible des filtres actifs pour l'entête du document exporté.
-  const exportFilters = useMemo(() => {
-    const parts: string[] = []
-    if (statusFilter) parts.push(`Statut : ${STATUS_CONFIG[statusFilter].label}`)
-    if (methodFilter) parts.push(`Méthode : ${paymentMethodLabel(methodFilter)}`)
-    if (categoryFilter) {
-      const name = feeCategories?.find((c) => String(c.id) === categoryFilter)?.name
-      if (name) parts.push(`Catégorie : ${name}`)
+  const activeFilterCount = [
+    statusFilter,
+    methodFilter,
+    categoryFilter,
+    cashierFilter,
+    dateFrom,
+    dateTo,
+  ].filter(Boolean).length
+
+  // Les exports sont produits par le serveur, aux mêmes filtres que l'écran et
+  // sous le même cloisonnement : un caissier n'obtient jamais dans un fichier
+  // ce que son tableau ne lui montre pas.
+  async function handleExport(format: "pdf" | "xlsx") {
+    setExporting(format)
+    try {
+      const blob = await paymentsApi.downloadJournal(params, format)
+      const jour = new Date().toISOString().slice(0, 10)
+      downloadBlob(blob, `journal-versements-${jour}.${format}`)
+      toast.success(format === "pdf" ? "Journal PDF téléchargé" : "Journal Excel téléchargé")
+    } catch (err) {
+      toast.error("Export impossible", {
+        description: err instanceof Error ? err.message : "Erreur inconnue",
+      })
+    } finally {
+      setExporting(null)
     }
-    if (dateFrom || dateTo) parts.push(`Période : ${dateFrom || "…"} au ${dateTo || "…"}`)
-    if (debouncedSearch) parts.push(`Recherche « ${debouncedSearch} »`)
-    return parts.length > 0 ? parts.join(" · ") : undefined
-  }, [statusFilter, methodFilter, categoryFilter, dateFrom, dateTo, debouncedSearch, feeCategories])
+  }
+
+  async function handleExportPreview() {
+    setExporting("preview")
+    try {
+      await openPdfPreview(() => paymentsApi.downloadJournal(params, "pdf"))
+    } finally {
+      setExporting(null)
+    }
+  }
 
   const handlePreviewReceipt = useCallback(async (payment: Payment) => {
     setDownloadingId(payment.id)
@@ -171,6 +200,7 @@ export function PaymentsPageClient() {
     setStatusFilter(undefined)
     setMethodFilter(undefined)
     setCategoryFilter(undefined)
+    setCashierFilter(undefined)
     setDateFrom("")
     setDateTo("")
     setSearch("")
@@ -215,14 +245,48 @@ export function PaymentsPageClient() {
         subtitle="Suivi des paiements et tableau de bord financier"
         actions={
           <>
-            <ExportMenu
-              filename="paiements"
-              disabled={payments.length === 0}
-              className={heroGlassBtn}
-              getPayload={() =>
-                buildPaymentsExportPayload({ payments, settings, filters: exportFilters })
-              }
-            />
+            <button
+              type="button"
+              className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+              onClick={() => handleExport("xlsx")}
+              disabled={exporting !== null || payments.length === 0}
+              aria-label="Télécharger le journal des versements au format Excel"
+            >
+              {exporting === "xlsx" ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
+              )}
+              Excel
+            </button>
+            <button
+              type="button"
+              className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+              onClick={handleExportPreview}
+              disabled={exporting !== null || payments.length === 0}
+              aria-label="Aperçu avant impression du journal des versements"
+            >
+              {exporting === "preview" ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Eye className="h-4 w-4" aria-hidden="true" />
+              )}
+              Aperçu
+            </button>
+            <button
+              type="button"
+              className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+              onClick={() => handleExport("pdf")}
+              disabled={exporting !== null || payments.length === 0}
+              aria-label="Télécharger le journal des versements au format PDF"
+            >
+              {exporting === "pdf" ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Download className="h-4 w-4" aria-hidden="true" />
+              )}
+              PDF
+            </button>
             <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4" />
               Nouveau paiement
@@ -311,6 +375,26 @@ export function PaymentsPageClient() {
               </SelectContent>
             </Select>
 
+            {/* Filtre encaisseur — la question de fond d'une caisse d'école */}
+            {showCashierFilter && (
+              <Select
+                value={cashierFilter ?? "all"}
+                onValueChange={(v) => setCashierFilter(v === "all" ? undefined : v)}
+              >
+                <SelectTrigger className="w-[170px] h-10" aria-label="Filtrer par encaisseur">
+                  <SelectValue placeholder="Encaissé par" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes les caisses</SelectItem>
+                  {cashiers?.map((cashier) => (
+                    <SelectItem key={cashier.id} value={cashier.id.toString()}>
+                      {cashier.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             {activeFilterCount > 0 && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10 text-xs text-muted-foreground">
                 <X className="mr-1 h-3 w-3" />
@@ -380,6 +464,7 @@ export function PaymentsPageClient() {
                   <TableHead>Frais</TableHead>
                   <TableHead className="text-right">Montant</TableHead>
                   <TableHead>Méthode</TableHead>
+                  <TableHead>Encaissé par</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -431,6 +516,14 @@ export function PaymentsPageClient() {
                         <div className="flex items-center gap-2">
                           <MethodIcon className="h-3.5 w-3.5 text-muted-foreground" />
                           <span className="text-sm">{paymentMethodLabel(payment.method)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <UserCheck className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                          <span className="text-sm">
+                            {payment.received_by_name ?? "—"}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -535,6 +628,10 @@ export function PaymentsPageClient() {
                             <span className="font-medium">{statusCfg.label}</span>
                           </span>
                         </div>
+                        <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
+                          <UserCheck className="h-3 w-3 shrink-0" aria-hidden="true" />
+                          Encaissé par {payment.received_by_name ?? "—"}
+                        </p>
                         {payment.fee_name && (
                           <p className="mt-1 truncate text-[11px] text-muted-foreground">
                             {payment.fee_name}

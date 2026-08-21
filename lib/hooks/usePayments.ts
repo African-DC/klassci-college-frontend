@@ -15,6 +15,7 @@ export const paymentKeys = {
   all: ["payments"] as const,
   list: (params: PaymentListParams) => ["payments", "list", params] as const,
   summary: (academicYearId?: number) => ["payments", "summary", academicYearId] as const,
+  cashiers: ["payments", "cashiers"] as const,
   byEnrollment: (enrollmentId: number) =>
     ["payments", "enrollment", enrollmentId] as const,
   preview: (enrollmentId: number, amount: number) =>
@@ -34,6 +35,21 @@ export function useFinancialSummary(academicYearId?: number) {
     queryKey: paymentKeys.summary(academicYearId),
     queryFn: () => paymentsApi.getSummary(academicYearId),
     staleTime: 1000 * 60 * 5,
+  })
+}
+
+/**
+ * Les encaisseurs proposables dans le filtre « Encaissé par ».
+ *
+ * Le serveur décide de ce que l'appelant a le droit d'y voir : un caissier
+ * cloisonné ne reçoit que lui-même. Le composant n'a donc pas à connaître les
+ * droits de celui qui ouvre l'écran.
+ */
+export function useCashiers() {
+  return useQuery({
+    queryKey: paymentKeys.cashiers,
+    queryFn: () => paymentsApi.listCashiers(),
+    staleTime: 1000 * 60 * 10,
   })
 }
 

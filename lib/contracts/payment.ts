@@ -48,6 +48,9 @@ export const PaymentSchema = z.object({
   reference: z.string().nullable(),
   notes: z.string().nullable().optional(),
   received_by: z.number().nullable().optional(),
+  // Qui a encaissé, en clair. Sans lui, la colonne « Encaissé par » afficherait
+  // un identifiant, ce qui ne répond pas à la question qu'on lui pose.
+  received_by_name: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
   student_name: z.string().nullable().optional(),
@@ -114,8 +117,17 @@ export const FinancialSummarySchema = z.object({
   completion_rate: z.number(),
 })
 
+/** Un compte ayant déjà encaissé — options du filtre « Encaissé par ». */
+export const CashierOptionSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+})
+
 export const PaymentListParamsSchema = z.object({
   class_id: z.number().optional(),
+  received_by: z.number().optional(),
+  date_from: z.string().optional(),
+  date_to: z.string().optional(),
   status: PaymentStatusSchema.optional(),
   method: PaymentMethodSchema.optional(),
   fee_category_id: z.number().optional(),
@@ -125,6 +137,7 @@ export const PaymentListParamsSchema = z.object({
   size: z.number().optional(),
 })
 
+export type CashierOption = z.infer<typeof CashierOptionSchema>
 export type PaymentMethod = z.infer<typeof PaymentMethodSchema>
 export type PaymentStatus = z.infer<typeof PaymentStatusSchema>
 export type EnrollmentFeeStatus = z.infer<typeof EnrollmentFeeStatusSchema>

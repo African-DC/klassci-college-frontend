@@ -2,9 +2,13 @@ import { z } from "zod"
 import { apiFetch, safeValidate } from "./client"
 import {
   FeeCategorySchema,
+  FeePropagationPreviewSchema,
+  FeePropagationResultSchema,
   FeeVariantSchema,
   OptionalFeeOptionSchema,
   type FeeCategory,
+  type FeePropagationPreview,
+  type FeePropagationResult,
   type FeeVariant,
   type OptionalFeeOption,
   type FeeCategoryCreate,
@@ -116,6 +120,35 @@ export const feesApi = {
 
   deleteVariant: async (id: number): Promise<void> => {
     await apiFetch(`/admin/fee-variants/${id}`, { method: "DELETE" })
+  },
+
+  // --- Repercussion d'un tarif sur les inscriptions existantes ---
+
+  /**
+   * Ce que la repercussion ferait, sans rien ecrire.
+   *
+   * Se lit avant de decider : l'ecole doit voir combien d'inscriptions sont
+   * touchees et de combien la dette bougerait AVANT de confirmer.
+   */
+  propagationPreview: async (id: number): Promise<FeePropagationPreview> => {
+    const json = await apiFetch<unknown>(`/admin/fee-variants/${id}/propagation-preview`)
+    return safeValidate(
+      FeePropagationPreviewSchema,
+      json,
+      `GET /admin/fee-variants/${id}/propagation-preview`,
+    )
+  },
+
+  /** Applique la repercussion. Rend le decompte des lignes reellement reecrites. */
+  propagate: async (id: number): Promise<FeePropagationResult> => {
+    const json = await apiFetch<unknown>(`/admin/fee-variants/${id}/propagate`, {
+      method: "POST",
+    })
+    return safeValidate(
+      FeePropagationResultSchema,
+      json,
+      `POST /admin/fee-variants/${id}/propagate`,
+    )
   },
 
   // --- Options de frais optionnels ---
