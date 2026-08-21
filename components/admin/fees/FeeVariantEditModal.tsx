@@ -22,9 +22,21 @@ import { useLevels } from "@/lib/hooks/useLevels"
 interface FeeVariantEditModalProps {
   variant: FeeVariant | null
   onClose: () => void
+  /**
+   * Appelé quand l'enregistrement a bel et bien changé le montant.
+   *
+   * C'est l'instant où la question se pose : l'école vient de corriger un
+   * tarif, et les élèves déjà inscrits gardent l'ancien. Ne rien demander
+   * ici laisserait l'écart s'installer sans que personne ne le voie.
+   */
+  onAmountChanged?: (updated: FeeVariant) => void
 }
 
-export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalProps) {
+export function FeeVariantEditModal({
+  variant,
+  onClose,
+  onAmountChanged,
+}: FeeVariantEditModalProps) {
   const form = useForm<FeeVariantUpdate>({
     resolver: zodResolver(FeeVariantUpdateSchema),
     values: variant ? {
@@ -55,9 +67,17 @@ export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalPro
 
   function onSubmit(data: FeeVariantUpdate) {
     if (!variant) return
+    const ancienMontant = variant.amount
     mutate(
       { id: variant.id, data },
-      { onSuccess: () => onClose() },
+      {
+        onSuccess: (updated) => {
+          onClose()
+          // Seulement si le montant a bougé : ouvrir la question après une
+          // simple correction de portée ferait du bruit pour rien.
+          if (updated.amount !== ancienMontant) onAmountChanged?.(updated)
+        },
+      },
     )
   }
 
