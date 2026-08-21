@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Bouton « Bordereau du jour » sur le point journalier : le comptable édite la pièce comptable de la journée depuis l'écran où il la consulte, au lieu d'aller la chercher dans l'aperçu des paramètres *(comptable)*
+- Chaque caisse du point journalier montre sa ventilation par moyen de paiement, espèces, mobile money, virement et chèque : rapprocher un dépôt bancaire d'une caisse ne demande plus d'ouvrir le détail des versements *(comptable, directeur)*
 - Bandeau « Ma caisse » qui signale les journées clôturées d'office pendant la nuit et permet de les régulariser en saisissant ce qui avait été compté *(caissier)*
 - Une journée non comptée affiche « Écart inconnu » et non un écart nul : le comptable voit la différence entre une caisse qui tombe juste et une caisse que personne n'a ouverte *(caissier, comptable)*
 - Chaque tranche de paiement se saisit au choix en pourcentage ou en montant fixe, dans la même grille : « Inscription 37 000 FCFA à la rentrée », puis 35 / 35 / 30 % du reste *(admin, comptable)*

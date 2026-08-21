@@ -7,7 +7,7 @@ import {
   type CashSessionList,
   type CashSessionRegularize,
 } from "@/lib/contracts/cash-session"
-import { apiFetch, safeValidate } from "./client"
+import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 
 const CashSessionArraySchema = z.array(CashSessionSchema)
 
@@ -58,4 +58,14 @@ export const cashSessionsApi = {
     const json = await apiFetch<unknown>(`/cash-sessions${dateQuery(businessDate)}`)
     return safeValidate(CashSessionListSchema, json, "GET /cash-sessions")
   },
+
+  /**
+   * Bordereau journalier en PDF — la pièce que le comptable archive.
+   *
+   * Le serveur décide de la portée à partir des droits de l'appelant :
+   * consolidé pour qui détient `payments:read:all`, sa seule caisse pour un
+   * caissier. Rien à passer d'ici, et donc rien à falsifier depuis le client.
+   */
+  dailyCashBook: (businessDate: string): Promise<Blob> =>
+    apiFetchBlob(`/payments/daily-cash-book?date=${encodeURIComponent(businessDate)}`),
 }
