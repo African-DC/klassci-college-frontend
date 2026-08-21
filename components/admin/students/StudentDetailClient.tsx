@@ -242,7 +242,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
       {/* Photo preview dialog */}
       {photoSrc && (
         <Dialog open={photoPreview} onOpenChange={setPhotoPreview}>
-          <DialogContent className="max-w-md p-2">
+          <DialogContent className="max-w-md p-2 sm:p-2">
             <div className="relative aspect-square w-full overflow-hidden rounded-lg">
               <img
                 src={photoSrc}

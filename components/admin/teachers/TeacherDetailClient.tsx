@@ -146,7 +146,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
       {/* Photo preview (lecture seule — gérée par l'enseignant sur son profil) */}
       {photoSrc && (
         <Dialog open={photoPreview} onOpenChange={setPhotoPreview}>
-          <DialogContent className="max-w-md p-2">
+          <DialogContent className="max-w-md p-2 sm:p-2">
             <div className="relative aspect-square w-full overflow-hidden rounded-lg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={photoSrc} alt={fullName} className="h-full w-full object-cover" />
