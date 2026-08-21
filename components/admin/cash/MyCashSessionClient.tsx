@@ -7,9 +7,16 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useMyCashSession } from "@/lib/hooks/useCashSessions"
-import { isClosed } from "@/lib/contracts/cash-session"
-import { CashStatusBadge, MethodBreakdown, VarianceBadge, formatFcfa } from "./cash-ui"
+import { hasBeenCounted, isAutoClosed, isLocked } from "@/lib/contracts/cash-session"
+import {
+  CashStatusBadge,
+  MethodBreakdown,
+  VarianceBadge,
+  formatBusinessDate,
+  formatFcfa,
+} from "./cash-ui"
 import { CloseCashDialog } from "./CloseCashDialog"
+import { RegularizeCashBanner } from "./RegularizeCashBanner"
 
 /**
  * « Ma caisse » — la journée du caissier connecté.
@@ -32,21 +39,32 @@ export function MyCashSessionClient() {
   }
 
   if (isError || !session) {
+    // Le bandeau reste rendu : les journées à régulariser sont indépendantes
+    // de la journée en cours, et c'est justement l'action que le caissier
+    // doit pouvoir mener même si sa caisse du jour ne charge pas.
     return (
-      <Card className="rounded-xl border shadow-sm">
-        <CardContent className="space-y-3 p-10 text-center">
-          <p className="text-sm text-muted-foreground">
-            {error instanceof Error ? error.message : "Impossible de charger votre caisse."}
-          </p>
-          <Button variant="outline" className="h-11" onClick={() => refetch()}>
-            Réessayer
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <RegularizeCashBanner />
+        <Card className="rounded-xl border shadow-sm">
+          <CardContent className="space-y-3 p-10 text-center">
+            <p className="text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : "Impossible de charger votre caisse."}
+            </p>
+            <Button variant="outline" className="h-11" onClick={() => refetch()}>
+              Réessayer
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
-  const closed = isClosed(session)
+  // Une journée clôturée d'office est verrouillée comme une journée signée :
+  // ne plus proposer de la clôturer. Elle se régularise, et cela se fait
+  // depuis le bandeau, qui porte la journée concernée.
+  const locked = isLocked(session)
+  const counted = hasBeenCounted(session)
+  const autoClosed = isAutoClosed(session)
 
   const kpis: HeroKpi[] = [
     { label: "Encaissé aujourd'hui", value: formatFcfa(session.total_collected), icon: Wallet },
@@ -54,20 +72,22 @@ export function MyCashSessionClient() {
     { label: "Versements", value: session.payments_count, icon: Receipt },
     {
       label: "État",
-      value: closed ? "Clôturée" : "Ouverte",
-      icon: closed ? Lock : CheckCircle2,
+      value: autoClosed ? "Clôturée d'office" : locked ? "Clôturée" : "Ouverte",
+      icon: locked ? Lock : CheckCircle2,
     },
   ]
 
   return (
     <div className="space-y-6">
+      <RegularizeCashBanner />
+
       <PageHero
         icon={Wallet}
         title="Ma caisse"
-        subtitle={`${session.cashier_name} · journée du ${session.business_date}`}
+        subtitle={`${session.cashier_name} · journée du ${formatBusinessDate(session.business_date)}`}
         kpis={kpis}
         actions={
-          !closed ? (
+          !locked ? (
             <button
               type="button"
               onClick={() => setCloseOpen(true)}
@@ -95,7 +115,36 @@ export function MyCashSessionClient() {
           <CardContent className="space-y-4 p-5">
             <h2 className="border-b pb-3 text-sm font-semibold">Clôture</h2>
 
-            {closed ? (
+            {autoClosed ? (
+              <div className="space-y-3 text-sm">
+                <p className="text-muted-foreground">
+                  Cette journée a été clôturée d&apos;office à minuit : elle n&apos;avait pas été
+                  clôturée en fin de service. Le tiroir n&apos;ayant pas été compté,
+                  l&apos;écart est inconnu.
+                </p>
+                <dl className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <dt className="text-muted-foreground">Espèces attendues</dt>
+                    <dd className="font-medium tabular-nums">
+                      {formatFcfa(session.expected_amount ?? 0)}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="text-muted-foreground">Espèces comptées</dt>
+                    <dd className="text-muted-foreground">Non comptées</dd>
+                  </div>
+                  <div className="flex items-center justify-between border-t pt-3">
+                    <dt className="text-muted-foreground">Écart</dt>
+                    <dd>
+                      <VarianceBadge variance={session.variance} />
+                    </dd>
+                  </div>
+                </dl>
+                <p className="text-xs text-muted-foreground">
+                  Régularisez-la depuis le bandeau en haut de cet écran.
+                </p>
+              </div>
+            ) : counted ? (
               <dl className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <dt className="text-muted-foreground">Espèces attendues</dt>
@@ -115,6 +164,12 @@ export function MyCashSessionClient() {
                     <VarianceBadge variance={session.variance} />
                   </dd>
                 </div>
+                {session.regularized_at && (
+                  <p className="text-xs text-muted-foreground">
+                    Journée clôturée d&apos;office puis régularisée : le comptage a été saisi
+                    après coup, sur le théorique arrêté à la clôture.
+                  </p>
+                )}
                 {session.notes && (
                   <div className="rounded-lg border border-border/60 bg-muted/40 p-3">
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground">Note</dt>

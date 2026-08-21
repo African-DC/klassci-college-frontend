@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Bandeau « Ma caisse » qui signale les journées clôturées d'office pendant la nuit et permet de les régulariser en saisissant ce qui avait été compté *(caissier)*
+- Une journée non comptée affiche « Écart inconnu » et non un écart nul : le comptable voit la différence entre une caisse qui tombe juste et une caisse que personne n'a ouverte *(caissier, comptable)*
 - Chaque tranche de paiement se saisit au choix en pourcentage ou en montant fixe, dans la même grille : « Inscription 37 000 FCFA à la rentrée », puis 35 / 35 / 30 % du reste *(admin, comptable)*
 - Simulation en direct sous la grille : on choisit un niveau et la situation de l'élève, affecté ou non, et l'on voit les francs que recevra chaque famille avant d'enregistrer *(admin, comptable)*
 - Rapport de fin de trimestre de la DEEP téléchargeable depuis Rapports : on choisit l'année et le trimestre, on obtient le canevas officiel des vingt-sept tableaux, avec aperçu avant impression *(admin, directeur)*
