@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Sexe et type de contrat de l'enseignant, permanent, vacataire ou fonctionnaire, à la création comme à la modification de sa fiche. Les deux se lisent sur la fiche, le contrat apparaît aussi dans la liste des enseignants, et l'un comme l'autre s'affichent « Non renseigné » tant qu'ils ne sont pas saisis *(admin)*.
 - Bouton « Archiver » sur les fiches élève, parent, enseignant, personnel et inscription : la fiche quitte les listes après un motif et cinq secondes de maintien, et reste récupérable dans la corbeille *(admin, directeur)*.
 - Écran « Corbeille » : les fiches retirées des écrans restent conservées, avec qui les a archivées, quand et pourquoi, et se restaurent en un clic *(admin, directeur)*.
 - Les gestes qui ne se rattrapent pas demandent un motif et se confirment en maintenant le bouton appuyé, cinq secondes pour archiver, dix pour supprimer définitivement. Le motif part au journal et à la direction *(admin, directeur)*.
