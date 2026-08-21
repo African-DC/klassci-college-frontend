@@ -77,6 +77,12 @@ export function EnrollmentSummaryStep({
                       <dd>{newValues.birth_date}</dd>
                     </>
                   ) : null}
+                  {newValues.birth_place ? (
+                    <>
+                      <dt className="text-muted-foreground">Lieu de naissance</dt>
+                      <dd>{newValues.birth_place}</dd>
+                    </>
+                  ) : null}
                   {newValues.genre ? (
                     <>
                       <dt className="text-muted-foreground">Genre</dt>

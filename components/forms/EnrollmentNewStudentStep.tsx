@@ -105,6 +105,25 @@ export function EnrollmentNewStudentStep({
           />
           <FormField
             control={form.control}
+            name="birth_place"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lieu de naissance</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Ex : Bouaké"
+                    className="h-11"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value || null)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="genre"
             render={({ field }) => (
               <FormItem>

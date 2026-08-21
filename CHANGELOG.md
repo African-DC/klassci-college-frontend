@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Champ « Lieu de naissance » à côté de la date, à la création d'un élève, à sa modification et à l'étape élève de l'inscription. Il s'affiche sur la fiche détail et part sur le certificat de scolarité, que l'administration refuse sans la mention « né(e) le ... à ... » *(secrétariat, admin)*
+- L'export de la liste des élèves emporte le lieu de naissance à côté de la date *(secrétariat, admin)*
 - Bouton « Bordereau du jour » sur le point journalier : le comptable édite la pièce comptable de la journée depuis l'écran où il la consulte, au lieu d'aller la chercher dans l'aperçu des paramètres *(comptable)*
 - Chaque caisse du point journalier montre sa ventilation par moyen de paiement, espèces, mobile money, virement et chèque : rapprocher un dépôt bancaire d'une caisse ne demande plus d'ouvrir le détail des versements *(comptable, directeur)*
 - Bandeau « Ma caisse » qui signale les journées clôturées d'office pendant la nuit et permet de les régulariser en saisissant ce qui avait été compté *(caissier)*

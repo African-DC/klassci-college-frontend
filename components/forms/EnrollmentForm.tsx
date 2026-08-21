@@ -82,6 +82,7 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
       first_name: "",
       last_name: "",
       birth_date: null,
+      birth_place: null,
       genre: null,
       enrollment_number: null,
       city: null,
@@ -171,7 +172,7 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
 
     if (step === 1) {
       if (enrollmentType === "new") {
-        const valid = await newForm.trigger(["first_name", "last_name", "birth_date", "genre", "enrollment_number"])
+        const valid = await newForm.trigger(["first_name", "last_name", "birth_date", "birth_place", "genre", "enrollment_number"])
         if (!valid) return
         // Validate parent fields if shown
         if (showParentFields) {

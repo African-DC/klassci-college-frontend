@@ -95,6 +95,7 @@ export const NewEnrollmentSchema = z.object({
   first_name: z.string().min(1, "Le prenom est requis"),
   last_name: z.string().min(1, "Le nom est requis"),
   birth_date: z.string().nullable().optional(),
+  birth_place: z.string().nullable().optional(),
   genre: z.enum(["M", "F"]).nullable().optional(),
   enrollment_number: z.string().nullable().optional(),
   city: z.string().nullable().optional(),
