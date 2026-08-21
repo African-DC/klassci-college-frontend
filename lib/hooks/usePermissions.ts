@@ -38,7 +38,12 @@ export function usePermissions() {
     has: (slug: string) => (set ? set.has(slug) : false),
     hasAny: (slugs: string[]) => (set ? slugs.some((s) => set.has(s)) : false),
     hasAll: (slugs: string[]) => (set ? slugs.every((s) => set.has(s)) : false),
-    isLoading: enabled && isLoading,
+    // La session compte comme un chargement. Sans cela, pendant que NextAuth
+    // s'amorce, `enabled` est faux, donc `isLoading` est faux, et `has()` rend
+    // faux faute de données : un écran qui teste « pas en chargement ET pas le
+    // droit » affiche « Accès refusé » à tout le monde, y compris à un
+    // administrateur, avant de basculer sur le vrai contenu.
+    isLoading: status === "loading" || (enabled && isLoading),
     isFetching,
   }
 }
