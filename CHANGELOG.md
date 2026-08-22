@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- L'enseignant déclare ses indisponibilités depuis « Mon emploi du temps », sur la même grille que celle de sa fiche côté administration *(enseignant)*
+- Le formulaire de créneau affiche la semaine de l'enseignant choisi, cours dans les autres classes et plages fermées, et prévient avant d'enregistrer quand l'horaire visé ne passe pas *(directeur des études, secrétariat, admin)*
 - Onglet « Moyens de paiement » dans Paramètres : pour chaque profil qui encaisse, on coche les moyens qu'il a le droit de saisir. Retirer les espèces au comptable prend deux clics, et l'écran prévient qu'autoriser les espèces engage une journée de caisse à ouvrir et à compter *(admin, directeur)*
 - Wave, MTN MoMo, Orange Money et Moov Money se choisissent séparément au guichet, au lieu d'un « Mobile Money » unique qui obligeait le comptable à démêler ses relevés *(caissier, comptable, secrétariat)*
 - Colonne « Encaissé par » sur l'écran des versements, dans le tableau comme sur les cartes du téléphone, et filtre par caisse pour la comptabilité qui veut contrôler un guichet *(comptable, directeur, caissier)*
@@ -81,6 +83,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 - Les bulletins et les statistiques DREN s'ouvraient sur une année sans données au lieu de l'année en cours *(admin)*
+- La grille de disponibilités d'un enseignant affichait toute sa semaine en rouge « indisponible » alors qu'il n'avait rien déclaré : une semaine vierge ne ferme plus rien *(admin, directeur des études, enseignant)*
 - Le bandeau de la page des versements annonce à la caissière ce qu'elle a encaissé, et non plus les chiffres de toute l'école *(caissier)*
 - Le portail se construisait avec une mémoire plafonnée pour un serveur qui n'existe plus, ce qui faisait échouer des mises en ligne au hasard *(devops)*
 - L'application saluait chacun par le début de son adresse e-mail : le caissier Ibrahim Tanoh lisait « Bonjour, Cashier3 » alors que l'écran juste en dessous affichait son vrai nom. Le prénom et le nom sont désormais repris de la connexion *(admin, personnel, enseignant, parent, élève)*

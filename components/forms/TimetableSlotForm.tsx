@@ -3,18 +3,24 @@
 import { useState, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus } from "lucide-react"
+import { AlertTriangle, Plus } from "lucide-react"
 import { TimetableSlotCreateSchema, type TimetableSlotCreate } from "@/lib/contracts/timetable"
-import { useCreateSlot, useUpdateSlot } from "@/lib/hooks/useTimetable"
+import { useCreateSlot, useTeacherWeek, useUpdateSlot } from "@/lib/hooks/useTimetable"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
-import { useSubjects, useCreateSubject } from "@/lib/hooks/useSubjects"
-import { useTeachers, useCreateTeacher } from "@/lib/hooks/useTeachers"
+import { useSubjects } from "@/lib/hooks/useSubjects"
+import { useTeachers } from "@/lib/hooks/useTeachers"
 import { useClass } from "@/lib/hooks/useClasses"
 import { useRooms } from "@/lib/hooks/useRooms"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+import { TeacherWeekPanel } from "@/components/timetable/TeacherWeekPanel"
+import { trouverEmpechement } from "@/lib/timetable/week-overlap"
+import {
+  InlineCreateSubjectDialog,
+  InlineCreateTeacherDialog,
+  addHour,
+} from "@/components/forms/timetable-slot/inline-create-dialogs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -22,13 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -136,6 +135,40 @@ export function TimetableSlotForm({
     prevSubjectRef.id = selectedSubjectId ?? 0
     form.setValue("teacher_id", selectedSubject.teacher_id)
   }
+
+  // La semaine de l'enseignant choisi, chargee des qu'il est choisi : elle
+  // sert a montrer l'empechement pendant la saisie, au lieu de le decouvrir en
+  // validant. Le backend refait la verification, celle-ci ne fait qu'avertir.
+  const selectedTeacherId = form.watch("teacher_id")
+  const watchedDay = form.watch("day")
+  const watchedStart = form.watch("start_time")
+  const watchedEnd = form.watch("end_time")
+  const { data: teacherWeek, isLoading: weekLoading } = useTeacherWeek(selectedTeacherId)
+
+  // En modification, le creneau qu'on deplace figure dans sa propre semaine :
+  // sans cela, il se signalerait lui-meme comme conflit.
+  const weekSansCeCreneau = useMemo(() => {
+    if (!teacherWeek || !slot) return teacherWeek
+    return {
+      ...teacherWeek,
+      busy: teacherWeek.busy.filter(
+        (b) =>
+          !(
+            b.kind === "course" &&
+            b.start_time === slot.start_time &&
+            b.end_time === slot.end_time &&
+            b.class_name === slot.class_name
+          ),
+      ),
+    }
+  }, [teacherWeek, slot])
+
+  const empechement = trouverEmpechement(
+    weekSansCeCreneau,
+    watchedDay,
+    watchedStart,
+    watchedEnd,
+  )
 
   const createMutation = useCreateSlot()
   const updateMutation = useUpdateSlot(slot?.id ?? 0)
@@ -266,6 +299,19 @@ export function TimetableSlotForm({
             )}
           />
 
+          {selectedTeacherId ? (
+            <div className="rounded-xl border bg-card/60 p-3 sm:p-4">
+              <TeacherWeekPanel
+                week={weekSansCeCreneau}
+                isLoading={weekLoading}
+                highlightDay={watchedDay}
+                highlightStart={watchedStart}
+                highlightEnd={watchedEnd}
+                editHref={`/admin/teachers/${selectedTeacherId}?tab=disponibilites`}
+              />
+            </div>
+          ) : null}
+
           <div className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
@@ -321,6 +367,19 @@ export function TimetableSlotForm({
             />
           </div>
 
+          {empechement && !error && (
+            <div
+              role="status"
+              className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">Créneau impossible</p>
+                <p className="text-sm text-muted-foreground">{empechement.message}</p>
+              </div>
+            </div>
+          )}
+
           {/* Room select */}
           <FormField
             control={form.control}
@@ -352,8 +411,17 @@ export function TimetableSlotForm({
           />
 
           {error && (
-            <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
-              <p className="text-sm text-destructive">{error.message}</p>
+            <div
+              role="alert"
+              className="flex items-start gap-2.5 rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium text-destructive">
+                  Enregistrement refusé
+                </p>
+                <p className="text-sm text-destructive/90">{error.message}</p>
+              </div>
             </div>
           )}
 
@@ -388,184 +456,4 @@ export function TimetableSlotForm({
       />
     </>
   )
-}
-
-// ---------------------------------------------------------------------------
-// Inline mini-dialogs
-// ---------------------------------------------------------------------------
-
-function InlineCreateSubjectDialog({
-  open,
-  onClose,
-  onCreated,
-}: {
-  open: boolean
-  onClose: () => void
-  onCreated: (id: number) => void
-}) {
-  const [name, setName] = useState("")
-  const { mutate, isPending } = useCreateSubject()
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!name.trim()) return
-    mutate(
-      {
-        name: name.trim(),
-        coefficient: 1,
-        hours_per_week: 1,
-      },
-      {
-        onSuccess: (created) => {
-          setName("")
-          onCreated(created.id)
-        },
-      },
-    )
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Créer une matière</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="subject-name">Nom de la matière *</Label>
-            <Input
-              id="subject-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Mathématiques"
-              className="h-11"
-              autoFocus
-            />
-            <p className="text-xs text-muted-foreground">
-              Crée une matière catalogue. Le coefficient et les heures seront configurés lors de l'assignation à un niveau.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button type="submit" disabled={isPending || !name.trim()}>
-              {isPending ? "Création..." : "Créer"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function generateAutoCredentials(first: string, last: string) {
-  const slug = `${first}.${last}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ".")
-  const suffix = String(Math.floor(Math.random() * 900) + 100)
-  return {
-    email: `${slug}.${suffix}@klassci.local`,
-    password: `Klassci${suffix}!${first[0]?.toUpperCase() ?? "X"}`,
-  }
-}
-
-function InlineCreateTeacherDialog({
-  open,
-  onClose,
-  onCreated,
-}: {
-  open: boolean
-  onClose: () => void
-  onCreated: (id: number) => void
-}) {
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [speciality, setSpeciality] = useState("")
-  const { mutate, isPending } = useCreateTeacher()
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!firstName.trim() || !lastName.trim()) return
-    const { email, password } = generateAutoCredentials(firstName.trim(), lastName.trim())
-    mutate(
-      {
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        email,
-        password,
-        speciality: speciality.trim() || undefined,
-      },
-      {
-        onSuccess: (created) => {
-          setFirstName("")
-          setLastName("")
-          setSpeciality("")
-          onCreated(created.id)
-        },
-      },
-    )
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Créer un enseignant</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="teacher-first">Prénom *</Label>
-              <Input
-                id="teacher-first"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Prénom"
-                className="h-11"
-                autoFocus
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="teacher-last">Nom *</Label>
-              <Input
-                id="teacher-last"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Nom"
-                className="h-11"
-            />
-          </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="teacher-spec">Spécialité</Label>
-            <Input
-              id="teacher-spec"
-              value={speciality}
-              onChange={(e) => setSpeciality(e.target.value)}
-              placeholder="Ex: Mathématiques (optionnel)"
-              className="h-11"
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Un compte sera créé automatiquement. Pour configurer les identifiants, rendez-vous sur la page de l'enseignant.
-          </p>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              disabled={isPending || !firstName.trim() || !lastName.trim()}
-            >
-              {isPending ? "Création..." : "Créer"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function addHour(time: string): string {
-  const [h, m] = time.split(":").map(Number)
-  return `${String(h + 1).padStart(2, "0")}:${String(m).padStart(2, "0")}`
 }
