@@ -205,15 +205,22 @@ export function PaymentsPageClient() {
     setSearch("")
   }
 
+  // Le serveur ne sert pas le recouvrement a qui ne lit que sa propre caisse.
+  // Son absence est donc le signal, et il n'y en a pas d'autre a inventer.
+  const cloisonne = summary?.total_expected === null
+
   const heroKpis: HeroKpi[] | undefined = summary
     ? [
         {
           label: "Attendu",
-          value: `${summary.total_expected.toLocaleString("fr-FR")} F`,
+          // Une caissiere ne lit pas le recouvrement de l'etablissement : le
+          // tiret dit « pas de votre ressort », la ou un 0 F dirait « rien
+          // n'est du ».
+          value: cloisonne ? "—" : `${summary.total_expected!.toLocaleString("fr-FR")} F`,
           icon: Banknote,
         },
         {
-          label: "Collecté",
+          label: cloisonne ? "Encaissé par vous" : "Collecté",
           value: `${summary.total_paid.toLocaleString("fr-FR")} F`,
           icon: Wallet,
           hint: `${summary.payment_count} paiement(s)`,
@@ -225,7 +232,7 @@ export function PaymentsPageClient() {
         },
         {
           label: "Taux de recouvrement",
-          value: `${summary.completion_rate.toFixed(1)}%`,
+          value: cloisonne ? "—" : `${summary.completion_rate!.toFixed(1)}%`,
           icon: TrendingUp,
           hint:
             summary.total_cancelled > 0

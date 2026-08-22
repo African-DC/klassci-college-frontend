@@ -109,12 +109,15 @@ export const AllocationPreviewSchema = z.object({
 })
 
 export const FinancialSummarySchema = z.object({
-  total_expected: z.number(),
+  // Vides pour une caissiere : le recouvrement est un chiffre d'ecole, il ne
+  // se restreint pas a une personne. Vides et non a zero, parce qu'un zero se
+  // lirait « rien n'est du ».
+  total_expected: z.number().nullable(),
   total_paid: z.number(),
   total_pending: z.number(),
   total_cancelled: z.number(),
   payment_count: z.number(),
-  completion_rate: z.number(),
+  completion_rate: z.number().nullable(),
 })
 
 /** Un compte ayant déjà encaissé — options du filtre « Encaissé par ». */
