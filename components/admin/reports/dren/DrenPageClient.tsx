@@ -27,15 +27,14 @@ import { LevelStatsTable } from "./LevelStatsTable"
 import { PageHero, heroAccentBtn, heroGlassBtn } from "@/components/shared/PageHero"
 import { ReportsNav } from "../ReportsNav"
 import { useDrenStats } from "@/lib/hooks/useDrenStats"
-import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import { drenApi } from "@/lib/api/dren"
 import { openPdfPreview } from "@/lib/pdf/preview"
 
 export function DrenPageClient() {
-  const { data: academicYearsData } = useAcademicYears()
-  const academicYears = academicYearsData?.items
   const [academicYearId, setAcademicYearId] = useState<number | undefined>(undefined)
-  const activeYearId = academicYearId ?? academicYears?.[0]?.id
+  const { academicYearId: activeYearId, years: academicYears } =
+    useCurrentAcademicYearId(academicYearId)
   const { data: stats, isLoading, isError } = useDrenStats(activeYearId)
   const [downloading, setDownloading] = useState<"excel" | "pdf" | null>(null)
   const [previewingPdf, setPreviewingPdf] = useState(false)
