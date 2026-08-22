@@ -32,8 +32,7 @@ export function DeepReportPageClient() {
   const [previewing, setPreviewing] = useState(false)
 
   // L'année en cours d'abord : c'est celle qu'on dépose neuf fois sur dix.
-  const activeYearId =
-    academicYearId ?? academicYears?.find((y) => y.is_current)?.id ?? academicYears?.[0]?.id
+  const { academicYearId: activeYearId } = useCurrentAcademicYearId(academicYearId)
   const activeYear = academicYears?.find((y) => y.id === activeYearId)
 
   const handleDownload = useCallback(async () => {

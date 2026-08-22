@@ -15,7 +15,7 @@ import { BulletinList } from "./BulletinList"
 import { BulletinGenerateButton } from "./BulletinGenerateButton"
 import { ReportsNav } from "./ReportsNav"
 import { useClasses } from "@/lib/hooks/useClasses"
-import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import type { BulletinListParams } from "@/lib/contracts/bulletin"
 
 export function ReportsPageClient() {
@@ -27,10 +27,11 @@ export function ReportsPageClient() {
 
   const { data: classesData, isLoading: classesLoading } = useClasses()
   const classes = classesData?.items
-  const { data: academicYearsData, isLoading: yearsLoading } = useAcademicYears()
-  const academicYears = academicYearsData?.items
-
-  const activeYearId = academicYearId ?? academicYears?.[0]?.id
+  const {
+    academicYearId: activeYearId,
+    years: academicYears,
+    isLoading: yearsLoading,
+  } = useCurrentAcademicYearId(academicYearId)
 
   const params: BulletinListParams = {
     ...(classId && { class_id: classId }),
