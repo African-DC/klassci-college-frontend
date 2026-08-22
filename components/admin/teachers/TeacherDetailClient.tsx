@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   Archive,
   BookOpen,
@@ -60,11 +60,14 @@ interface TeacherDetailClientProps {
 
 export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
   const router = useRouter()
+  // Le formulaire de creneau renvoie ici avec ?tab=disponibilites quand
+  // l'enseignant choisi bloque : autant arriver sur le bon onglet.
+  const searchParams = useSearchParams()
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [photoPreview, setPhotoPreview] = useState(false)
-  const [activeTab, setActiveTab] = useState("overview")
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") ?? "overview")
   const [photoLoaded, setPhotoLoaded] = useState(false)
 
   const { data: teacher, isLoading, isError, refetch } = useTeacher(teacherId)

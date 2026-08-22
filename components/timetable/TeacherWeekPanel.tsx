@@ -11,7 +11,9 @@
  * décider.
  */
 
-import { AlertTriangle, CalendarX2, Check, Info } from "lucide-react"
+import Link from "next/link"
+import type { Route } from "next"
+import { AlertTriangle, CalendarX2, Check, Info, SquarePen } from "lucide-react"
 import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
 import { JOURS_FR, enMinutes, versJourAnglais } from "@/lib/timetable/week-overlap"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -57,6 +59,15 @@ interface TeacherWeekPanelProps {
   highlightEnd?: string
   /** Titre facultatif — le portail enseignant parle à la première personne. */
   title?: string
+  /**
+   * Affiche un lien vers la fiche de l'enseignant pour y corriger ses plages.
+   *
+   * L'administration a le droit de les saisir à sa place — chez ROSTAN c'est
+   * le directeur des études qui note ce qu'on lui a dit de vive voix. Depuis la
+   * pose d'un créneau, on ne veut pas d'un éditeur de plus dans la fenêtre :
+   * juste le chemin le plus court vers l'endroit qui existe déjà.
+   */
+  editHref?: string
 }
 
 function etatDe(week: TeacherWeek, jour: DayOfWeek, heure: number): EtatCase {
@@ -99,6 +110,7 @@ export function TeacherWeekPanel({
   highlightStart,
   highlightEnd,
   title,
+  editHref,
 }: TeacherWeekPanelProps) {
   if (isLoading) {
     return (
@@ -129,7 +141,20 @@ export function TeacherWeekPanel({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">{title ?? `Semaine de ${week.teacher_name}`}</p>
-        <Legende />
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <Legende />
+          {editHref && (
+            <Link
+              href={editHref as Route}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-11 items-center gap-1.5 text-xs font-medium text-primary underline-offset-4 hover:underline sm:h-auto"
+            >
+              <SquarePen className="h-3.5 w-3.5" aria-hidden />
+              Modifier ses disponibilités
+            </Link>
+          )}
+        </div>
       </div>
 
       {rienDeclare && (

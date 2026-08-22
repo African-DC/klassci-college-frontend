@@ -173,6 +173,9 @@ export function TeacherAvailabilityTab({ teacherId, intro }: TeacherAvailability
     (v) => v.state === "preferred",
   ).length
   const maxSlots = DAYS.length * HOURS.length
+  // Rien de declare : la semaine ne contraint rien, et la grille ne doit pas
+  // afficher le contraire (cf. UNDECLARED_STYLE).
+  const hasDeclarations = savedMap.size > 0
 
   return (
     <div className="space-y-4">
@@ -204,10 +207,11 @@ export function TeacherAvailabilityTab({ teacherId, intro }: TeacherAvailability
         getDisplayState={getDisplayState}
         isPendingCell={isPendingCell}
         interactive={editMode && !saving}
+        hasDeclarations={hasDeclarations}
         onToggle={handleToggle}
       />
 
-      <AvailabilityLegend pendingCount={pending.size} />
+      <AvailabilityLegend pendingCount={pending.size} hasDeclarations={hasDeclarations} />
     </div>
   )
 }

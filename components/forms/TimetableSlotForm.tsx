@@ -307,6 +307,7 @@ export function TimetableSlotForm({
                 highlightDay={watchedDay}
                 highlightStart={watchedStart}
                 highlightEnd={watchedEnd}
+                editHref={`/admin/teachers/${selectedTeacherId}?tab=disponibilites`}
               />
             </div>
           ) : null}
@@ -366,6 +367,19 @@ export function TimetableSlotForm({
             />
           </div>
 
+          {empechement && !error && (
+            <div
+              role="status"
+              className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">Créneau impossible</p>
+                <p className="text-sm text-muted-foreground">{empechement.message}</p>
+              </div>
+            </div>
+          )}
+
           {/* Room select */}
           <FormField
             control={form.control}
@@ -395,19 +409,6 @@ export function TimetableSlotForm({
               </FormItem>
             )}
           />
-
-          {empechement && !error && (
-            <div
-              role="status"
-              className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3"
-            >
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
-              <div className="space-y-0.5">
-                <p className="text-sm font-medium">Créneau impossible</p>
-                <p className="text-sm text-muted-foreground">{empechement.message}</p>
-              </div>
-            </div>
-          )}
 
           {error && (
             <div
