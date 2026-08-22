@@ -80,6 +80,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- Les bulletins et les statistiques DREN s'ouvraient sur une année sans données au lieu de l'année en cours *(admin)*
 - Le bandeau de la page des versements annonce à la caissière ce qu'elle a encaissé, et non plus les chiffres de toute l'école *(caissier)*
 - Le portail se construisait avec une mémoire plafonnée pour un serveur qui n'existe plus, ce qui faisait échouer des mises en ligne au hasard *(devops)*
 - L'application saluait chacun par le début de son adresse e-mail : le caissier Ibrahim Tanoh lisait « Bonjour, Cashier3 » alors que l'écran juste en dessous affichait son vrai nom. Le prénom et le nom sont désormais repris de la connexion *(admin, personnel, enseignant, parent, élève)*
