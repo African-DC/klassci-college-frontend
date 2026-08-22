@@ -5,6 +5,7 @@ import {
   TimetableSlotSchema,
   GenerateTaskResponseSchema,
   TeacherAvailabilitySchema,
+  TeacherWeekSchema,
   type TimetableSlot,
   type TimetableSlotCreate,
   type TimetableSlotUpdate,
@@ -12,6 +13,7 @@ import {
   type TeacherAvailability,
   type TeacherAvailabilityCreate,
   type TeacherAvailabilityUpdate,
+  type TeacherWeek,
   type TimetableDiagnostic,
 } from "@/lib/contracts/timetable"
 
@@ -168,6 +170,59 @@ export const timetableApi = {
     )
     const item = (json as { data?: TeacherAvailability }).data ?? (json as TeacherAvailability)
     return safeValidate(TeacherAvailabilitySchema, item, `PATCH /teacher-availabilities/${availabilityId}`)
+  },
+
+  // La semaine occupee d'un enseignant, pour la montrer avant de choisir
+  // l'horaire plutot que de refuser apres coup.
+  teacherWeek: async (teacherId: number): Promise<TeacherWeek> => {
+    const json = await apiFetch<unknown>(`/teachers/${teacherId}/week`)
+    return safeValidate(TeacherWeekSchema, json, `/teachers/${teacherId}/week`)
+  },
+
+  // Portail enseignant : le backend resout l'enseignant depuis le jeton, le
+  // front n'a jamais a connaitre son identifiant de profil.
+  myWeek: async (): Promise<TeacherWeek> => {
+    const json = await apiFetch<unknown>(`/teacher/week`)
+    return safeValidate(TeacherWeekSchema, json, `/teacher/week`)
+  },
+
+  myAvailabilities: async (): Promise<TeacherAvailability[]> => {
+    const json = await apiFetch<TeacherAvailability[] | { data?: TeacherAvailability[] }>(
+      `/teacher/availabilities`,
+    )
+    const arr = Array.isArray(json) ? json : json.data ?? []
+    return safeValidate(TeacherAvailabilityArraySchema, arr, `/teacher/availabilities`)
+  },
+
+  declareMyAvailability: async (
+    data: TeacherAvailabilityCreate,
+  ): Promise<TeacherAvailability> => {
+    const json = await apiFetch<TeacherAvailability | { data?: TeacherAvailability }>(
+      `/teacher/availabilities`,
+      { method: "POST", body: JSON.stringify(data) },
+    )
+    const item = (json as { data?: TeacherAvailability }).data ?? (json as TeacherAvailability)
+    return safeValidate(TeacherAvailabilitySchema, item, `POST /teacher/availabilities`)
+  },
+
+  updateMyAvailability: async (
+    availabilityId: number,
+    data: TeacherAvailabilityUpdate,
+  ): Promise<TeacherAvailability> => {
+    const json = await apiFetch<TeacherAvailability | { data?: TeacherAvailability }>(
+      `/teacher/availabilities/${availabilityId}`,
+      { method: "PATCH", body: JSON.stringify(data) },
+    )
+    const item = (json as { data?: TeacherAvailability }).data ?? (json as TeacherAvailability)
+    return safeValidate(
+      TeacherAvailabilitySchema,
+      item,
+      `PATCH /teacher/availabilities/${availabilityId}`,
+    )
+  },
+
+  deleteMyAvailability: async (availabilityId: number): Promise<void> => {
+    await apiFetch<void>(`/teacher/availabilities/${availabilityId}`, { method: "DELETE" })
   },
 
   deleteAvailability: async (availabilityId: number): Promise<void> => {

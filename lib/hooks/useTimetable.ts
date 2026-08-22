@@ -18,6 +18,9 @@ export const timetableKeys = {
   mine: () => ["timetable", "mine"] as const,
   availabilities: (teacherId: number) =>
     ["timetable", "availabilities", teacherId] as const,
+  myAvailabilities: () => ["timetable", "availabilities", "mine"] as const,
+  teacherWeek: (teacherId: number) => ["timetable", "week", teacherId] as const,
+  myWeek: () => ["timetable", "week", "mine"] as const,
 }
 
 export function useTimetable(classId: number) {
@@ -240,4 +243,74 @@ export function useDeleteAvailability(teacherId: number) {
       toast.error("Erreur", { description: err.message })
     },
   })
+}
+
+// ---------------------------------------------------------------------------
+// Semaine d'un enseignant, et disponibilites vues du portail enseignant
+// ---------------------------------------------------------------------------
+
+/** La semaine occupee de l'enseignant choisi, pour l'afficher avant l'horaire. */
+export function useTeacherWeek(teacherId: number | undefined) {
+  return useQuery({
+    queryKey: timetableKeys.teacherWeek(teacherId ?? 0),
+    queryFn: () => timetableApi.teacherWeek(teacherId as number),
+    enabled: !!teacherId,
+    staleTime: 1000 * 60,
+  })
+}
+
+export function useMyWeek() {
+  return useQuery({
+    queryKey: timetableKeys.myWeek(),
+    queryFn: () => timetableApi.myWeek(),
+    staleTime: 1000 * 60,
+  })
+}
+
+export function useMyAvailabilities() {
+  return useQuery({
+    queryKey: timetableKeys.myAvailabilities(),
+    queryFn: () => timetableApi.myAvailabilities(),
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+/** Les trois ecritures du portail enseignant invalident les memes lectures. */
+function useMyAvailabilityMutation<TVars>(
+  mutationFn: (vars: TVars) => Promise<unknown>,
+  successMessage?: string,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: timetableKeys.myAvailabilities() })
+      queryClient.invalidateQueries({ queryKey: timetableKeys.myWeek() })
+      if (successMessage) toast.success(successMessage)
+    },
+    onError: (err) => {
+      toast.error("Enregistrement impossible", { description: err.message })
+    },
+  })
+}
+
+export function useDeclareMyAvailability() {
+  return useMyAvailabilityMutation(
+    (data: TeacherAvailabilityCreate) => timetableApi.declareMyAvailability(data),
+    "Disponibilité enregistrée",
+  )
+}
+
+export function useUpdateMyAvailability() {
+  return useMyAvailabilityMutation(
+    ({ id, data }: { id: number; data: TeacherAvailabilityUpdate }) =>
+      timetableApi.updateMyAvailability(id, data),
+  )
+}
+
+export function useDeleteMyAvailability() {
+  return useMyAvailabilityMutation(
+    (id: number) => timetableApi.deleteMyAvailability(id),
+    "Disponibilité retirée",
+  )
 }

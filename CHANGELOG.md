@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- L'enseignant déclare ses indisponibilités depuis « Mon emploi du temps », sur la même grille que celle de sa fiche côté administration *(enseignant)*
+- Le formulaire de créneau affiche la semaine de l'enseignant choisi, cours dans les autres classes et plages fermées, et prévient avant d'enregistrer quand l'horaire visé ne passe pas *(directeur des études, secrétariat, admin)*
 - Onglet « Moyens de paiement » dans Paramètres : pour chaque profil qui encaisse, on coche les moyens qu'il a le droit de saisir. Retirer les espèces au comptable prend deux clics, et l'écran prévient qu'autoriser les espèces engage une journée de caisse à ouvrir et à compter *(admin, directeur)*
 - Wave, MTN MoMo, Orange Money et Moov Money se choisissent séparément au guichet, au lieu d'un « Mobile Money » unique qui obligeait le comptable à démêler ses relevés *(caissier, comptable, secrétariat)*
 - Colonne « Encaissé par » sur l'écran des versements, dans le tableau comme sur les cartes du téléphone, et filtre par caisse pour la comptabilité qui veut contrôler un guichet *(comptable, directeur, caissier)*
