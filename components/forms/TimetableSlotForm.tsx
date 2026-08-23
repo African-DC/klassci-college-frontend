@@ -170,14 +170,10 @@ export function TimetableSlotForm({
   const choisirSurLaGrille = useCallback(
     (plage: PlageChoisie) => {
       form.setValue("day", JOURS_FR[plage.jour], { shouldValidate: true, shouldDirty: true })
-      form.setValue("start_time", `${String(plage.debut).padStart(2, "0")}:00`, {
-        shouldValidate: true,
-        shouldDirty: true,
-      })
-      form.setValue("end_time", `${String(plage.fin).padStart(2, "0")}:00`, {
-        shouldValidate: true,
-        shouldDirty: true,
-      })
+      // La plage arrive deja en « HH:MM » : la reformater y ajoutait des
+      // secondes, que le schema refuse.
+      form.setValue("start_time", plage.debut, { shouldValidate: true, shouldDirty: true })
+      form.setValue("end_time", plage.fin, { shouldValidate: true, shouldDirty: true })
     },
     [form],
   )
