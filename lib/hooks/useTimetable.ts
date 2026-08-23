@@ -23,6 +23,23 @@ export const timetableKeys = {
   myWeek: () => ["timetable", "week", "mine"] as const,
 }
 
+/**
+ * Les seules entrées du cache qui contiennent une liste de créneaux.
+ *
+ * `getQueriesData` fait une correspondance par **préfixe** : demander
+ * `["timetable"]` ramène aussi `["timetable", "week", 7]`, dont la valeur est
+ * un objet `TeacherWeek`, et `["timetable", "availabilities", 7]`, dont la
+ * valeur est une liste de plages. Étaler l'un ou mapper l'autre casse la mise
+ * à jour optimiste avant même que la requête ne parte — c'est ce qui faisait
+ * échouer l'enregistrement d'un créneau sur « r is not iterable ».
+ *
+ * Le générique `getQueriesData<TimetableSlot[]>` ne protège de rien : c'est
+ * une affirmation que le cache ne garantit pas, et TypeScript la croit.
+ */
+const estListeDeCreneaux = ([cle]: [readonly unknown[], unknown]): boolean =>
+  cle[1] === "class" || cle[1] === "teacher" || cle[1] === "mine"
+
+
 export function useTimetable(classId: number) {
   return useQuery({
     queryKey: timetableKeys.byClass(classId),
@@ -55,9 +72,9 @@ export function useCreateSlot() {
     mutationFn: (data: TimetableSlotCreate) => timetableApi.create(data),
     onMutate: async (newSlot) => {
       await queryClient.cancelQueries({ queryKey: timetableKeys.all })
-      const queries = queryClient.getQueriesData<TimetableSlot[]>({
-        queryKey: timetableKeys.all,
-      })
+      const queries = queryClient
+        .getQueriesData<TimetableSlot[]>({ queryKey: timetableKeys.all })
+        .filter(estListeDeCreneaux)
       const optimistic: TimetableSlot = {
         id: -Date.now(),
         class_id: newSlot.class_id,
@@ -102,9 +119,9 @@ export function useUpdateSlot(id: number) {
     mutationFn: (data: TimetableSlotUpdate) => timetableApi.update(id, data),
     onMutate: async (updatedFields) => {
       await queryClient.cancelQueries({ queryKey: timetableKeys.all })
-      const queries = queryClient.getQueriesData<TimetableSlot[]>({
-        queryKey: timetableKeys.all,
-      })
+      const queries = queryClient
+        .getQueriesData<TimetableSlot[]>({ queryKey: timetableKeys.all })
+        .filter(estListeDeCreneaux)
       for (const [key, data] of queries) {
         if (data) {
           queryClient.setQueryData(
@@ -138,9 +155,9 @@ export function useDeleteSlot() {
     mutationFn: (id: number) => timetableApi.remove(id),
     onMutate: async (deletedId) => {
       await queryClient.cancelQueries({ queryKey: timetableKeys.all })
-      const queries = queryClient.getQueriesData<TimetableSlot[]>({
-        queryKey: timetableKeys.all,
-      })
+      const queries = queryClient
+        .getQueriesData<TimetableSlot[]>({ queryKey: timetableKeys.all })
+        .filter(estListeDeCreneaux)
       for (const [key, data] of queries) {
         if (data) {
           queryClient.setQueryData(

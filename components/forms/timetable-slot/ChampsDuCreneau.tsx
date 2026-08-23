@@ -80,7 +80,7 @@ export function ChampsDuCreneau({ form, empechement, erreurServeur }: Props) {
             <FormItem>
               <FormLabel>Début *</FormLabel>
               <FormControl>
-                <Input type="time" className="h-11" {...field} />
+                <Input type="time" className="h-11 w-full min-w-0" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -94,7 +94,7 @@ export function ChampsDuCreneau({ form, empechement, erreurServeur }: Props) {
             <FormItem>
               <FormLabel>Fin *</FormLabel>
               <FormControl>
-                <Input type="time" className="h-11" {...field} />
+                <Input type="time" className="h-11 w-full min-w-0" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

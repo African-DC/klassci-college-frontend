@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TimetableSlotForm } from "@/components/forms/TimetableSlotForm"
+import { EcranTropPetit } from "@/components/forms/timetable-slot/EcranTropPetit"
 import {
   HEURE_DEBUT,
   HEURE_FIN,
@@ -242,7 +243,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
             <div className="min-w-0">
               <p className="text-sm font-semibold">Vue mobile de consultation</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {totalSlots} créneau{totalSlots > 1 ? "x" : ""} cette semaine. La grille complète reste disponible sur ordinateur.
+                {totalSlots} créneau{totalSlots > 1 ? "x" : ""} cette semaine. Ajouter ou modifier un créneau demande une tablette ou un ordinateur : il faut voir la semaine de l&apos;enseignant pendant qu&apos;on choisit l&apos;heure.
               </p>
             </div>
           </div>
@@ -437,31 +438,40 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
 
       {/* Create modal */}
       <Dialog open={createModal !== null} onOpenChange={() => setCreateModal(null)}>
-        <DialogContent className="sm:max-w-2xl lg:max-w-5xl">
+        <DialogContent className="sm:max-w-2xl lg:max-w-6xl xl:max-w-7xl">
           <DialogHeader>
             <DialogTitle>Ajouter un créneau</DialogTitle>
           </DialogHeader>
-          <TimetableSlotForm
-            defaultDay={createModal?.day}
-            defaultStartTime={createModal?.time}
-            defaultEndTime={createModal?.endTime}
-            classId={classId}
-            onSuccess={() => setCreateModal(null)}
-          />
+          {/* En dessous de md, on ne pose pas de creneau : on ne verrait pas
+              la semaine de l'enseignant pendant qu'on choisit l'heure. */}
+          <div className="md:hidden">
+            <EcranTropPetit />
+          </div>
+          <div className="hidden md:block">
+            <TimetableSlotForm
+              defaultDay={createModal?.day}
+              defaultStartTime={createModal?.time}
+              defaultEndTime={createModal?.endTime}
+              classId={classId}
+              onSuccess={() => setCreateModal(null)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Edit modal */}
       <Dialog open={editSlot !== null} onOpenChange={() => setEditSlot(null)}>
-        <DialogContent className="sm:max-w-2xl lg:max-w-5xl">
+        <DialogContent className="sm:max-w-2xl lg:max-w-6xl xl:max-w-7xl">
           <DialogHeader>
             <DialogTitle>Modifier le créneau</DialogTitle>
           </DialogHeader>
+          <div className="md:hidden">
+            <EcranTropPetit />
+          </div>
           {editSlot && (
-            <TimetableSlotForm
-              slot={editSlot}
-              onSuccess={() => setEditSlot(null)}
-            />
+            <div className="hidden md:block">
+              <TimetableSlotForm slot={editSlot} onSuccess={() => setEditSlot(null)} />
+            </div>
           )}
         </DialogContent>
       </Dialog>

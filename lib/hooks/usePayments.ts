@@ -22,6 +22,11 @@ export const paymentKeys = {
     ["payments", "preview", enrollmentId, amount] as const,
 }
 
+/** Les seules entrées du cache qui contiennent une page de versements. */
+const estListePaginee = (cle: readonly unknown[]): boolean =>
+  cle[1] === "list" || cle[1] === "enrollment"
+
+
 export function usePayments(params: PaymentListParams = {}) {
   return useQuery({
     queryKey: paymentKeys.list(params),
@@ -123,17 +128,25 @@ export function useRecordEnrollmentPayment(enrollmentId: number) {
   })
 }
 
-/** Met à jour optimistiquement le statut d'un paiement dans le cache paginé */
+/**
+ * Met à jour optimistiquement le statut d'un paiement dans les listes paginées.
+ *
+ * Le préfixe `["payments"]` ramène aussi `["payments", "summary", …]`, dont la
+ * valeur est un récapitulatif financier sans `items`, et `["payments",
+ * "cashiers"]`, qui est une simple liste. Écrire dedans jetait
+ * « Cannot read properties of undefined » avant que la requête ne parte : la
+ * validation et l'annulation d'un versement échouaient sur l'écran des
+ * paiements, qui affiche justement le récapitulatif à côté de la liste.
+ */
 function optimisticStatusUpdate(
   queryClient: ReturnType<typeof useQueryClient>,
   paymentId: number,
   newStatus: Payment["status"],
 ) {
-  // Met à jour dans toutes les listes paginées en cache
   queryClient.setQueriesData<PaginatedResponse<Payment>>(
-    { queryKey: paymentKeys.all },
+    { queryKey: paymentKeys.all, predicate: (q) => estListePaginee(q.queryKey) },
     (old) => {
-      if (!old) return old
+      if (!old?.items) return old
       return {
         ...old,
         items: old.items.map((p) =>

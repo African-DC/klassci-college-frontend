@@ -56,7 +56,7 @@ export function SemaineListe({ week, jourVise }: Props) {
                   ) : (
                     <CalendarX2 className="mt-0.5 h-3 w-3 shrink-0 text-rose-600" aria-hidden />
                   )}
-                  <span className="tabular-nums">
+                  <span className="shrink-0 whitespace-nowrap tabular-nums">
                     {b.start_time}–{b.end_time}
                   </span>
                   <span>
@@ -71,7 +71,7 @@ export function SemaineListe({ week, jourVise }: Props) {
                   className="flex items-start gap-1.5 text-xs text-muted-foreground"
                 >
                   <Check className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600" aria-hidden />
-                  <span className="tabular-nums">
+                  <span className="shrink-0 whitespace-nowrap tabular-nums">
                     {o.start_time}–{o.end_time}
                   </span>
                   <span>{o.preferred ? "Préféré" : "Disponible"}</span>
