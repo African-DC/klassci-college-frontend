@@ -20,14 +20,12 @@ import Link from "next/link"
 import type { Route } from "next"
 import { Info, RefreshCw, SquarePen } from "lucide-react"
 import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
-import { HEURES, JOURS } from "@/lib/timetable/semaine"
 import { versJourAnglais } from "@/lib/timetable/week-overlap"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Legende } from "./week-grid/Legende"
 import { SemaineGrille } from "./week-grid/SemaineGrille"
 import { SemaineListe } from "./week-grid/SemaineListe"
 import type { EtatCase } from "./week-grid/etats"
-import { etatDe } from "./week-grid/etats"
 import type { PlageChoisie } from "./week-grid/use-selection-glissee"
 
 interface TeacherWeekPanelProps {
@@ -56,7 +54,10 @@ interface TeacherWeekPanelProps {
 /** Les états réellement présents — la légende ne nomme rien d'autre. */
 function etatsPresents(week: TeacherWeek): Set<EtatCase> {
   const vus = new Set<EtatCase>()
-  for (const jour of JOURS) for (const heure of HEURES) vus.add(etatDe(week, jour, heure))
+  if (week.busy.some((b) => b.kind === "course")) vus.add("cours")
+  if (week.busy.some((b) => b.kind === "unavailable")) vus.add("ferme")
+  if (week.open.length > 0) vus.add("ouvert")
+  vus.add(week.has_declarations ? "hors" : "libre")
   return vus
 }
 

@@ -13,15 +13,8 @@
  */
 
 import type { CSSProperties } from "react"
-import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
-import { couvre } from "@/lib/timetable/semaine"
 
 export type EtatCase = "libre" | "cours" | "ferme" | "ouvert" | "hors"
-
-/** Les états qu'on ne peut pas recouvrir d'un cours. */
-export function estBloquant(etat: EtatCase): boolean {
-  return etat === "cours" || etat === "ferme" || etat === "hors"
-}
 
 export const LIBELLES: Record<EtatCase, string> = {
   libre: "libre",
@@ -79,40 +72,3 @@ export function styleDe(etat: EtatCase): { className: string; style?: CSSPropert
   }
 }
 
-export function etatDe(week: TeacherWeek, jour: DayOfWeek, heure: number): EtatCase {
-  if (
-    week.busy.some(
-      (b) => b.day === jour && b.kind === "course" && couvre(b.start_time, b.end_time, heure),
-    )
-  )
-    return "cours"
-  if (
-    week.busy.some(
-      (b) => b.day === jour && b.kind === "unavailable" && couvre(b.start_time, b.end_time, heure),
-    )
-  )
-    return "ferme"
-  if (week.open.some((o) => o.day === jour && couvre(o.start_time, o.end_time, heure)))
-    return "ouvert"
-  return week.has_declarations ? "hors" : "libre"
-}
-
-/** Le cours qui occupe cette heure, s'il y en a un — pour l'étiqueter. */
-export function coursDe(week: TeacherWeek, jour: DayOfWeek, heure: number) {
-  return week.busy.find(
-    (b) => b.day === jour && b.kind === "course" && couvre(b.start_time, b.end_time, heure),
-  )
-}
-
-/**
- * Cette heure est-elle la **première** du cours qui l'occupe ?
- *
- * Un cours de deux heures ne doit porter son étiquette qu'une fois : répétée,
- * elle se lit comme deux cours.
- */
-export function debuteIci(debut: string, heure: number): boolean {
-  const d = /^(\d{1,2}):(\d{2})$/.exec(debut)
-  if (!d) return false
-  const minutes = Number(d[1]) * 60 + Number(d[2])
-  return minutes >= heure * 60 && minutes < (heure + 1) * 60
-}

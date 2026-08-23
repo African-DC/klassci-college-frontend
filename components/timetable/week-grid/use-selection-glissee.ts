@@ -3,39 +3,48 @@
 /**
  * Choisir l'heure d'un cours en la traçant sur la semaine.
  *
- * Avant, on lisait la grille puis on traduisait ce qu'on y avait vu dans trois
- * listes déroulantes. Le geste naturel — poser le doigt sur 8 h et descendre
- * jusqu'à 10 h — n'existait pas. C'est pourtant ainsi qu'on remplit un emploi
+ * Le geste naturel — poser le doigt sur 8 h et descendre jusqu'à 10 h —
+ * n'existait pas : on lisait la grille, puis on traduisait ce qu'on y avait vu
+ * dans trois listes déroulantes. C'est pourtant ainsi qu'on remplit un emploi
  * du temps sur papier depuis toujours.
  *
- * Trois décisions portent l'ergonomie :
+ * Quatre décisions portent l'ergonomie :
  *
- * - **La sélection bute sur les empêchements.** Traverser un cours déjà posé
- *   s'arrête à son bord. On apprend la contrainte par le geste, sans avoir lu
- *   la légende ni essuyé un refus après validation. Le geste marche dans les
- *   deux sens : on peut remonter.
- * - **On lit l'heure dans la hauteur, pas dans une case.** La colonne du jour
- *   est une seule surface : l'heure se déduit de la position verticale du
- *   pointeur. Le doigt et la souris suivent donc exactement le même chemin,
- *   sans dépendre du survol, qui n'existe pas au toucher.
+ * - **Tout se compte en minutes.** Un cours qui finit à 9 h 30 ne ferme pas
+ *   l'heure de 9 h : il ferme jusqu'à 9 h 30, et on peut poser à 9 h 30. Le
+ *   serveur a toujours compté ainsi ; la grille le fait enfin aussi.
+ * - **Le trait est borné à l'espace libre où il commence.** Traverser un cours
+ *   déjà posé est impossible, non par une garde ajoutée, mais parce qu'on ne
+ *   peut pas sortir de l'intervalle où l'on est. La butée est une conséquence
+ *   du modèle, pas une boucle qui teste heure par heure.
+ * - **On lit l'instant dans la hauteur.** La colonne du jour est une seule
+ *   surface : le doigt et la souris suivent le même chemin, sans dépendre du
+ *   survol, qui n'existe pas au toucher.
  * - **Un geste confisqué n'écrit rien.** `pointercancel` veut dire que le
- *   navigateur a repris la main, pas que l'utilisateur a choisi. Le confondre
- *   avec `pointerup` ferait écrire une plage que personne n'a voulue.
+ *   navigateur a repris la main, pas que l'utilisateur a choisi.
  */
 
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import type { DayOfWeek } from "@/lib/contracts/timetable"
-import { HEURE_DEBUT, HEURE_FIN, PX_PAR_HEURE, versHHMM } from "@/lib/timetable/semaine"
+import { type Intervalle, creneauLibreAutour } from "@/lib/timetable/occupation"
+import { HEURE_DEBUT, HEURE_FIN, PX_PAR_HEURE } from "@/lib/timetable/semaine"
+
+/** Le pas de saisie : un quart d'heure couvre les 8 h 30 et les 9 h 15. */
+export const PAS_MINUTES = 15
+
+/** Durée posée d'un simple clic, quand rien n'a été traîné. */
+const DUREE_PAR_DEFAUT = 60
 
 export interface PlageChoisie {
   jour: DayOfWeek
-  /** « HH:MM », l'unité du domaine — pas des heures pleines qui perdraient les demies. */
+  /** « HH:MM », l'unité du domaine. */
   debut: string
   fin: string
 }
 
 interface Options {
-  estBloquee: (jour: DayOfWeek, heure: number) => boolean
+  /** Ce qui bloque ce jour-là, en minutes. */
+  occupationsDe: (jour: DayOfWeek) => Intervalle[]
   onCommit: (plage: PlageChoisie) => void
 }
 
@@ -43,40 +52,48 @@ interface Trace {
   jour: DayOfWeek
   ancre: number
   tete: number
+  libre: Intervalle
 }
 
-/** L'heure pleine sous le pointeur, d'après sa hauteur dans la colonne. */
-export function heureSousLePointeur(y: number, hautColonne: number): number {
-  const brute = HEURE_DEBUT + Math.floor((y - hautColonne) / PX_PAR_HEURE)
-  return Math.min(HEURE_FIN - 1, Math.max(HEURE_DEBUT, brute))
+export function versHHMM(minutes: number): string {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`
 }
 
-export function useSelectionGlissee({ estBloquee, onCommit }: Options) {
+/** L'instant sous le pointeur, d'après sa hauteur dans la colonne. */
+export function minuteSousLePointeur(y: number, hautColonne: number): number {
+  const brute = HEURE_DEBUT * 60 + ((y - hautColonne) / PX_PAR_HEURE) * 60
+  return Math.min(HEURE_FIN * 60, Math.max(HEURE_DEBUT * 60, brute))
+}
+
+const plancher = (m: number) => Math.floor(m / PAS_MINUTES) * PAS_MINUTES
+const plafond = (m: number) => Math.ceil(m / PAS_MINUTES) * PAS_MINUTES
+const borner = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
+
+function plageDe(t: Trace): PlageChoisie {
+  const debut = Math.min(t.ancre, t.tete)
+  const fin = Math.max(t.ancre, t.tete)
+  // Un clic sans traînée pose une heure, ou ce qui reste de libre si c'est moins.
+  const etendue = fin > debut ? fin : Math.min(debut + DUREE_PAR_DEFAUT, t.libre.fin)
+  return { jour: t.jour, debut: versHHMM(debut), fin: versHHMM(etendue) }
+}
+
+export function useSelectionGlissee({ occupationsDe, onCommit }: Options) {
   const [trace, setTrace] = useState<Trace | null>(null)
 
-  /** Jusqu'où on peut aller depuis l'ancre sans traverser un empêchement. */
-  const borner = useCallback(
-    (jour: DayOfWeek, depart: number, vise: number): number => {
-      const pas = vise >= depart ? 1 : -1
-      let dernier = depart
-      for (let h = depart + pas; pas > 0 ? h <= vise : h >= vise; h += pas) {
-        if (estBloquee(jour, h)) break
-        dernier = h
-      }
-      return dernier
-    },
-    [estBloquee],
-  )
-
-  const commencer = (jour: DayOfWeek, heure: number) => {
-    if (estBloquee(jour, heure)) return
-    setTrace({ jour, ancre: heure, tete: heure })
+  const commencer = (jour: DayOfWeek, minute: number) => {
+    const libre = creneauLibreAutour(occupationsDe(jour), minute)
+    if (!libre) return
+    const ancre = borner(plancher(minute), libre.debut, libre.fin - PAS_MINUTES)
+    setTrace({ jour, ancre, tete: ancre, libre })
   }
 
-  const deplacer = (heure: number) => {
+  const deplacer = (minute: number) => {
     setTrace((t) => {
       if (!t) return t
-      const tete = borner(t.jour, t.ancre, heure)
+      const vise = minute >= t.ancre ? plafond(minute) : plancher(minute)
+      const tete = borner(vise, t.libre.debut, t.libre.fin)
       return tete === t.tete ? t : { ...t, tete }
     })
   }
@@ -86,11 +103,7 @@ export function useSelectionGlissee({ estBloquee, onCommit }: Options) {
     const abandonner = () => setTrace(null)
     const finir = () => {
       setTrace(null)
-      onCommit({
-        jour: trace.jour,
-        debut: versHHMM(Math.min(trace.ancre, trace.tete)),
-        fin: versHHMM(Math.max(trace.ancre, trace.tete) + 1),
-      })
+      onCommit(plageDe(trace))
     }
     const auClavier = (e: KeyboardEvent) => {
       if (e.key === "Escape") abandonner()
@@ -105,13 +118,10 @@ export function useSelectionGlissee({ estBloquee, onCommit }: Options) {
     }
   }, [trace, onCommit])
 
-  const enCours: PlageChoisie | null = trace
-    ? {
-        jour: trace.jour,
-        debut: versHHMM(Math.min(trace.ancre, trace.tete)),
-        fin: versHHMM(Math.max(trace.ancre, trace.tete) + 1),
-      }
-    : null
-
-  return { enCours, commencer, deplacer, glisse: trace !== null }
+  return {
+    enCours: trace ? plageDe(trace) : null,
+    commencer,
+    deplacer,
+    glisse: trace !== null,
+  }
 }

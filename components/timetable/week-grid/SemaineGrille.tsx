@@ -16,7 +16,7 @@
 
 import { useRef } from "react"
 import { cn } from "@/lib/utils"
-import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
+import type { TeacherWeek } from "@/lib/contracts/timetable"
 import {
   HEURES,
   HEURE_DEBUT,
@@ -27,8 +27,13 @@ import {
   enMinutes,
   minutesEnPx,
 } from "@/lib/timetable/semaine"
-import { LIBELLES, estBloquant, etatDe, styleDe } from "./etats"
-import { type PlageChoisie, heureSousLePointeur, useSelectionGlissee } from "./use-selection-glissee"
+import { occupationsDuJour } from "@/lib/timetable/occupation"
+import { LIBELLES, styleDe } from "./etats"
+import {
+  type PlageChoisie,
+  minuteSousLePointeur,
+  useSelectionGlissee,
+} from "./use-selection-glissee"
 
 const HAUTEUR = (HEURE_FIN - HEURE_DEBUT) * PX_PAR_HEURE
 
@@ -52,10 +57,9 @@ function rectangle(debut: string, fin: string): { top: number; height: number } 
 
 export function SemaineGrille({ week, vise, onChoisir }: Props) {
   const colonnes = useRef<HTMLDivElement | null>(null)
-  const bloquee = (jour: DayOfWeek, heure: number) => estBloquant(etatDe(week, jour, heure))
 
   const { enCours, commencer, deplacer, glisse } = useSelectionGlissee({
-    estBloquee: bloquee,
+    occupationsDe: (jour) => occupationsDuJour(week, jour),
     onCommit: (p) => onChoisir?.(p),
   })
 
@@ -65,9 +69,9 @@ export function SemaineGrille({ week, vise, onChoisir }: Props) {
   const styleHors = styleDe("hors")
   const styleOuvert = styleDe("ouvert")
 
-  const heureDe = (clientY: number) => {
+  const minuteDe = (clientY: number) => {
     const haut = colonnes.current?.getBoundingClientRect().top ?? 0
-    return heureSousLePointeur(clientY, haut)
+    return minuteSousLePointeur(clientY, haut)
   }
 
   return (
@@ -102,7 +106,7 @@ export function SemaineGrille({ week, vise, onChoisir }: Props) {
           ref={colonnes}
           className="relative flex flex-1 gap-1"
           style={{ height: HAUTEUR, ...(interactive ? { touchAction: "none" } : {}) }}
-          onPointerMove={interactive && glisse ? (e) => deplacer(heureDe(e.clientY)) : undefined}
+          onPointerMove={interactive && glisse ? (e) => deplacer(minuteDe(e.clientY)) : undefined}
         >
           {/* Les filets d'heures, en fond */}
           {HEURES.map((heure) => (
@@ -135,7 +139,7 @@ export function SemaineGrille({ week, vise, onChoisir }: Props) {
                     ? (e) => {
                         e.preventDefault()
                         e.currentTarget.setPointerCapture(e.pointerId)
-                        commencer(jour, heureDe(e.clientY))
+                        commencer(jour, minuteDe(e.clientY))
                       }
                     : undefined
                 }
