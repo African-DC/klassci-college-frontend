@@ -2,12 +2,14 @@
 
 import { useState, useMemo, useCallback } from "react"
 import {
-  Plus, CheckCircle, XCircle, Download, Wallet, TrendingUp,
+  Plus, Download, Wallet, TrendingUp,
   AlertCircle, Banknote, CreditCard, Search, X, Eye,
   Receipt, CalendarDays, Coins, Smartphone, Building2, FileText,
   FileSpreadsheet, Loader2, UserCheck,
 } from "lucide-react"
 import { toast } from "sonner"
+import { PaymentRowActions } from "@/components/admin/payments/PaymentRowActions"
+import { PaymentCardActions } from "@/components/admin/payments/PaymentCardActions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -572,41 +574,16 @@ export function PaymentsPageClient() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div
-                          className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity"
+                          className="opacity-60 transition-opacity group-hover:opacity-100"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {payment.status === "pending" && (
-                            <>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                                onClick={() => setConfirmAction({ type: "validate", payment })}
-                                title="Valider"
-                              >
-                                <CheckCircle className="h-4 w-4 text-emerald-600" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                                onClick={() => setConfirmAction({ type: "cancel", payment })}
-                                title="Annuler"
-                              >
-                                <XCircle className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </>
-                          )}
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={() => handlePreviewReceipt(payment)}
-                            disabled={downloadingId === payment.id}
-                            title="Voir le reçu"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <PaymentRowActions
+                            payment={payment}
+                            onValidate={(p) => setConfirmAction({ type: "validate", payment: p })}
+                            onCancel={(p) => setConfirmAction({ type: "cancel", payment: p })}
+                            onPreviewReceipt={handlePreviewReceipt}
+                            previewBusy={downloadingId === payment.id}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -625,57 +602,66 @@ export function PaymentsPageClient() {
                   ? payment.student_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
                   : "?"
                 return (
-                  <button
+                  <div
                     key={payment.id}
-                    type="button"
-                    onClick={() => handlePreviewReceipt(payment)}
-                    className="w-full rounded-lg border bg-card p-3 text-left transition-colors hover:bg-accent/40 active:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="overflow-hidden rounded-lg border bg-card"
                   >
-                    <div className="flex items-start gap-3">
-                      <StudentAvatar photoUrl={payment.student_photo_url} initials={initials} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="truncate text-sm font-medium leading-tight">
-                            {payment.student_name ?? `Paiement #${payment.id}`}
+                    <button
+                      type="button"
+                      onClick={() => handlePreviewReceipt(payment)}
+                      className="w-full p-3 text-left transition-colors hover:bg-accent/40 active:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    >
+                      <div className="flex items-start gap-3">
+                        <StudentAvatar photoUrl={payment.student_photo_url} initials={initials} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="truncate text-sm font-medium leading-tight">
+                              {payment.student_name ?? `Paiement #${payment.id}`}
+                            </p>
+                            <p className="shrink-0 text-base font-semibold tabular-nums leading-tight">
+                              {Number(payment.amount).toLocaleString("fr-FR")}
+                              <span className="ml-0.5 text-[10px] font-normal text-muted-foreground">FCFA</span>
+                            </p>
+                          </div>
+                          <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <MethodIcon className="h-3 w-3" aria-hidden="true" />
+                              {paymentMethodLabel(payment.method)}
+                            </span>
+                            <span className="tabular-nums">
+                              {new Date(payment.created_at).toLocaleDateString("fr-FR", {
+                                day: "2-digit",
+                                month: "short",
+                              })}
+                            </span>
+                            <span className="ml-auto inline-flex items-center gap-1">
+                              <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} aria-hidden="true" />
+                              <span className="font-medium">{statusCfg.label}</span>
+                            </span>
+                          </div>
+                          <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
+                            <UserCheck className="h-3 w-3 shrink-0" aria-hidden="true" />
+                            Encaissé par {payment.received_by_name ?? "—"}
                           </p>
-                          <p className="shrink-0 text-base font-semibold tabular-nums leading-tight">
-                            {Number(payment.amount).toLocaleString("fr-FR")}
-                            <span className="ml-0.5 text-[10px] font-normal text-muted-foreground">FCFA</span>
-                          </p>
+                          {payment.fee_name && (
+                            <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                              {payment.fee_name}
+                            </p>
+                          )}
+                          {payment.cancellation_reason && (
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                              {motifComplet(payment)}
+                            </p>
+                          )}
                         </div>
-                        <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <MethodIcon className="h-3 w-3" aria-hidden="true" />
-                            {paymentMethodLabel(payment.method)}
-                          </span>
-                          <span className="tabular-nums">
-                            {new Date(payment.created_at).toLocaleDateString("fr-FR", {
-                              day: "2-digit",
-                              month: "short",
-                            })}
-                          </span>
-                          <span className="ml-auto inline-flex items-center gap-1">
-                            <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} aria-hidden="true" />
-                            <span className="font-medium">{statusCfg.label}</span>
-                          </span>
-                        </div>
-                        <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
-                          <UserCheck className="h-3 w-3 shrink-0" aria-hidden="true" />
-                          Encaissé par {payment.received_by_name ?? "—"}
-                        </p>
-                        {payment.fee_name && (
-                          <p className="mt-1 truncate text-[11px] text-muted-foreground">
-                            {payment.fee_name}
-                          </p>
-                        )}
-                        {payment.cancellation_reason && (
-                          <p className="mt-1 text-[11px] text-muted-foreground">
-                            {motifComplet(payment)}
-                          </p>
-                        )}
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                    <PaymentCardActions
+                      payment={payment}
+                      onValidate={(p) => setConfirmAction({ type: "validate", payment: p })}
+                      onCancel={(p) => setConfirmAction({ type: "cancel", payment: p })}
+                    />
+                  </div>
                 )
               })}
             </div>
