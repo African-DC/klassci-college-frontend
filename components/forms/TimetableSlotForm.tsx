@@ -226,7 +226,7 @@ export function TimetableSlotForm({
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="min-w-0 space-y-4">
           <div className="min-w-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-start lg:gap-6">
             <div className="min-w-0 space-y-4">
               {/* Subject select — filtered by class level */}
