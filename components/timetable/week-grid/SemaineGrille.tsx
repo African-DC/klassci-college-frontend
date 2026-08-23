@@ -11,9 +11,9 @@
  * que le texte sous la grille dit explicitement.
  */
 
-import { useRef } from "react"
+import { useMemo, useRef } from "react"
 import type { TeacherWeek } from "@/lib/contracts/timetable"
-import { type Intervalle, occupationsDuJour } from "@/lib/timetable/occupation"
+import { type Intervalle, occupationsDuJour, versIntervalle } from "@/lib/timetable/occupation"
 import {
   HEURES,
   HEURE_DEBUT,
@@ -21,7 +21,6 @@ import {
   JOURS,
   JOURS_COURTS,
   PX_PAR_HEURE,
-  enMinutes,
   minutesEnPx,
 } from "@/lib/timetable/semaine"
 import { ColonneDuJour } from "./ColonneDuJour"
@@ -41,18 +40,32 @@ interface Props {
   onChoisir?: (plage: PlageChoisie) => void
 }
 
-function versIntervalle(debut: string, fin: string): Intervalle | null {
-  const d = enMinutes(debut)
-  const f = enMinutes(fin)
-  return d === null || f === null || f <= d ? null : { debut: d, fin: f }
-}
 
 export function SemaineGrille({ week, vise, onChoisir }: Props) {
   const cadre = useRef<HTMLDivElement | null>(null)
   const interactive = Boolean(onChoisir)
 
+  // Chaque deplacement du pointeur est un setState : sans ce memo, la semaine
+  // entiere se recalculerait a chaque image du glisse.
+  const parJour = useMemo(
+    () =>
+      new Map(
+        JOURS.map((jour) => [
+          jour,
+          {
+            occupations: occupationsDuJour(week, jour),
+            ouvertures: week.open
+              .filter((o) => o.day === jour)
+              .map((o) => versIntervalle(o.start_time, o.end_time))
+              .filter((i): i is Intervalle => i !== null),
+          },
+        ]),
+      ),
+    [week],
+  )
+
   const { enCours, commencer, deplacer, relacher, abandonner } = useSelectionGlissee({
-    occupationsDe: (jour) => occupationsDuJour(week, jour),
+    occupationsDe: (jour) => parJour.get(jour)?.occupations ?? [],
     onCommit: (p) => onChoisir?.(p),
   })
 
@@ -107,11 +120,8 @@ export function SemaineGrille({ week, vise, onChoisir }: Props) {
               key={jour}
               jour={jour}
               hauteur={HAUTEUR}
-              occupations={occupationsDuJour(week, jour)}
-              ouvertures={week.open
-                .filter((o) => o.day === jour)
-                .map((o) => versIntervalle(o.start_time, o.end_time))
-                .filter((i): i is Intervalle => i !== null)}
+              occupations={parJour.get(jour)?.occupations ?? []}
+              ouvertures={parJour.get(jour)?.ouvertures ?? []}
               selection={montree?.jour === jour ? selection : null}
               gestes={
                 interactive

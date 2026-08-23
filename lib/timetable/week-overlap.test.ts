@@ -6,7 +6,6 @@
 import { describe, expect, it } from "vitest"
 import type { TeacherWeek } from "@/lib/contracts/timetable"
 import { trouverEmpechement } from "./week-overlap"
-import { enMinutes, seChevauchent } from "./semaine"
 
 function semaine(partiel: Partial<TeacherWeek> = {}): TeacherWeek {
   return {
@@ -18,20 +17,6 @@ function semaine(partiel: Partial<TeacherWeek> = {}): TeacherWeek {
     ...partiel,
   }
 }
-
-describe("seChevauchent", () => {
-  it("voit un chevauchement partiel", () => {
-    expect(seChevauchent(9 * 60, 11 * 60, 10 * 60, 12 * 60)).toBe(true)
-  })
-
-  it("laisse passer deux cours bout à bout", () => {
-    expect(seChevauchent(8 * 60, 10 * 60, 10 * 60, 11 * 60)).toBe(false)
-  })
-
-  it("ne se prononce pas sur une heure mal formée", () => {
-    expect(enMinutes("8h")).toBeNull()
-  })
-})
 
 describe("trouverEmpechement", () => {
   it("ne bloque rien tant que la saisie est incomplète", () => {
@@ -124,5 +109,25 @@ describe("trouverEmpechement", () => {
     })
 
     expect(trouverEmpechement(s, "monday", "09:00", "10:00")?.kind).toBe("course")
+  })
+})
+
+describe("des disponibilités déclarées heure par heure", () => {
+  it("laissent passer un cours de deux heures", () => {
+    // La forme que l'écran de saisie produit réellement : une ligne par heure.
+    const semaine: TeacherWeek = {
+      teacher_id: 1,
+      teacher_name: "Jean Kouassi",
+      has_declarations: true,
+      busy: [],
+      open: [8, 9, 10, 11].map((h) => ({
+        day: "monday" as const,
+        start_time: `${String(h).padStart(2, "0")}:00`,
+        end_time: `${String(h + 1).padStart(2, "0")}:00`,
+        preferred: false,
+      })),
+    }
+    expect(trouverEmpechement(semaine, "lundi", "08:00", "10:00")).toBeNull()
+    expect(trouverEmpechement(semaine, "lundi", "12:00", "13:00")?.kind).toBe("not_open")
   })
 })

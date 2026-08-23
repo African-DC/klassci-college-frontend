@@ -11,14 +11,17 @@
  * de rupture décider.
  *
  * Il ne traduit rien : la plage visée arrive en « HH:MM » et repart telle
- * quelle vers la grille, qui la teste avec le même recouvrement que tous les
- * autres états. Arrondir à l'heure ferait disparaître les créneaux d'une
- * demi-heure, qui sont exactement ceux qu'on vient combler.
+ * quelle vers la grille.
+ *
+ * Aucun bouton « Actualiser » : la requête se relit d'elle-même au retour sur
+ * l'onglet, ce qui est exactement le cas qu'un tel bouton servirait. En avoir
+ * deux faisait tourner l'icône pendant la relecture automatique, sans que
+ * personne ait cliqué.
  */
 
 import Link from "next/link"
 import type { Route } from "next"
-import { Info, RefreshCw, SquarePen } from "lucide-react"
+import { Info, SquarePen } from "lucide-react"
 import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
 import { versJourAnglais } from "@/lib/timetable/week-overlap"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -46,9 +49,6 @@ interface TeacherWeekPanelProps {
   editHref?: string
   /** Rendu du panneau interactif : tracer une plage la renvoie au formulaire. */
   onChoisir?: (plage: PlageChoisie) => void
-  /** Relecture manuelle, quand les plages ont bougé dans un autre onglet. */
-  onRefresh?: () => void
-  isRefreshing?: boolean
 }
 
 /** Les états réellement présents — la légende ne nomme rien d'autre. */
@@ -70,8 +70,6 @@ export function TeacherWeekPanel({
   title,
   editHref,
   onChoisir,
-  onRefresh,
-  isRefreshing,
 }: TeacherWeekPanelProps) {
   if (isLoading) {
     return (
@@ -95,20 +93,6 @@ export function TeacherWeekPanel({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold">{title ?? `Semaine de ${week.teacher_name}`}</p>
         <div className="flex items-center gap-1">
-          {onRefresh && (
-            <button
-              type="button"
-              onClick={onRefresh}
-              className="inline-flex h-11 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-8"
-              title="Relire ses disponibilités"
-            >
-              <RefreshCw
-                className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin motion-reduce:animate-none" : ""}`}
-                aria-hidden
-              />
-              Actualiser
-            </button>
-          )}
           {editHref && (
             <Link
               href={editHref as Route}

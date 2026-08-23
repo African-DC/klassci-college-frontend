@@ -16,6 +16,9 @@
 import { AlertTriangle } from "lucide-react"
 import type { UseFormReturn } from "react-hook-form"
 import type { TimetableSlotCreate } from "@/lib/contracts/timetable"
+import { JOURS, JOURS_NOMS } from "@/lib/timetable/semaine"
+
+const DAYS = JOURS.map((j) => ({ value: JOURS_NOMS[j].fr, label: JOURS_NOMS[j].long }))
 import type { Empechement } from "@/lib/timetable/week-overlap"
 import { Input } from "@/components/ui/input"
 import {
@@ -33,14 +36,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 
-const DAYS = [
-  { value: "lundi", label: "Lundi" },
-  { value: "mardi", label: "Mardi" },
-  { value: "mercredi", label: "Mercredi" },
-  { value: "jeudi", label: "Jeudi" },
-  { value: "vendredi", label: "Vendredi" },
-  { value: "samedi", label: "Samedi" },
-] as const
 
 interface Props {
   form: UseFormReturn<TimetableSlotCreate>

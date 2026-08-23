@@ -6,22 +6,14 @@
  */
 
 import type { DayOfWeek, TeacherAvailability } from "@/lib/contracts/timetable"
-import { HEURES, JOURS, JOURS_COURTS } from "@/lib/timetable/semaine"
-import { JOURS_FR } from "@/lib/timetable/week-overlap"
+import { HEURES, JOURS, JOURS_COURTS, JOURS_NOMS } from "@/lib/timetable/semaine"
+import { styleDe } from "@/components/timetable/week-grid/etats"
 
-const JOURS_FR_LONG: Record<keyof typeof JOURS_FR, string> = {
-  monday: "Lundi",
-  tuesday: "Mardi",
-  wednesday: "Mercredi",
-  thursday: "Jeudi",
-  friday: "Vendredi",
-  saturday: "Samedi",
-}
 
 /** Les jours, depuis la source unique — plus une table de plus. */
 export const DAYS: { key: DayOfWeek; label: string; court: string }[] = JOURS.map((key) => ({
   key,
-  label: JOURS_FR_LONG[key],
+  label: JOURS_NOMS[key].long,
   court: JOURS_COURTS[key],
 }))
 
@@ -42,10 +34,12 @@ export const NEXT_STATE: Record<CellState, CellState> = {
   preferred: "unavailable",
 }
 
+/** Les couleurs viennent d'`etats.ts`, comme celles de la semaine enseignant.
+ *  Deux tables, c'est deux ecrans qui finissent par dire le rose differemment. */
 export const STATE_STYLES: Record<CellState, string> = {
-  unavailable: "bg-rose-500/15 text-rose-600 ring-1 ring-rose-300/40",
-  available: "bg-emerald-500/20 text-emerald-700 ring-1 ring-emerald-500/30",
-  preferred: "bg-primary/15 text-primary ring-1 ring-primary/30",
+  unavailable: styleDe("ferme").className,
+  available: styleDe("ouvert").className,
+  preferred: styleDe("prefere").className,
 }
 
 export const STATE_LABELS: Record<CellState, string> = {
@@ -63,7 +57,7 @@ export const STATE_LABELS: Record<CellState, string> = {
  * regle passe en liste blanche — cote backend comme pour la generation
  * automatique — et le reste est bel et bien ferme.
  */
-export const UNDECLARED_STYLE = "bg-muted/50 ring-1 ring-inset ring-border/60"
+export const UNDECLARED_STYLE = styleDe("libre").className
 
 export interface SavedCell {
   id: number

@@ -33,13 +33,23 @@ export type Motif = "course" | "closed" | "not_open"
 export interface Occupation extends Intervalle {
   motif: Motif
   /** L'intitulé du cours, quand c'en est un. */
-  label?: string
-  class_name?: string | null
+  label: string
+  class_name: string | null
 }
 
+/** La fenêtre **dessinée**. Elle borne l'affichage, jamais la règle. */
 export const JOURNEE: Intervalle = { debut: HEURE_DEBUT * 60, fin: HEURE_FIN * 60 }
 
-function versIntervalle(debut: string, fin: string): Intervalle | null {
+/**
+ * La journée entière, qui borne la règle.
+ *
+ * Borner la règle à 7 h – 18 h la rendait muette en dehors : l'avertissement
+ * laissait passer un cours à 6 h que le serveur refusait. Une fenêtre de dessin
+ * n'a pas à décider de ce qui est permis.
+ */
+const JOUR_ENTIER: Intervalle = { debut: 0, fin: 24 * 60 }
+
+export function versIntervalle(debut: string, fin: string): Intervalle | null {
   const d = enMinutes(debut)
   const f = enMinutes(fin)
   return d === null || f === null || f <= d ? null : { debut: d, fin: f }
@@ -94,7 +104,7 @@ export function occupationsDuJour(week: TeacherWeek, jour: DayOfWeek): Occupatio
       ...i,
       motif: b.kind === "course" ? "course" : "closed",
       label: b.label,
-      class_name: b.class_name,
+      class_name: b.class_name ?? null,
     })
   }
 
@@ -103,8 +113,8 @@ export function occupationsDuJour(week: TeacherWeek, jour: DayOfWeek): Occupatio
       .filter((o) => o.day === jour)
       .map((o) => versIntervalle(o.start_time, o.end_time))
       .filter((i): i is Intervalle => i !== null)
-    for (const ferme of complement(ouvertures, JOURNEE)) {
-      sortie.push({ ...ferme, motif: "not_open" })
+    for (const ferme of complement(ouvertures, JOUR_ENTIER)) {
+      sortie.push({ ...ferme, motif: "not_open", label: "Hors des plages déclarées", class_name: null })
     }
   }
 
@@ -122,17 +132,38 @@ export function creneauLibreAutour(
   occupations: Intervalle[],
   minute: number,
 ): Intervalle | null {
-  for (const libre of complement(occupations, JOURNEE)) {
+  for (const libre of complement(occupations, JOUR_ENTIER)) {
     if (minute >= libre.debut && minute < libre.fin) return libre
   }
   return null
 }
 
-/** La première occupation que croise [debut, fin[, ou `null` si la voie est libre. */
+/** Un cours prime sur une fermeture, qui prime sur le hors-plage. */
+const PRIORITE: Record<Motif, number> = { course: 0, closed: 1, not_open: 2 }
+
+/**
+ * L'occupation qui bloque [debut, fin[, ou `null` si la voie est libre.
+ *
+ * Choisie par gravité et non par ordre d'horaire : le serveur regarde d'abord
+ * les cours, puis les fermetures, puis le hors-plage. Prendre la première dans
+ * le temps faisait nommer « hors des plages déclarées » là où le serveur disait
+ * « indisponible » — et l'écran conseillait alors d'ouvrir une plage qui ne
+ * débloquait rien.
+ */
 export function premierEmpechement(
   occupations: Occupation[],
   debut: number,
   fin: number,
 ): Occupation | null {
-  return occupations.find((o) => o.debut < fin && o.fin > debut) ?? null
+  const croisees = occupations.filter((o) => o.debut < fin && o.fin > debut)
+  if (croisees.length === 0) return null
+  return croisees.reduce((a, b) =>
+    PRIORITE[a.motif] !== PRIORITE[b.motif]
+      ? PRIORITE[a.motif] < PRIORITE[b.motif]
+        ? a
+        : b
+      : a.debut <= b.debut
+        ? a
+        : b,
+  )
 }

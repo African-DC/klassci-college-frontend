@@ -15,7 +15,8 @@ import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { ChampsDuCreneau } from "@/components/forms/timetable-slot/ChampsDuCreneau"
 import { TeacherWeekPanel } from "@/components/timetable/TeacherWeekPanel"
 import type { PlageChoisie } from "@/components/timetable/week-grid/use-selection-glissee"
-import { JOURS_FR, trouverEmpechement } from "@/lib/timetable/week-overlap"
+import { trouverEmpechement } from "@/lib/timetable/week-overlap"
+import { JOURS_FR } from "@/lib/timetable/semaine"
 import {
   InlineCreateSubjectDialog,
   InlineCreateTeacherDialog,
@@ -136,12 +137,7 @@ export function TimetableSlotForm({
   const watchedDay = form.watch("day")
   const watchedStart = form.watch("start_time")
   const watchedEnd = form.watch("end_time")
-  const {
-    data: teacherWeek,
-    isLoading: weekLoading,
-    isFetching: weekFetching,
-    refetch: relireLaSemaine,
-  } = useTeacherWeek(selectedTeacherId)
+  const { data: teacherWeek, isLoading: weekLoading } = useTeacherWeek(selectedTeacherId)
 
   // En modification, le creneau qu'on deplace figure dans sa propre semaine :
   // sans cela, il se signalerait lui-meme comme conflit.
@@ -366,8 +362,6 @@ export function TimetableSlotForm({
                   highlightEnd={watchedEnd}
                   editHref={`/admin/teachers/${selectedTeacherId}?tab=disponibilites`}
                   onChoisir={choisirSurLaGrille}
-                  onRefresh={() => void relireLaSemaine()}
-                  isRefreshing={weekFetching}
                 />
               ) : (
                 <div className="hidden rounded-xl border border-dashed bg-muted/20 p-6 text-center lg:block">

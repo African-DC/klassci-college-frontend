@@ -25,7 +25,7 @@ import {
   complement,
 } from "@/lib/timetable/occupation"
 import { JOURS_COURTS, minutesEnPx, versHHMM } from "@/lib/timetable/semaine"
-import { styleDe } from "./etats"
+import { ETAT_DE_MOTIF, LIBELLES, styleDe } from "./etats"
 
 interface Props {
   jour: DayOfWeek
@@ -55,10 +55,11 @@ function resume(occupations: Occupation[], libres: Intervalle[]): string {
   if (occupations.length === 0) return "libre toute la journée"
   const dits = occupations.map((o) => {
     const de = `de ${versHHMM(o.debut)} à ${versHHMM(o.fin)}`
-    if (o.motif === "course")
-      return `${o.label ?? "cours"}${o.class_name ? ` avec la ${o.class_name}` : ""} ${de}`
-    if (o.motif === "closed") return `indisponible ${de}`
-    return `hors des plages déclarées ${de}`
+    const quoi =
+      o.motif === "course"
+        ? `${o.label}${o.class_name ? ` avec la ${o.class_name}` : ""}`
+        : LIBELLES[ETAT_DE_MOTIF[o.motif]]
+    return `${quoi} ${de}`
   })
   const restant = libres.map((l) => `libre de ${versHHMM(l.debut)} à ${versHHMM(l.fin)}`)
   return [...dits, ...restant].join(", ")
@@ -79,7 +80,7 @@ export function ColonneDuJour({
     <div
       role="img"
       aria-label={`${JOURS_COURTS[jour]} : ${resume(occupations, libres)}`}
-      className={cn("relative flex-1 rounded-md bg-muted/25", gestes && "cursor-pointer")}
+      className={cn("relative flex-1 rounded-md", styleDe("libre").className, gestes && "cursor-pointer")}
       {...gestes}
     >
       {ouvertures.map((o) => {
@@ -97,13 +98,12 @@ export function ColonneDuJour({
       {occupations.map((o) => {
         const r = rectangle(o, hauteur)
         if (!r) return null
-        const style = styleDe(o.motif === "course" ? "cours" : o.motif === "closed" ? "ferme" : "hors")
-        const titre =
+        const style = styleDe(ETAT_DE_MOTIF[o.motif])
+        const quoi =
           o.motif === "course"
-            ? `${o.label}${o.class_name ? ` · ${o.class_name}` : ""} de ${versHHMM(o.debut)} à ${versHHMM(o.fin)}`
-            : o.motif === "closed"
-              ? `Indisponible de ${versHHMM(o.debut)} à ${versHHMM(o.fin)}`
-              : `Hors des plages déclarées de ${versHHMM(o.debut)} à ${versHHMM(o.fin)}`
+            ? `${o.label}${o.class_name ? ` · ${o.class_name}` : ""}`
+            : LIBELLES[ETAT_DE_MOTIF[o.motif]]
+        const titre = `${quoi} de ${versHHMM(o.debut)} à ${versHHMM(o.fin)}`
 
         return (
           <div
@@ -137,7 +137,10 @@ export function ColonneDuJour({
           const r = rectangle(selection, hauteur)
           return r ? (
             <div
-              className="pointer-events-none absolute inset-x-0 z-10 flex items-center justify-center rounded bg-orange-500 text-[10px] font-semibold text-white shadow-md ring-2 ring-inset ring-orange-600/50"
+              className={cn(
+                "pointer-events-none absolute inset-x-0 z-10 flex items-center justify-center rounded text-[10px]",
+                styleDe("choisi").className,
+              )}
               style={{ top: r.top + 1, height: r.height - 2 }}
             >
               <span className="tabular-nums">

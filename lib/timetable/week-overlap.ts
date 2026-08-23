@@ -15,7 +15,7 @@
 
 import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
 import { type Occupation, occupationsDuJour, premierEmpechement } from "./occupation"
-import { enMinutes } from "./semaine"
+import { JOURS_FR, enMinutes, versHHMM } from "./semaine"
 
 /** Le formulaire parle français, le serveur anglais. */
 const JOURS_VERS_EN: Record<string, DayOfWeek> = {
@@ -27,25 +27,11 @@ const JOURS_VERS_EN: Record<string, DayOfWeek> = {
   samedi: "saturday",
 }
 
-/**
- * Le nom français de chaque jour, dans le type littéral et pas en `string`.
- *
- * Les formulaires stockent le jour en français et leur schéma n'accepte que
- * ces six valeurs : garder le type littéral évite un cast à chaque traduction.
- */
-export const JOURS_FR = {
-  monday: "lundi",
-  tuesday: "mardi",
-  wednesday: "mercredi",
-  thursday: "jeudi",
-  friday: "vendredi",
-  saturday: "samedi",
-} as const satisfies Record<DayOfWeek, string>
 
 export function versJourAnglais(jour: string | undefined): DayOfWeek | undefined {
   if (!jour) return undefined
-  if (jour in JOURS_VERS_EN) return JOURS_VERS_EN[jour]
-  return jour in JOURS_FR ? (jour as DayOfWeek) : undefined
+  if (Object.hasOwn(JOURS_VERS_EN, jour)) return JOURS_VERS_EN[jour]
+  return Object.hasOwn(JOURS_FR, jour) ? (jour as DayOfWeek) : undefined
 }
 
 export type Empechement = {
@@ -54,22 +40,19 @@ export type Empechement = {
   message: string
 }
 
-function versHHMM(minutes: number): string {
-  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`
-}
 
-function phrase(nom: string, jourFr: string, o: Occupation, debut: string, fin: string): string {
+function phrase(nom: string, jourFr: string, o: Occupation, debut: number, fin: number): string {
   const de = `de ${versHHMM(o.debut)} à ${versHHMM(o.fin)}`
   switch (o.motif) {
     case "course": {
       const classe = o.class_name ? ` avec la ${o.class_name}` : ""
-      return `${nom} a déjà ${o.label ?? "cours"}${classe} le ${jourFr} ${de}.`
+      return `${nom} a déjà ${o.label}${classe} le ${jourFr} ${de}.`
     }
     case "closed":
       return `${nom} est déclaré indisponible le ${jourFr} ${de}.`
     default:
       return (
-        `${nom} n'est pas déclaré disponible le ${jourFr} de ${debut} à ${fin}. ` +
+        `${nom} n'est pas déclaré disponible le ${jourFr} de ${versHHMM(debut)} à ${versHHMM(fin)}. ` +
         "Ouvrez cette plage dans ses disponibilités si le cours doit y tenir."
       )
   }
@@ -98,6 +81,6 @@ export function trouverEmpechement(
 
   return {
     kind: bloquant.motif,
-    message: phrase(semaine.teacher_name, JOURS_FR[jourEn], bloquant, debut!, fin!),
+    message: phrase(semaine.teacher_name, JOURS_FR[jourEn], bloquant, d, f),
   }
 }

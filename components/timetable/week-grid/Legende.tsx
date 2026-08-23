@@ -13,7 +13,7 @@
 import type { EtatCase } from "./etats"
 import { LIBELLES_LEGENDE, styleDe } from "./etats"
 
-const ORDRE: EtatCase[] = ["cours", "ferme", "ouvert", "hors", "libre"]
+const ORDRE: EtatCase[] = ["cours", "ferme", "ouvert", "prefere", "hors", "libre"]
 
 export function Legende({ etats }: { etats: ReadonlySet<EtatCase> }) {
   const presents = ORDRE.filter((e) => etats.has(e))
@@ -34,10 +34,10 @@ export function Legende({ etats }: { etats: ReadonlySet<EtatCase> }) {
       })}
       <li className="flex items-center gap-1.5">
         <span
-          className="h-3 w-3 shrink-0 rounded-[3px] bg-orange-500 ring-1 ring-orange-600/40"
+          className={`h-3 w-3 shrink-0 rounded-[3px] ${styleDe("choisi").className}`}
           aria-hidden
         />
-        Créneau choisi
+        {LIBELLES_LEGENDE.choisi}
       </li>
     </ul>
   )

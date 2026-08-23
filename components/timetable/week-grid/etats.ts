@@ -14,22 +14,33 @@
 
 import type { CSSProperties } from "react"
 
-export type EtatCase = "libre" | "cours" | "ferme" | "ouvert" | "hors"
+export type EtatCase = "libre" | "cours" | "ferme" | "ouvert" | "prefere" | "hors" | "choisi"
 
 export const LIBELLES: Record<EtatCase, string> = {
   libre: "libre",
   cours: "occupé par un autre cours",
   ferme: "indisponible, déclaré",
   ouvert: "disponible, déclaré",
+  prefere: "préféré, déclaré",
   hors: "hors des plages déclarées",
+  choisi: "créneau en cours de saisie",
 }
+
+/** La raison d'une occupation et l'état qui la peint sont le même concept. */
+export const ETAT_DE_MOTIF = {
+  course: "cours",
+  closed: "ferme",
+  not_open: "hors",
+} as const satisfies Record<"course" | "closed" | "not_open", EtatCase>
 
 export const LIBELLES_LEGENDE: Record<EtatCase, string> = {
   libre: "Libre",
   cours: "Cours ailleurs",
   ferme: "Indisponible",
   ouvert: "Disponible",
+  prefere: "Préféré",
   hors: "Non déclaré",
+  choisi: "Créneau choisi",
 }
 
 /**
@@ -66,7 +77,14 @@ export function styleDe(etat: EtatCase): { className: string; style?: CSSPropert
         },
       }
     case "ouvert":
-      return { className: "bg-emerald-500/20 ring-1 ring-inset ring-emerald-500/40" }
+      return { className: "bg-emerald-500/20 text-emerald-700 ring-1 ring-inset ring-emerald-500/40" }
+    case "prefere":
+      return { className: "bg-primary/15 text-primary ring-1 ring-inset ring-primary/30" }
+    case "choisi":
+      return {
+        className:
+          "bg-orange-500 font-semibold text-white shadow-md ring-2 ring-inset ring-orange-600/50",
+      }
     default:
       return { className: "bg-muted/25 ring-1 ring-inset ring-border/40" }
   }
