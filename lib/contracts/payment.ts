@@ -51,6 +51,12 @@ export const PaymentSchema = z.object({
   // Qui a encaissé, en clair. Sans lui, la colonne « Encaissé par » afficherait
   // un identifiant, ce qui ne répond pas à la question qu'on lui pose.
   received_by_name: z.string().nullable().optional(),
+  // Renseignés seulement sur un versement annulé : le bordereau et le reçu
+  // réimprimé les portent, l'écran doit pouvoir les dire aussi.
+  cancelled_at: z.string().nullable().optional(),
+  cancelled_by: z.number().nullable().optional(),
+  cancelled_by_name: z.string().nullable().optional(),
+  cancellation_reason: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
   student_name: z.string().nullable().optional(),
