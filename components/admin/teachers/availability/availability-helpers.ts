@@ -6,25 +6,31 @@
  */
 
 import type { DayOfWeek, TeacherAvailability } from "@/lib/contracts/timetable"
+import { HEURES, JOURS, JOURS_COURTS } from "@/lib/timetable/semaine"
+import { JOURS_FR } from "@/lib/timetable/week-overlap"
 
-export const DAYS: { key: DayOfWeek; label: string; court: string }[] = [
-  { key: "monday", label: "Lundi", court: "Lun" },
-  { key: "tuesday", label: "Mardi", court: "Mar" },
-  { key: "wednesday", label: "Mercredi", court: "Mer" },
-  { key: "thursday", label: "Jeudi", court: "Jeu" },
-  { key: "friday", label: "Vendredi", court: "Ven" },
-  { key: "saturday", label: "Samedi", court: "Sam" },
-]
+const JOURS_FR_LONG: Record<keyof typeof JOURS_FR, string> = {
+  monday: "Lundi",
+  tuesday: "Mardi",
+  wednesday: "Mercredi",
+  thursday: "Jeudi",
+  friday: "Vendredi",
+  saturday: "Samedi",
+}
 
-// 07:00 a 18:00 (11 creneaux)
-export const HOURS = Array.from({ length: 11 }, (_, i) => {
-  const h = 7 + i
-  return {
-    start: `${String(h).padStart(2, "0")}:00`,
-    end: `${String(h + 1).padStart(2, "0")}:00`,
-    label: `${String(h).padStart(2, "0")}h`,
-  }
-})
+/** Les jours, depuis la source unique — plus une table de plus. */
+export const DAYS: { key: DayOfWeek; label: string; court: string }[] = JOURS.map((key) => ({
+  key,
+  label: JOURS_FR_LONG[key],
+  court: JOURS_COURTS[key],
+}))
+
+/** Une case par heure, sur l'amplitude partagée. */
+export const HOURS = HEURES.map((h) => ({
+  start: `${String(h).padStart(2, "0")}:00`,
+  end: `${String(h + 1).padStart(2, "0")}:00`,
+  label: `${String(h).padStart(2, "0")}h`,
+}))
 
 export type CellState = "unavailable" | "available" | "preferred"
 

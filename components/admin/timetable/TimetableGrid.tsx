@@ -19,7 +19,12 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TimetableSlotForm } from "@/components/forms/TimetableSlotForm"
-import { HEURE_DEBUT, HEURE_FIN, PX_PAR_HEURE } from "@/lib/timetable/semaine"
+import { HEURE_DEBUT, HEURE_FIN, PX_PAR_HEURE, enMinutes, minutesEnPx } from "@/lib/timetable/semaine"
+import { complement } from "@/lib/timetable/occupation"
+
+/** Les deux grilles partagent leur echelle et leurs conversions. */
+const timeToMinutes = (t: string): number => enMinutes(t) ?? 0
+const minutesToPx = minutesEnPx
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
 const DAY_LABELS: Record<string, string> = {
@@ -60,14 +65,7 @@ function getSlotColor(subjectColor: string | null | undefined): string {
   return COLOR_MAP[subjectColor] ?? DEFAULT_SLOT_COLOR
 }
 
-function timeToMinutes(t: string): number {
-  const [h, m] = t.split(":").map(Number)
-  return h * 60 + m
-}
 
-function minutesToPx(minutes: number): number {
-  return ((minutes - START_HOUR * 60) / 60) * PX_PER_HOUR
-}
 
 function sortSlotsByTime(slots: TimetableSlot[]): TimetableSlot[] {
   return [...slots].sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time))
@@ -347,20 +345,13 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                       const hourStart = hour * 60
                       const hourEnd = (hour + 1) * 60
 
-                      // Find free sub-segments within this hour
-                      // Start with the full hour as free, then subtract occupied ranges
-                      let segments: { start: number; end: number }[] = [{ start: hourStart, end: hourEnd }]
-
-                      for (const occ of occupied) {
-                        if (occ.end <= hourStart || occ.start >= hourEnd) continue
-                        // This slot overlaps with this hour — split free segments
-                        const newSegs: { start: number; end: number }[] = []
-                        for (const seg of segments) {
-                          if (occ.start > seg.start) newSegs.push({ start: seg.start, end: Math.min(occ.start, seg.end) })
-                          if (occ.end < seg.end) newSegs.push({ start: Math.max(occ.end, seg.start), end: seg.end })
-                        }
-                        segments = newSegs
-                      }
+                      // Les trous libres de cette heure. Meme soustraction
+                      // d'intervalles que la semaine de l'enseignant : ecrite
+                      // une fois, testee une fois.
+                      const segments = complement(
+                        occupied.map((o) => ({ debut: o.start, fin: o.end })),
+                        { debut: hourStart, fin: hourEnd },
+                      ).map((i) => ({ start: i.debut, end: i.fin }))
 
                       // Render a "+" for each free sub-segment
                       for (const seg of segments) {

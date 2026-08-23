@@ -11,6 +11,11 @@
  * bloquée ? », on calcule les intervalles occupés, et le trait qu'on tire est
  * borné à l'espace libre qui l'entoure. La question des minutes ne se pose
  * plus : elle n'a jamais eu de réponse en heures.
+ *
+ * Ce module est **la** règle côté écran. La grille en tire ce qu'elle dessine
+ * et ce qu'elle interdit ; l'avertissement de saisie en tire sa phrase. Les
+ * deux répondaient séparément à la même question, et se sont mis à répondre
+ * différemment : la grille laissait tracer ce que l'avertissement refusait.
  */
 
 import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
@@ -20,6 +25,16 @@ export interface Intervalle {
   /** Minutes depuis minuit. */
   debut: number
   fin: number
+}
+
+/** Pourquoi un intervalle est pris. Les trois ne se disent pas pareil. */
+export type Motif = "course" | "closed" | "not_open"
+
+export interface Occupation extends Intervalle {
+  motif: Motif
+  /** L'intitulé du cours, quand c'en est un. */
+  label?: string
+  class_name?: string | null
 }
 
 export const JOURNEE: Intervalle = { debut: HEURE_DEBUT * 60, fin: HEURE_FIN * 60 }
@@ -37,7 +52,7 @@ export function fusionner(intervalles: Intervalle[]): Intervalle[] {
   for (const i of tries) {
     const dernier = sortie[sortie.length - 1]
     if (dernier && i.debut <= dernier.fin) dernier.fin = Math.max(dernier.fin, i.fin)
-    else sortie.push({ ...i })
+    else sortie.push({ debut: i.debut, fin: i.fin })
   }
   return sortie
 }
@@ -56,28 +71,44 @@ export function complement(intervalles: Intervalle[], borne: Intervalle): Interv
 }
 
 /**
- * Tout ce qui empêche de poser un cours ce jour-là.
+ * Tout ce qui empêche de poser un cours ce jour-là, avec sa raison.
  *
  * Trois sources, une seule liste : les cours ailleurs, les plages fermées, et
  * — quand l'enseignant a déclaré des ouvertures — tout ce qui tombe en dehors
  * d'elles. Les trois se disent différemment à l'écran mais bloquent
  * identiquement, alors elles se calculent ensemble.
+ *
+ * Les ouvertures sont **recollées** avant d'être soustraites : l'écran de
+ * saisie les écrit heure par heure, si bien que « libre de 8 h à 12 h » arrive
+ * en quatre lignes. Les traiter séparément fermerait tout ce qui dure plus
+ * d'une heure.
  */
-export function occupationsDuJour(week: TeacherWeek, jour: DayOfWeek): Intervalle[] {
-  const brut: Intervalle[] = []
+export function occupationsDuJour(week: TeacherWeek, jour: DayOfWeek): Occupation[] {
+  const sortie: Occupation[] = []
+
   for (const b of week.busy) {
     if (b.day !== jour) continue
     const i = versIntervalle(b.start_time, b.end_time)
-    if (i) brut.push(i)
+    if (!i) continue
+    sortie.push({
+      ...i,
+      motif: b.kind === "course" ? "course" : "closed",
+      label: b.label,
+      class_name: b.class_name,
+    })
   }
+
   if (week.has_declarations) {
     const ouvertures = week.open
       .filter((o) => o.day === jour)
       .map((o) => versIntervalle(o.start_time, o.end_time))
       .filter((i): i is Intervalle => i !== null)
-    brut.push(...complement(ouvertures, JOURNEE))
+    for (const ferme of complement(ouvertures, JOURNEE)) {
+      sortie.push({ ...ferme, motif: "not_open" })
+    }
   }
-  return fusionner(brut)
+
+  return sortie.sort((a, b) => a.debut - b.debut)
 }
 
 /**
@@ -95,4 +126,13 @@ export function creneauLibreAutour(
     if (minute >= libre.debut && minute < libre.fin) return libre
   }
   return null
+}
+
+/** La première occupation que croise [debut, fin[, ou `null` si la voie est libre. */
+export function premierEmpechement(
+  occupations: Occupation[],
+  debut: number,
+  fin: number,
+): Occupation | null {
+  return occupations.find((o) => o.debut < fin && o.fin > debut) ?? null
 }

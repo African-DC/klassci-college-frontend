@@ -1,30 +1,23 @@
 /**
  * Ce qui empêche de poser un créneau, dit avant de cliquer.
  *
- * Le backend refuse déjà avec une phrase complète, mais un refus arrive après
+ * Le serveur refuse déjà avec une phrase complète, mais un refus arrive après
  * coup : la personne a choisi son enseignant, son jour, son horaire, et
- * découvre seulement en validant que c'était impossible. Les mêmes règles
- * appliquées ici, sur la semaine déjà chargée, permettent de le dire pendant
- * la saisie.
+ * découvre seulement en validant que c'était impossible. La même règle
+ * appliquée ici, sur la semaine déjà chargée, permet de le dire pendant la
+ * saisie.
  *
- * La règle est celle du backend et du générateur automatique : tant qu'un
- * enseignant n'a rien déclaré il est disponible partout ; dès qu'il a déclaré
- * une plage, seules celles-là restent ouvertes.
+ * « La même règle » au sens strict : ce module ne décide de rien. Il demande à
+ * `occupation.ts` ce qui bloque, et se contente d'en faire une phrase. Quand
+ * il décidait lui-même, la grille et lui répondaient différemment — la grille
+ * laissait tracer un créneau que cet avertissement refusait aussitôt.
  */
 
 import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
-import { enMinutes, seChevauchent } from "@/lib/timetable/semaine"
+import { type Occupation, occupationsDuJour, premierEmpechement } from "./occupation"
+import { enMinutes } from "./semaine"
 
-export { enMinutes, seChevauchent }
-
-/** Le creneau vise, en minutes, croise-t-il cet intervalle « HH:MM » ? */
-function croise(d: number, f: number, debut: string, fin: string): boolean {
-  const d2 = enMinutes(debut)
-  const f2 = enMinutes(fin)
-  return d2 !== null && f2 !== null && seChevauchent(d, f, d2, f2)
-}
-
-/** Le formulaire parle français, le backend anglais. */
+/** Le formulaire parle français, le serveur anglais. */
 const JOURS_VERS_EN: Record<string, DayOfWeek> = {
   lundi: "monday",
   mardi: "tuesday",
@@ -35,11 +28,10 @@ const JOURS_VERS_EN: Record<string, DayOfWeek> = {
 }
 
 /**
- * Le nom francais de chaque jour, dans le type litteral et pas en `string`.
+ * Le nom français de chaque jour, dans le type littéral et pas en `string`.
  *
- * Les formulaires stockent le jour en francais et leur schema n'accepte que ces
- * six valeurs : garder le type litteral evite un cast a chaque fois qu'on
- * traduit depuis l'anglais.
+ * Les formulaires stockent le jour en français et leur schéma n'accepte que
+ * ces six valeurs : garder le type littéral évite un cast à chaque traduction.
  */
 export const JOURS_FR = {
   monday: "lundi",
@@ -50,20 +42,37 @@ export const JOURS_FR = {
   saturday: "samedi",
 } as const satisfies Record<DayOfWeek, string>
 
-
 export function versJourAnglais(jour: string | undefined): DayOfWeek | undefined {
   if (!jour) return undefined
-  return JOURS_VERS_EN[jour] ?? (JOURS_FR[jour as DayOfWeek] ? (jour as DayOfWeek) : undefined)
+  if (jour in JOURS_VERS_EN) return JOURS_VERS_EN[jour]
+  return jour in JOURS_FR ? (jour as DayOfWeek) : undefined
 }
-
-/** Minutes depuis minuit, ou `null` si ce n'est pas une heure « HH:MM ». */
-
-/** Deux plages se chevauchent si l'une commence avant que l'autre finisse. */
 
 export type Empechement = {
   /** `course` : il enseigne ailleurs. `closed` : plage fermée. `not_open` : hors des plages ouvertes. */
-  kind: "course" | "closed" | "not_open"
+  kind: Occupation["motif"]
   message: string
+}
+
+function versHHMM(minutes: number): string {
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`
+}
+
+function phrase(nom: string, jourFr: string, o: Occupation, debut: string, fin: string): string {
+  const de = `de ${versHHMM(o.debut)} à ${versHHMM(o.fin)}`
+  switch (o.motif) {
+    case "course": {
+      const classe = o.class_name ? ` avec la ${o.class_name}` : ""
+      return `${nom} a déjà ${o.label ?? "cours"}${classe} le ${jourFr} ${de}.`
+    }
+    case "closed":
+      return `${nom} est déclaré indisponible le ${jourFr} ${de}.`
+    default:
+      return (
+        `${nom} n'est pas déclaré disponible le ${jourFr} de ${debut} à ${fin}. ` +
+        "Ouvrez cette plage dans ses disponibilités si le cours doit y tenir."
+      )
+  }
 }
 
 /**
@@ -84,47 +93,11 @@ export function trouverEmpechement(
   const f = enMinutes(fin)
   if (!jourEn || d === null || f === null || d >= f) return null
 
-  const jourFr = JOURS_FR[jourEn]
-  const nom = semaine.teacher_name
-
-  const cours = semaine.busy.find(
-    (b) =>
-      b.day === jourEn &&
-      b.kind === "course" &&
-      croise(d, f, b.start_time, b.end_time),
-  )
-  if (cours) {
-    const classe = cours.class_name ? ` avec la ${cours.class_name}` : ""
-    return {
-      kind: "course",
-      message: `${nom} a déjà ${cours.label}${classe} le ${jourFr} de ${cours.start_time} à ${cours.end_time}.`,
-    }
-  }
-
-  const fermeture = semaine.busy.find(
-    (b) =>
-      b.day === jourEn &&
-      b.kind === "unavailable" &&
-      croise(d, f, b.start_time, b.end_time),
-  )
-  if (fermeture) {
-    return {
-      kind: "closed",
-      message: `${nom} est déclaré indisponible le ${jourFr} de ${fermeture.start_time} à ${fermeture.end_time}.`,
-    }
-  }
-
-  if (!semaine.has_declarations) return null
-
-  const couvert = semaine.open.some((o) => {
-    const o1 = enMinutes(o.start_time)
-    const o2 = enMinutes(o.end_time)
-    return o.day === jourEn && o1 !== null && o2 !== null && o1 <= d && o2 >= f
-  })
-  if (couvert) return null
+  const bloquant = premierEmpechement(occupationsDuJour(semaine, jourEn), d, f)
+  if (!bloquant) return null
 
   return {
-    kind: "not_open",
-    message: `${nom} n'est pas déclaré disponible le ${jourFr} de ${debut} à ${fin}. Ouvrez cette plage dans ses disponibilités si le cours doit y tenir.`,
+    kind: bloquant.motif,
+    message: phrase(semaine.teacher_name, JOURS_FR[jourEn], bloquant, debut!, fin!),
   }
 }

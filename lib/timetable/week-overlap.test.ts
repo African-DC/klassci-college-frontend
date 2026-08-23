@@ -5,7 +5,8 @@
 
 import { describe, expect, it } from "vitest"
 import type { TeacherWeek } from "@/lib/contracts/timetable"
-import { enMinutes, seChevauchent, trouverEmpechement } from "./week-overlap"
+import { trouverEmpechement } from "./week-overlap"
+import { enMinutes, seChevauchent } from "./semaine"
 
 function semaine(partiel: Partial<TeacherWeek> = {}): TeacherWeek {
   return {

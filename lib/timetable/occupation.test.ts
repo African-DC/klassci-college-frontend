@@ -66,9 +66,9 @@ describe("occupationsDuJour", () => {
         { day: "monday", start_time: "14:00", end_time: "16:00", kind: "unavailable", label: "Indisponible", class_name: null },
       ],
     })
-    expect(occupationsDuJour(s, "monday")).toEqual([
-      { debut: h(9), fin: h(9, 30) },
-      { debut: h(14), fin: h(16) },
+    expect(occupationsDuJour(s, "monday").map((o) => [o.debut, o.fin, o.motif])).toEqual([
+      [h(9), h(9, 30), "course"],
+      [h(14), h(16), "closed"],
     ])
   })
 
@@ -77,9 +77,9 @@ describe("occupationsDuJour", () => {
       has_declarations: true,
       open: [{ day: "monday", start_time: "08:00", end_time: "12:00", preferred: false }],
     })
-    expect(occupationsDuJour(s, "monday")).toEqual([
-      { debut: JOURNEE.debut, fin: h(8) },
-      { debut: h(12), fin: JOURNEE.fin },
+    expect(occupationsDuJour(s, "monday").map((o) => [o.debut, o.fin, o.motif])).toEqual([
+      [JOURNEE.debut, h(8), "not_open"],
+      [h(12), JOURNEE.fin, "not_open"],
     ])
     expect(creneauLibreAutour(occupationsDuJour(s, "monday"), h(9))).toEqual({
       debut: h(8),
@@ -123,5 +123,29 @@ describe("complement", () => {
     expect(complement([{ debut: h(6), fin: h(9) }, { debut: h(12), fin: h(20) }], JOURNEE)).toEqual([
       { debut: h(9), fin: h(12) },
     ])
+  })
+})
+
+describe("des ouvertures déclarées heure par heure", () => {
+  const parHeure = (heures: number[]) =>
+    semaine({
+      has_declarations: true,
+      open: heures.map((x) => ({
+        day: "monday" as const,
+        start_time: `${String(x).padStart(2, "0")}:00`,
+        end_time: `${String(x + 1).padStart(2, "0")}:00`,
+        preferred: false,
+      })),
+    })
+
+  it("se recollent, comme l'écran de saisie les produit", () => {
+    const occ = occupationsDuJour(parHeure([8, 9, 10, 11]), "monday")
+    expect(creneauLibreAutour(occ, h(8))).toEqual({ debut: h(8), fin: h(12) })
+  })
+
+  it("laissent un trou quand il y en a un", () => {
+    const occ = occupationsDuJour(parHeure([8, 10]), "monday")
+    expect(creneauLibreAutour(occ, h(8))).toEqual({ debut: h(8), fin: h(9) })
+    expect(creneauLibreAutour(occ, h(9))).toBeNull()
   })
 })

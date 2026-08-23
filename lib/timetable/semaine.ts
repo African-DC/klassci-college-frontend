@@ -50,10 +50,6 @@ export function minutesEnPx(minutes: number): number {
   return ((minutes - HEURE_DEBUT * 60) / 60) * PX_PAR_HEURE
 }
 
-export function versHHMM(heure: number): string {
-  return `${String(heure).padStart(2, "0")}:00`
-}
-
 /** Minutes depuis minuit, ou `null` si ce n'est pas une heure « HH:MM ». */
 export function enMinutes(valeur: string | undefined | null): number | null {
   if (!valeur) return null
@@ -67,15 +63,9 @@ export function seChevauchent(d1: number, f1: number, d2: number, f2: number): b
   return d1 < f2 && f1 > d2
 }
 
-/**
- * Cette heure pleine est-elle touchée par l'intervalle « HH:MM » donné ?
- *
- * Le test se fait en minutes et jamais en heures arrondies : les créneaux
- * existants commencent à 08:30 aussi souvent qu'à 08:00, et arrondir ferait
- * disparaître de la grille tout ce qui dure moins d'une heure.
- */
-export function couvre(debut: string, fin: string, heure: number): boolean {
-  const d = enMinutes(debut)
-  const f = enMinutes(fin)
-  return d !== null && f !== null && seChevauchent(d, f, heure * 60, (heure + 1) * 60)
+/** « HH:MM » depuis des minutes — l'inverse de `enMinutes`, à côté d'elle. */
+export function versHHMM(minutes: number): string {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`
 }
