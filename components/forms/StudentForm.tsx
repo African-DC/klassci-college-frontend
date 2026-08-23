@@ -63,7 +63,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <StudentPhotoField value={photo} onChange={setPhoto} disabled={isPending || attachPhoto.isPending} />
 
         <div className="grid grid-cols-2 gap-4">

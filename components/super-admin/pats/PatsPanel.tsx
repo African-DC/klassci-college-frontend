@@ -75,7 +75,7 @@ export function PatsPanel() {
           <CardTitle className="text-base">Créer un token</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="name">Nom</Label>
               <Input id="name" placeholder="dev-laptop" {...form.register("name")} />
