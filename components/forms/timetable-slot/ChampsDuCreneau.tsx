@@ -59,7 +59,7 @@ export function ChampsDuCreneau({ form, empechement, erreurServeur }: Props) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Jour *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder="Jour" />
