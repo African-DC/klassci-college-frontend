@@ -52,6 +52,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
+- Le créneau se trace directement sur la semaine de l'enseignant : on clique, on descend, l'heure de début et de fin suivent *(admin, directeur des études)*
+- La fenêtre d'ajout de créneau occupe la largeur disponible et montre la semaine à côté des champs, au lieu de la reléguer sous un ascenseur *(admin, directeur des études)*
+- Les états de la semaine se distinguent par leur matière et non par leur seule couleur : un cours est plein, une indisponibilité hachurée, une heure non déclarée tramée *(tous)*
+- Bouton « Actualiser » sur la semaine, et relecture automatique au retour sur l'onglet quand les plages ont bougé ailleurs *(admin, directeur des études)*
 - Le mode de paiement du formulaire d'encaissement ne montre que les moyens que la personne connectée peut réellement utiliser : plus de choix proposé puis refusé au moment d'enregistrer *(caissier, comptable, secrétariat)*
 - Les versements enregistrés autrefois en « Mobile Money » gardent ce libellé partout et restent filtrables dans le journal des versements : l'historique d'une école ne change pas de sens *(comptable, parent)*
 - Le journal des versements s'exporte désormais depuis le serveur : le PDF sort au gabarit officiel de l'établissement, et le classeur Excel porte les couleurs, le logo, la période et les filtres appliqués, au lieu d'un tableau sans identité *(comptable, caissier)*
@@ -82,6 +86,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- Sur téléphone, la fenêtre d'ajout de créneau débordait à droite : les boutons et les listes étaient coupés *(admin, directeur des études)*
 - La grille de disponibilités peignait toute la semaine en « hors des plages déclarées » dès qu'une seule absence était notée *(admin, directeur des études, enseignant)*
 - Les bulletins et les statistiques DREN s'ouvraient sur une année sans données au lieu de l'année en cours *(admin)*
 - La grille de disponibilités d'un enseignant affichait toute sa semaine en rouge « indisponible » alors qu'il n'avait rien déclaré : une semaine vierge ne ferme plus rien *(admin, directeur des études, enseignant)*
