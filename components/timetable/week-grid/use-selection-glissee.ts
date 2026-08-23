@@ -14,11 +14,10 @@
  *   s'arrête à son bord. On apprend la contrainte par le geste, sans avoir lu
  *   la légende ni essuyé un refus après validation. Le geste marche dans les
  *   deux sens : on peut remonter.
- * - **On vise le point, pas la case.** Le pointeur est relu à chaque
- *   déplacement via `elementFromPoint`, si bien que la souris et le doigt
- *   suivent le même chemin — `onPointerEnter` ne se déclenche pas au toucher.
- *   La grille doit porter `touch-action: none` **avant** le contact : c'est ce
- *   qui empêche le navigateur de confisquer le geste pour faire défiler.
+ * - **On lit l'heure dans la hauteur, pas dans une case.** La colonne du jour
+ *   est une seule surface : l'heure se déduit de la position verticale du
+ *   pointeur. Le doigt et la souris suivent donc exactement le même chemin,
+ *   sans dépendre du survol, qui n'existe pas au toucher.
  * - **Un geste confisqué n'écrit rien.** `pointercancel` veut dire que le
  *   navigateur a repris la main, pas que l'utilisateur a choisi. Le confondre
  *   avec `pointerup` ferait écrire une plage que personne n'a voulue.
@@ -26,7 +25,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import type { DayOfWeek } from "@/lib/contracts/timetable"
-import { versHHMM } from "@/lib/timetable/semaine"
+import { HEURE_DEBUT, HEURE_FIN, PX_PAR_HEURE, versHHMM } from "@/lib/timetable/semaine"
 
 export interface PlageChoisie {
   jour: DayOfWeek
@@ -46,12 +45,10 @@ interface Trace {
   tete: number
 }
 
-function lireCase(x: number, y: number): { jour: DayOfWeek; heure: number } | null {
-  const cible = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-heure]")
-  if (!cible) return null
-  const jour = cible.dataset.jour as DayOfWeek | undefined
-  const heure = Number(cible.dataset.heure)
-  return jour && Number.isFinite(heure) ? { jour, heure } : null
+/** L'heure pleine sous le pointeur, d'après sa hauteur dans la colonne. */
+export function heureSousLePointeur(y: number, hautColonne: number): number {
+  const brute = HEURE_DEBUT + Math.floor((y - hautColonne) / PX_PAR_HEURE)
+  return Math.min(HEURE_FIN - 1, Math.max(HEURE_DEBUT, brute))
 }
 
 export function useSelectionGlissee({ estBloquee, onCommit }: Options) {
@@ -76,12 +73,10 @@ export function useSelectionGlissee({ estBloquee, onCommit }: Options) {
     setTrace({ jour, ancre: heure, tete: heure })
   }
 
-  const deplacer = (x: number, y: number) => {
+  const deplacer = (heure: number) => {
     setTrace((t) => {
       if (!t) return t
-      const sous = lireCase(x, y)
-      if (!sous || sous.jour !== t.jour) return t
-      const tete = borner(t.jour, t.ancre, sous.heure)
+      const tete = borner(t.jour, t.ancre, heure)
       return tete === t.tete ? t : { ...t, tete }
     })
   }

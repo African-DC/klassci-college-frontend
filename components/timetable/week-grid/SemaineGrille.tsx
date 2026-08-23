@@ -1,23 +1,36 @@
 "use client"
 
 /**
- * La semaine d'un enseignant, en grille jour × heure.
+ * La semaine d'un enseignant, en colonnes de jours.
  *
- * La grille est le contrôle, pas l'illustration : on y trace le créneau à la
- * souris ou au doigt, et les listes déroulantes du formulaire suivent. Elles
- * restent affichées — elles sont le chemin du clavier, et la confirmation de
- * ce qu'on vient de tracer.
+ * Même géométrie que la grille des classes : chaque occupation est un bloc
+ * posé en absolu, haut de sa vraie durée. Un cours de 8 h à 8 h 30 occupe une
+ * demi-case, un cours de deux heures est un seul bloc et non deux cases
+ * jumelles, et son intitulé ne s'écrit qu'une fois. Les deux écrans se lisent
+ * donc de la même façon, ce qui compte plus qu'on ne croit : c'est la même
+ * personne qui passe de l'un à l'autre.
  *
- * Le tableau reste un vrai `<table>` avec ses en-têtes de ligne et de colonne :
- * une grille jour × heure se lit à la voix par ses en-têtes, et la remplacer
- * par des `<div>` reviendrait à débiter soixante-six cases sans repère.
+ * La grille est aussi le contrôle : on y trace le créneau, et les listes
+ * déroulantes du formulaire suivent. Elles restent le chemin du clavier.
  */
 
+import { useRef } from "react"
 import { cn } from "@/lib/utils"
 import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
-import { HEURES, JOURS, JOURS_COURTS, couvre } from "@/lib/timetable/semaine"
-import { LIBELLES, coursDe, debuteIci, estBloquant, etatDe, styleDe } from "./etats"
-import { type PlageChoisie, useSelectionGlissee } from "./use-selection-glissee"
+import {
+  HEURES,
+  HEURE_DEBUT,
+  HEURE_FIN,
+  JOURS,
+  JOURS_COURTS,
+  PX_PAR_HEURE,
+  enMinutes,
+  minutesEnPx,
+} from "@/lib/timetable/semaine"
+import { LIBELLES, estBloquant, etatDe, styleDe } from "./etats"
+import { type PlageChoisie, heureSousLePointeur, useSelectionGlissee } from "./use-selection-glissee"
+
+const HAUTEUR = (HEURE_FIN - HEURE_DEBUT) * PX_PAR_HEURE
 
 interface Props {
   week: TeacherWeek
@@ -27,7 +40,18 @@ interface Props {
   onChoisir?: (plage: PlageChoisie) => void
 }
 
+/** Le rectangle d'une plage « HH:MM », borné à l'amplitude affichée. */
+function rectangle(debut: string, fin: string): { top: number; height: number } | null {
+  const d = enMinutes(debut)
+  const f = enMinutes(fin)
+  if (d === null || f === null || f <= d) return null
+  const haut = Math.max(0, minutesEnPx(d))
+  const bas = Math.min(HAUTEUR, minutesEnPx(f))
+  return bas <= haut ? null : { top: haut, height: bas - haut }
+}
+
 export function SemaineGrille({ week, vise, onChoisir }: Props) {
+  const colonnes = useRef<HTMLDivElement | null>(null)
   const bloquee = (jour: DayOfWeek, heure: number) => estBloquant(etatDe(week, jour, heure))
 
   const { enCours, commencer, deplacer, glisse } = useSelectionGlissee({
@@ -37,104 +61,171 @@ export function SemaineGrille({ week, vise, onChoisir }: Props) {
 
   const montree = enCours ?? vise ?? null
   const interactive = Boolean(onChoisir)
+  const styleFerme = styleDe("ferme")
+  const styleHors = styleDe("hors")
+  const styleOuvert = styleDe("ouvert")
 
-  // Le meme test de recouvrement que pour tous les autres etats : arrondir a
-  // l'heure ferait disparaitre un creneau de 08:00 a 08:30.
-  const dansSelection = (jour: DayOfWeek, heure: number) =>
-    montree !== null && montree.jour === jour && couvre(montree.debut, montree.fin, heure)
+  const heureDe = (clientY: number) => {
+    const haut = colonnes.current?.getBoundingClientRect().top ?? 0
+    return heureSousLePointeur(clientY, haut)
+  }
 
   return (
-    <div
-      className="rounded-xl border bg-card p-1.5 shadow-sm"
-      onPointerMove={interactive && glisse ? (e) => deplacer(e.clientX, e.clientY) : undefined}
-      // Pose avant le contact, sinon le navigateur a deja decide de faire
-      // defiler et confisque le geste des le premier deplacement du doigt.
-      style={interactive ? { touchAction: "none" } : undefined}
-    >
-      <table className="w-full table-fixed border-separate border-spacing-0.5">
-        <caption className="sr-only">
-          Occupation de la semaine de {week.teacher_name}, par jour et par heure
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" className="w-9">
-              <span className="sr-only">Heure</span>
-            </th>
-            {JOURS.map((jour) => (
-              <th
-                key={jour}
-                scope="col"
-                className="pb-1 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
-              >
-                {JOURS_COURTS[jour]}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {HEURES.map((heure) => (
-            <tr key={heure}>
-              <th
-                scope="row"
-                className="pr-1 text-right align-middle text-[10px] font-medium tabular-nums text-muted-foreground"
-              >
-                {String(heure).padStart(2, "0")}h
-              </th>
-              {JOURS.map((jour) => {
-                const etat = etatDe(week, jour, heure)
-                const bloque = estBloquant(etat)
-                const choisie = dansSelection(jour, heure)
-                const { className, style } = styleDe(etat)
-                const cours = etat === "cours" ? coursDe(week, jour, heure) : undefined
-                const etiquette = cours && debuteIci(cours.start_time, heure) ? cours : undefined
+    <div className="rounded-xl border bg-card p-2 shadow-sm">
+      <div className="flex">
+        <div className="w-9 shrink-0" aria-hidden />
+        {JOURS.map((jour) => (
+          <div
+            key={jour}
+            className="flex-1 pb-1 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            {JOURS_COURTS[jour]}
+          </div>
+        ))}
+      </div>
 
-                return (
-                  <td key={jour} className="p-0">
-                    <div
-                      data-jour={jour}
-                      data-heure={heure}
-                      onPointerDown={
-                        interactive
-                          ? (e) => {
-                              e.preventDefault()
-                              commencer(jour, heure)
-                            }
-                          : undefined
+      <div className="flex">
+        {/* Colonne des heures */}
+        <div className="relative w-9 shrink-0" style={{ height: HAUTEUR }}>
+          {HEURES.map((heure) => (
+            <span
+              key={heure}
+              className="absolute right-1 -translate-y-1/2 text-[10px] font-medium tabular-nums text-muted-foreground"
+              style={{ top: minutesEnPx(heure * 60) }}
+            >
+              {String(heure).padStart(2, "0")}h
+            </span>
+          ))}
+        </div>
+
+        <div
+          ref={colonnes}
+          className="relative flex flex-1 gap-1"
+          style={{ height: HAUTEUR, ...(interactive ? { touchAction: "none" } : {}) }}
+          onPointerMove={interactive && glisse ? (e) => deplacer(heureDe(e.clientY)) : undefined}
+        >
+          {/* Les filets d'heures, en fond */}
+          {HEURES.map((heure) => (
+            <div
+              key={heure}
+              className="pointer-events-none absolute inset-x-0 border-t border-border/40"
+              style={{ top: minutesEnPx(heure * 60) }}
+              aria-hidden
+            />
+          ))}
+
+          {JOURS.map((jour) => {
+            const cours = week.busy.filter((b) => b.day === jour && b.kind === "course")
+            const fermetures = week.busy.filter((b) => b.day === jour && b.kind === "unavailable")
+            const ouvertures = week.open.filter((o) => o.day === jour)
+            const selection =
+              montree?.jour === jour ? rectangle(montree.debut, montree.fin) : null
+
+            return (
+              <div
+                key={jour}
+                className={cn(
+                  "relative flex-1 rounded-md",
+                  week.has_declarations ? "" : "bg-muted/20",
+                  interactive && "cursor-pointer",
+                )}
+                style={week.has_declarations ? styleHors.style : undefined}
+                onPointerDown={
+                  interactive
+                    ? (e) => {
+                        e.preventDefault()
+                        e.currentTarget.setPointerCapture(e.pointerId)
+                        commencer(jour, heureDe(e.clientY))
                       }
-                      title={`${JOURS_COURTS[jour]} ${String(heure).padStart(2, "0")}h — ${
-                        LIBELLES[etat]
-                      }${cours?.class_name ? ` (${cours.label}, ${cours.class_name})` : ""}`}
+                    : undefined
+                }
+              >
+                {ouvertures.map((o) => {
+                  const r = rectangle(o.start_time, o.end_time)
+                  return r ? (
+                    <div
+                      key={`o-${o.start_time}`}
+                      className={cn("absolute inset-x-0 rounded", styleOuvert.className)}
+                      style={{ top: r.top, height: r.height }}
+                      title={`Disponible de ${o.start_time} à ${o.end_time}`}
+                    />
+                  ) : null
+                })}
+
+                {fermetures.map((f) => {
+                  const r = rectangle(f.start_time, f.end_time)
+                  return r ? (
+                    <div
+                      key={`f-${f.start_time}`}
                       className={cn(
-                        "relative flex h-11 select-none items-center justify-center overflow-hidden rounded-md px-1 text-[10px] leading-tight transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none lg:h-9",
-                        choisie
-                          ? "bg-orange-500 font-semibold text-white shadow-md ring-2 ring-inset ring-orange-600/50"
-                          : className,
-                        interactive && !bloque && !choisie && "cursor-pointer hover:ring-2 hover:ring-orange-400/50",
-                        interactive && bloque && "cursor-not-allowed",
+                        "absolute inset-x-0 flex items-center justify-center rounded text-[9px]",
+                        styleFerme.className,
                       )}
-                      style={choisie ? undefined : style}
+                      style={{ top: r.top, height: r.height, ...styleFerme.style }}
+                      title={`Indisponible de ${f.start_time} à ${f.end_time}`}
                     >
-                      {choisie && montree && debuteIci(montree.debut, heure) ? (
-                        <span className="tabular-nums">
-                          {montree.debut}–{montree.fin}
-                        </span>
-                      ) : etiquette ? (
-                        <span className="truncate font-medium">
-                          {etiquette.class_name ?? etiquette.label}
-                        </span>
-                      ) : null}
                       <span className="sr-only">
-                        {LIBELLES[etat]}
-                        {choisie ? ", dans le créneau en cours de saisie" : ""}
+                        Indisponible de {f.start_time} à {f.end_time}
                       </span>
                     </div>
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                  ) : null
+                })}
+
+                {cours.map((c) => {
+                  const r = rectangle(c.start_time, c.end_time)
+                  if (!r) return null
+                  return (
+                    <div
+                      key={`c-${c.start_time}`}
+                      className="absolute inset-x-0 overflow-hidden rounded border border-sky-700/25 bg-sky-600/90 px-1 py-0.5 text-white shadow-sm dark:bg-sky-500/80"
+                      style={{ top: r.top + 1, height: r.height - 2 }}
+                      title={`${c.label}${c.class_name ? ` · ${c.class_name}` : ""} de ${c.start_time} à ${c.end_time}`}
+                    >
+                      <p className="truncate text-[10px] font-semibold leading-tight">
+                        {c.class_name ?? c.label}
+                      </p>
+                      {r.height >= 38 && (
+                        <p className="truncate text-[9px] leading-tight opacity-80">{c.label}</p>
+                      )}
+                      {r.height >= 54 && (
+                        <p className="text-[9px] leading-tight tabular-nums opacity-70">
+                          {c.start_time}–{c.end_time}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
+
+                {selection && (
+                  <div
+                    className="pointer-events-none absolute inset-x-0 z-10 flex items-center justify-center rounded bg-orange-500 text-[10px] font-semibold text-white shadow-md ring-2 ring-inset ring-orange-600/50"
+                    style={{ top: selection.top + 1, height: selection.height - 2 }}
+                  >
+                    <span className="tabular-nums">
+                      {montree!.debut}–{montree!.fin}
+                    </span>
+                  </div>
+                )}
+
+                <span className="sr-only">
+                  {JOURS_COURTS[jour]} :{" "}
+                  {cours.length === 0 && fermetures.length === 0
+                    ? LIBELLES[week.has_declarations ? "hors" : "libre"]
+                    : [
+                        ...cours.map(
+                          (c) =>
+                            `${c.label}${c.class_name ? ` avec la ${c.class_name}` : ""} de ${c.start_time} à ${c.end_time}`,
+                        ),
+                        ...fermetures.map(
+                          (f) => `indisponible de ${f.start_time} à ${f.end_time}`,
+                        ),
+                      ].join(", ")}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
 
       {interactive ? (
         <p className="px-1 pb-0.5 pt-2 text-[11px] text-muted-foreground">

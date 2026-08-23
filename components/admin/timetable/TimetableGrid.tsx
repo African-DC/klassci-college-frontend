@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TimetableSlotForm } from "@/components/forms/TimetableSlotForm"
+import { HEURE_DEBUT, HEURE_FIN, PX_PAR_HEURE } from "@/lib/timetable/semaine"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
 const DAY_LABELS: Record<string, string> = {
@@ -31,10 +32,12 @@ const DAY_LABELS: Record<string, string> = {
 }
 
 // Grid config
-const START_HOUR = 7
-const END_HOUR = 18
-const TOTAL_HOURS = END_HOUR - START_HOUR // 11
-const PX_PER_HOUR = 60 // pixels per hour
+// Geometrie partagee avec la semaine de l'enseignant : les deux grilles se
+// lisent cote a cote, elles doivent avoir la meme echelle.
+const START_HOUR = HEURE_DEBUT
+const END_HOUR = HEURE_FIN
+const TOTAL_HOURS = END_HOUR - START_HOUR
+const PX_PER_HOUR = PX_PAR_HEURE
 
 const COLOR_MAP: Record<string, string> = {
   blue: "bg-blue-100 border-blue-300 text-blue-800",

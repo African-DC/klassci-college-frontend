@@ -30,7 +30,25 @@ export const JOURS_COURTS: Record<DayOfWeek, string> = {
 }
 
 /** 7 h à 18 h : l'amplitude d'une journée de collège ivoirien. */
-export const HEURES = Array.from({ length: 11 }, (_, i) => 7 + i)
+export const HEURE_DEBUT = 7
+export const HEURE_FIN = 18
+export const HEURES = Array.from({ length: HEURE_FIN - HEURE_DEBUT }, (_, i) => HEURE_DEBUT + i)
+
+/**
+ * Hauteur d'une heure, en pixels.
+ *
+ * La grille des classes place déjà ses cours ainsi : un bloc positionné en
+ * absolu, haut de sa vraie durée. C'est ce qui permet à un cours de 8 h à
+ * 8 h 30 d'occuper une demi-case au lieu d'en remplir une entière, et à un
+ * cours de deux heures d'être un seul bloc plutôt que deux cases jumelles.
+ * On reprend la même mesure pour que les deux grilles se lisent pareil.
+ */
+export const PX_PAR_HEURE = 60
+
+/** La position verticale d'un instant, en pixels depuis le haut de la grille. */
+export function minutesEnPx(minutes: number): number {
+  return ((minutes - HEURE_DEBUT * 60) / 60) * PX_PAR_HEURE
+}
 
 export function versHHMM(heure: number): string {
   return `${String(heure).padStart(2, "0")}:00`
