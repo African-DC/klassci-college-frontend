@@ -82,6 +82,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page Frais : copie des montants d'une catégorie vers une autre en un clic (choix des niveaux à copier), pour ne plus ressaisir la même grille à chaque trimestre *(admin)*.
 
 ### Fixed
+- La grille de disponibilités peignait toute la semaine en « hors des plages déclarées » dès qu'une seule absence était notée *(admin, directeur des études, enseignant)*
 - Les bulletins et les statistiques DREN s'ouvraient sur une année sans données au lieu de l'année en cours *(admin)*
 - La grille de disponibilités d'un enseignant affichait toute sa semaine en rouge « indisponible » alors qu'il n'avait rien déclaré : une semaine vierge ne ferme plus rien *(admin, directeur des études, enseignant)*
 - Le bandeau de la page des versements annonce à la caissière ce qu'elle a encaissé, et non plus les chiffres de toute l'école *(caissier)*

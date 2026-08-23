@@ -175,7 +175,12 @@ export function TeacherAvailabilityTab({ teacherId, intro }: TeacherAvailability
   const maxSlots = DAYS.length * HOURS.length
   // Rien de declare : la semaine ne contraint rien, et la grille ne doit pas
   // afficher le contraire (cf. UNDECLARED_STYLE).
-  const hasDeclarations = savedMap.size > 0
+  // Ce qui bascule la grille en liste blanche, c'est une plage OUVERTE.
+  // Compter toutes les lignes ferait qu'une seule absence notée peindrait la
+  // semaine entière en « hors des plages déclarées ».
+  const hasDeclarations = [...savedMap.values()].some(
+    (c) => c.state === "available" || c.state === "preferred",
+  )
 
   return (
     <div className="space-y-4">
