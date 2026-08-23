@@ -8,6 +8,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Fixed
+- Annulation d'un versement déjà encaissé, depuis le tableau comme depuis le téléphone : c'est le cas courant, un montant saisi qui n'est pas dans la caisse *(admin)*
+
 ### Added
 - L'annulation d'un versement demande un motif écrit, affiché ensuite sous le statut dans le journal des paiements *(caissier, comptable, directeur)*
 - L'enseignant déclare ses indisponibilités depuis « Mon emploi du temps », sur la même grille que celle de sa fiche côté administration *(enseignant)*
