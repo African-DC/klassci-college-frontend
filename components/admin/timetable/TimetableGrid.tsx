@@ -437,7 +437,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
 
       {/* Create modal */}
       <Dialog open={createModal !== null} onOpenChange={() => setCreateModal(null)}>
-        <DialogContent className="sm:max-w-2xl lg:max-w-5xl">
+        <DialogContent className="sm:max-w-2xl lg:max-w-6xl xl:max-w-7xl">
           <DialogHeader>
             <DialogTitle>Ajouter un créneau</DialogTitle>
           </DialogHeader>
@@ -453,7 +453,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
 
       {/* Edit modal */}
       <Dialog open={editSlot !== null} onOpenChange={() => setEditSlot(null)}>
-        <DialogContent className="sm:max-w-2xl lg:max-w-5xl">
+        <DialogContent className="sm:max-w-2xl lg:max-w-6xl xl:max-w-7xl">
           <DialogHeader>
             <DialogTitle>Modifier le créneau</DialogTitle>
           </DialogHeader>
