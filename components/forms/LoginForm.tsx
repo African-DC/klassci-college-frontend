@@ -102,7 +102,15 @@ export function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      {/* `method="post"` n'est jamais emprunté une fois que React écoute, mais il
+          décide de ce qui arrive avant. Entre l'affichage du HTML et l'exécution du
+          bundle, le bouton existe déjà et personne n'intercepte : un clic déclenche
+          la soumission native du navigateur, qui sans `method` est un GET. Le mot de
+          passe part alors dans l'URL, donc dans l'historique, dans les journaux du
+          serveur et, pour une requête de même origine, dans l'en-tête Referer de la
+          page suivante. La fenêtre est étroite, et elle s'allonge exactement là où la
+          connexion est lente. */}
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         {sessionExpired && !error && (
           <div
             role="alert"

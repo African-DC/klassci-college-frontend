@@ -50,7 +50,10 @@ export function ChangePasswordForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      {/* Voir LoginForm : sans `method="post"`, une soumission avant l'hydratation
+          partirait en GET. Ce formulaire porte le mot de passe actuel en plus du
+          nouveau. */}
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <FormField
           control={form.control}
           name="current_password"

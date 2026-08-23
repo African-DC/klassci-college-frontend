@@ -335,6 +335,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page « Mes notes » du portail enseignant qui était inaccessible (lien sidebar vers une page absente) *(enseignant)* (#111).
 
 ### Security
+- Un identifiant saisi puis validé avant que la page ne soit prête ne peut plus se retrouver dans l'adresse du navigateur *(tous)*
 
 - Endpoint d'exposition des permissions effectives sécurisé par JWT et tenant scope, consommé par le portail pour le gating UI *(tous)* (#108).
 

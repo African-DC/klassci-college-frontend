@@ -93,7 +93,7 @@ export function WizardShell() {
           <p className="text-sm text-muted-foreground">{STEPS[step].description}</p>
         </div>
 
-        <form onSubmit={methods.handleSubmit(onSubmit)} className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
+        <form method="post" onSubmit={methods.handleSubmit(onSubmit)} className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
           {step === 0 && <StepSchool />}
           {step === 1 && <StepAdmin />}
           {step === 2 && <StepOptional />}

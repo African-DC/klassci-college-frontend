@@ -88,7 +88,7 @@ function MailPulseForm({
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardContent className="p-4 sm:p-5">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit((d) => save(d))} className="space-y-5">
+            <form method="post" onSubmit={form.handleSubmit((d) => save(d))} className="space-y-5">
               {/* Interrupteur maître */}
               <FormField
                 control={form.control}
