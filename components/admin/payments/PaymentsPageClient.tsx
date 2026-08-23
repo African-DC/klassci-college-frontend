@@ -4,27 +4,18 @@ import { useState, useMemo, useCallback } from "react"
 import {
   Plus, Download, Wallet, TrendingUp,
   AlertCircle, Banknote, CreditCard, Eye,
-  Receipt, FileSpreadsheet, Loader2, UserCheck,
+  Receipt, FileSpreadsheet, Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
-import { PaymentRowActions } from "@/components/admin/payments/PaymentRowActions"
-import { PaymentCardActions } from "@/components/admin/payments/PaymentCardActions"
-import { StudentAvatar } from "@/components/admin/payments/StudentAvatar"
 import { PaymentsFilters } from "@/components/admin/payments/PaymentsFilters"
 import { usePaymentFilters } from "@/lib/hooks/usePaymentFilters"
 import { PaymentConfirmDialog, type PaymentConfirmAction } from "@/components/admin/payments/PaymentConfirmDialog"
 import { PaymentReceiptDialog } from "@/components/admin/payments/PaymentReceiptDialog"
+import { PaymentsTable } from "@/components/admin/payments/PaymentsTable"
+import { PaymentsCardList } from "@/components/admin/payments/PaymentsCardList"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageHero, heroAccentBtn, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { PaymentCreateWizard } from "./PaymentCreateWizard"
 import {
   usePayments,
@@ -35,28 +26,9 @@ import {
 } from "@/lib/hooks/usePayments"
 import { useFeeCategories } from "@/lib/hooks/useFees"
 import { paymentsApi } from "@/lib/api/payments"
-import { paymentMethodLabel } from "@/lib/payment-methods"
-import { paymentMethodIcon } from "@/components/admin/payments/method-icon"
 import { openPdfPreview } from "@/lib/pdf/preview"
 import { downloadBlob } from "@/lib/utils"
-import type { PaymentStatus, Payment } from "@/lib/contracts/payment"
-
-/** « Annulé le 23/08/2026 par M. Konan · motif » — la ligne d'un contrôle. */
-function motifComplet(p: Payment): string {
-  const quand = p.cancelled_at
-    ? ` le ${new Date(p.cancelled_at).toLocaleDateString("fr-FR")}`
-    : ""
-  const qui = p.cancelled_by_name ? ` par ${p.cancelled_by_name}` : ""
-  return `Annulé${quand}${qui}${p.cancellation_reason ? ` · ${p.cancellation_reason}` : ""}`
-}
-
-const STATUS_CONFIG: Record<PaymentStatus, { label: string; dot: string }> = {
-  pending: { label: "En attente", dot: "bg-amber-500" },
-  completed: { label: "Validé", dot: "bg-emerald-500" },
-  failed: { label: "Échoué", dot: "bg-red-500" },
-  refunded: { label: "Remboursé", dot: "bg-blue-500" },
-  cancelled: { label: "Annulé", dot: "bg-rose-500" },
-}
+import type { Payment } from "@/lib/contracts/payment"
 
 export function PaymentsPageClient() {
   const [createOpen, setCreateOpen] = useState(false)
@@ -279,188 +251,19 @@ export function PaymentsPageClient() {
             </div>
           ) : (
             <>
-            {/* Desktop : table dense. Mobile : cards persona-first */}
-            <div className="hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead>Élève</TableHead>
-                  <TableHead>Frais</TableHead>
-                  <TableHead className="text-right">Montant</TableHead>
-                  <TableHead>Méthode</TableHead>
-                  <TableHead>Encaissé par</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payments.map((payment: Payment) => {
-                  const statusCfg = STATUS_CONFIG[payment.status]
-                  const MethodIcon = paymentMethodIcon(payment.method)
-                  const initials = payment.student_name
-                    ? payment.student_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
-                    : "?"
-                  return (
-                    <TableRow
-                      key={payment.id}
-                      className="group cursor-pointer"
-                      onClick={() => {
-                        // Navigate to student detail if we have student info
-                        // For now, open receipt preview
-                        handlePreviewReceipt(payment)
-                      }}
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-2.5">
-                          <StudentAvatar
-                            photoUrl={payment.student_photo_url}
-                            initials={initials}
-                          />
-                          <div>
-                            <p className="text-sm font-medium leading-tight">
-                              {payment.student_name ?? `Paiement #${payment.id}`}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">#{payment.id}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {payment.fee_name ?? "—"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className="font-semibold tabular-nums">
-                          {Number(payment.amount).toLocaleString("fr-FR")}
-                        </span>
-                        <span className="ml-1 text-xs text-muted-foreground">FCFA</span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <MethodIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-sm">{paymentMethodLabel(payment.method)}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <UserCheck className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                          <span className="text-sm">
-                            {payment.received_by_name ?? "—"}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className={`h-2 w-2 rounded-full ${statusCfg.dot}`} />
-                          <span className="text-sm">{statusCfg.label}</span>
-                        </div>
-                        {payment.cancellation_reason && (
-                          <p className="mt-0.5 max-w-[22rem] text-xs text-muted-foreground">
-                            {motifComplet(payment)}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground tabular-nums">
-                        {new Date(payment.created_at).toLocaleDateString("fr-FR", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div
-                          className="opacity-60 transition-opacity group-hover:opacity-100"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <PaymentRowActions
-                            payment={payment}
-                            onValidate={(p) => setConfirmAction({ type: "validate", payment: p })}
-                            onCancel={(p) => setConfirmAction({ type: "cancel", payment: p })}
-                            onPreviewReceipt={handlePreviewReceipt}
-                            previewBusy={downloadingId === payment.id}
-                          />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-            </div>
-
-            {/* Mobile : cards verticales, Wave-style amount-first + status colored */}
-            <div className="space-y-2 p-3 md:hidden">
-              {payments.map((payment: Payment) => {
-                const statusCfg = STATUS_CONFIG[payment.status]
-                const MethodIcon = paymentMethodIcon(payment.method)
-                const initials = payment.student_name
-                  ? payment.student_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
-                  : "?"
-                return (
-                  <div
-                    key={payment.id}
-                    className="overflow-hidden rounded-lg border bg-card"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handlePreviewReceipt(payment)}
-                      className="w-full p-3 text-left transition-colors hover:bg-accent/40 active:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                    >
-                      <div className="flex items-start gap-3">
-                        <StudentAvatar photoUrl={payment.student_photo_url} initials={initials} />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="truncate text-sm font-medium leading-tight">
-                              {payment.student_name ?? `Paiement #${payment.id}`}
-                            </p>
-                            <p className="shrink-0 text-base font-semibold tabular-nums leading-tight">
-                              {Number(payment.amount).toLocaleString("fr-FR")}
-                              <span className="ml-0.5 text-[10px] font-normal text-muted-foreground">FCFA</span>
-                            </p>
-                          </div>
-                          <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <MethodIcon className="h-3 w-3" aria-hidden="true" />
-                              {paymentMethodLabel(payment.method)}
-                            </span>
-                            <span className="tabular-nums">
-                              {new Date(payment.created_at).toLocaleDateString("fr-FR", {
-                                day: "2-digit",
-                                month: "short",
-                              })}
-                            </span>
-                            <span className="ml-auto inline-flex items-center gap-1">
-                              <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} aria-hidden="true" />
-                              <span className="font-medium">{statusCfg.label}</span>
-                            </span>
-                          </div>
-                          <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
-                            <UserCheck className="h-3 w-3 shrink-0" aria-hidden="true" />
-                            Encaissé par {payment.received_by_name ?? "—"}
-                          </p>
-                          {payment.fee_name && (
-                            <p className="mt-1 truncate text-[11px] text-muted-foreground">
-                              {payment.fee_name}
-                            </p>
-                          )}
-                          {payment.cancellation_reason && (
-                            <p className="mt-1 text-[11px] text-muted-foreground">
-                              {motifComplet(payment)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                    <PaymentCardActions
-                      payment={payment}
-                      onValidate={(p) => setConfirmAction({ type: "validate", payment: p })}
-                      onCancel={(p) => setConfirmAction({ type: "cancel", payment: p })}
-                    />
-                  </div>
-                )
-              })}
-            </div>
+            <PaymentsTable
+              payments={payments}
+              downloadingId={downloadingId}
+              onPreviewReceipt={handlePreviewReceipt}
+              onValidate={(p) => setConfirmAction({ type: "validate", payment: p })}
+              onCancel={(p) => setConfirmAction({ type: "cancel", payment: p })}
+            />
+            <PaymentsCardList
+              payments={payments}
+              onPreviewReceipt={handlePreviewReceipt}
+              onValidate={(p) => setConfirmAction({ type: "validate", payment: p })}
+              onCancel={(p) => setConfirmAction({ type: "cancel", payment: p })}
+            />
             </>
           )}
         </CardContent>
