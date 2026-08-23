@@ -558,11 +558,8 @@ export function PaymentsPageClient() {
                           <span className="text-sm">{statusCfg.label}</span>
                         </div>
                         {payment.cancellation_reason && (
-                          <p
-                            className="mt-0.5 max-w-[22rem] text-xs text-muted-foreground"
-                            title={motifComplet(payment)}
-                          >
-                            {payment.cancellation_reason}
+                          <p className="mt-0.5 max-w-[22rem] text-xs text-muted-foreground">
+                            {motifComplet(payment)}
                           </p>
                         )}
                       </TableCell>
@@ -671,6 +668,11 @@ export function PaymentsPageClient() {
                             {payment.fee_name}
                           </p>
                         )}
+                        {payment.cancellation_reason && (
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            {motifComplet(payment)}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </button>
@@ -729,6 +731,12 @@ export function PaymentsPageClient() {
               <p className="text-xs text-muted-foreground">
                 Une phrase, pas un mot : elle figurera sur le bordereau de caisse et sur le
                 reçu.
+              </p>
+              <p className="rounded-md bg-amber-500/10 px-2.5 py-2 text-xs text-amber-900 dark:text-amber-200">
+                À n&apos;utiliser que si <strong>aucun argent n&apos;a bougé</strong> : une
+                saisie en trop, un double. Si l&apos;argent a bien été encaissé, annuler le
+                ferait disparaître alors qu&apos;il est dans le tiroir, et la caisse serait
+                en excédent inexpliqué à la clôture. Passez par la comptabilité.
               </p>
             </div>
           )}
