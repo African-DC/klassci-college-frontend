@@ -187,8 +187,9 @@ export function useValidatePayment() {
 export function useCancelPayment() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => paymentsApi.cancel(id),
-    onMutate: async (id) => {
+    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+      paymentsApi.cancel(id, reason),
+    onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: paymentKeys.all })
       const snapshots = queryClient.getQueriesData<PaginatedResponse<Payment>>({
         queryKey: paymentKeys.all,

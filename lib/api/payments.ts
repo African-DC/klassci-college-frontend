@@ -153,8 +153,11 @@ export const paymentsApi = {
   },
 
   // Annuler un paiement (cascade DELETE allocations + recompute fees)
-  cancel: async (id: number): Promise<Payment> => {
-    const json = await apiFetch<unknown>(`/payments/${id}/cancel`, { method: "POST" })
+  cancel: async (id: number, reason: string): Promise<Payment> => {
+    const json = await apiFetch<unknown>(`/payments/${id}/cancel`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    })
     return safeValidate(
       PaymentSchema,
       unwrapPayment(json),

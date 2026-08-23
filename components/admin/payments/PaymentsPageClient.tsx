@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageHero, heroAccentBtn, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
@@ -65,6 +66,15 @@ import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ""
 
+/** « Annulé le 23/08/2026 par M. Konan · motif » — la ligne d'un contrôle. */
+function motifComplet(p: Payment): string {
+  const quand = p.cancelled_at
+    ? ` le ${new Date(p.cancelled_at).toLocaleDateString("fr-FR")}`
+    : ""
+  const qui = p.cancelled_by_name ? ` par ${p.cancelled_by_name}` : ""
+  return `Annulé${quand}${qui}${p.cancellation_reason ? ` · ${p.cancellation_reason}` : ""}`
+}
+
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; dot: string }> = {
   pending: { label: "En attente", variant: "secondary", dot: "bg-amber-500" },
   completed: { label: "Validé", variant: "default", dot: "bg-emerald-500" },
@@ -83,6 +93,10 @@ export function PaymentsPageClient() {
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [confirmAction, setConfirmAction] = useState<{ type: "validate" | "cancel"; payment: Payment } | null>(null)
+  // Le motif d'annulation figure sur le bordereau et sur le reçu réimprimé :
+  // il est exigé ici, pas seulement côté serveur, pour que la personne qui
+  // annule sache qu'elle signe une phrase.
+  const [motifAnnulation, setMotifAnnulation] = useState("")
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewPaymentId, setPreviewPaymentId] = useState<number | null>(null)
@@ -185,13 +199,19 @@ export function PaymentsPageClient() {
     }
   }
 
+  const motifTropCourt = motifAnnulation.trim().length < 10
+
   function handleConfirmAction() {
     if (!confirmAction) return
-    const onSuccess = () => setConfirmAction(null)
+    const onSuccess = () => {
+      setConfirmAction(null)
+      setMotifAnnulation("")
+    }
     if (confirmAction.type === "validate") {
       validatePayment(confirmAction.payment.id, { onSuccess })
     } else {
-      cancelPayment(confirmAction.payment.id, { onSuccess })
+      if (motifTropCourt) return
+      cancelPayment({ id: confirmAction.payment.id, reason: motifAnnulation.trim() }, { onSuccess })
     }
   }
 
@@ -537,6 +557,11 @@ export function PaymentsPageClient() {
                           <div className={`h-2 w-2 rounded-full ${statusCfg.dot}`} />
                           <span className="text-sm">{statusCfg.label}</span>
                         </div>
+                        {payment.cancellation_reason && (
+                          <p className="mt-0.5 max-w-[22rem] text-xs text-muted-foreground">
+                            {motifComplet(payment)}
+                          </p>
+                        )}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground tabular-nums">
                         {new Date(payment.created_at).toLocaleDateString("fr-FR", {
@@ -643,6 +668,11 @@ export function PaymentsPageClient() {
                             {payment.fee_name}
                           </p>
                         )}
+                        {payment.cancellation_reason && (
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            {motifComplet(payment)}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </button>
@@ -664,7 +694,15 @@ export function PaymentsPageClient() {
       <PaymentCreateWizard open={createOpen} onClose={() => setCreateOpen(false)} />
 
       {/* Confirmation dialog */}
-      <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null) }}>
+      <AlertDialog
+        open={!!confirmAction}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmAction(null)
+            setMotifAnnulation("")
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -673,12 +711,43 @@ export function PaymentsPageClient() {
             <AlertDialogDescription>
               {confirmAction?.type === "validate"
                 ? `Vous allez valider le paiement de ${Number(confirmAction.payment.amount).toLocaleString("fr-FR")} FCFA. Cette action est irréversible.`
-                : `Vous allez annuler le paiement de ${Number(confirmAction?.payment.amount).toLocaleString("fr-FR")} FCFA. Cette action est irréversible.`}
+                : `Le versement de ${Number(confirmAction?.payment.amount).toLocaleString("fr-FR")} FCFA ne sera pas supprimé : il restera dans le journal, marqué annulé, avec votre nom et votre motif. Le reçu réimprimé le dira aussi.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {confirmAction?.type === "cancel" && (
+            <div className="space-y-1.5">
+              <label htmlFor="motif-annulation" className="text-sm font-medium">
+                Motif de l&apos;annulation *
+              </label>
+              <Textarea
+                id="motif-annulation"
+                value={motifAnnulation}
+                onChange={(e) => setMotifAnnulation(e.target.value)}
+                placeholder="Ex : montant saisi en trop, la caisse ne contient pas ces 5 000 F."
+                rows={3}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">
+                Une phrase, pas un mot : elle figurera sur le bordereau de caisse et sur le
+                reçu.
+              </p>
+              <p className="rounded-md bg-amber-500/10 px-2.5 py-2 text-xs text-amber-900 dark:text-amber-200">
+                À n&apos;utiliser que si <strong>aucun argent n&apos;a bougé</strong> : une
+                saisie en trop, un double. Si l&apos;argent a bien été encaissé, annuler le
+                ferait disparaître alors qu&apos;il est dans le tiroir, et la caisse serait
+                en excédent inexpliqué à la clôture. Passez par la comptabilité.
+              </p>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Retour</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmAction} disabled={validating || cancelling}>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              disabled={
+                validating || cancelling || (confirmAction?.type === "cancel" && motifTropCourt)
+              }
+            >
               {validating || cancelling
                 ? "Traitement..."
                 : confirmAction?.type === "validate" ? "Valider" : "Annuler le paiement"}
