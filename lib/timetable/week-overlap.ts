@@ -24,14 +24,23 @@ const JOURS_VERS_EN: Record<string, DayOfWeek> = {
   samedi: "saturday",
 }
 
-export const JOURS_FR: Record<DayOfWeek, string> = {
+/**
+ * Le nom francais de chaque jour, dans le type litteral et pas en `string`.
+ *
+ * Les formulaires stockent le jour en francais et leur schema n'accepte que ces
+ * six valeurs : garder le type litteral evite un cast a chaque fois qu'on
+ * traduit depuis l'anglais.
+ */
+export const JOURS_FR = {
   monday: "lundi",
   tuesday: "mardi",
   wednesday: "mercredi",
   thursday: "jeudi",
   friday: "vendredi",
   saturday: "samedi",
-}
+} as const satisfies Record<DayOfWeek, string>
+
+export type JourFr = (typeof JOURS_FR)[DayOfWeek]
 
 export function versJourAnglais(jour: string | undefined): DayOfWeek | undefined {
   if (!jour) return undefined

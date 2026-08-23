@@ -255,7 +255,11 @@ export function useTeacherWeek(teacherId: number | undefined) {
     queryKey: timetableKeys.teacherWeek(teacherId ?? 0),
     queryFn: () => timetableApi.teacherWeek(teacherId as number),
     enabled: !!teacherId,
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 30,
+    // Les plages se corrigent souvent dans un autre onglet, sur la fiche de
+    // l'enseignant. Relire au retour evite de poser un creneau contre une
+    // semaine perimee, sans que personne ait a penser au bouton.
+    refetchOnWindowFocus: true,
   })
 }
 

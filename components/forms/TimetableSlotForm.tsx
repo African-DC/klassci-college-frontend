@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertTriangle, Plus } from "lucide-react"
@@ -13,7 +13,8 @@ import { useClass } from "@/lib/hooks/useClasses"
 import { useRooms } from "@/lib/hooks/useRooms"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { TeacherWeekPanel } from "@/components/timetable/TeacherWeekPanel"
-import { trouverEmpechement } from "@/lib/timetable/week-overlap"
+import type { PlageChoisie } from "@/components/timetable/week-grid/use-selection-glissee"
+import { JOURS_FR, trouverEmpechement } from "@/lib/timetable/week-overlap"
 import {
   InlineCreateSubjectDialog,
   InlineCreateTeacherDialog,
@@ -143,7 +144,12 @@ export function TimetableSlotForm({
   const watchedDay = form.watch("day")
   const watchedStart = form.watch("start_time")
   const watchedEnd = form.watch("end_time")
-  const { data: teacherWeek, isLoading: weekLoading } = useTeacherWeek(selectedTeacherId)
+  const {
+    data: teacherWeek,
+    isLoading: weekLoading,
+    isFetching: weekFetching,
+    refetch: relireLaSemaine,
+  } = useTeacherWeek(selectedTeacherId)
 
   // En modification, le creneau qu'on deplace figure dans sa propre semaine :
   // sans cela, il se signalerait lui-meme comme conflit.
@@ -162,6 +168,27 @@ export function TimetableSlotForm({
       ),
     }
   }, [teacherWeek, slot])
+
+  /**
+   * Ce qui a ete trace sur la grille devient la saisie.
+   *
+   * Le formulaire stocke le jour en francais, la grille raisonne en anglais :
+   * la traduction se fait ici, au seul endroit ou les deux se rencontrent.
+   */
+  const choisirSurLaGrille = useCallback(
+    (plage: PlageChoisie) => {
+      form.setValue("day", JOURS_FR[plage.jour], { shouldValidate: true, shouldDirty: true })
+      form.setValue("start_time", `${String(plage.debut).padStart(2, "0")}:00`, {
+        shouldValidate: true,
+        shouldDirty: true,
+      })
+      form.setValue("end_time", `${String(plage.fin).padStart(2, "0")}:00`, {
+        shouldValidate: true,
+        shouldDirty: true,
+      })
+    },
+    [form],
+  )
 
   const empechement = trouverEmpechement(
     weekSansCeCreneau,
@@ -208,6 +235,8 @@ export function TimetableSlotForm({
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-start lg:gap-6">
+            <div className="space-y-4">
           {/* Subject select — filtered by class level */}
           <FormField
             control={form.control}
@@ -298,19 +327,6 @@ export function TimetableSlotForm({
               </FormItem>
             )}
           />
-
-          {selectedTeacherId ? (
-            <div className="rounded-xl border bg-card/60 p-3 sm:p-4">
-              <TeacherWeekPanel
-                week={weekSansCeCreneau}
-                isLoading={weekLoading}
-                highlightDay={watchedDay}
-                highlightStart={watchedStart}
-                highlightEnd={watchedEnd}
-                editHref={`/admin/teachers/${selectedTeacherId}?tab=disponibilites`}
-              />
-            </div>
-          ) : null}
 
           <div className="grid gap-4 sm:grid-cols-3">
             <FormField
@@ -409,6 +425,33 @@ export function TimetableSlotForm({
               </FormItem>
             )}
           />
+
+            </div>
+
+            {/* La semaine a cote des champs, et non au-dessus : on doit voir les
+                heures se remplir pendant qu'on les trace. */}
+            <div className="mt-4 lg:mt-0">
+              {selectedTeacherId ? (
+                <TeacherWeekPanel
+                  week={weekSansCeCreneau}
+                  isLoading={weekLoading}
+                  highlightDay={watchedDay}
+                  highlightStart={watchedStart}
+                  highlightEnd={watchedEnd}
+                  editHref={`/admin/teachers/${selectedTeacherId}?tab=disponibilites`}
+                  onChoisir={choisirSurLaGrille}
+                  onRefresh={() => void relireLaSemaine()}
+                  isRefreshing={weekFetching}
+                />
+              ) : (
+                <div className="hidden rounded-xl border border-dashed bg-muted/20 p-6 text-center lg:block">
+                  <p className="text-sm text-muted-foreground">
+                    Choisissez un enseignant pour voir sa semaine et y tracer le créneau.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
 
           {error && (
             <div
