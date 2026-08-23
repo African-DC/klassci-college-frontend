@@ -3,44 +3,20 @@
 import { useState, useMemo, useCallback } from "react"
 import {
   Plus, Download, Wallet, TrendingUp,
-  AlertCircle, Banknote, CreditCard, Search, X, Eye,
-  Receipt, CalendarDays, Coins, Smartphone, Building2, FileText,
-  FileSpreadsheet, Loader2, UserCheck,
+  AlertCircle, Banknote, CreditCard, Eye,
+  Receipt, FileSpreadsheet, Loader2, UserCheck,
 } from "lucide-react"
 import { toast } from "sonner"
 import { PaymentRowActions } from "@/components/admin/payments/PaymentRowActions"
 import { PaymentCardActions } from "@/components/admin/payments/PaymentCardActions"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { StudentAvatar } from "@/components/admin/payments/StudentAvatar"
+import { PaymentsFilters } from "@/components/admin/payments/PaymentsFilters"
+import { usePaymentFilters } from "@/lib/hooks/usePaymentFilters"
+import { PaymentConfirmDialog, type PaymentConfirmAction } from "@/components/admin/payments/PaymentConfirmDialog"
+import { PaymentReceiptDialog } from "@/components/admin/payments/PaymentReceiptDialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageHero, heroAccentBtn, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -59,14 +35,11 @@ import {
 } from "@/lib/hooks/usePayments"
 import { useFeeCategories } from "@/lib/hooks/useFees"
 import { paymentsApi } from "@/lib/api/payments"
-import { ALL_PAYMENT_METHODS, paymentMethodLabel } from "@/lib/payment-methods"
+import { paymentMethodLabel } from "@/lib/payment-methods"
 import { paymentMethodIcon } from "@/components/admin/payments/method-icon"
-import { useDebounce } from "@/lib/hooks/useDebounce"
 import { openPdfPreview } from "@/lib/pdf/preview"
 import { downloadBlob } from "@/lib/utils"
-import type { PaymentListParams, PaymentStatus, PaymentMethod, Payment } from "@/lib/contracts/payment"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ""
+import type { PaymentStatus, Payment } from "@/lib/contracts/payment"
 
 /** « Annulé le 23/08/2026 par M. Konan · motif » — la ligne d'un contrôle. */
 function motifComplet(p: Payment): string {
@@ -77,47 +50,23 @@ function motifComplet(p: Payment): string {
   return `Annulé${quand}${qui}${p.cancellation_reason ? ` · ${p.cancellation_reason}` : ""}`
 }
 
-const STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; dot: string }> = {
-  pending: { label: "En attente", variant: "secondary", dot: "bg-amber-500" },
-  completed: { label: "Validé", variant: "default", dot: "bg-emerald-500" },
-  failed: { label: "Échoué", variant: "destructive", dot: "bg-red-500" },
-  refunded: { label: "Remboursé", variant: "outline", dot: "bg-blue-500" },
-  cancelled: { label: "Annulé", variant: "destructive", dot: "bg-rose-500" },
+const STATUS_CONFIG: Record<PaymentStatus, { label: string; dot: string }> = {
+  pending: { label: "En attente", dot: "bg-amber-500" },
+  completed: { label: "Validé", dot: "bg-emerald-500" },
+  failed: { label: "Échoué", dot: "bg-red-500" },
+  refunded: { label: "Remboursé", dot: "bg-blue-500" },
+  cancelled: { label: "Annulé", dot: "bg-rose-500" },
 }
 
 export function PaymentsPageClient() {
   const [createOpen, setCreateOpen] = useState(false)
-  const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState<PaymentStatus | undefined>(undefined)
-  const [methodFilter, setMethodFilter] = useState<PaymentMethod | undefined>(undefined)
-  const [categoryFilter, setCategoryFilter] = useState<string | undefined>(undefined)
-  const [cashierFilter, setCashierFilter] = useState<string | undefined>(undefined)
-  const [dateFrom, setDateFrom] = useState("")
-  const [dateTo, setDateTo] = useState("")
-  const [confirmAction, setConfirmAction] = useState<{ type: "validate" | "cancel"; payment: Payment } | null>(null)
-  // Le motif d'annulation figure sur le bordereau et sur le reçu réimprimé :
-  // il est exigé ici, pas seulement côté serveur, pour que la personne qui
-  // annule sache qu'elle signe une phrase.
-  const [motifAnnulation, setMotifAnnulation] = useState("")
+  const [confirmAction, setConfirmAction] = useState<PaymentConfirmAction | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewPaymentId, setPreviewPaymentId] = useState<number | null>(null)
   const [exporting, setExporting] = useState<"pdf" | "xlsx" | "preview" | null>(null)
 
-  const debouncedSearch = useDebounce(search)
-
-  // La période part au serveur : la filtrer dans le navigateur ne trierait que
-  // la page affichée, et l'export qui suit ne dirait pas la même chose que
-  // l'écran.
-  const params: PaymentListParams = {
-    ...(statusFilter && { status: statusFilter }),
-    ...(methodFilter && { method: methodFilter }),
-    ...(debouncedSearch && { search: debouncedSearch }),
-    ...(categoryFilter && { fee_category_id: Number(categoryFilter) }),
-    ...(cashierFilter && { received_by: Number(cashierFilter) }),
-    ...(dateFrom && { date_from: `${dateFrom}T00:00:00` }),
-    ...(dateTo && { date_to: `${dateTo}T23:59:59` }),
-  }
+  const { filters, set, reset, params, activeCount } = usePaymentFilters()
 
   const { data, isLoading } = usePayments(params)
   const { data: summary } = useFinancialSummary()
@@ -132,15 +81,6 @@ export function PaymentsPageClient() {
   // distinguer. Un caissier cloisonné ne reçoit que lui-même du serveur : lui
   // proposer une liste d'un seul nom serait un faux choix.
   const showCashierFilter = (cashiers?.length ?? 0) > 1
-
-  const activeFilterCount = [
-    statusFilter,
-    methodFilter,
-    categoryFilter,
-    cashierFilter,
-    dateFrom,
-    dateTo,
-  ].filter(Boolean).length
 
   // Les exports sont produits par le serveur, aux mêmes filtres que l'écran et
   // sous le même cloisonnement : un caissier n'obtient jamais dans un fichier
@@ -201,30 +141,14 @@ export function PaymentsPageClient() {
     }
   }
 
-  const motifTropCourt = motifAnnulation.trim().length < 10
-
-  function handleConfirmAction() {
+  function handleConfirmAction(reason: string) {
     if (!confirmAction) return
-    const onSuccess = () => {
-      setConfirmAction(null)
-      setMotifAnnulation("")
-    }
+    const onSuccess = () => setConfirmAction(null)
     if (confirmAction.type === "validate") {
       validatePayment(confirmAction.payment.id, { onSuccess })
     } else {
-      if (motifTropCourt) return
-      cancelPayment({ id: confirmAction.payment.id, reason: motifAnnulation.trim() }, { onSuccess })
+      cancelPayment({ id: confirmAction.payment.id, reason }, { onSuccess })
     }
-  }
-
-  function clearFilters() {
-    setStatusFilter(undefined)
-    setMethodFilter(undefined)
-    setCategoryFilter(undefined)
-    setCashierFilter(undefined)
-    setDateFrom("")
-    setDateTo("")
-    setSearch("")
   }
 
   // Le serveur ne sert pas le recouvrement a qui ne lit que sa propre caisse.
@@ -324,143 +248,15 @@ export function PaymentsPageClient() {
         kpis={heroKpis}
       />
 
-      {/* Barre de recherche + filtres */}
-      <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Search */}
-            <div className="relative flex-1 min-w-[240px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher par élève, référence..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-10 pl-9 pr-9"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Filtres rapides */}
-            <Select
-              value={statusFilter ?? "all"}
-              onValueChange={(v) => setStatusFilter(v === "all" ? undefined : (v as PaymentStatus))}
-            >
-              <SelectTrigger className="w-[150px] h-10">
-                <SelectValue placeholder="Statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="pending">En attente</SelectItem>
-                <SelectItem value="completed">Validé</SelectItem>
-                <SelectItem value="failed">Échoué</SelectItem>
-                <SelectItem value="refunded">Remboursé</SelectItem>
-                <SelectItem value="cancelled">Annulé</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={methodFilter ?? "all"}
-              onValueChange={(v) => setMethodFilter(v === "all" ? undefined : (v as PaymentMethod))}
-            >
-              <SelectTrigger className="w-[150px] h-10">
-                <SelectValue placeholder="Méthode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes méthodes</SelectItem>
-                {/* Le filtre porte sur l'historique, valeur « Mobile Money »
-                    comprise : sans elle, une école ne retrouverait plus les
-                    versements enregistrés avant la distinction des opérateurs. */}
-                {ALL_PAYMENT_METHODS.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {paymentMethodLabel(m)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Filtre catégorie de frais */}
-            <Select
-              value={categoryFilter ?? "all"}
-              onValueChange={(v) => setCategoryFilter(v === "all" ? undefined : v)}
-            >
-              <SelectTrigger className="w-[160px] h-10">
-                <SelectValue placeholder="Catégorie" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes catégories</SelectItem>
-                {feeCategories?.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id.toString()}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Filtre encaisseur — la question de fond d'une caisse d'école */}
-            {showCashierFilter && (
-              <Select
-                value={cashierFilter ?? "all"}
-                onValueChange={(v) => setCashierFilter(v === "all" ? undefined : v)}
-              >
-                <SelectTrigger className="w-[170px] h-10" aria-label="Filtrer par encaisseur">
-                  <SelectValue placeholder="Encaissé par" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes les caisses</SelectItem>
-                  {cashiers?.map((cashier) => (
-                    <SelectItem key={cashier.id} value={cashier.id.toString()}>
-                      {cashier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            {activeFilterCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10 text-xs text-muted-foreground">
-                <X className="mr-1 h-3 w-3" />
-                Réinitialiser ({activeFilterCount})
-              </Button>
-            )}
-          </div>
-
-          {/* Date range filter */}
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="text-xs text-muted-foreground shrink-0">Période :</span>
-            <Input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="h-8 w-[8.75rem] min-w-0 max-w-full flex-1 text-xs sm:flex-none"
-              placeholder="Du"
-            />
-            <span className="text-xs text-muted-foreground">au</span>
-            <Input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="h-8 w-[8.75rem] min-w-0 max-w-full flex-1 text-xs sm:flex-none"
-              placeholder="Au"
-            />
-            {(dateFrom || dateTo) && (
-              <button
-                onClick={() => { setDateFrom(""); setDateTo("") }}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <PaymentsFilters
+        filters={filters}
+        set={set}
+        reset={reset}
+        activeCount={activeCount}
+        feeCategories={feeCategories}
+        cashiers={cashiers}
+        showCashier={showCashierFilter}
+      />
 
       {/* Tableau des paiements premium */}
       <Card className="border-0 shadow-sm ring-1 ring-border overflow-hidden">
@@ -476,7 +272,7 @@ export function PaymentsPageClient() {
               <Receipt className="h-10 w-10 mb-3 opacity-40" />
               <p className="text-sm font-medium">Aucun paiement trouvé</p>
               <p className="text-xs mt-1">
-                {activeFilterCount > 0 || search
+                {activeCount > 0 || filters.search
                   ? "Essayez de modifier vos filtres"
                   : "Créez votre premier paiement"}
               </p>
@@ -679,119 +475,19 @@ export function PaymentsPageClient() {
 
       <PaymentCreateWizard open={createOpen} onClose={() => setCreateOpen(false)} />
 
-      {/* Confirmation dialog */}
-      <AlertDialog
-        open={!!confirmAction}
-        onOpenChange={(open) => {
-          if (!open) {
-            setConfirmAction(null)
-            setMotifAnnulation("")
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmAction?.type === "validate" ? "Valider ce paiement ?" : "Annuler ce paiement ?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmAction?.type === "validate"
-                ? `Vous allez valider le paiement de ${Number(confirmAction.payment.amount).toLocaleString("fr-FR")} FCFA. Cette action est irréversible.`
-                : `Le versement de ${Number(confirmAction?.payment.amount).toLocaleString("fr-FR")} FCFA ne sera pas supprimé : il restera dans le journal, marqué annulé, avec votre nom et votre motif. Le reçu réimprimé le dira aussi.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {confirmAction?.type === "cancel" && (
-            <div className="space-y-1.5">
-              <label htmlFor="motif-annulation" className="text-sm font-medium">
-                Motif de l&apos;annulation *
-              </label>
-              <Textarea
-                id="motif-annulation"
-                value={motifAnnulation}
-                onChange={(e) => setMotifAnnulation(e.target.value)}
-                placeholder="Ex : montant saisi en trop, la caisse ne contient pas ces 5 000 F."
-                rows={3}
-                autoFocus
-              />
-              <p className="text-xs text-muted-foreground">
-                Une phrase, pas un mot : elle figurera sur le bordereau de caisse et sur le
-                reçu.
-              </p>
-              <p className="rounded-md bg-amber-500/10 px-2.5 py-2 text-xs text-amber-900 dark:text-amber-200">
-                À n&apos;utiliser que si <strong>aucun argent n&apos;a bougé</strong> : une
-                saisie en trop, un double. Si l&apos;argent a bien été encaissé, annuler le
-                ferait disparaître alors qu&apos;il est dans le tiroir, et la caisse serait
-                en excédent inexpliqué à la clôture. Passez par la comptabilité.
-              </p>
-            </div>
-          )}
-          <AlertDialogFooter>
-            <AlertDialogCancel>Retour</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmAction}
-              disabled={
-                validating || cancelling || (confirmAction?.type === "cancel" && motifTropCourt)
-              }
-            >
-              {validating || cancelling
-                ? "Traitement..."
-                : confirmAction?.type === "validate" ? "Valider" : "Annuler le paiement"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Receipt Preview Dialog */}
-      <Dialog open={previewUrl !== null} onOpenChange={handleClosePreview}>
-        <DialogContent className="max-w-3xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>Reçu de paiement #{previewPaymentId}</DialogTitle>
-          </DialogHeader>
-          {previewUrl && (
-            <iframe
-              src={previewUrl}
-              className="w-full h-[65vh] rounded-lg border"
-              title="Aperçu du reçu"
-            />
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={handleClosePreview}>
-              Fermer
-            </Button>
-            <Button onClick={handleDownloadFromPreview}>
-              <Download className="mr-2 h-4 w-4" />
-              Télécharger le PDF
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Student Avatar with fallback
-// ---------------------------------------------------------------------------
-
-function StudentAvatar({ photoUrl, initials }: { photoUrl?: string | null; initials: string }) {
-  const [imgError, setImgError] = useState(false)
-  const fullUrl = photoUrl && !imgError ? `${API_URL}${photoUrl}` : null
-
-  if (fullUrl) {
-    return (
-      <img
-        src={fullUrl}
-        alt=""
-        className="h-8 w-8 rounded-full object-cover"
-        onError={() => setImgError(true)}
+      <PaymentConfirmDialog
+        action={confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={handleConfirmAction}
+        busy={validating || cancelling}
       />
-    )
-  }
 
-  return (
-    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-      {initials}
+      <PaymentReceiptDialog
+        url={previewUrl}
+        paymentId={previewPaymentId}
+        onClose={handleClosePreview}
+        onDownload={handleDownloadFromPreview}
+      />
     </div>
   )
 }
