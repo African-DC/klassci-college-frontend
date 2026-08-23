@@ -8,39 +8,45 @@
  * jusqu'à 10 h — n'existait pas. C'est pourtant ainsi qu'on remplit un emploi
  * du temps sur papier depuis toujours.
  *
- * Deux décisions portent l'ergonomie :
+ * Trois décisions portent l'ergonomie :
  *
- * - **La sélection bute sur les empêchements.** Descendre à travers un cours
- *   déjà posé s'arrête à son bord. On apprend la contrainte par le geste,
- *   sans avoir lu la légende ni essuyé un refus après validation.
+ * - **La sélection bute sur les empêchements.** Traverser un cours déjà posé
+ *   s'arrête à son bord. On apprend la contrainte par le geste, sans avoir lu
+ *   la légende ni essuyé un refus après validation. Le geste marche dans les
+ *   deux sens : on peut remonter.
  * - **On vise le point, pas la case.** Le pointeur est relu à chaque
  *   déplacement via `elementFromPoint`, si bien que la souris et le doigt
- *   suivent le même chemin — `onPointerEnter` ne se déclenche pas au toucher,
- *   et la tablette serait restée sur le carreau.
+ *   suivent le même chemin — `onPointerEnter` ne se déclenche pas au toucher.
+ *   La grille doit porter `touch-action: none` **avant** le contact : c'est ce
+ *   qui empêche le navigateur de confisquer le geste pour faire défiler.
+ * - **Un geste confisqué n'écrit rien.** `pointercancel` veut dire que le
+ *   navigateur a repris la main, pas que l'utilisateur a choisi. Le confondre
+ *   avec `pointerup` ferait écrire une plage que personne n'a voulue.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import type { DayOfWeek } from "@/lib/contracts/timetable"
+import { versHHMM } from "@/lib/timetable/semaine"
 
 export interface PlageChoisie {
   jour: DayOfWeek
-  /** Heures pleines ; `fin` est exclusive (8 → 10 se lit « 08:00 à 10:00 »). */
-  debut: number
-  fin: number
+  /** « HH:MM », l'unité du domaine — pas des heures pleines qui perdraient les demies. */
+  debut: string
+  fin: string
 }
 
 interface Options {
-  /** Une case sur laquelle on ne peut ni commencer ni s'étendre. */
   estBloquee: (jour: DayOfWeek, heure: number) => boolean
   onCommit: (plage: PlageChoisie) => void
 }
 
-interface Ancre {
+interface Trace {
   jour: DayOfWeek
-  heure: number
+  ancre: number
+  tete: number
 }
 
-function lireCase(x: number, y: number): Ancre | null {
+function lireCase(x: number, y: number): { jour: DayOfWeek; heure: number } | null {
   const cible = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-heure]")
   if (!cible) return null
   const jour = cible.dataset.jour as DayOfWeek | undefined
@@ -49,13 +55,7 @@ function lireCase(x: number, y: number): Ancre | null {
 }
 
 export function useSelectionGlissee({ estBloquee, onCommit }: Options) {
-  const [ancre, setAncre] = useState<Ancre | null>(null)
-  const [tete, setTete] = useState<number | null>(null)
-  const ancreRef = useRef<Ancre | null>(null)
-  const teteRef = useRef<number | null>(null)
-
-  ancreRef.current = ancre
-  teteRef.current = tete
+  const [trace, setTrace] = useState<Trace | null>(null)
 
   /** Jusqu'où on peut aller depuis l'ancre sans traverser un empêchement. */
   const borner = useCallback(
@@ -71,63 +71,52 @@ export function useSelectionGlissee({ estBloquee, onCommit }: Options) {
     [estBloquee],
   )
 
-  const commencer = useCallback(
-    (jour: DayOfWeek, heure: number) => {
-      if (estBloquee(jour, heure)) return
-      setAncre({ jour, heure })
-      setTete(heure)
-    },
-    [estBloquee],
-  )
+  const commencer = (jour: DayOfWeek, heure: number) => {
+    if (estBloquee(jour, heure)) return
+    setTrace({ jour, ancre: heure, tete: heure })
+  }
 
-  const deplacer = useCallback(
-    (x: number, y: number) => {
-      const depart = ancreRef.current
-      if (!depart) return
+  const deplacer = (x: number, y: number) => {
+    setTrace((t) => {
+      if (!t) return t
       const sous = lireCase(x, y)
-      if (!sous || sous.jour !== depart.jour) return
-      setTete(borner(depart.jour, depart.heure, sous.heure))
-    },
-    [borner],
-  )
+      if (!sous || sous.jour !== t.jour) return t
+      const tete = borner(t.jour, t.ancre, sous.heure)
+      return tete === t.tete ? t : { ...t, tete }
+    })
+  }
 
   useEffect(() => {
-    if (!ancre) return
+    if (!trace) return
+    const abandonner = () => setTrace(null)
     const finir = () => {
-      const depart = ancreRef.current
-      const fin = teteRef.current
-      setAncre(null)
-      setTete(null)
-      if (!depart || fin === null) return
+      setTrace(null)
       onCommit({
-        jour: depart.jour,
-        debut: Math.min(depart.heure, fin),
-        fin: Math.max(depart.heure, fin) + 1,
+        jour: trace.jour,
+        debut: versHHMM(Math.min(trace.ancre, trace.tete)),
+        fin: versHHMM(Math.max(trace.ancre, trace.tete) + 1),
       })
     }
-    const annuler = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return
-      setAncre(null)
-      setTete(null)
+    const auClavier = (e: KeyboardEvent) => {
+      if (e.key === "Escape") abandonner()
     }
     window.addEventListener("pointerup", finir)
-    window.addEventListener("pointercancel", finir)
-    window.addEventListener("keydown", annuler)
+    window.addEventListener("pointercancel", abandonner)
+    window.addEventListener("keydown", auClavier)
     return () => {
       window.removeEventListener("pointerup", finir)
-      window.removeEventListener("pointercancel", finir)
-      window.removeEventListener("keydown", annuler)
+      window.removeEventListener("pointercancel", abandonner)
+      window.removeEventListener("keydown", auClavier)
     }
-  }, [ancre, onCommit])
+  }, [trace, onCommit])
 
-  const enCours: PlageChoisie | null =
-    ancre && tete !== null
-      ? {
-          jour: ancre.jour,
-          debut: Math.min(ancre.heure, tete),
-          fin: Math.max(ancre.heure, tete) + 1,
-        }
-      : null
+  const enCours: PlageChoisie | null = trace
+    ? {
+        jour: trace.jour,
+        debut: versHHMM(Math.min(trace.ancre, trace.tete)),
+        fin: versHHMM(Math.max(trace.ancre, trace.tete) + 1),
+      }
+    : null
 
-  return { enCours, commencer, deplacer, glisse: ancre !== null }
+  return { enCours, commencer, deplacer, glisse: trace !== null }
 }

@@ -12,6 +12,7 @@ import { useTeachers } from "@/lib/hooks/useTeachers"
 import { useClass } from "@/lib/hooks/useClasses"
 import { useRooms } from "@/lib/hooks/useRooms"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+import { ChampsDuCreneau } from "@/components/forms/timetable-slot/ChampsDuCreneau"
 import { TeacherWeekPanel } from "@/components/timetable/TeacherWeekPanel"
 import type { PlageChoisie } from "@/components/timetable/week-grid/use-selection-glissee"
 import { JOURS_FR, trouverEmpechement } from "@/lib/timetable/week-overlap"
@@ -21,7 +22,6 @@ import {
   addHour,
 } from "@/components/forms/timetable-slot/inline-create-dialogs"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -38,14 +38,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 
-const DAYS = [
-  { value: "lundi", label: "Lundi" },
-  { value: "mardi", label: "Mardi" },
-  { value: "mercredi", label: "Mercredi" },
-  { value: "jeudi", label: "Jeudi" },
-  { value: "vendredi", label: "Vendredi" },
-  { value: "samedi", label: "Samedi" },
-] as const
 
 interface TimetableSlotFormProps {
   defaultDay?: string
@@ -235,202 +227,140 @@ export function TimetableSlotForm({
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-start lg:gap-6">
-            <div className="space-y-4">
-          {/* Subject select — filtered by class level */}
-          <FormField
-            control={form.control}
-            name="subject_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Matière *</FormLabel>
-                <div className="flex items-center gap-2">
-                  <Select
-                    onValueChange={(v) => field.onChange(Number(v))}
-                    value={field.value?.toString() ?? ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-11 flex-1">
-                        <SelectValue placeholder="Sélectionner une matière" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {subjects.map((s) => (
-                        <SelectItem key={s.id} value={s.id.toString()}>
-                          {s.name} (Coef. {s.coefficient}, {s.hours_per_week}h/sem)
-                          {s.teacher_name ? ` — ${s.teacher_name}` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-11 w-11 shrink-0"
-                    onClick={() => setShowCreateSubject(true)}
-                    title="Créer une matière"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="min-w-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-start lg:gap-6">
+            <div className="min-w-0 space-y-4">
+              {/* Subject select — filtered by class level */}
+              <FormField
+                control={form.control}
+                name="subject_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Matière *</FormLabel>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        onValueChange={(v) => field.onChange(Number(v))}
+                        value={field.value?.toString() ?? ""}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-11 min-w-0 flex-1">
+                            <SelectValue placeholder="Sélectionner une matière" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {subjects.map((s) => (
+                            <SelectItem key={s.id} value={s.id.toString()}>
+                              {s.name} (Coef. {s.coefficient}, {s.hours_per_week}h/sem)
+                              {s.teacher_name ? ` — ${s.teacher_name}` : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-11 w-11 shrink-0"
+                        onClick={() => setShowCreateSubject(true)}
+                        title="Créer une matière"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {/* Teacher select */}
-          <FormField
-            control={form.control}
-            name="teacher_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Enseignant *</FormLabel>
-                <div className="flex items-center gap-2">
-                  <Select
-                    onValueChange={(v) => field.onChange(Number(v))}
-                    value={field.value?.toString() ?? ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-11 flex-1">
-                        <SelectValue placeholder="Sélectionner un enseignant" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {selectedSubject?.teacher_id && selectedSubject?.teacher_name ? (
-                        /* Subject has an assigned teacher: show only that teacher */
-                        <SelectItem value={selectedSubject.teacher_id.toString()}>
-                          {selectedSubject.teacher_name}
-                        </SelectItem>
-                      ) : (
-                        /* No assigned teacher: show all teachers */
-                        allTeachers.map((t) => (
-                          <SelectItem key={t.id} value={t.id.toString()}>
-                            {t.first_name} {t.last_name} {t.speciality ? `(${t.speciality})` : ""}
+              {/* Teacher select */}
+              <FormField
+                control={form.control}
+                name="teacher_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Enseignant *</FormLabel>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        onValueChange={(v) => field.onChange(Number(v))}
+                        value={field.value?.toString() ?? ""}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-11 min-w-0 flex-1">
+                            <SelectValue placeholder="Sélectionner un enseignant" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {selectedSubject?.teacher_id && selectedSubject?.teacher_name ? (
+                            /* Subject has an assigned teacher: show only that teacher */
+                            <SelectItem value={selectedSubject.teacher_id.toString()}>
+                              {selectedSubject.teacher_name}
+                            </SelectItem>
+                          ) : (
+                            /* No assigned teacher: show all teachers */
+                            allTeachers.map((t) => (
+                              <SelectItem key={t.id} value={t.id.toString()}>
+                                {t.first_name} {t.last_name} {t.speciality ? `(${t.speciality})` : ""}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-11 w-11 shrink-0"
+                        onClick={() => setShowCreateTeacher(true)}
+                        title="Créer un enseignant"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <ChampsDuCreneau
+                form={form}
+                empechement={empechement}
+                erreurServeur={Boolean(error)}
+              />
+
+              {/* Room select */}
+              <FormField
+                control={form.control}
+                name="room"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Salle</FormLabel>
+                    <Select
+                      onValueChange={(v) => field.onChange(v === "none" ? "" : v)}
+                      value={field.value || "none"}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-11">
+                          <SelectValue placeholder="Sélectionner une salle (optionnel)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">Aucune salle</SelectItem>
+                        {filteredRooms.map((r) => (
+                          <SelectItem key={r.id} value={r.name}>
+                            {r.name} {r.capacity ? `(${r.capacity} places)` : ""} {r.room_type !== "classroom" ? `— ${r.room_type}` : ""}
                           </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-11 w-11 shrink-0"
-                    onClick={() => setShowCreateTeacher(true)}
-                    title="Créer un enseignant"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <FormField
-              control={form.control}
-              name="day"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Jour *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Jour" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {DAYS.map((d) => (
-                        <SelectItem key={d.value} value={d.value}>
-                          {d.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="start_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Début *</FormLabel>
-                  <FormControl>
-                    <Input type="time" className="h-11" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="end_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fin *</FormLabel>
-                  <FormControl>
-                    <Input type="time" className="h-11" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {empechement && !error && (
-            <div
-              role="status"
-              className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3"
-            >
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
-              <div className="space-y-0.5">
-                <p className="text-sm font-medium">Créneau impossible</p>
-                <p className="text-sm text-muted-foreground">{empechement.message}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Room select */}
-          <FormField
-            control={form.control}
-            name="room"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Salle</FormLabel>
-                <Select
-                  onValueChange={(v) => field.onChange(v === "none" ? "" : v)}
-                  value={field.value || "none"}
-                >
-                  <FormControl>
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Sélectionner une salle (optionnel)" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="none">Aucune salle</SelectItem>
-                    {filteredRooms.map((r) => (
-                      <SelectItem key={r.id} value={r.name}>
-                        {r.name} {r.capacity ? `(${r.capacity} places)` : ""} {r.room_type !== "classroom" ? `— ${r.room_type}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
             </div>
 
             {/* La semaine a cote des champs, et non au-dessus : on doit voir les
                 heures se remplir pendant qu'on les trace. */}
-            <div className="mt-4 lg:mt-0">
+            <div className="mt-4 min-w-0 lg:mt-0">
               {selectedTeacherId ? (
                 <TeacherWeekPanel
                   week={weekSansCeCreneau}

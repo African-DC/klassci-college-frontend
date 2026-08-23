@@ -2,35 +2,19 @@
  * Ce qu'une case de la semaine raconte, et comment elle le montre.
  *
  * Cinq états, distingués par la **matière** et pas seulement par la teinte :
- * un aplat plein n'est pas une trame, et une trame n'est pas un fond vide. On
- * doit pouvoir lire la grille sans la légende, et la lire quand même quand on
- * ne distingue pas le rouge du vert — ce qui concerne un homme sur douze.
+ * un aplat plein n'est pas une trame à 45°, qui n'est pas une trame à −45°,
+ * qui n'est pas un fond vide. On doit pouvoir lire la grille sans la légende,
+ * et la lire quand même quand on ne distingue pas le rouge du vert — ce qui
+ * concerne un homme sur douze.
+ *
+ * Les deux trames qui coexistent vraiment, « indisponible » et « non
+ * déclaré », sont donc orientées à l'opposé l'une de l'autre. Les distinguer
+ * par la seule teinte reviendrait à ne pas les distinguer.
  */
 
 import type { CSSProperties } from "react"
 import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
-import { enMinutes } from "@/lib/timetable/week-overlap"
-
-export const JOURS: DayOfWeek[] = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-]
-
-export const JOURS_COURTS: Record<DayOfWeek, string> = {
-  monday: "Lun",
-  tuesday: "Mar",
-  wednesday: "Mer",
-  thursday: "Jeu",
-  friday: "Ven",
-  saturday: "Sam",
-}
-
-/** 7 h à 18 h : l'amplitude d'une journée de collège ivoirien. */
-export const HEURES = Array.from({ length: 11 }, (_, i) => 7 + i)
+import { couvre } from "@/lib/timetable/semaine"
 
 export type EtatCase = "libre" | "cours" | "ferme" | "ouvert" | "hors"
 
@@ -47,14 +31,20 @@ export const LIBELLES: Record<EtatCase, string> = {
   hors: "hors des plages déclarées",
 }
 
+export const LIBELLES_LEGENDE: Record<EtatCase, string> = {
+  libre: "Libre",
+  cours: "Cours ailleurs",
+  ferme: "Indisponible",
+  ouvert: "Disponible",
+  hors: "Non déclaré",
+}
+
 /**
  * L'aplat de chaque état.
  *
  * `cours` est le seul plein : c'est le seul empêchement qui porte un contenu,
- * un vrai cours avec sa classe. `ferme` est hachuré parce qu'une hachure se
- * lit « barré » dans toutes les cultures. `hors` est une trame plus pâle : ce
- * n'est pas un refus, c'est une absence d'offre. `ouvert` est le seul état
- * accueillant, et il reste discret pour ne pas concurrencer la sélection.
+ * un vrai cours avec sa classe. Les trames se lisent « barré » dans toutes les
+ * cultures. `ouvert` reste discret pour ne pas concurrencer la sélection.
  */
 export function styleDe(etat: EtatCase): { className: string; style?: CSSProperties } {
   switch (etat) {
@@ -65,11 +55,12 @@ export function styleDe(etat: EtatCase): { className: string; style?: CSSPropert
       }
     case "ferme":
       return {
-        className: "text-rose-900/70 ring-1 ring-inset ring-rose-400/40 dark:text-rose-100/70",
+        className:
+          "bg-rose-500/[0.07] ring-1 ring-inset ring-rose-400/40 dark:bg-rose-400/10 dark:ring-rose-400/30",
         style: {
           backgroundImage:
-            "repeating-linear-gradient(45deg, rgb(244 63 94 / 0.28) 0 2px, transparent 2px 6px)",
-          backgroundColor: "rgb(244 63 94 / 0.07)",
+            "repeating-linear-gradient(45deg, currentColor 0 2px, transparent 2px 6px)",
+          color: "rgb(244 63 94 / 0.3)",
         },
       }
     case "hors":
@@ -77,26 +68,23 @@ export function styleDe(etat: EtatCase): { className: string; style?: CSSPropert
         className: "ring-1 ring-inset ring-border/60",
         style: {
           backgroundImage:
-            "repeating-linear-gradient(45deg, rgb(100 116 139 / 0.16) 0 2px, transparent 2px 7px)",
+            "repeating-linear-gradient(-45deg, currentColor 0 1px, transparent 1px 9px)",
+          color: "rgb(100 116 139 / 0.35)",
         },
       }
     case "ouvert":
-      return {
-        className: "bg-emerald-500/12 ring-1 ring-inset ring-emerald-500/25",
-      }
+      return { className: "bg-emerald-500/20 ring-1 ring-inset ring-emerald-500/40" }
     default:
       return { className: "bg-muted/25 ring-1 ring-inset ring-border/40" }
   }
 }
 
-function couvre(debut: string, fin: string, heure: number): boolean {
-  const d = enMinutes(debut)
-  const f = enMinutes(fin)
-  return d !== null && f !== null && d < (heure + 1) * 60 && f > heure * 60
-}
-
 export function etatDe(week: TeacherWeek, jour: DayOfWeek, heure: number): EtatCase {
-  if (week.busy.some((b) => b.day === jour && b.kind === "course" && couvre(b.start_time, b.end_time, heure)))
+  if (
+    week.busy.some(
+      (b) => b.day === jour && b.kind === "course" && couvre(b.start_time, b.end_time, heure),
+    )
+  )
     return "cours"
   if (
     week.busy.some(
@@ -104,7 +92,8 @@ export function etatDe(week: TeacherWeek, jour: DayOfWeek, heure: number): EtatC
     )
   )
     return "ferme"
-  if (week.open.some((o) => o.day === jour && couvre(o.start_time, o.end_time, heure))) return "ouvert"
+  if (week.open.some((o) => o.day === jour && couvre(o.start_time, o.end_time, heure)))
+    return "ouvert"
   return week.has_declarations ? "hors" : "libre"
 }
 
@@ -122,10 +111,8 @@ export function coursDe(week: TeacherWeek, jour: DayOfWeek, heure: number) {
  * elle se lit comme deux cours.
  */
 export function debuteIci(debut: string, heure: number): boolean {
-  const d = enMinutes(debut)
-  return d !== null && d >= heure * 60 && d < (heure + 1) * 60
-}
-
-export function versHHMM(heure: number): string {
-  return `${String(heure).padStart(2, "0")}:00`
+  const d = /^(\d{1,2}):(\d{2})$/.exec(debut)
+  if (!d) return false
+  const minutes = Number(d[1]) * 60 + Number(d[2])
+  return minutes >= heure * 60 && minutes < (heure + 1) * 60
 }

@@ -12,7 +12,7 @@
 import { CalendarX2, Check, GraduationCap } from "lucide-react"
 import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
 import { JOURS_FR } from "@/lib/timetable/week-overlap"
-import { JOURS } from "./etats"
+import { JOURS } from "@/lib/timetable/semaine"
 
 interface Props {
   week: TeacherWeek

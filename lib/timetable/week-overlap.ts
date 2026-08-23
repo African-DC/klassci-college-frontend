@@ -13,6 +13,16 @@
  */
 
 import type { DayOfWeek, TeacherWeek } from "@/lib/contracts/timetable"
+import { enMinutes, seChevauchent } from "@/lib/timetable/semaine"
+
+export { enMinutes, seChevauchent }
+
+/** Le creneau vise, en minutes, croise-t-il cet intervalle « HH:MM » ? */
+function croise(d: number, f: number, debut: string, fin: string): boolean {
+  const d2 = enMinutes(debut)
+  const f2 = enMinutes(fin)
+  return d2 !== null && f2 !== null && seChevauchent(d, f, d2, f2)
+}
 
 /** Le formulaire parle français, le backend anglais. */
 const JOURS_VERS_EN: Record<string, DayOfWeek> = {
@@ -40,7 +50,6 @@ export const JOURS_FR = {
   saturday: "samedi",
 } as const satisfies Record<DayOfWeek, string>
 
-export type JourFr = (typeof JOURS_FR)[DayOfWeek]
 
 export function versJourAnglais(jour: string | undefined): DayOfWeek | undefined {
   if (!jour) return undefined
@@ -48,27 +57,8 @@ export function versJourAnglais(jour: string | undefined): DayOfWeek | undefined
 }
 
 /** Minutes depuis minuit, ou `null` si ce n'est pas une heure « HH:MM ». */
-export function enMinutes(heure: string | undefined): number | null {
-  if (!heure) return null
-  const m = /^(\d{1,2}):(\d{2})$/.exec(heure)
-  if (!m) return null
-  return Number(m[1]) * 60 + Number(m[2])
-}
 
 /** Deux plages se chevauchent si l'une commence avant que l'autre finisse. */
-export function seChevauchent(
-  debutA: string,
-  finA: string,
-  debutB: string,
-  finB: string,
-): boolean {
-  const a1 = enMinutes(debutA)
-  const a2 = enMinutes(finA)
-  const b1 = enMinutes(debutB)
-  const b2 = enMinutes(finB)
-  if (a1 === null || a2 === null || b1 === null || b2 === null) return false
-  return a1 < b2 && a2 > b1
-}
 
 export type Empechement = {
   /** `course` : il enseigne ailleurs. `closed` : plage fermée. `not_open` : hors des plages ouvertes. */
@@ -101,7 +91,7 @@ export function trouverEmpechement(
     (b) =>
       b.day === jourEn &&
       b.kind === "course" &&
-      seChevauchent(debut!, fin!, b.start_time, b.end_time),
+      croise(d, f, b.start_time, b.end_time),
   )
   if (cours) {
     const classe = cours.class_name ? ` avec la ${cours.class_name}` : ""
@@ -115,7 +105,7 @@ export function trouverEmpechement(
     (b) =>
       b.day === jourEn &&
       b.kind === "unavailable" &&
-      seChevauchent(debut!, fin!, b.start_time, b.end_time),
+      croise(d, f, b.start_time, b.end_time),
   )
   if (fermeture) {
     return {

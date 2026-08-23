@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest"
 import type { TeacherWeek } from "@/lib/contracts/timetable"
-import { seChevauchent, trouverEmpechement } from "./week-overlap"
+import { enMinutes, seChevauchent, trouverEmpechement } from "./week-overlap"
 
 function semaine(partiel: Partial<TeacherWeek> = {}): TeacherWeek {
   return {
@@ -20,15 +20,15 @@ function semaine(partiel: Partial<TeacherWeek> = {}): TeacherWeek {
 
 describe("seChevauchent", () => {
   it("voit un chevauchement partiel", () => {
-    expect(seChevauchent("09:00", "11:00", "10:00", "12:00")).toBe(true)
+    expect(seChevauchent(9 * 60, 11 * 60, 10 * 60, 12 * 60)).toBe(true)
   })
 
   it("laisse passer deux cours bout à bout", () => {
-    expect(seChevauchent("08:00", "10:00", "10:00", "11:00")).toBe(false)
+    expect(seChevauchent(8 * 60, 10 * 60, 10 * 60, 11 * 60)).toBe(false)
   })
 
   it("ne se prononce pas sur une heure mal formée", () => {
-    expect(seChevauchent("8h", "10:00", "09:00", "11:00")).toBe(false)
+    expect(enMinutes("8h")).toBeNull()
   })
 })
 
