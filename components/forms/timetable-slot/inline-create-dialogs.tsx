@@ -88,12 +88,33 @@ export function InlineCreateSubjectDialog({
   )
 }
 
-function generateAutoCredentials(first: string, last: string) {
+/** Des octets tires du generateur cryptographique du navigateur. */
+function alea(octets: number): string {
+  const buf = new Uint8Array(octets)
+  crypto.getRandomValues(buf)
+  return Array.from(buf, (o) => o.toString(36).padStart(2, "0")).join("")
+}
+
+/**
+ * L'adresse et le mot de passe d'un enseignant cree au vol.
+ *
+ * Les deux sont tires separement, et c'est tout le point. La version
+ * precedente derivait le mot de passe du meme suffixe a trois chiffres que
+ * l'adresse : lire `aissatou.diallo.437@klassci.local` donnait
+ * `Klassci437!A` sans une seule tentative. Le hasard venait de plus de
+ * `Math.random`, qui ne promet rien contre la prediction.
+ *
+ * Le mot de passe est rendu a l'appelant pour etre montre une fois. Sans
+ * cela le compte ne serait pas sur, il serait inutilisable : son
+ * proprietaire legitime serait le seul a ne pas pouvoir s'y connecter.
+ */
+export function generateAutoCredentials(first: string, last: string) {
   const slug = `${first}.${last}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ".")
-  const suffix = String(Math.floor(Math.random() * 900) + 100)
   return {
-    email: `${slug}.${suffix}@klassci.local`,
-    password: `Klassci${suffix}!${first[0]?.toUpperCase() ?? "X"}`,
+    email: `${slug}.${alea(3)}@klassci.local`,
+    // Majuscule, minuscule, chiffre et signe : les regles usuelles sont
+    // satisfaites sans rien retirer aux douze octets tires au sort.
+    password: `Kl${alea(12)}!A9`,
   }
 }
 
@@ -109,6 +130,8 @@ export function InlineCreateTeacherDialog({
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [speciality, setSpeciality] = useState("")
+  // Montres une fois, apres creation : personne d autre ne les connaitra.
+  const [identifiants, setIdentifiants] = useState<{ email: string; password: string } | null>(null)
   const { mutate, isPending } = useCreateTeacher()
 
   function handleSubmit(e: React.FormEvent) {
@@ -128,6 +151,7 @@ export function InlineCreateTeacherDialog({
           setFirstName("")
           setLastName("")
           setSpeciality("")
+          setIdentifiants({ email, password })
           onCreated(created.id)
         },
       },
@@ -140,6 +164,33 @@ export function InlineCreateTeacherDialog({
         <DialogHeader>
           <DialogTitle>Créer un enseignant</DialogTitle>
         </DialogHeader>
+        {identifiants ? (
+          <div className="space-y-3">
+            <p className="text-sm">
+              Compte créé. Ces identifiants ne seront <strong>plus jamais affichés</strong> :
+              transmettez-les à l&apos;enseignant maintenant.
+            </p>
+            <dl className="space-y-2 rounded-lg border bg-muted/40 p-3 text-sm">
+              <div>
+                <dt className="text-xs text-muted-foreground">Adresse</dt>
+                <dd className="font-mono break-all">{identifiants.email}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Mot de passe</dt>
+                <dd className="font-mono break-all">{identifiants.password}</dd>
+              </div>
+            </dl>
+            <DialogFooter>
+              <Button
+                type="button"
+                className="h-11"
+                onClick={() => { setIdentifiants(null); onClose() }}
+              >
+                J&apos;ai noté, fermer
+              </Button>
+            </DialogFooter>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -175,7 +226,7 @@ export function InlineCreateTeacherDialog({
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Un compte sera créé automatiquement. Pour configurer les identifiants, rendez-vous sur la page de l'enseignant.
+            Un compte sera créé, et ses identifiants affichés une seule fois : notez-les avant de fermer.
           </p>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
@@ -189,6 +240,7 @@ export function InlineCreateTeacherDialog({
             </Button>
           </DialogFooter>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   )
