@@ -1,8 +1,15 @@
 "use client"
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query"
 import { toast } from "sonner"
 import { paymentsApi } from "@/lib/api/payments"
+import { pageSuivante } from "./pagination"
 import type {
   EnrollmentPaymentCreate,
   Payment,
@@ -14,7 +21,8 @@ import type { PaginatedResponse } from "@/lib/contracts"
 export const paymentKeys = {
   all: ["payments"] as const,
   list: (params: PaymentListParams) => ["payments", "list", params] as const,
-  summary: (academicYearId?: number) => ["payments", "summary", academicYearId] as const,
+  summary: (academicYearId?: number, filtres?: PaymentListParams) =>
+    ["payments", "summary", academicYearId, filtres] as const,
   cashiers: ["payments", "cashiers"] as const,
   byEnrollment: (enrollmentId: number) =>
     ["payments", "enrollment", enrollmentId] as const,
@@ -35,10 +43,17 @@ export function usePayments(params: PaymentListParams = {}) {
   })
 }
 
-export function useFinancialSummary(academicYearId?: number) {
+/**
+ * Les chiffres du bandeau, calcules sur le perimetre de l'ecran.
+ *
+ * Les filtres partent au serveur : agreger ce qui est charge donnerait des
+ * totaux faux des la deuxieme page, et un bandeau qui ignore les filtres
+ * annonce l'annee entiere au-dessus d'une liste qui montre trois lignes.
+ */
+export function useFinancialSummary(academicYearId?: number, filtres?: PaymentListParams) {
   return useQuery({
-    queryKey: paymentKeys.summary(academicYearId),
-    queryFn: () => paymentsApi.getSummary(academicYearId),
+    queryKey: paymentKeys.summary(academicYearId, filtres),
+    queryFn: () => paymentsApi.getSummary(academicYearId, filtres),
     staleTime: 1000 * 60 * 5,
   })
 }
@@ -208,5 +223,24 @@ export function useCancelPayment() {
       queryClient.invalidateQueries({ queryKey: paymentKeys.all })
       queryClient.invalidateQueries({ queryKey: paymentKeys.summary() })
     },
+  })
+}
+
+
+/**
+ * Le journal des versements, charge au fil du defilement.
+ *
+ * La pagination existait a l'ecran sans etre navigable : le pied de page
+ * annoncait « Page 1/92 » et rien ne permettait d'atteindre la seconde.
+ */
+export function useInfinitePayments(params: PaymentListParams = {}) {
+  return useInfiniteQuery({
+    queryKey: [...paymentKeys.list(params), "infinite"] as const,
+    queryFn: ({ pageParam }: { pageParam: number }) => paymentsApi.list({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    // La condition d arret vit dans `./pagination`, ou elle est testee.
+    getNextPageParam: (derniere: PaginatedResponse<Payment>, pages: unknown[]) =>
+      pageSuivante(derniere, pages.length),
+    staleTime: 1000 * 60 * 5,
   })
 }
