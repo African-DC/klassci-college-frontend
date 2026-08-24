@@ -2,14 +2,18 @@
 
 import Link from "next/link"
 import { ArrowRight, Settings, Shield } from "lucide-react"
+import { PageHero } from "@/components/shared/PageHero"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataError } from "@/components/shared/DataError"
 import { useSettings } from "@/lib/hooks/useSettings"
 import { SchoolInfoSection } from "./SchoolInfoSection"
 import { TrimesterSection } from "./TrimesterSection"
+import { HolidaySection } from "./HolidaySection"
 import { NotificationSection } from "./NotificationSection"
 import { PdfIdentitySection } from "./PdfIdentitySection"
+import { MailPulseSection } from "./MailPulseSection"
+import { PaymentMethodSection } from "./PaymentMethodSection"
 
 export function SettingsPageClient() {
   const { data: settings, isLoading, isError, refetch } = useSettings()
@@ -17,17 +21,11 @@ export function SettingsPageClient() {
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <Settings className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="font-serif text-2xl tracking-tight">Paramètres</h1>
-          <p className="text-sm text-muted-foreground">
-            Configuration de l&apos;établissement et des notifications
-          </p>
-        </div>
-      </div>
+      <PageHero
+        icon={Settings}
+        title="Paramètres"
+        subtitle="Configuration de l'établissement et des notifications"
+      />
 
       {/* Contenu */}
       {isLoading ? (
@@ -39,8 +37,10 @@ export function SettingsPageClient() {
           <TabsList>
             <TabsTrigger value="school">Établissement</TabsTrigger>
             <TabsTrigger value="identity">Identité visuelle</TabsTrigger>
-            <TabsTrigger value="trimesters">Trimestres</TabsTrigger>
+            <TabsTrigger value="trimesters">Calendrier</TabsTrigger>
+            <TabsTrigger value="payment-methods">Moyens de paiement</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="mailpulse">MailPulse</TabsTrigger>
           </TabsList>
 
           <TabsContent value="school">
@@ -51,12 +51,21 @@ export function SettingsPageClient() {
             <PdfIdentitySection settings={settings} isLoading={isLoading} />
           </TabsContent>
 
-          <TabsContent value="trimesters">
+          <TabsContent value="trimesters" className="space-y-6">
             <TrimesterSection settings={settings} />
+            <HolidaySection settings={settings} />
+          </TabsContent>
+
+          <TabsContent value="payment-methods">
+            <PaymentMethodSection />
           </TabsContent>
 
           <TabsContent value="notifications">
             <NotificationSection settings={settings} />
+          </TabsContent>
+
+          <TabsContent value="mailpulse">
+            <MailPulseSection />
           </TabsContent>
         </Tabs>
       ) : null}
@@ -64,10 +73,11 @@ export function SettingsPageClient() {
       {/* Discoverability link to roles & permissions */}
       <Link
         href="/admin/roles"
+        aria-label="Accéder à la gestion des rôles et permissions"
         className="group flex items-center gap-4 rounded-xl border bg-card p-5 transition-colors hover:border-primary/30 hover:bg-primary/[0.02]"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Shield className="h-5 w-5 text-primary" />
+          <Shield aria-hidden="true" className="h-5 w-5 text-primary" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-medium">Rôles &amp; permissions</p>
@@ -76,7 +86,7 @@ export function SettingsPageClient() {
             évaluations, valider les paiements, gérer les inscriptions…).
           </p>
         </div>
-        <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        <ArrowRight aria-hidden="true" className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
       </Link>
     </div>
   )
@@ -85,7 +95,7 @@ export function SettingsPageClient() {
 function SettingsSkeleton() {
   return (
     <div className="space-y-6">
-      <Skeleton className="h-10 w-80" />
+      <Skeleton className="h-10 w-full max-w-xs" />
       <div className="space-y-4">
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-12 w-full" />

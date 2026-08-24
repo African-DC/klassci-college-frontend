@@ -91,9 +91,9 @@ export function StudentDetailHeader({
           <Link
             href="/admin/students"
             aria-label="Retour \u00e0 la liste des \u00e9l\u00e8ves"
-            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
+            className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition-colors hover:bg-muted sm:h-9 sm:w-9"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
           </Link>
 
           {/* Avatar with photo upload */}
@@ -109,11 +109,11 @@ export function StudentDetailHeader({
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
               {uploading ? (
-                <Clock className="h-5 w-5 text-white animate-spin" />
+                <Clock aria-hidden="true" className="h-5 w-5 animate-spin text-white" />
               ) : (
-                <Camera className="h-5 w-5 text-white" />
+                <Camera aria-hidden="true" className="h-5 w-5 text-white" />
               )}
             </div>
             <input

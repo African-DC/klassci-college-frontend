@@ -8,6 +8,7 @@ export const teacherPortalKeys = {
   dashboard: () => ["teacher-portal", "dashboard"] as const,
   classes: () => ["teacher-portal", "classes"] as const,
   classAttendance: (classId: number) => ["teacher-portal", "class-attendance", classId] as const,
+  classRoster: (classId: number) => ["teacher-portal", "class-roster", classId] as const,
   evaluations: () => ["teacher-portal", "evaluations"] as const,
 }
 
@@ -31,6 +32,15 @@ export function useTeacherClassAttendance(classId: number | undefined) {
   return useQuery({
     queryKey: teacherPortalKeys.classAttendance(classId as number),
     queryFn: () => teacherPortalApi.getClassAttendance(classId as number),
+    enabled: classId !== undefined && classId > 0,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useTeacherClassRoster(classId: number | undefined) {
+  return useQuery({
+    queryKey: teacherPortalKeys.classRoster(classId as number),
+    queryFn: () => teacherPortalApi.getClassRoster(classId as number),
     enabled: classId !== undefined && classId > 0,
     staleTime: 1000 * 60 * 5,
   })

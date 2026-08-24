@@ -4,15 +4,16 @@ import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { signOut } from "next-auth/react"
-import { LayoutDashboard, CalendarDays, ClipboardList, UserCheck, LogOut, type LucideIcon } from "lucide-react"
+import { LayoutDashboard, CalendarDays, ClipboardList, UserCheck, Gauge, LogOut, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { logout } from "@/lib/utils/logout"
 
 const navItems: { label: string; href: Route; icon: LucideIcon }[] = [
   { label: "Accueil", href: "/teacher/dashboard", icon: LayoutDashboard },
   { label: "Mon EDT", href: "/teacher/timetable", icon: CalendarDays },
   { label: "Notes", href: "/teacher/grades" as Route, icon: ClipboardList },
   { label: "Appel", href: "/teacher/attendance" as Route, icon: UserCheck },
+  { label: "Ma perf", href: "/teacher/performance" as Route, icon: Gauge },
 ]
 
 export function TeacherNav() {
@@ -28,9 +29,9 @@ export function TeacherNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
+                "relative flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
                 isActive
-                  ? "text-primary"
+                  ? "text-primary before:absolute before:top-0 before:left-1/2 before:h-1 before:w-6 before:-translate-x-1/2 before:rounded-full before:bg-accent before:content-['']"
                   : "text-muted-foreground"
               )}
             >
@@ -40,7 +41,7 @@ export function TeacherNav() {
           )
         })}
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => void logout()}
           className="flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium text-muted-foreground transition-colors min-w-[56px] hover:text-destructive"
         >
           <LogOut className="h-5 w-5" />
@@ -82,9 +83,9 @@ export function TeacherSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-primary/10 text-primary before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-accent before:content-['']"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
@@ -96,7 +97,7 @@ export function TeacherSidebar() {
       </nav>
       <div className="border-t p-3">
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => void logout()}
           className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="h-4 w-4" />

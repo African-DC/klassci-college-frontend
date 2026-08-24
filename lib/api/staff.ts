@@ -1,7 +1,7 @@
 import { getSession } from "next-auth/react"
 import { z } from "zod"
-import { StaffSchema } from "@/lib/contracts/staff"
-import type { Staff, StaffCreate, StaffUpdate } from "@/lib/contracts/staff"
+import { StaffSchema, StaffFullSchema } from "@/lib/contracts/staff"
+import type { Staff, StaffCreate, StaffUpdate, StaffFull } from "@/lib/contracts/staff"
 import { createCrudApi } from "./createCrudApi"
 import { apiFetch, handleExpiredSession, safeValidate } from "./client"
 
@@ -19,23 +19,30 @@ export const staffApi = {
     StaffSchema,
   ),
 
-  getFull: async (id: number): Promise<Record<string, unknown>> => {
-    return apiFetch<Record<string, unknown>>(`/admin/staff/${id}/full`)
+  getFull: async (id: number): Promise<StaffFull> => {
+    const json = await apiFetch<unknown>(`/admin/staff/${id}/full`)
+    return safeValidate(StaffFullSchema, json, `GET /admin/staff/${id}/full`)
   },
 
   uploadPhoto: async (staffId: number, file: File): Promise<{ photo_url: string }> => {
     const session = await getSession()
+    if (session?.error === "RefreshTokenError") {
+      void handleExpiredSession()
+      throw new Error("Session expirée")
+    }
     const formData = new FormData()
     formData.append("file", file)
+    const headers: Record<string, string> = session?.accessToken
+      ? { Authorization: `Bearer ${session.accessToken}` }
+      : {}
+    const hadToken = "Authorization" in headers
     const res = await fetch(`${getBaseUrl()}/admin/staff/${staffId}/photo`, {
       method: "POST",
-      headers: {
-        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
-      },
+      headers,
       body: formData,
     })
     if (res.status === 401) {
-      if (session?.accessToken) await handleExpiredSession()
+      if (hadToken) void handleExpiredSession()
       throw new Error("Session expirée")
     }
     if (!res.ok) throw new Error("Upload failed")

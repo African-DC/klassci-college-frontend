@@ -5,9 +5,17 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Eye, EyeOff, KeyRound } from "lucide-react"
 import { StaffCreateSchema, type StaffCreate } from "@/lib/contracts/staff"
+import { StaffRoleOptions } from "@/components/admin/staff/StaffRoleOptions"
 import { useCreateStaff } from "@/lib/hooks/useStaff"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Form,
   FormControl,
@@ -33,6 +41,7 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
       password: "",
       position: "",
       phone: "",
+      role: "staff",
     },
   })
 
@@ -49,7 +58,7 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -109,6 +118,30 @@ export function StaffForm({ onSuccess }: StaffFormProps) {
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Rôle d&apos;accès *</FormLabel>
+              <Select value={field.value ?? "staff"} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Rôle d'accès" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <StaffRoleOptions />
+                </SelectContent>
+              </Select>
+              <FormDescription className="text-xs">
+                Détermine les droits d&apos;accès dans KLASSCI (le poste ci-dessus reste le libellé du métier).
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Compte de connexion — toujours obligatoire pour le staff
             (admin secondaire, secrétaire, comptable... doit accéder à un portail). */}

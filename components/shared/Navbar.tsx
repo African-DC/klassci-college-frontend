@@ -1,6 +1,8 @@
 "use client"
 
-import { signOut, useSession } from "next-auth/react"
+import Link from "next/link"
+import type { Route } from "next"
+import { useSession } from "next-auth/react"
 import { useTheme } from "next-themes"
 import { Menu, LogOut, User, ChevronDown, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -16,6 +18,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { NotificationBell } from "@/components/shared/NotificationBell"
 import { AcademicYearBadge } from "@/components/shared/AcademicYearBadge"
+import { logout } from "@/lib/utils/logout"
+import { displayName, roleLabel } from "@/lib/utils/session-identity"
 
 interface NavbarProps {
   onMenuClick: () => void
@@ -24,10 +28,13 @@ interface NavbarProps {
 export function Navbar({ onMenuClick }: NavbarProps) {
   const { data: session } = useSession()
   const { theme, setTheme } = useTheme()
-  const initials = session?.user?.email
-    ?.split("@")[0]
-    .slice(0, 2)
-    .toUpperCase() ?? "AD"
+  const nom = displayName(session?.user)
+  const initials = nom.slice(0, 2).toUpperCase()
+
+  const role = session?.user?.role
+  const profilePortal =
+    role === "teacher" ? "teacher" : role === "student" ? "student" : role === "parent" ? "parent" : "admin"
+  const profileHref = `/${profilePortal}/profile` as Route
 
   return (
     <header className="flex h-16 shrink-0 items-center border-b bg-card px-4 lg:px-6">
@@ -74,8 +81,8 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium leading-none">{session?.user?.email?.split("@")[0] ?? "Admin"}</p>
-                <p className="text-xs text-muted-foreground capitalize">{session?.user?.role ?? "admin"}</p>
+                <p className="text-sm font-medium leading-none">{nom}</p>
+                <p className="text-xs text-muted-foreground">{roleLabel(session?.user?.role)}</p>
               </div>
               <ChevronDown className="hidden md:block h-4 w-4 text-muted-foreground" />
             </button>
@@ -83,15 +90,16 @@ export function Navbar({ onMenuClick }: NavbarProps) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* TODO: lier a /settings/profile */}
-            <DropdownMenuItem disabled>
-              <User className="mr-2 h-4 w-4" />
-              Profil
+            <DropdownMenuItem asChild>
+              <Link href={profileHref}>
+                <User className="mr-2 h-4 w-4" />
+                Profil
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => void logout()}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Deconnexion

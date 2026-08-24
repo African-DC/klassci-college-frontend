@@ -8,9 +8,16 @@ import {
 } from "@/lib/contracts/bulletin"
 
 const BulletinArraySchema = z.array(BulletinSchema)
+/**
+ * Enveloppe paginée. `total` porte le compte de l'école pour les filtres
+ * demandés : le pied de liste et le pagineur le lisent ici, jamais en
+ * comptant `items`, qui ne décrit que la page rendue.
+ */
 const BulletinListResponseSchema = z.object({
   items: BulletinArraySchema,
   total: z.number(),
+  page: z.number(),
+  size: z.number(),
 })
 
 export interface BulletinListResult {
@@ -19,6 +26,12 @@ export interface BulletinListResult {
   page: number
   size: number
 }
+
+/**
+ * Une classe compte au plus une quarantaine d'élèves : ce format tient un
+ * niveau entier sur une page, tout en restant sous le plafond du backend.
+ */
+export const BULLETINS_PAGE_SIZE = 50
 
 export interface BulletinGenerateResult {
   message: string
@@ -34,19 +47,14 @@ export interface BulletinPublishResult {
 export const bulletinsApi = {
   list: async (params: BulletinListParams = {}): Promise<BulletinListResult> => {
     const query = new URLSearchParams(
-      Object.entries(params)
+      Object.entries({ size: BULLETINS_PAGE_SIZE, ...params })
         .filter(([, v]) => v !== undefined)
         .map(([k, v]) => [k, String(v)]),
     ).toString()
     const json = await apiFetch<unknown>(
       `/reports/bulletins${query ? `?${query}` : ""}`,
     )
-    const validated = safeValidate(BulletinListResponseSchema, json, "GET /reports/bulletins")
-    return {
-      ...validated,
-      page: 1,
-      size: validated.items.length || 1,
-    }
+    return safeValidate(BulletinListResponseSchema, json, "GET /reports/bulletins")
   },
 
   getById: async (id: number): Promise<Bulletin> => {
@@ -76,7 +84,13 @@ export const bulletinsApi = {
     })
   },
 
-  downloadPdf: async (id: number): Promise<Blob> => {
-    return apiFetchBlob(`/reports/bulletins/${id}/pdf`)
+  /**
+   * Le bulletin est retenu quand la famille est en retard sur son échéancier.
+   * `overrideReason` lève la retenue, à condition d'avoir le droit de déroger.
+   */
+  downloadPdf: async (id: number, overrideReason?: string): Promise<Blob> => {
+    const reason = overrideReason?.trim()
+    const query = reason ? `?override_reason=${encodeURIComponent(reason)}` : ""
+    return apiFetchBlob(`/reports/bulletins/${id}/pdf${query}`)
   },
 }

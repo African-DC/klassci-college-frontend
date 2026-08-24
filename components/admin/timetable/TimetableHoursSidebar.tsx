@@ -6,14 +6,11 @@ import { cn } from "@/lib/utils"
 import { useTimetable } from "@/lib/hooks/useTimetable"
 import { useSubjects } from "@/lib/hooks/useSubjects"
 import { useClass } from "@/lib/hooks/useClasses"
-import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { TimetableSlot } from "@/lib/contracts/timetable"
 import type { Subject } from "@/lib/contracts/subject"
 
 interface TimetableHoursSidebarProps {
   classId: number
-  weekOffset?: number
 }
 
 interface SubjectHours {
@@ -68,8 +65,8 @@ function formatHours(h: number): string {
   return `${hours}h${String(minutes).padStart(2, "0")}`
 }
 
-export function TimetableHoursSidebar({ classId, weekOffset = 0 }: TimetableHoursSidebarProps) {
-  const { data: slots, isLoading: slotsLoading } = useTimetable(classId, weekOffset)
+export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
+  const { data: slots, isLoading: slotsLoading } = useTimetable(classId)
   const { data: classDetail } = useClass(classId)
   const levelId = classDetail?.level_id
   const { data: subjectsData, isLoading: subjectsLoading } = useSubjects(
@@ -121,7 +118,7 @@ export function TimetableHoursSidebar({ classId, weekOffset = 0 }: TimetableHour
 
   if (isLoading) {
     return (
-      <div className="w-[260px] shrink-0 rounded-lg border bg-card p-4 space-y-3">
+      <div className="w-full shrink-0 rounded-lg border bg-card p-4 space-y-3 lg:w-[260px]">
         <Skeleton className="h-5 w-32" />
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="space-y-1.5">
@@ -135,7 +132,7 @@ export function TimetableHoursSidebar({ classId, weekOffset = 0 }: TimetableHour
 
   if (!subjectHours.length) {
     return (
-      <div className="w-[260px] shrink-0 rounded-lg border bg-card p-4">
+      <div className="w-full shrink-0 rounded-lg border bg-card p-4 lg:w-[260px]">
         <div className="flex items-center gap-2 mb-3">
           <BookOpen className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold">Volume horaire</h3>
@@ -150,7 +147,7 @@ export function TimetableHoursSidebar({ classId, weekOffset = 0 }: TimetableHour
   const allComplete = totals.assigned >= totals.required && totals.required > 0
 
   return (
-    <div className="w-[260px] shrink-0 rounded-lg border bg-card overflow-hidden">
+    <div className="w-full shrink-0 rounded-lg border bg-card overflow-hidden lg:w-[260px]">
       {/* Header */}
       <div className="border-b bg-muted/30 px-4 py-3">
         <div className="flex items-center gap-2">
@@ -163,7 +160,7 @@ export function TimetableHoursSidebar({ classId, weekOffset = 0 }: TimetableHour
       </div>
 
       {/* Subject list */}
-      <div className="p-3 space-y-2.5 max-h-[calc(100vh-380px)] overflow-y-auto">
+      <div className="p-3 space-y-2.5 max-h-72 overflow-y-auto lg:max-h-[calc(100vh-380px)]">
         {subjectHours.map((s) => {
           const pct = s.required > 0 ? Math.min((s.assigned / s.required) * 100, 100) : 0
           const progressColor = getProgressColor(s.assigned, s.required)

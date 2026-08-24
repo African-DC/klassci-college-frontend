@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import type { Route } from "next"
 import { ArrowLeft, FileText, Award, Download, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -9,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
+import { BulletinWithheldNotice } from "@/components/shared/documents/BulletinWithheldNotice"
 import { useParentChildBulletins } from "@/lib/hooks/useParentPortal"
 import { parentPortalApi } from "@/lib/api/parent-portal"
 import { downloadBlob } from "@/lib/utils"
@@ -24,7 +27,7 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
   const handleDownload = useCallback(async (bulletinId: number) => {
     setDownloadingId(bulletinId)
     try {
-      const blob = await parentPortalApi.downloadChildBulletinPdf(bulletinId)
+      const blob = await parentPortalApi.downloadChildBulletinPdf(childId, bulletinId)
       downloadBlob(blob, `bulletin-${bulletinId}.pdf`)
     } catch (err) {
       toast.error("Erreur lors du téléchargement", {
@@ -33,7 +36,7 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
     } finally {
       setDownloadingId(null)
     }
-  }, [])
+  }, [childId])
 
   if (error) {
     return <DataError message="Impossible de charger les bulletins." onRetry={refetch} />
@@ -44,13 +47,14 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
       <div className="flex items-center gap-3">
         <Link
           href="/parent/children"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-muted"
+          aria-label="Retour à la liste des enfants"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border transition-colors hover:bg-muted sm:h-9 sm:w-9"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
         </Link>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <FileText className="h-5 w-5 text-primary" />
+            <FileText aria-hidden="true" className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="font-serif text-2xl tracking-tight">Bulletins</h1>
@@ -72,9 +76,13 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">Trimestre {bulletin.trimester}</CardTitle>
-                  <Badge variant={bulletin.is_published ? "default" : "secondary"}>
-                    {bulletin.is_published ? "Publié" : "Brouillon"}
-                  </Badge>
+                  {bulletin.is_withheld ? (
+                    <Badge variant="secondary">Retenu</Badge>
+                  ) : (
+                    <Badge variant={bulletin.is_published ? "default" : "secondary"}>
+                      {bulletin.is_published ? "Publié" : "Brouillon"}
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {bulletin.class_name} — {bulletin.academic_year_name}
@@ -97,25 +105,42 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
                 </div>
                 {bulletin.mention && (
                   <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-amber-500" />
+                    <Award aria-hidden="true" className="h-4 w-4 text-amber-500" />
                     <span className="text-sm font-medium">{bulletin.mention}</span>
                   </div>
                 )}
-                {bulletin.is_published && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => handleDownload(bulletin.id)}
-                    disabled={downloadingId === bulletin.id}
-                  >
-                    {downloadingId === bulletin.id ? (
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                    ) : (
-                      <Download className="mr-1 h-3 w-3" />
-                    )}
-                    Télécharger PDF
-                  </Button>
+                {bulletin.is_withheld && (
+                  <BulletinWithheldNotice
+                    reason={bulletin.withheld_reason ?? null}
+                    gradesHref={`/parent/children/${childId}/grades` as Route}
+                  />
+                )}
+                {/* Aucun bouton quand le bulletin est retenu : un
+                    téléchargement qui échoue en 402 vaut moins qu'un bouton
+                    absent et expliqué. */}
+                {bulletin.is_published && !bulletin.is_withheld && (
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <PdfPreviewButton
+                      fetchBlob={() => parentPortalApi.downloadChildBulletinPdf(childId, bulletin.id)}
+                      label={`le bulletin du trimestre ${bulletin.trimester}`}
+                      className="h-11 w-full sm:h-9 sm:flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDownload(bulletin.id)}
+                      disabled={downloadingId === bulletin.id}
+                      aria-label={`Télécharger le bulletin du trimestre ${bulletin.trimester} en PDF`}
+                      className="h-11 w-full sm:h-9 sm:flex-1"
+                    >
+                      {downloadingId === bulletin.id ? (
+                        <Loader2 aria-hidden="true" className="mr-1.5 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download aria-hidden="true" className="mr-1.5 h-4 w-4" />
+                      )}
+                      Télécharger PDF
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -124,8 +149,12 @@ export function ParentChildBulletinsClient({ childId }: ParentChildBulletinsClie
       ) : (
         <Card className="border-0 shadow-sm ring-1 ring-border">
           <CardContent className="py-12 text-center">
-            <FileText className="mx-auto h-10 w-10 text-muted-foreground/50" />
+            <FileText aria-hidden="true" className="mx-auto h-10 w-10 text-muted-foreground/50" />
             <p className="mt-3 text-sm text-muted-foreground">Aucun bulletin disponible.</p>
+            <p className="mt-1 text-xs text-muted-foreground/80">
+              Les bulletins apparaîtront ici à la fin de chaque trimestre, une fois
+              publiés par l&apos;administration.
+            </p>
           </CardContent>
         </Card>
       )}

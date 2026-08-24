@@ -4,6 +4,7 @@ import type { Student, StudentCreate, StudentFilters, StudentFull, StudentUpdate
 import { createCrudApi } from "./createCrudApi"
 import { apiFetch, handleExpiredSession, safeValidate } from "./client"
 import { z } from "zod"
+import { FeeEntitlementSchema } from "@/lib/contracts/fee"
 
 function getBaseUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_URL
@@ -17,6 +18,7 @@ const StudentEnrollmentFeeSchema = z.object({
   id: z.number(),
   enrollment_id: z.number(),
   category_name: z.string(),
+  entitlements: z.array(FeeEntitlementSchema).optional(),
   amount: z.number(),
   paid: z.number(),
   remaining: z.number(),
@@ -44,17 +46,23 @@ export const studentsApi = {
     // FormData multipart upload — can't go through apiFetch (which JSON-encodes).
     // We replicate the 401 → handleExpiredSession contract manually.
     const session = await getSession()
+    if (session?.error === "RefreshTokenError") {
+      void handleExpiredSession()
+      throw new Error("Session expirée")
+    }
     const formData = new FormData()
     formData.append("file", file)
+    const headers: Record<string, string> = session?.accessToken
+      ? { Authorization: `Bearer ${session.accessToken}` }
+      : {}
+    const hadToken = "Authorization" in headers
     const res = await fetch(`${getBaseUrl()}/admin/students/${studentId}/photo`, {
       method: "POST",
-      headers: {
-        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
-      },
+      headers,
       body: formData,
     })
     if (res.status === 401) {
-      if (session?.accessToken) await handleExpiredSession()
+      if (hadToken) void handleExpiredSession()
       throw new Error("Session expirée")
     }
     if (!res.ok) throw new Error("Upload failed")

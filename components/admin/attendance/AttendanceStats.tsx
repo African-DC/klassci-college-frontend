@@ -9,10 +9,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ExportMenu } from "@/components/export/ExportMenu"
 import { useAttendanceStats } from "@/lib/hooks/useAttendance"
+import { useSettings } from "@/lib/hooks/useSettings"
+import { buildAttendanceExportPayload } from "./attendance-export"
 
 interface AttendanceStatsProps {
   classId?: number
+  className?: string
 }
 
 function rateColor(rate: number): string {
@@ -22,8 +26,9 @@ function rateColor(rate: number): string {
 }
 
 
-export function AttendanceStats({ classId }: AttendanceStatsProps) {
+export function AttendanceStats({ classId, className }: AttendanceStatsProps) {
   const { data: stats, isLoading } = useAttendanceStats(classId)
+  const { data: settings } = useSettings()
 
   if (!classId) {
     return (
@@ -55,8 +60,16 @@ export function AttendanceStats({ classId }: AttendanceStatsProps) {
   const sorted = [...stats.students].sort((a, b) => a.attendance_rate - b.attendance_rate)
 
   return (
-    <div className="rounded-lg border">
-      <Table>
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <ExportMenu
+          filename="presences"
+          disabled={stats.students.length === 0}
+          getPayload={() => buildAttendanceExportPayload({ stats, settings, className })}
+        />
+      </div>
+      <div className="rounded-lg border">
+        <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Élève</TableHead>
@@ -85,7 +98,8 @@ export function AttendanceStats({ classId }: AttendanceStatsProps) {
             </TableRow>
           ))}
         </TableBody>
-      </Table>
+        </Table>
+      </div>
     </div>
   )
 }

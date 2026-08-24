@@ -2,8 +2,8 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Button } from "@/components/ui/button"
-import { CheckCircle2, AlertCircle, AlertTriangle, RefreshCw } from "lucide-react"
+import { AlertCircle, AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react"
+import { PageHero, heroGlassBtn } from "@/components/shared/PageHero"
 import { usePlatformHealth } from "@/lib/hooks/super-admin/useDiagnose"
 
 const ICONS = {
@@ -28,26 +28,35 @@ export function DiagnoseDashboard() {
   const { data, isLoading, isError, refetch, isFetching } = usePlatformHealth()
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Diagnose</h1>
-          <p className="text-sm text-muted-foreground">
+    <div className="space-y-5">
+      <PageHero
+        icon={AlertCircle}
+        title="Diagnostic plateforme"
+        subtitle={
+          <>
             Vérification automatique toutes les 30 secondes.
-            {data?.timestamp && (
-              <> Dernière màj : {new Date(data.timestamp).toLocaleTimeString("fr-FR")}.</>
-            )}
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-          <RefreshCw className={`mr-1.5 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-          Rafraîchir
-        </Button>
-      </div>
+            {data?.timestamp && <> Dernière mise à jour : {new Date(data.timestamp).toLocaleTimeString("fr-FR")}.</>}
+          </>
+        }
+        actions={
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            aria-label="Rafraîchir l'état de la plateforme"
+            className={heroGlassBtn}
+          >
+            <RefreshCw aria-hidden="true" className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+            Rafraîchir
+          </button>
+        }
+      />
 
       {data && (
         <div
-          className={`rounded-md border p-4 ${
+          role="status"
+          aria-live="polite"
+          className={`rounded-lg border p-4 ${
             data.overall === "ok"
               ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950"
               : data.overall === "degraded"
@@ -78,12 +87,12 @@ export function DiagnoseDashboard() {
               <Card key={check.component}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
-                    <Icon className={`h-5 w-5 ${COLOURS[check.status]}`} />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium capitalize">{check.component}</p>
+                    <Icon className={`h-5 w-5 ${COLOURS[check.status]}`} aria-hidden="true" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium capitalize">{check.component}</p>
                       <p className="text-xs text-muted-foreground">
                         {LABELS[check.status]}
-                        {check.message && ` — ${check.message}`}
+                        {check.message && ` · ${check.message}`}
                       </p>
                     </div>
                   </div>

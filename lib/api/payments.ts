@@ -2,19 +2,34 @@ import { z } from "zod"
 import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
   AllocationPreviewSchema,
+  PaymentMethodListSchema,
+  CashierOptionSchema,
   FinancialSummarySchema,
   PaymentSchema,
   type AllocationPreview,
+  type CashierOption,
   type EnrollmentPaymentCreate,
   type FinancialSummary,
   type Payment,
   type PaymentCreate,
   type PaymentListParams,
+  type PaymentMethodOption,
 } from "@/lib/contracts/payment"
 import { PaginatedResponseSchema, type PaginatedResponse } from "@/lib/contracts"
 
 const PaginatedPaymentSchema = PaginatedResponseSchema(PaymentSchema)
 const PaymentArraySchema = z.array(PaymentSchema)
+const CashierArraySchema = z.array(CashierOptionSchema)
+
+/** Sérialise les filtres d'écran en query string, en ignorant les vides. */
+function toQuery(params: Record<string, string | number | undefined>): string {
+  const query = new URLSearchParams(
+    Object.entries(params)
+      .filter(([, value]) => value !== undefined && value !== "")
+      .map(([key, value]) => [key, String(value)]),
+  ).toString()
+  return query ? `?${query}` : ""
+}
 
 function unwrap(json: unknown): unknown {
   if (json !== null && typeof json === "object") {
@@ -34,14 +49,18 @@ function unwrapPayment(json: unknown): unknown {
 }
 
 export const paymentsApi = {
+  // Les moyens de paiement que l'utilisateur courant peut reellement saisir.
+  // Croise ce que l'ecole accepte et ce que son profil autorise : le selecteur
+  // se remplit d'ici plutot que d'une liste figee, pour ne jamais proposer un
+  // choix qui sera refuse a l'enregistrement.
+  myMethods: async (): Promise<PaymentMethodOption[]> => {
+    const json = await apiFetch<unknown>("/payments/methods")
+    return safeValidate(PaymentMethodListSchema, json, "GET /payments/methods").items
+  },
+
   // Liste paginée des paiements
   list: async (params: PaymentListParams = {}): Promise<PaginatedResponse<Payment>> => {
-    const query = new URLSearchParams(
-      Object.entries(params)
-        .filter(([, v]) => v !== undefined)
-        .map(([k, v]) => [k, String(v)]),
-    ).toString()
-    const json = await apiFetch<unknown>(`/payments${query ? `?${query}` : ""}`)
+    const json = await apiFetch<unknown>(`/payments${toQuery(params)}`)
     if (Array.isArray(json)) {
       const arr = safeValidate(PaymentArraySchema, json, "GET /payments")
       return { items: arr, total: arr.length, page: 1, size: arr.length, total_pages: 1 }
@@ -134,8 +153,11 @@ export const paymentsApi = {
   },
 
   // Annuler un paiement (cascade DELETE allocations + recompute fees)
-  cancel: async (id: number): Promise<Payment> => {
-    const json = await apiFetch<unknown>(`/payments/${id}/cancel`, { method: "POST" })
+  cancel: async (id: number, reason: string): Promise<Payment> => {
+    const json = await apiFetch<unknown>(`/payments/${id}/cancel`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    })
     return safeValidate(
       PaymentSchema,
       unwrapPayment(json),
@@ -157,5 +179,30 @@ export const paymentsApi = {
   // Télécharger le reçu PDF
   downloadReceipt: async (id: number): Promise<Blob> => {
     return apiFetchBlob(`/payments/${id}/receipt`)
+  },
+
+  // Les encaisseurs proposables dans le filtre « Encaissé par ».
+  // Un caissier cloisonné ne reçoit que lui-même : le filtre ne peut de toute
+  // façon rien lui montrer des autres guichets.
+  listCashiers: async (): Promise<CashierOption[]> => {
+    const json = await apiFetch<unknown>("/payments/cashiers")
+    return safeValidate(CashierArraySchema, unwrap(json), "GET /payments/cashiers")
+  },
+
+  // Journal des versements, mêmes filtres que la liste affichée. Le
+  // cloisonnement est appliqué par le serveur : l'export ne peut pas montrer
+  // plus que l'écran.
+  downloadJournal: (
+    params: PaymentListParams = {},
+    format: "pdf" | "xlsx" = "pdf",
+  ): Promise<Blob> => {
+    // La pagination reste à l'écran : un journal se lit en entier, et un
+    // document qui ne couvrirait que la page affichée annoncerait un total
+    // faux sans le dire.
+    const filters: Record<string, string | number | undefined> = { format }
+    for (const [key, value] of Object.entries(params)) {
+      if (key !== "page" && key !== "size") filters[key] = value as string | number | undefined
+    }
+    return apiFetchBlob(`/payments/export${toQuery(filters)}`)
   },
 }

@@ -1,28 +1,21 @@
 "use client"
 
-import { useRef, useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
-  ArrowLeft,
+  Archive,
   BookOpen,
-  Camera,
   Pencil,
   Trash2,
   User,
   GraduationCap,
-  Phone,
+  Users,
   FileText,
   CalendarDays,
   CalendarCheck,
   Clock,
   MoreVertical,
 } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import {
   DropdownMenu,
@@ -44,6 +37,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
+import { DetailHero } from "@/components/shared/DetailHero"
+import { AccountSection } from "@/components/shared/account/AccountSection"
+import { ContactActions } from "@/components/shared/ContactActions"
+import { ArchiveActionDialog, ARCHIVE_MENU_LABEL } from "@/components/shared/ArchiveActionDialog"
+import { useArchiveAction } from "@/lib/hooks/useArchiveAction"
+import type { HeroKpi } from "@/components/shared/PageHero"
 import { TeacherEditModal } from "./TeacherEditModal"
 import { TeacherOverviewTab } from "./tabs/TeacherOverviewTab"
 import { TeacherProfileTab } from "./tabs/TeacherProfileTab"
@@ -52,8 +51,7 @@ import { TeacherEvaluationsTab } from "./tabs/TeacherEvaluationsTab"
 import { TeacherTimetableTab } from "./tabs/TeacherTimetableTab"
 import { TeacherAvailabilityTab } from "./tabs/TeacherAvailabilityTab"
 import { TeacherAttendanceTab } from "./tabs/TeacherAttendanceTab"
-import { useTeacher, useTeacherFull, useDeleteTeacher, teacherKeys } from "@/lib/hooks/useTeachers"
-import { teachersApi } from "@/lib/api/teachers"
+import { useTeacher, useTeacherFull, useDeleteTeacher } from "@/lib/hooks/useTeachers"
 import { getUploadUrl } from "@/lib/utils"
 
 interface TeacherDetailClientProps {
@@ -62,47 +60,24 @@ interface TeacherDetailClientProps {
 
 export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
   const router = useRouter()
-  const queryClient = useQueryClient()
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  // Le formulaire de creneau renvoie ici avec ?tab=disponibilites quand
+  // l'enseignant choisi bloque : autant arriver sur le bon onglet.
+  const searchParams = useSearchParams()
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [photoPreview, setPhotoPreview] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [activeTab, setActiveTab] = useState("overview")
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") ?? "overview")
   const [photoLoaded, setPhotoLoaded] = useState(false)
 
   const { data: teacher, isLoading, isError, refetch } = useTeacher(teacherId)
   const { data: fullData } = useTeacherFull(teacherId)
   const { mutate: deleteTeacher, isPending: deleting } = useDeleteTeacher()
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      await teachersApi.uploadPhoto(teacherId, file)
-      queryClient.invalidateQueries({ queryKey: teacherKeys.detail(teacherId) })
-      toast.success("Photo mise à jour")
-    } catch {
-      toast.error("Erreur lors de l'upload")
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ""
-    }
-  }
-
-  const handleDeletePhoto = async () => {
-    try {
-      await teachersApi.deletePhoto(teacherId)
-      queryClient.invalidateQueries({ queryKey: teacherKeys.detail(teacherId) })
-      queryClient.invalidateQueries({ queryKey: teacherKeys.all })
-      setPhotoPreview(false)
-      toast.success("Photo supprimée")
-    } catch {
-      toast.error("Erreur lors de la suppression de la photo")
-    }
-  }
+  const archiveAction = useArchiveAction({
+    entity: "teacher",
+    id: teacherId,
+    listRoute: "/admin/teachers",
+  })
 
   const handleDelete = () => {
     deleteTeacher(teacherId, {
@@ -119,140 +94,67 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
   const initials = `${teacher.first_name?.[0] ?? ""}${teacher.last_name?.[0] ?? ""}`.toUpperCase()
   const fullName = `${teacher.last_name} ${teacher.first_name}`
   const photoSrc = getUploadUrl((teacher as Record<string, unknown>).photo_url as string | null | undefined)
+  const userEmail = fullData?.user_email as string | null | undefined
+  const heroKpis: HeroKpi[] = [
+    { label: "Classes", value: (fullData?.classes_count as number | undefined) ?? 0, icon: GraduationCap },
+    { label: "Élèves", value: (fullData?.students_count as number | undefined) ?? 0, icon: Users },
+    { label: "Heures / sem", value: (fullData?.hours_per_week as number | undefined) ?? 0, icon: Clock },
+  ]
 
   return (
     <div className="space-y-6">
-      {/* Header — mobile-first stack, AvatarImage gating, kebab actions
-          Pattern cristallisé dans redesign-premium.md principes 13 + 14 */}
-      <div className="flex items-start gap-3">
-        <Link
-          href="/admin/teachers"
-          aria-label="Retour à la liste des enseignants"
-          className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-
-        <button
-          type="button"
-          onClick={() => photoLoaded && setPhotoPreview(true)}
-          aria-label={photoLoaded ? "Voir la photo en grand" : "Photo de l'enseignant"}
-          className="shrink-0 overflow-hidden rounded-2xl border-2 border-border focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-default"
-          disabled={!photoLoaded}
-        >
-          <Avatar className="h-16 w-16 rounded-2xl sm:h-24 sm:w-24">
-            {photoSrc ? (
-              <AvatarImage
-                src={photoSrc}
-                alt={fullName}
-                className="object-cover"
-                onLoadingStatusChange={(status) => setPhotoLoaded(status === "loaded")}
-              />
-            ) : null}
-            <AvatarFallback className="rounded-2xl bg-primary/10 text-xl font-semibold text-primary sm:text-2xl">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-        </button>
-
-        <div className="min-w-0 flex-1">
-          <h1 className="font-serif text-lg tracking-tight sm:text-2xl">{fullName}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {teacher.speciality ?? "Enseignant"}
-          </p>
-          {teacher.phone && (
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <a
-                href={`tel:${teacher.phone}`}
-                className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/5"
-              >
-                <Phone className="h-3 w-3" />
-                {teacher.phone}
-              </a>
-            </div>
-          )}
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+      <DetailHero
+        onBack={() => router.push("/admin/teachers")}
+        backLabel="Retour à la liste des enseignants"
+        photoUrl={photoSrc}
+        initials={initials}
+        name={fullName}
+        subtitle={teacher.speciality ?? "Enseignant"}
+        contact={<ContactActions phone={teacher.phone} email={userEmail} variant="hero" />}
+        kpis={heroKpis}
+        onAvatarClick={() => photoLoaded && setPhotoPreview(true)}
+        onPhotoStatus={setPhotoLoaded}
+        actions={
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/20">
               <MoreVertical className="h-4 w-4" />
               <span className="sr-only">Actions sur l&apos;enseignant</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Modifier les infos
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-            >
-              <Camera className="mr-2 h-4 w-4" />
-              {photoSrc ? "Changer la photo" : "Ajouter une photo"}
-            </DropdownMenuItem>
-            {photoSrc && photoLoaded && (
-              <DropdownMenuItem onClick={handleDeletePhoto}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Supprimer la photo
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Modifier les infos
               </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => setDeleteOpen(true)}
-              className="text-destructive focus:text-destructive focus:bg-destructive/10"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Supprimer l&apos;enseignant
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuSeparator />
+              {/* Archiver d'abord : c'est le geste réversible, donc celui que
+                  l'on veut voir avant la suppression définitive. */}
+              {archiveAction.canArchive && (
+                <DropdownMenuItem onClick={archiveAction.open}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  {ARCHIVE_MENU_LABEL.teacher}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                onClick={() => setDeleteOpen(true)}
+                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Supprimer l&apos;enseignant
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+      />
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handlePhotoUpload}
-        />
-      </div>
-
-      {/* Photo preview dialog */}
+      {/* Photo preview (lecture seule — gérée par l'enseignant sur son profil) */}
       {photoSrc && (
         <Dialog open={photoPreview} onOpenChange={setPhotoPreview}>
-          <DialogContent className="max-w-md p-2">
+          <DialogContent className="max-w-md p-2 sm:p-2">
             <div className="relative aspect-square w-full overflow-hidden rounded-lg">
-              <img
-                src={photoSrc}
-                alt={fullName}
-                className="h-full w-full object-cover"
-              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoSrc} alt={fullName} className="h-full w-full object-cover" />
             </div>
-            <div className="flex items-center justify-between px-2 pb-1">
-              <p className="text-sm font-medium">{fullName}</p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setPhotoPreview(false)
-                    fileInputRef.current?.click()
-                  }}
-                >
-                  <Camera className="mr-1.5 h-3.5 w-3.5" />
-                  Changer
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeletePhoto}
-                >
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                  Supprimer
-                </Button>
-              </div>
-            </div>
+            <p className="px-2 pb-1 text-sm font-medium">{fullName}</p>
           </DialogContent>
         </Dialog>
       )}
@@ -260,7 +162,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
       {/* Tabs — controlled + scroll-x mobile (pattern principe 13/14) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-        <TabsList className="w-max">
+        <TabsList className="w-max max-w-none">
           <TabsTrigger value="overview">
             <BookOpen className="mr-1.5 h-3.5 w-3.5" />
             Vue d&apos;ensemble
@@ -326,8 +228,14 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
         </TabsContent>
       </Tabs>
 
+      {/* Compte de connexion — information secondaire, placée en bas de fiche */}
+      <AccountSection entityType="teacher" entityId={teacherId} />
+
       {/* Edit modal */}
       <TeacherEditModal teacherId={teacherId} open={editOpen} onClose={() => setEditOpen(false)} />
+
+      {/* Archivage — hors du menu déroulant, qui se démonte à la fermeture */}
+      <ArchiveActionDialog action={archiveAction} entity="teacher" subject={fullName} />
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -362,7 +270,7 @@ function DetailSkeleton() {
           <Skeleton className="h-4 w-32" />
         </div>
       </div>
-      <Skeleton className="h-10 w-80 rounded-lg" />
+      <Skeleton className="h-10 w-full max-w-xs rounded-lg" />
       <Skeleton className="h-48 rounded-lg" />
     </div>
   )

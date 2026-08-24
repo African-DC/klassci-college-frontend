@@ -110,7 +110,13 @@ export function AvailabilityToolbar({
 }
 
 
-export function AvailabilityLegend({ pendingCount }: { pendingCount: number }) {
+export function AvailabilityLegend({
+  pendingCount,
+  hasDeclarations,
+}: {
+  pendingCount: number
+  hasDeclarations: boolean
+}) {
   return (
     <div className="flex flex-wrap items-center gap-5 text-xs text-muted-foreground">
       <div className="flex items-center gap-1.5">
@@ -122,8 +128,17 @@ export function AvailabilityLegend({ pendingCount }: { pendingCount: number }) {
         <span>Créneaux préférés</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <div className="h-3 w-5 rounded-sm bg-rose-500/15 ring-1 ring-rose-300/40" />
-        <span>Indisponible</span>
+        {hasDeclarations ? (
+          <>
+            <div className="h-3 w-5 rounded-sm bg-rose-500/15 ring-1 ring-rose-300/40" />
+            <span>Hors des plages déclarées</span>
+          </>
+        ) : (
+          <>
+            <div className="h-3 w-5 rounded-sm bg-muted/50 ring-1 ring-inset ring-border/60" />
+            <span>Non déclaré — aucune contrainte</span>
+          </>
+        )}
       </div>
       {pendingCount > 0 && (
         <div className="flex items-center gap-1.5">

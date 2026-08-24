@@ -62,7 +62,7 @@ export function ParentCreateModal({ open, onClose }: ParentCreateModalProps) {
           <DialogTitle>Nouveau parent</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}

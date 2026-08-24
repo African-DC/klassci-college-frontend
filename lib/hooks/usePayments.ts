@@ -15,11 +15,17 @@ export const paymentKeys = {
   all: ["payments"] as const,
   list: (params: PaymentListParams) => ["payments", "list", params] as const,
   summary: (academicYearId?: number) => ["payments", "summary", academicYearId] as const,
+  cashiers: ["payments", "cashiers"] as const,
   byEnrollment: (enrollmentId: number) =>
     ["payments", "enrollment", enrollmentId] as const,
   preview: (enrollmentId: number, amount: number) =>
     ["payments", "preview", enrollmentId, amount] as const,
 }
+
+/** Les seules entrées du cache qui contiennent une page de versements. */
+const estListePaginee = (cle: readonly unknown[]): boolean =>
+  cle[1] === "list" || cle[1] === "enrollment"
+
 
 export function usePayments(params: PaymentListParams = {}) {
   return useQuery({
@@ -34,6 +40,21 @@ export function useFinancialSummary(academicYearId?: number) {
     queryKey: paymentKeys.summary(academicYearId),
     queryFn: () => paymentsApi.getSummary(academicYearId),
     staleTime: 1000 * 60 * 5,
+  })
+}
+
+/**
+ * Les encaisseurs proposables dans le filtre « Encaissé par ».
+ *
+ * Le serveur décide de ce que l'appelant a le droit d'y voir : un caissier
+ * cloisonné ne reçoit que lui-même. Le composant n'a donc pas à connaître les
+ * droits de celui qui ouvre l'écran.
+ */
+export function useCashiers() {
+  return useQuery({
+    queryKey: paymentKeys.cashiers,
+    queryFn: () => paymentsApi.listCashiers(),
+    staleTime: 1000 * 60 * 10,
   })
 }
 
@@ -107,17 +128,25 @@ export function useRecordEnrollmentPayment(enrollmentId: number) {
   })
 }
 
-/** Met à jour optimistiquement le statut d'un paiement dans le cache paginé */
+/**
+ * Met à jour optimistiquement le statut d'un paiement dans les listes paginées.
+ *
+ * Le préfixe `["payments"]` ramène aussi `["payments", "summary", …]`, dont la
+ * valeur est un récapitulatif financier sans `items`, et `["payments",
+ * "cashiers"]`, qui est une simple liste. Écrire dedans jetait
+ * « Cannot read properties of undefined » avant que la requête ne parte : la
+ * validation et l'annulation d'un versement échouaient sur l'écran des
+ * paiements, qui affiche justement le récapitulatif à côté de la liste.
+ */
 function optimisticStatusUpdate(
   queryClient: ReturnType<typeof useQueryClient>,
   paymentId: number,
   newStatus: Payment["status"],
 ) {
-  // Met à jour dans toutes les listes paginées en cache
   queryClient.setQueriesData<PaginatedResponse<Payment>>(
-    { queryKey: paymentKeys.all },
+    { queryKey: paymentKeys.all, predicate: (q) => estListePaginee(q.queryKey) },
     (old) => {
-      if (!old) return old
+      if (!old?.items) return old
       return {
         ...old,
         items: old.items.map((p) =>
@@ -158,8 +187,9 @@ export function useValidatePayment() {
 export function useCancelPayment() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => paymentsApi.cancel(id),
-    onMutate: async (id) => {
+    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+      paymentsApi.cancel(id, reason),
+    onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: paymentKeys.all })
       const snapshots = queryClient.getQueriesData<PaginatedResponse<Payment>>({
         queryKey: paymentKeys.all,

@@ -1,8 +1,10 @@
 import {
   DashboardStatsSchema,
   DashboardActivitySchema,
+  AdminSummarySchema,
   type DashboardStats,
   type DashboardActivity,
+  type AdminSummary,
 } from "@/lib/contracts/dashboard"
 import { apiFetch } from "./client"
 
@@ -12,4 +14,7 @@ export const dashboardApi = {
 
   activity: async (): Promise<DashboardActivity> =>
     apiFetch("/dashboard/activity", { schema: DashboardActivitySchema }),
+
+  summary: async (): Promise<AdminSummary> =>
+    apiFetch("/dashboard/summary", { schema: AdminSummarySchema }),
 }

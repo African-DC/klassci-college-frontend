@@ -18,15 +18,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { useDrenStats } from "@/lib/hooks/useDrenStats"
 
+// Palette dérivée des tokens shadcn `--chart-1..5` (définis dans globals.css).
+// Reste cohérente avec le thème (clair/sombre) et la règle monochrome + accent.
 const COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--accent))",
-  "hsl(215, 70%, 50%)",
-  "hsl(150, 60%, 45%)",
-  "hsl(280, 60%, 55%)",
-  "hsl(340, 65%, 50%)",
-  "hsl(45, 80%, 50%)",
-  "hsl(180, 50%, 45%)",
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
 ]
 
 // Custom premium tooltip
@@ -103,7 +102,7 @@ export function DashboardCharts() {
     return (
       <div className="grid gap-4 lg:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i} className="border-0 shadow-sm ring-1 ring-border">
+          <Card key={i} className="shadow-sm">
             <CardHeader><Skeleton className="h-5 w-48" /></CardHeader>
             <CardContent><Skeleton className="h-[280px] w-full" /></CardContent>
           </Card>
@@ -115,9 +114,9 @@ export function DashboardCharts() {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       {/* Bar chart */}
-      <Card className="border-0 shadow-sm ring-1 ring-border">
+      <Card className="shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-medium">
+          <CardTitle className="text-base font-semibold">
             Inscriptions validées par niveau
           </CardTitle>
           <CardDescription className="text-xs">
@@ -142,9 +141,9 @@ export function DashboardCharts() {
       </Card>
 
       {/* Donut — Répartition par niveau */}
-      <Card className="border-0 shadow-sm ring-1 ring-border">
+      <Card className="shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-medium">
+          <CardTitle className="text-base font-semibold">
             Répartition par niveau
           </CardTitle>
           <CardDescription className="text-xs">
@@ -184,9 +183,9 @@ export function DashboardCharts() {
       </Card>
 
       {/* Donut — Garçons / Filles */}
-      <Card className="border-0 shadow-sm ring-1 ring-border">
+      <Card className="shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-medium">
+          <CardTitle className="text-base font-semibold">
             Répartition garçons / filles
           </CardTitle>
           <CardDescription className="text-xs">
@@ -225,9 +224,9 @@ export function DashboardCharts() {
       </Card>
 
       {/* Donut — Répartition par classe */}
-      <Card className="border-0 shadow-sm ring-1 ring-border">
+      <Card className="shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-medium">
+          <CardTitle className="text-base font-semibold">
             Répartition par classe
           </CardTitle>
           <CardDescription className="text-xs">

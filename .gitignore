@@ -19,3 +19,9 @@ playwright/.cache/
 
 # Sentry
 .sentryclirc
+
+# Agent scratch (worktrees éphémères, scripts et captures E2E locales)
+.claude/worktrees/
+/_*.bat
+/_e2e_*.js
+/test[0-9]*.png

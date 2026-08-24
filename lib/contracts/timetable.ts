@@ -89,6 +89,39 @@ export const TeacherAvailabilityUpdateSchema = z.object({
   preferred: z.boolean().optional(),
 })
 
+// ---------------------------------------------------------------------------
+// Semaine d'un enseignant
+//
+// Sert a montrer l'empechement AVANT de choisir l'horaire. `has_declarations`
+// porte la regle appliquee par le backend : tant qu'un enseignant n'a rien
+// declare il est disponible partout ; des qu'il a declare une plage, seules
+// celles de `open` restent ouvertes.
+// ---------------------------------------------------------------------------
+
+export const TeacherWeekBusySlotSchema = z.object({
+  day: DayOfWeekSchema,
+  start_time: z.string(),
+  end_time: z.string(),
+  kind: z.enum(["course", "unavailable"]),
+  label: z.string(),
+  class_name: z.string().nullable().optional(),
+})
+
+export const TeacherWeekOpenSlotSchema = z.object({
+  day: DayOfWeekSchema,
+  start_time: z.string(),
+  end_time: z.string(),
+  preferred: z.boolean(),
+})
+
+export const TeacherWeekSchema = z.object({
+  teacher_id: z.number(),
+  teacher_name: z.string(),
+  has_declarations: z.boolean(),
+  busy: z.array(TeacherWeekBusySlotSchema),
+  open: z.array(TeacherWeekOpenSlotSchema),
+})
+
 // Diagnostic pre-generation
 export interface TimetableDiagnostic {
   ready: boolean
@@ -105,3 +138,6 @@ export type DayOfWeek = z.infer<typeof DayOfWeekSchema>
 export type TeacherAvailability = z.infer<typeof TeacherAvailabilitySchema>
 export type TeacherAvailabilityCreate = z.infer<typeof TeacherAvailabilityCreateSchema>
 export type TeacherAvailabilityUpdate = z.infer<typeof TeacherAvailabilityUpdateSchema>
+export type TeacherWeekBusySlot = z.infer<typeof TeacherWeekBusySlotSchema>
+export type TeacherWeekOpenSlot = z.infer<typeof TeacherWeekOpenSlotSchema>
+export type TeacherWeek = z.infer<typeof TeacherWeekSchema>

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react"
 import type { Route } from "next"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { signOut } from "next-auth/react"
 import {
   LayoutDashboard,
   CalendarDays,
@@ -17,6 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { logout } from "@/lib/utils/logout"
 
 const mainNavItems: { label: string; href: Route; icon: LucideIcon }[] = [
   { label: "Accueil", href: "/student/dashboard", icon: LayoutDashboard },
@@ -84,7 +84,7 @@ export function StudentNav() {
               role="menuitem"
               onClick={() => {
                 setMoreOpen(false)
-                signOut({ callbackUrl: "/login" })
+                void logout()
               }}
               className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
             >
@@ -105,8 +105,10 @@ export function StudentNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
-                  isActive ? "text-primary" : "text-muted-foreground",
+                  "relative flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
+                  isActive
+                    ? "text-primary before:absolute before:top-0 before:left-1/2 before:h-1 before:w-6 before:-translate-x-1/2 before:rounded-full before:bg-accent before:content-['']"
+                    : "text-muted-foreground",
                 )}
               >
                 <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
@@ -119,8 +121,10 @@ export function StudentNav() {
             aria-haspopup="true"
             onClick={() => setMoreOpen((prev) => !prev)}
             className={cn(
-              "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
-              isMoreActive || moreOpen ? "text-primary" : "text-muted-foreground",
+              "relative flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-[10px] font-medium transition-colors min-w-[56px]",
+              isMoreActive || moreOpen
+                ? "text-primary before:absolute before:top-0 before:left-1/2 before:h-1 before:w-6 before:-translate-x-1/2 before:rounded-full before:bg-accent before:content-['']"
+                : "text-muted-foreground",
             )}
           >
             <MoreHorizontal className={cn("h-5 w-5", (isMoreActive || moreOpen) && "text-primary")} />

@@ -46,7 +46,7 @@ export function StudentAttendanceClient() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <ClipboardCheck className="h-5 w-5 text-primary" />
+          <ClipboardCheck aria-hidden="true" className="h-5 w-5 text-primary" />
         </div>
         <div>
           <h1 className="font-serif text-xl tracking-tight">Présences</h1>
@@ -63,7 +63,10 @@ export function StudentAttendanceClient() {
             setPage(1)
           }}
         >
-          <SelectTrigger className="w-44">
+          <SelectTrigger
+            aria-label="Filtrer par statut"
+            className="h-11 w-full sm:h-10 sm:w-44"
+          >
             <SelectValue placeholder="Statut" />
           </SelectTrigger>
           <SelectContent>
@@ -81,12 +84,13 @@ export function StudentAttendanceClient() {
       ) : isError ? (
         <DataError message="Impossible de charger les présences." onRetry={() => refetch()} />
       ) : !data || data.items.length === 0 ? (
-        <div className="py-12 text-center text-sm text-muted-foreground">
-          Aucun enregistrement de présence.
+        <div className="rounded-lg border bg-muted/30 py-12 text-center text-sm text-muted-foreground">
+          Aucun enregistrement de présence pour le moment.
         </div>
       ) : (
         <>
-          <div className="rounded-lg border">
+          {/* Desktop : table dense */}
+          <div className="hidden rounded-lg border md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -127,22 +131,64 @@ export function StudentAttendanceClient() {
             </Table>
           </div>
 
-          {/* Pagination */}
+          {/* Mobile : cards date-prominent avec badge statut */}
+          <div className="space-y-2 md:hidden">
+            {data.items.map((record) => {
+              const config = getStatusConfig(record.status)
+              return (
+                <div key={record.id} className="rounded-lg border bg-card p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium capitalize">
+                        {new Date(record.created_at).toLocaleDateString("fr-FR", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                        })}
+                      </p>
+                      {record.time_in && (
+                        <p className="text-[11px] text-muted-foreground tabular-nums">
+                          Arrivée à {record.time_in}
+                        </p>
+                      )}
+                      {record.notes && (
+                        <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                          {record.notes}
+                        </p>
+                      )}
+                    </div>
+                    <Badge
+                      variant={config.variant}
+                      className={`shrink-0 text-[10px] ${config.className ?? ""}`}
+                    >
+                      {config.label}
+                    </Badge>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Pagination — touch targets h-11 sur mobile */}
           {data.total > data.size && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground tabular-nums">
                 Page {data.page} sur {Math.ceil(data.total / data.size)}
               </span>
               <div className="flex gap-2">
                 <button
-                  className="px-3 py-1.5 rounded-md border text-sm disabled:opacity-50"
+                  type="button"
+                  aria-label="Page précédente"
+                  className="inline-flex h-11 items-center rounded-md border bg-card px-4 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 sm:h-9 sm:px-3"
                   disabled={data.page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
                   Précédent
                 </button>
                 <button
-                  className="px-3 py-1.5 rounded-md border text-sm disabled:opacity-50"
+                  type="button"
+                  aria-label="Page suivante"
+                  className="inline-flex h-11 items-center rounded-md border bg-card px-4 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 sm:h-9 sm:px-3"
                   disabled={data.page >= Math.ceil(data.total / data.size)}
                   onClick={() => setPage((p) => p + 1)}
                 >

@@ -1,12 +1,19 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowLeft, Award, FileCheck2, Loader2 } from "lucide-react"
+import { ArrowLeft, Award, FileCheck2, Loader2, Clock } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { studentDocumentsApi } from "@/lib/api/student-documents"
 import { downloadBlob } from "@/lib/utils"
+import { useParentChildren } from "@/lib/hooks/useParentPortal"
+import { isEnrolledFromClassName } from "@/lib/utils/enrollment-status"
+import { useDocumentReleaseStatus } from "@/lib/hooks/useDocumentRelease"
+import { DocumentLockNotice } from "@/components/shared/documents/DocumentLockNotice"
+import { asDocumentBlocked } from "@/lib/contracts/document-release"
 
 interface ParentChildDocumentsClientProps {
   childId: number
@@ -46,6 +53,25 @@ export function ParentChildDocumentsClient({
   childId,
 }: ParentChildDocumentsClientProps) {
   const [downloading, setDownloading] = useState<DocKind | null>(null)
+  const { data: children } = useParentChildren()
+  const child = children?.find((c) => c.id === childId)
+  // Documents officiels (certificat/attestation) ne sont émis que pour les
+  // élèves dont l'inscription est validée pour l'année courante. Si on tente
+  // de télécharger sur un enfant pas inscrit, le BE répond une erreur peu
+  // exploitable. On affiche un guard explicite pour Mme Aïcha avant le clic.
+  const isEnrolled = child ? isEnrolledFromClassName(child.class_name) : true
+  // isEnrolled est initialisé à `true` tant que children n'est pas chargé
+  // pour ne pas masquer l'UI pendant le fetch initial — le guard apparaît
+  // une fois la donnée arrivée si pertinent.
+
+  // Retenue pour impayé. On l'interroge avant d'afficher les boutons : voir le
+  // montant et où le régler vaut mieux que cliquer et se prendre un refus.
+  // Inutile de demander pour un enfant pas encore inscrit — ce cas relève des
+  // règles d'inscription, pas du recouvrement.
+  const { data: release, refetch: refetchRelease } = useDocumentReleaseStatus(
+    isEnrolled ? childId : null,
+  )
+  const isBlocked = release?.blocked ?? false
 
   async function handleDownload(doc: (typeof DOCS)[number]) {
     setDownloading(doc.kind)
@@ -54,6 +80,10 @@ export function ParentChildDocumentsClient({
       downloadBlob(blob, `${doc.filenameBase}_enfant_${childId}.pdf`)
       toast.success(`${doc.title} téléchargé(e)`)
     } catch (err) {
+      // Un versement encaissé au secrétariat il y a deux minutes peut avoir
+      // levé la retenue : on resynchronise plutôt que de laisser le bandeau
+      // mentir dans un sens ou dans l'autre.
+      if (asDocumentBlocked(err)) void refetchRelease()
       const message =
         err instanceof Error
           ? err.message
@@ -81,10 +111,37 @@ export function ParentChildDocumentsClient({
         </div>
       </div>
 
+      {!isEnrolled && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="flex items-start gap-3 py-4">
+            <Clock aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-amber-900">
+                Documents indisponibles pour le moment
+              </p>
+              <p className="text-xs text-amber-800">
+                Les documents officiels (certificat de scolarité, attestation de
+                fréquentation) sont délivrés uniquement pour les élèves dont
+                l&apos;inscription est validée pour l&apos;année courante. Contactez le
+                secrétariat pour finaliser le dossier.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isEnrolled && isBlocked && release ? (
+        <DocumentLockNotice
+          lateAmount={release.late_amount}
+          studentName={child?.full_name}
+        />
+      ) : null}
+
       <div className="space-y-3">
         {DOCS.map((doc) => {
           const Icon = doc.icon
           const isDownloading = downloading === doc.kind
+          const disabled = isDownloading || !isEnrolled || isBlocked
           return (
             <div
               key={doc.kind}
@@ -92,7 +149,7 @@ export function ParentChildDocumentsClient({
             >
               <div className="flex items-start gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Icon className="h-6 w-6" />
+                  <Icon aria-hidden="true" className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-medium">{doc.title}</p>
@@ -101,21 +158,35 @@ export function ParentChildDocumentsClient({
                   </p>
                 </div>
               </div>
-              <Button
-                size="lg"
-                onClick={() => handleDownload(doc)}
-                disabled={isDownloading}
-                className="h-11 w-full"
-              >
-                {isDownloading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Génération...
-                  </>
-                ) : (
-                  "Télécharger PDF"
-                )}
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <PdfPreviewButton
+                  fetchBlob={() => doc.download(childId)}
+                  label={doc.title}
+                  disabled={disabled}
+                  className="h-11 w-full sm:flex-1"
+                />
+                <Button
+                  size="lg"
+                  onClick={() => handleDownload(doc)}
+                  disabled={disabled}
+                  aria-disabled={disabled}
+                  aria-label={`Télécharger ${doc.title}`}
+                  className="h-11 w-full sm:flex-1"
+                >
+                  {isDownloading ? (
+                    <>
+                      <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
+                      Génération...
+                    </>
+                  ) : !isEnrolled ? (
+                    "Disponible après inscription"
+                  ) : isBlocked ? (
+                    "Retenu jusqu'au règlement"
+                  ) : (
+                    "Télécharger PDF"
+                  )}
+                </Button>
+              </div>
             </div>
           )
         })}

@@ -2,10 +2,9 @@
 
 import { useCallback, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { useQueryClient } from "@tanstack/react-query"
+import { Info } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { timetableApi } from "@/lib/api/timetable"
-import { timetableKeys, useTeacherAvailabilities } from "@/lib/hooks/useTimetable"
+import { useAvailabilitySurface } from "@/components/admin/teachers/availability/use-availability-surface"
 import type { DayOfWeek } from "@/lib/contracts/timetable"
 import {
   AvailabilityGrid,
@@ -25,12 +24,15 @@ import {
 } from "@/components/admin/teachers/availability/availability-helpers"
 
 interface TeacherAvailabilityTabProps {
-  teacherId: number
+  /** Absent : l'enseignant connecté gère ses propres plages depuis son portail. */
+  teacherId?: number
+  /** Le portail enseignant parle à la première personne. */
+  intro?: React.ReactNode
 }
 
-export function TeacherAvailabilityTab({ teacherId }: TeacherAvailabilityTabProps) {
-  const queryClient = useQueryClient()
-  const { data: availabilities, isLoading } = useTeacherAvailabilities(teacherId)
+export function TeacherAvailabilityTab({ teacherId, intro }: TeacherAvailabilityTabProps) {
+  const surface = useAvailabilitySurface(teacherId)
+  const { availabilities, isLoading } = surface
 
   const [editMode, setEditMode] = useState(false)
   const [pending, setPending] = useState<Map<string, PendingChange>>(new Map())
@@ -108,7 +110,7 @@ export function TeacherAvailabilityTab({ teacherId }: TeacherAvailabilityTabProp
       const [day, start, end] = key.split("|") as [DayOfWeek, string, string]
       if (change.kind === "create") {
         operations.push(
-          timetableApi.createAvailability(teacherId, {
+          surface.create({
             day,
             start_time: start,
             end_time: end,
@@ -117,10 +119,10 @@ export function TeacherAvailabilityTab({ teacherId }: TeacherAvailabilityTabProp
           }),
         )
       } else if (change.kind === "delete") {
-        operations.push(timetableApi.deleteAvailability(change.existingId))
+        operations.push(surface.remove(change.existingId))
       } else {
         operations.push(
-          timetableApi.updateAvailability(change.existingId, {
+          surface.update(change.existingId, {
             available: true,
             preferred: change.target === "preferred",
           }),
@@ -150,15 +152,10 @@ export function TeacherAvailabilityTab({ teacherId }: TeacherAvailabilityTabProp
       )
     }
 
-    await queryClient.invalidateQueries({
-      queryKey: timetableKeys.availabilities(teacherId),
-    })
-    await queryClient.invalidateQueries({
-      queryKey: ["teachers", teacherId, "full"],
-    })
+    await surface.invalidate()
 
     setSaving(false)
-  }, [pending, teacherId, queryClient])
+  }, [pending, surface])
 
   if (isLoading) {
     return (
@@ -176,9 +173,29 @@ export function TeacherAvailabilityTab({ teacherId }: TeacherAvailabilityTabProp
     (v) => v.state === "preferred",
   ).length
   const maxSlots = DAYS.length * HOURS.length
+  // Rien de declare : la semaine ne contraint rien, et la grille ne doit pas
+  // afficher le contraire (cf. UNDECLARED_STYLE).
+  // Ce qui bascule la grille en liste blanche, c'est une plage OUVERTE.
+  // Compter toutes les lignes ferait qu'une seule absence notée peindrait la
+  // semaine entière en « hors des plages déclarées ».
+  const hasDeclarations = [...savedMap.values()].some(
+    (c) => c.state === "available" || c.state === "preferred",
+  )
 
   return (
     <div className="space-y-4">
+{intro ?? (
+      <div className="flex items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+        <p className="text-muted-foreground">
+          Disponibilités <span className="font-medium text-foreground">annuelles</span> : ce planning
+          récurrent (par jour de la semaine) sert de base à la génération de l&apos;emploi du temps, il
+          ne se règle pas semaine par semaine. Pour une absence ponctuelle, utilisez plutôt une{" "}
+          <span className="font-medium text-foreground">demande de congé</span>.
+        </p>
+      </div>
+      )}
+
       <AvailabilityToolbar
         editMode={editMode}
         saving={saving}
@@ -195,10 +212,11 @@ export function TeacherAvailabilityTab({ teacherId }: TeacherAvailabilityTabProp
         getDisplayState={getDisplayState}
         isPendingCell={isPendingCell}
         interactive={editMode && !saving}
+        hasDeclarations={hasDeclarations}
         onToggle={handleToggle}
       />
 
-      <AvailabilityLegend pendingCount={pending.size} />
+      <AvailabilityLegend pendingCount={pending.size} hasDeclarations={hasDeclarations} />
     </div>
   )
 }

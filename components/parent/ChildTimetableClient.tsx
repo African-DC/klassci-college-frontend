@@ -1,10 +1,12 @@
 "use client"
 
+import { Clock, Calendar } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { useParentChildTimetable } from "@/lib/hooks/useParentPortal"
 import type { ChildTimetableSlot } from "@/lib/api/parent-portal"
+import { isEnrolledFromClassName } from "@/lib/utils/enrollment-status"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
 const DAY_LABELS: Record<string, string> = {
@@ -67,9 +69,35 @@ export function ChildTimetableClient({ childId }: ChildTimetableClientProps) {
       ) : isLoading ? (
         <TimetableSkeleton />
       ) : slots.length === 0 ? (
-        <div className="py-12 text-center text-sm text-muted-foreground">
-          Aucun emploi du temps disponible.
-        </div>
+        // Empty state désambigué : distinguer "enfant pas inscrit" vs
+        // "inscrit mais aucun cours cette semaine" pour rassurer le parent.
+        !isEnrolledFromClassName(className) ? (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="flex flex-col items-center py-10 text-center">
+              <Clock aria-hidden="true" className="mb-3 h-10 w-10 text-amber-500" />
+              <p className="text-sm font-medium text-amber-900">
+                Inscription en attente
+              </p>
+              <p className="mt-1 text-xs text-amber-800">
+                L&apos;emploi du temps apparaîtra ici une fois l&apos;inscription validée
+                par l&apos;administration.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="bg-muted/30">
+            <CardContent className="flex flex-col items-center py-10 text-center">
+              <Calendar aria-hidden="true" className="mb-3 h-10 w-10 text-muted-foreground/50" />
+              <p className="text-sm text-muted-foreground">
+                Aucun cours programmé cette semaine.
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground/80">
+                L&apos;administration n&apos;a pas encore publié l&apos;emploi du temps. Contactez
+                le secrétariat si la situation persiste.
+              </p>
+            </CardContent>
+          </Card>
+        )
       ) : (
         <div className="space-y-4">
           {DAYS.map((day) => {

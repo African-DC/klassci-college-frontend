@@ -1,30 +1,30 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useQuery } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import {
-  ArrowLeft,
+  Archive,
   Pencil,
   Trash2,
-  User,
   Users,
   Mail,
   MoreVertical,
-  Phone,
+  MapPin,
   CalendarDays,
-  ChevronRight,
   ShieldCheck,
+  UserPlus,
+  Wallet,
+  Coins,
 } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import type { Route } from "next"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -38,38 +38,37 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { DataError } from "@/components/shared/DataError"
-import { useParent, useDeleteParent } from "@/lib/hooks/useParents"
-import { parentsApi } from "@/lib/api/parents"
+import { DetailHero } from "@/components/shared/DetailHero"
+import { AccountSection } from "@/components/shared/account/AccountSection"
+import { ContactActions } from "@/components/shared/ContactActions"
+import { ArchiveActionDialog, ARCHIVE_MENU_LABEL } from "@/components/shared/ArchiveActionDialog"
+import { useArchiveAction } from "@/lib/hooks/useArchiveAction"
+import type { HeroKpi } from "@/components/shared/PageHero"
+import { useParent, useParentFull, useDeleteParent, useUnlinkParent } from "@/lib/hooks/useParents"
+import { formatXof } from "@/lib/export/format"
+import type { ParentChild } from "@/lib/contracts/parent"
 import { ParentEditModal } from "./ParentEditModal"
-import type { Route } from "next"
+import { ParentLinkChildModal } from "./ParentLinkChildModal"
+import { ParentChildCard } from "./ParentChildCard"
 
-interface ParentDetailClientProps {
-  parentId: number
-}
-
-export function ParentDetailClient({ parentId }: ParentDetailClientProps) {
+export function ParentDetailClient({ parentId }: { parentId: number }) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [linkOpen, setLinkOpen] = useState(false)
+  const [unlinkTarget, setUnlinkTarget] = useState<ParentChild | null>(null)
 
   const { data: parent, isLoading, isError, refetch } = useParent(parentId)
-  const { data: fullData } = useQuery({
-    queryKey: ["parent", parentId, "full"],
-    queryFn: () => parentsApi.getFull(parentId),
-    enabled: !!parentId,
-    staleTime: 1000 * 60 * 5,
-  })
+  const { data: full } = useParentFull(parentId)
   const { mutate: deleteParent, isPending: deleting } = useDeleteParent()
-
-  const handleDelete = () => {
-    deleteParent(parentId, {
-      onSuccess: () => {
-        router.push("/admin/students" as Route)
-      },
-    })
-  }
+  const { mutate: unlink, isPending: unlinking } = useUnlinkParent()
+  const archiveAction = useArchiveAction({
+    entity: "parent",
+    id: parentId,
+    listRoute: "/admin/parents",
+  })
 
   if (isLoading) return <DetailSkeleton />
   if (isError) return <DataError message="Impossible de charger la fiche parent." onRetry={() => refetch()} />
@@ -77,154 +76,190 @@ export function ParentDetailClient({ parentId }: ParentDetailClientProps) {
 
   const initials = `${parent.first_name?.[0] ?? ""}${parent.last_name?.[0] ?? ""}`.toUpperCase()
   const fullName = `${parent.last_name} ${parent.first_name}`
-  const children = (fullData?.children as Array<Record<string, unknown>>) ?? []
-  const userEmail = (fullData?.user_email as string | null | undefined) ?? parent.email
-  const userIsActive = fullData?.user_is_active as boolean | null | undefined
-  const userLastLogin = fullData?.user_last_login as string | null | undefined
+  const children = full?.children ?? []
+  const summary = full?.summary
+  const userEmail = full?.user_email ?? parent.email
   const createdAt = parent.created_at
     ? new Date(parent.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
     : null
 
+  // `null` signifie « vous n'avez pas le droit de lire ce montant » ; `undefined`
+  // signifie « pas encore chargé ». Seul le premier justifie de masquer.
+  const amountsHidden = summary !== undefined && summary?.total_balance === null
+
+  const kpis: HeroKpi[] = [
+    { label: "Enfants", value: summary?.children_count ?? children.length, icon: Users },
+    ...(amountsHidden
+      ? []
+      : [
+          { label: "Total payé", value: formatXof(summary?.total_paid ?? 0), icon: Coins },
+          {
+            label: "Reste à payer",
+            value: formatXof(summary?.total_balance ?? 0),
+            icon: Wallet,
+            hint: summary?.academic_year_name ? `Année ${summary.academic_year_name}` : undefined,
+          },
+        ]),
+  ]
+
+  const handleDelete = () =>
+    deleteParent(parentId, { onSuccess: () => router.push("/admin/students" as Route) })
+
+  const confirmUnlink = () => {
+    if (!unlinkTarget) return
+    unlink(
+      { parentId, studentId: unlinkTarget.student_id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["parent", parentId, "full"] })
+          setUnlinkTarget(null)
+        },
+      },
+    )
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header — pattern cristallisé redesign-premium principes 13/14 */}
-      <div className="flex items-start gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          aria-label="Retour"
-          className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border hover:bg-muted transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-
-        <Avatar className="h-16 w-16 shrink-0 rounded-2xl border-2 border-border sm:h-24 sm:w-24">
-          <AvatarFallback className="rounded-2xl bg-primary/10 text-xl font-semibold text-primary sm:text-2xl">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-
-        <div className="min-w-0 flex-1">
-          <h1 className="font-serif text-lg tracking-tight sm:text-2xl">{fullName}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Parent {children.length > 0 ? `· ${children.length} enfant${children.length > 1 ? "s" : ""}` : ""}
-          </p>
-          {parent.phone && (
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <a
-                href={`tel:${parent.phone}`}
-                className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/5"
-              >
-                <Phone className="h-3 w-3" />
-                {parent.phone}
-              </a>
-            </div>
-          )}
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+      <DetailHero
+        onBack={() => router.back()}
+        backLabel="Retour à la liste des parents"
+        initials={initials}
+        name={fullName}
+        subtitle={`Parent${children.length > 0 ? ` · ${children.length} enfant${children.length > 1 ? "s" : ""}` : ""}`}
+        contact={<ContactActions phone={parent.phone} email={userEmail} variant="hero" />}
+        kpis={kpis}
+        actions={
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/20">
               <MoreVertical className="h-4 w-4" />
               <span className="sr-only">Actions sur le parent</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Modifier
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => setDeleteOpen(true)}
-              className="text-destructive focus:text-destructive focus:bg-destructive/10"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Supprimer le parent
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Modifier les infos
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLinkOpen(true)}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Lier un enfant
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {/* Archiver d'abord : c'est le geste réversible, donc celui que
+                  l'on veut voir avant la suppression définitive. */}
+              {archiveAction.canArchive && (
+                <DropdownMenuItem onClick={archiveAction.open}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  {ARCHIVE_MENU_LABEL.parent}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                onClick={() => setDeleteOpen(true)}
+                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Supprimer le parent
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+      />
 
-      {/* Section Enfants liés — Wave-style 1-tap action vers la fiche élève */}
+      {/* Enfants liés */}
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardContent className="p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="flex items-center gap-2 text-sm font-medium">
-              <Users className="h-4 w-4 text-muted-foreground" />
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               Enfants liés
-            </h3>
-            {children.length > 0 && (
-              <span className="text-xs text-muted-foreground">{children.length} liés</span>
-            )}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setLinkOpen(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-sm font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/90"
+            >
+              <UserPlus className="h-4 w-4" aria-hidden="true" />
+              Lier un enfant
+            </button>
           </div>
+
           {children.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucun enfant lié à ce parent.</p>
+            <div className="rounded-lg border border-dashed py-8 text-center">
+              <Users className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" aria-hidden="true" />
+              <p className="text-sm text-muted-foreground">Aucun enfant lié à ce parent.</p>
+              <button
+                type="button"
+                onClick={() => setLinkOpen(true)}
+                className="mt-1 text-sm font-medium text-accent"
+              >
+                Lier un enfant maintenant
+              </button>
+            </div>
           ) : (
-            <ul className="space-y-2">
-              {children.map((child) => {
-                const ln = String(child.last_name ?? "")
-                const fn = String(child.first_name ?? "")
-                const className = (child.class_name as string | null) ?? null
-                const cid = child.id as number
-                const ci = `${ln[0] ?? ""}${fn[0] ?? ""}`.toUpperCase()
-                return (
-                  <li key={cid}>
-                    <Link
-                      href={`/admin/students/${cid}` as Route}
-                      className="flex items-center gap-3 rounded-lg border bg-card p-3 hover:bg-muted/50 hover:ring-1 hover:ring-primary transition-all"
-                    >
-                      <Avatar className="h-9 w-9 shrink-0">
-                        <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                          {ci}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{ln} {fn}</p>
-                        {className && <p className="text-xs text-muted-foreground">{className}</p>}
-                      </div>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {children.map((child) => (
+                <ParentChildCard key={child.student_id} child={child} onUnlink={setUnlinkTarget} />
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Section Contact & compte — tri-état badge principe 14 */}
+      {/* Contact & compte */}
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardContent className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-4">
-            Contact &amp; compte
-          </h3>
+          <h2 className="mb-4 text-sm font-semibold text-muted-foreground">Contact &amp; compte</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <InfoItem icon={<Mail className="h-4 w-4" />} label="Email" value={userEmail ?? "Non renseigné"} />
             <InfoItem
-              icon={<Mail className="h-4 w-4" />}
-              label="Email"
-              value={userEmail ?? "Non renseigné"}
-            />
-            <InfoItem
-              icon={<User className="h-4 w-4" />}
+              icon={<MapPin className="h-4 w-4" />}
               label="Ville / Commune"
               value={[parent.city, parent.commune].filter(Boolean).join(" / ") || "Non renseigné"}
             />
-            <AccountStatusItem isActive={userIsActive} lastLogin={userLastLogin} />
-            <InfoItem
-              icon={<CalendarDays className="h-4 w-4" />}
-              label="Créé le"
-              value={createdAt ?? "—"}
+            <AccountStatusItem
+              hasAccount={!!(full?.user_email || parent.user_id)}
+              isActive={full?.user_is_active}
+              lastLogin={full?.user_last_login}
             />
+            <InfoItem icon={<CalendarDays className="h-4 w-4" />} label="Créé le" value={createdAt ?? "—"} />
           </div>
         </CardContent>
       </Card>
 
-      <ParentEditModal
+      <AccountSection entityType="parent" entityId={parentId} />
+
+      <ParentEditModal parentId={parentId} open={editOpen} onClose={() => setEditOpen(false)} />
+
+      {/* Archivage — hors du menu déroulant, qui se démonte à la fermeture */}
+      <ArchiveActionDialog action={archiveAction} entity="parent" subject={fullName} />
+      <ParentLinkChildModal
         parentId={parentId}
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
+        linkedStudentIds={children.map((c) => c.student_id)}
+        open={linkOpen}
+        onClose={() => setLinkOpen(false)}
       />
+
+      {/* Unlink confirmation */}
+      <AlertDialog open={!!unlinkTarget} onOpenChange={(o) => !o && setUnlinkTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Retirer cet enfant ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Le lien entre {fullName} et {unlinkTarget?.student_name} sera retiré. L&apos;élève ne
+              sera pas supprimé.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmUnlink}
+              disabled={unlinking}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {unlinking ? "Retrait..." : "Retirer le lien"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -232,8 +267,8 @@ export function ParentDetailClient({ parentId }: ParentDetailClientProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer ce parent ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Le parent {fullName} sera définitivement supprimé.
-              Les liens avec les enfants seront retirés.
+              Cette action est irréversible. Le parent {fullName} sera définitivement supprimé. Les
+              liens avec les enfants seront retirés.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -252,15 +287,7 @@ export function ParentDetailClient({ parentId }: ParentDetailClientProps) {
   )
 }
 
-function InfoItem({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-}) {
+function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-start gap-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
@@ -275,26 +302,24 @@ function InfoItem({
 }
 
 function AccountStatusItem({
+  hasAccount,
   isActive,
   lastLogin,
 }: {
+  hasAccount: boolean
   isActive: boolean | null | undefined
   lastLogin: string | null | undefined
 }) {
-  // Tri-état sémantique principe 14 redesign-premium.
-  let badge: { label: string; className: string; variant: "outline" | "destructive" }
-  if (!lastLogin) {
-    badge = {
-      label: "En attente",
-      className: "border-amber-500 text-amber-700 dark:text-amber-400",
-      variant: "outline",
-    }
+  let badge: { label: string; className: string; variant: "outline" | "destructive" | "secondary" }
+  if (!hasAccount) {
+    badge = { label: "Sans compte", className: "", variant: "secondary" }
+  } else if (!lastLogin) {
+    badge = { label: "En attente", className: "border-amber-500 text-amber-700 dark:text-amber-400", variant: "outline" }
   } else if (isActive === false) {
     badge = { label: "Désactivé", className: "", variant: "destructive" }
   } else {
     badge = { label: "Actif", className: "border-emerald-500 text-emerald-600", variant: "outline" }
   }
-
   return (
     <div className="flex items-start gap-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
@@ -313,16 +338,9 @@ function AccountStatusItem({
 function DetailSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3">
-        <Skeleton className="h-9 w-9 rounded-md" />
-        <Skeleton className="h-16 w-16 rounded-2xl sm:h-24 sm:w-24" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-7 w-48" />
-          <Skeleton className="h-4 w-32" />
-        </div>
-      </div>
-      <Skeleton className="h-32 rounded-lg" />
-      <Skeleton className="h-32 rounded-lg" />
+      <Skeleton className="h-52 rounded-2xl" />
+      <Skeleton className="h-40 rounded-xl" />
+      <Skeleton className="h-32 rounded-xl" />
     </div>
   )
 }

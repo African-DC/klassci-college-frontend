@@ -19,7 +19,8 @@ test.describe('Login flow', () => {
 
   test('invalid credentials show inline error', async ({ page }) => {
     await page.goto('/login')
-    await page.getByPlaceholder('nom@etablissement.cd').fill('nope@klassci.com')
+    await page.getByPlaceholder('ROSTAN').fill('local')
+    await page.getByPlaceholder('nom@etablissement.ci').fill('nope@klassci.com')
     await page.getByPlaceholder('Entrez votre mot de passe').fill('wrongpass123')
     await page.getByRole('button', { name: /Se connecter/i }).click()
     await expect(page.getByText(/incorrect/i)).toBeVisible({ timeout: 10_000 })

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { ClipboardList, ClipboardCheck, History, BarChart3, UserCheck } from "lucide-react"
+import { ClipboardList, ClipboardCheck, History, BarChart3, UserCheck, School, BookOpen, CalendarDays } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PageHero, type HeroKpi } from "@/components/shared/PageHero"
 import { AttendanceGrid } from "./AttendanceGrid"
 import { AttendanceHistory } from "./AttendanceHistory"
 import { AttendanceStats } from "./AttendanceStats"
@@ -61,30 +62,46 @@ export function AttendancePageClient() {
     setSlotId(undefined)
   }
 
+  // Contexte sélectionné — affiché en subtitle pour rappeler à l'admin
+  // sur quelle classe / quel jour il pointe (sinon stats opaques).
+  const selectedClass = classes.find((c) => c.id === classId)
+  const subtitle = selectedClass
+    ? `Classe ${selectedClass.name}${dayOfWeek ? ` · ${dayOfWeek}` : ""}`
+    : "Pointage des présences par session de cours, historique et statistiques"
+
+  const kpis: HeroKpi[] = [
+    { label: "Classes", value: classes.length, icon: School },
+    {
+      label: selectedClass ? "Créneaux de la classe" : "Créneaux",
+      value: selectedClass ? (slots?.length ?? 0) : "—",
+      icon: BookOpen,
+    },
+    {
+      label: "Créneaux ce jour",
+      value: selectedClass ? availableSlots.length : "—",
+      icon: CalendarDays,
+    },
+  ]
+
   return (
     <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <ClipboardCheck className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="font-serif text-2xl tracking-tight">Présences</h1>
-          <p className="text-sm text-muted-foreground">
-            Pointage des présences par session de cours, historique et statistiques
-          </p>
-        </div>
-      </div>
+      {/* Hero signature KLASSCI (dégradé bleu + KPIs intégrés) */}
+      <PageHero
+        icon={ClipboardCheck}
+        title="Présences"
+        subtitle={<span className="capitalize">{subtitle}</span>}
+        kpis={kpis}
+      />
 
       {/* Filtres principaux */}
       <div className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1">
+        <div className="min-w-[160px] flex-1 space-y-1 sm:flex-none">
           <label htmlFor="filter-class" className="text-xs text-muted-foreground">Classe</label>
           <Select
             value={classId?.toString() ?? ""}
             onValueChange={(v) => handleClassChange(Number(v))}
           >
-            <SelectTrigger id="filter-class" className="w-40">
+            <SelectTrigger id="filter-class" className="h-11 w-full sm:h-10 sm:w-40">
               <SelectValue placeholder="Classe" />
             </SelectTrigger>
             <SelectContent>
@@ -97,25 +114,25 @@ export function AttendancePageClient() {
           </Select>
         </div>
 
-        <div className="space-y-1">
+        <div className="min-w-[140px] flex-1 space-y-1 sm:flex-none">
           <label htmlFor="filter-date" className="text-xs text-muted-foreground">Date</label>
           <Input
             id="filter-date"
             type="date"
             value={date}
             onChange={(e) => handleDateChange(e.target.value)}
-            className="w-40"
+            className="h-11 w-full sm:h-10 sm:w-40"
           />
         </div>
 
         {classId && (
-          <div className="space-y-1">
+          <div className="min-w-[200px] flex-1 space-y-1 sm:flex-none">
             <label htmlFor="filter-slot" className="text-xs text-muted-foreground">Créneau</label>
             <Select
               value={slotId?.toString() ?? ""}
               onValueChange={(v) => setSlotId(Number(v))}
             >
-              <SelectTrigger id="filter-slot" className="w-64">
+              <SelectTrigger id="filter-slot" className="h-11 w-full sm:h-10 sm:w-64">
                 <SelectValue placeholder="Sélectionner un créneau" />
               </SelectTrigger>
               <SelectContent>
@@ -140,15 +157,15 @@ export function AttendancePageClient() {
       <Tabs defaultValue="pointage">
         <TabsList>
           <TabsTrigger value="pointage">
-            <ClipboardList className="mr-2 h-4 w-4" />
+            <ClipboardList aria-hidden="true" className="mr-2 h-4 w-4" />
             Pointage
           </TabsTrigger>
           <TabsTrigger value="historique">
-            <History className="mr-2 h-4 w-4" />
+            <History aria-hidden="true" className="mr-2 h-4 w-4" />
             Historique
           </TabsTrigger>
           <TabsTrigger value="statistiques">
-            <BarChart3 className="mr-2 h-4 w-4" />
+            <BarChart3 aria-hidden="true" className="mr-2 h-4 w-4" />
             Statistiques
           </TabsTrigger>
         </TabsList>
@@ -158,7 +175,7 @@ export function AttendancePageClient() {
             <AttendanceGrid classId={classId} slotId={slotId} date={date} />
           ) : (
             <div className="py-16 text-center">
-              <UserCheck className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+              <UserCheck aria-hidden="true" className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground">
                 Sélectionnez une classe, une date et un créneau pour commencer le pointage.
               </p>
@@ -171,7 +188,7 @@ export function AttendancePageClient() {
         </TabsContent>
 
         <TabsContent value="statistiques">
-          <AttendanceStats classId={classId} />
+          <AttendanceStats classId={classId} className={selectedClass?.name} />
         </TabsContent>
       </Tabs>
     </div>

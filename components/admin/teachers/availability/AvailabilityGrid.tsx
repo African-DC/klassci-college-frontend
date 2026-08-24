@@ -8,6 +8,7 @@ import {
   HOURS,
   STATE_LABELS,
   STATE_STYLES,
+  UNDECLARED_STYLE,
   cellKey,
 } from "./availability-helpers"
 
@@ -15,6 +16,8 @@ interface AvailabilityGridProps {
   getDisplayState: (day: DayOfWeek, start: string, end: string) => CellState
   isPendingCell: (day: DayOfWeek, start: string, end: string) => boolean
   interactive: boolean
+  /** Faux : rien n'est declare, une case vide ne ferme rien. */
+  hasDeclarations: boolean
   onToggle: (day: DayOfWeek, start: string, end: string) => void
 }
 
@@ -22,6 +25,7 @@ export function AvailabilityGrid({
   getDisplayState,
   isPendingCell,
   interactive,
+  hasDeclarations,
   onToggle,
 }: AvailabilityGridProps) {
   return (
@@ -37,9 +41,10 @@ export function AvailabilityGrid({
                 {DAYS.map((d) => (
                   <th
                     key={d.key}
-                    className="p-2 text-center font-medium text-muted-foreground min-w-[80px]"
+                    className="p-2 text-center font-medium text-muted-foreground min-w-[52px] sm:min-w-[80px]"
                   >
-                    {d.label}
+                    <span className="sm:hidden">{d.court}</span>
+                    <span className="hidden sm:inline">{d.label}</span>
                   </th>
                 ))}
               </tr>
@@ -53,6 +58,16 @@ export function AvailabilityGrid({
                   {DAYS.map((day) => {
                     const state = getDisplayState(day.key, hour.start, hour.end)
                     const isPending = isPendingCell(day.key, hour.start, hour.end)
+                    const style =
+                      state === "unavailable" && !hasDeclarations
+                        ? UNDECLARED_STYLE
+                        : STATE_STYLES[state]
+                    const lu =
+                      state === "unavailable"
+                        ? hasDeclarations
+                          ? "hors des plages declarees"
+                          : "non declare"
+                        : state
                     return (
                       <td
                         key={cellKey(day.key, hour.start, hour.end)}
@@ -63,13 +78,13 @@ export function AvailabilityGrid({
                           disabled={!interactive}
                           onClick={() => onToggle(day.key, hour.start, hour.end)}
                           className={`
-                            w-full h-9 rounded-md text-[10px] font-medium transition-colors
+                            w-full h-11 sm:h-9 rounded-md text-[10px] font-medium transition-colors
                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
                             ${interactive ? "hover:opacity-80 cursor-pointer" : "cursor-default"}
-                            ${STATE_STYLES[state]}
+                            ${style}
                             ${isPending ? "ring-2 ring-dashed ring-amber-500/70" : ""}
                           `}
-                          aria-label={`${day.label} ${hour.start}-${hour.end}: ${state}${
+                          aria-label={`${day.label} ${hour.start}-${hour.end} : ${lu}${
                             isPending ? " (modification en attente)" : ""
                           }`}
                         >

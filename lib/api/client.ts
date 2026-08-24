@@ -3,6 +3,14 @@ import type { Session } from "next-auth"
 import type { z } from "zod"
 
 function getBaseUrl(): string {
+  // Server-side (route handlers / RSC): call the backend directly so auth and
+  // server fetches never depend on the public host's DNS/TLS (no hairpin,
+  // no host-pinning). Falls back to the internal address.
+  if (typeof window === "undefined") {
+    return process.env.INTERNAL_API_URL ?? "http://127.0.0.1:8000"
+  }
+  // Client-side: same-origin relative base → works on whatever host the app is
+  // served from (https domain, raw IP in http, …). No mixed-content, no CORS.
   const url = process.env.NEXT_PUBLIC_API_URL
   if (!url) throw new Error("NEXT_PUBLIC_API_URL is not defined — check your .env file")
   return url
@@ -30,10 +38,22 @@ export async function handleExpiredSession(): Promise<void> {
   } catch {
     // ignore
   }
-  // Clear the NextAuth cookie. redirect:false because we trigger a full
-  // navigation ourselves to also reset TanStack Query / Zustand state.
-  await signOut({ redirect: false }).catch(() => {})
-  window.location.href = "/login?expired=1"
+  // Belt-and-suspenders: even if signOut hangs or rejects, the redirect
+  // must fire — otherwise we get the zombie state observed 2026-05-20
+  // (28×401 with the session-token cookie still set, no redirect, UI
+  // stays mounted on /admin/*).
+  const redirect = () => {
+    window.location.href = "/login?expired=1"
+  }
+  const fallback = window.setTimeout(redirect, 1500)
+  try {
+    await signOut({ redirect: false })
+  } catch {
+    // ignore — we redirect regardless
+  } finally {
+    window.clearTimeout(fallback)
+    redirect()
+  }
 }
 
 interface RequestOptions extends Omit<RequestInit, "headers"> {
@@ -74,6 +94,15 @@ async function getCachedSession(): Promise<Session | null> {
 async function authHeaders(): Promise<Record<string, string>> {
   const session = await getCachedSession()
   const headers: Record<string, string> = { "Content-Type": "application/json" }
+  // auth.ts sets session.error = "RefreshTokenError" when isTokenExpired() is
+  // truthy on the next jwt() pass, but it still exposes session.accessToken
+  // (the stale JWT). Don't send that to the BE: bail out and trigger the
+  // signOut/redirect flow immediately. Middleware would catch it on the next
+  // server navigation, but client-side fetches need their own handler.
+  if (session?.error === "RefreshTokenError") {
+    void handleExpiredSession()
+    throw new Error("Session expirée")
+  }
   if (session?.accessToken) {
     headers["Authorization"] = `Bearer ${session.accessToken}`
   }
@@ -81,14 +110,66 @@ async function authHeaders(): Promise<Record<string, string>> {
 }
 
 /** Fetch authentifié retournant un Blob (pour téléchargement PDF, Excel, etc.) */
-export async function apiFetchBlob(path: string): Promise<Blob> {
+/**
+ * Erreur HTTP portant le `detail` du backend tel quel.
+ *
+ * FastAPI renvoie soit une chaine (`{detail: "..."}`), soit un objet quand le
+ * front doit pouvoir agir dessus, par exemple un montant a payer et le droit
+ * de deroger. On garde l'objet intact ici : le client HTTP n'a pas a connaitre
+ * la semantique de chaque code, chaque module la lit lui-meme.
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly detail: unknown,
+  ) {
+    super(message)
+    this.name = "ApiError"
+  }
+}
+
+function apiErrorFrom(status: number, detail: unknown, fallback: string): ApiError {
+  if (typeof detail === "string") return new ApiError(detail, status, detail)
+  if (detail !== null && typeof detail === "object") {
+    const message = (detail as { message?: unknown }).message
+    return new ApiError(typeof message === "string" ? message : fallback, status, detail)
+  }
+  return new ApiError(fallback, status, detail)
+}
+
+interface BlobRequestOptions {
+  method?: string
+  /** Corps JSON déjà sérialisé. Sa présence conserve le Content-Type. */
+  body?: string
+}
+
+/**
+ * Certains documents sont délivrés par un POST et non un GET : le billet
+ * d'entrée ferme l'absence dans le cahier d'appel en même temps qu'il
+ * s'imprime. Le verbe et le corps sont donc paramétrables, le contrat 401 et
+ * la lecture du `detail` backend restent les mêmes.
+ */
+export async function apiFetchBlob(
+  path: string,
+  options: BlobRequestOptions = {},
+): Promise<Blob> {
   const headers = await authHeaders()
-  delete headers["Content-Type"]
-  const res = await fetch(`${getBaseUrl()}${path}`, { headers })
+  if (options.body === undefined) delete headers["Content-Type"]
+  const hadToken = "Authorization" in headers
+  const res = await fetch(`${getBaseUrl()}${path}`, {
+    method: options.method ?? "GET",
+    body: options.body,
+    headers,
+  })
   if (res.status === 401) {
-    const session = await getCachedSession()
-    if (session?.accessToken) {
-      await handleExpiredSession()
+    // We sent a Bearer that the BE rejected → JWT expired or revoked.
+    // Gate on the header we actually sent (not a re-read of the session)
+    // so the post-login race — cookie set but getSession() not yet primed,
+    // so no Authorization header in the first fetch — doesn't trigger an
+    // immediate signOut right after login.
+    if (hadToken) {
+      void handleExpiredSession()
     }
     throw new Error("Session expirée")
   }
@@ -96,11 +177,12 @@ export async function apiFetchBlob(path: string): Promise<Blob> {
     // Surface the BE detail when available so the caller can toast a useful
     // message — see app/routers/_pdf_helpers.py for the JSON {detail} contract.
     const contentType = res.headers.get("content-type") ?? ""
+    const fallback = `Erreur ${res.status} lors du téléchargement`
     if (contentType.includes("application/json")) {
-      const body = (await res.json().catch(() => null)) as { detail?: string } | null
-      if (body?.detail) throw new Error(body.detail)
+      const body = (await res.json().catch(() => null)) as { detail?: unknown } | null
+      if (body?.detail) throw apiErrorFrom(res.status, body.detail, fallback)
     }
-    throw new Error(`Erreur ${res.status} lors du téléchargement`)
+    throw new Error(fallback)
   }
   return res.blob()
 }
@@ -108,18 +190,20 @@ export async function apiFetchBlob(path: string): Promise<Blob> {
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { schema, ...fetchOptions } = options
   const headers = { ...(await authHeaders()), ...fetchOptions.headers }
+  const hadToken = "Authorization" in headers
   const res = await fetch(`${getBaseUrl()}${path}`, { ...fetchOptions, headers })
 
   // 401: the JWT carried in the Authorization header is missing or expired.
-  // We only trigger signOut+redirect if we actually had a session — otherwise
-  // we'd race with the login flow (cookies set but not yet readable by
-  // getSession() on the first post-login fetch). When there's no session,
-  // throwing a plain error is enough: the middleware will redirect on the
+  // Gate on the header we actually sent (not a re-read of the session)
+  // — the session cache may report `accessToken` truthy even when the BE
+  // is rejecting that very token, and re-reading it before deciding can
+  // race with handleExpiredSession() clearing the cache. The post-login
+  // race (cookie set but no Authorization header yet) is handled by
+  // hadToken=false: throwing is enough, the middleware redirects on the
   // next navigation.
   if (res.status === 401) {
-    const session = await getCachedSession()
-    if (session?.accessToken) {
-      await handleExpiredSession()
+    if (hadToken) {
+      void handleExpiredSession()
     }
     throw new Error("Session expirée")
   }

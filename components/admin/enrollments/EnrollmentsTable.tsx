@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
+import { AssignmentStatusBadge } from "@/components/shared/AssignmentStatusBadge"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { cn } from "@/lib/utils"
 
@@ -107,11 +108,29 @@ function FilterChip({
 
 type ChipKey = "a_valider" | "validees"
 
+type AssignmentChipKey = "tous" | "affectes" | "non_affectes" | "non_renseigne"
+
+// Affecté et réaffecté sont tous deux subventionnés par l'État : côté filtre
+// ils forment une seule cohorte, celle dont l'école ne facture qu'une part.
+function matchesAssignmentChip(enrollment: Enrollment, chip: AssignmentChipKey): boolean {
+  switch (chip) {
+    case "affectes":
+      return enrollment.assignment_status === "affecte" || enrollment.assignment_status === "reaffecte"
+    case "non_affectes":
+      return enrollment.assignment_status === "non_affecte"
+    case "non_renseigne":
+      return !enrollment.assignment_status
+    default:
+      return true
+  }
+}
+
 export function EnrollmentsTable() {
   const router = useRouter()
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
   const [activeChip, setActiveChip] = useState<ChipKey>("a_valider")
+  const [assignmentChip, setAssignmentChip] = useState<AssignmentChipKey>("tous")
   const [validateTarget, setValidateTarget] = useState<Enrollment | null>(null)
   const debouncedSearch = useDebounce(search)
 
@@ -144,12 +163,31 @@ export function EnrollmentsTable() {
     return { aValider, validees }
   }, [allItems])
 
-  const filteredItems = useMemo(() => {
+  // Cohorte de statut d'abord : les compteurs d'affectation doivent refléter
+  // la liste qu'on regarde, pas tout le tenant.
+  const statusFilteredItems = useMemo(() => {
     if (activeChip === "a_valider") {
       return allItems.filter((e) => TO_VALIDATE_STATUSES.has(e.status))
     }
     return allItems.filter((e) => e.status === "valide")
   }, [allItems, activeChip])
+
+  const assignmentCounts = useMemo(() => {
+    let affectes = 0
+    let nonAffectes = 0
+    let nonRenseigne = 0
+    for (const e of statusFilteredItems) {
+      if (matchesAssignmentChip(e, "affectes")) affectes += 1
+      else if (matchesAssignmentChip(e, "non_affectes")) nonAffectes += 1
+      else nonRenseigne += 1
+    }
+    return { tous: statusFilteredItems.length, affectes, nonAffectes, nonRenseigne }
+  }, [statusFilteredItems])
+
+  const filteredItems = useMemo(
+    () => statusFilteredItems.filter((e) => matchesAssignmentChip(e, assignmentChip)),
+    [statusFilteredItems, assignmentChip],
+  )
 
   const paginatedItems = useMemo(
     () => filteredItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
@@ -166,6 +204,11 @@ export function EnrollmentsTable() {
     setPage(1)
   }, [])
 
+  const handleAssignmentChipClick = useCallback((key: AssignmentChipKey) => {
+    setAssignmentChip(key)
+    setPage(1)
+  }, [])
+
   const handleValidate = useCallback(() => {
     if (!validateTarget) return
     validateMutation.mutate(validateTarget.id, {
@@ -174,6 +217,13 @@ export function EnrollmentsTable() {
   }, [validateMutation, validateTarget])
 
   const isToValidate = (e: Enrollment) => TO_VALIDATE_STATUSES.has(e.status)
+
+  // Une liste vide à cause du filtre d'affectation n'est pas une absence de
+  // données : sans cette nuance l'admin croit avoir perdu ses inscriptions.
+  const emptyMessage =
+    assignmentChip === "tous"
+      ? "Aucune inscription trouvée"
+      : "Aucune inscription ne correspond à cette affectation"
 
   const columns: ColumnDef<Enrollment>[] = useMemo(
     () => [
@@ -208,6 +258,11 @@ export function EnrollmentsTable() {
             {row.original.class_name ?? `#${row.original.class_id}`}
           </Badge>
         ),
+      },
+      {
+        accessorKey: "assignment_status",
+        header: "Affectation",
+        cell: ({ row }) => <AssignmentStatusBadge status={row.original.assignment_status} />,
       },
       {
         accessorKey: "status",
@@ -264,6 +319,38 @@ export function EnrollmentsTable() {
         />
       </div>
 
+      {/* Second axe : l'affectation. Séparé du pipeline de validation parce
+          qu'il répond à une autre question — non pas « que dois-je traiter »
+          mais « qui l'État subventionne », ce que le comptable croise avec la
+          grille tarifaire. */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-x-visible">
+        <span className="shrink-0 text-xs font-medium text-muted-foreground">Affectation</span>
+        <FilterChip
+          label="Tous"
+          count={assignmentCounts.tous}
+          isActive={assignmentChip === "tous"}
+          onClick={() => handleAssignmentChipClick("tous")}
+        />
+        <FilterChip
+          label="Affectés"
+          count={assignmentCounts.affectes}
+          isActive={assignmentChip === "affectes"}
+          onClick={() => handleAssignmentChipClick("affectes")}
+        />
+        <FilterChip
+          label="Non affectés"
+          count={assignmentCounts.nonAffectes}
+          isActive={assignmentChip === "non_affectes"}
+          onClick={() => handleAssignmentChipClick("non_affectes")}
+        />
+        <FilterChip
+          label="Non renseigné"
+          count={assignmentCounts.nonRenseigne}
+          isActive={assignmentChip === "non_renseigne"}
+          onClick={() => handleAssignmentChipClick("non_renseigne")}
+        />
+      </div>
+
       {/* Desktop : table dense via CrudTable. Mobile : liste minimaliste +
           bouton Valider distinct (Wave-style — la zone tap-to-drill n'avale
           pas l'action). */}
@@ -285,7 +372,7 @@ export function EnrollmentsTable() {
           onRowClick={(item) => router.push(`/admin/enrollments/${item.id}`)}
           renderEditModal={() => null}
           getItemLabel={(e) => `#${e.id}`}
-          emptyMessage="Aucune inscription trouvée"
+          emptyMessage={emptyMessage}
           errorMessage="Impossible de charger les inscriptions"
           deleteTitle="Supprimer l'inscription"
           deleteDescription="Cette action est irréversible. L'inscription sera définitivement supprimée."
@@ -305,7 +392,7 @@ export function EnrollmentsTable() {
         )}
         {!isLoading && paginatedItems.length === 0 && (
           <p className="rounded-lg border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
-            Aucune inscription trouvée
+            {emptyMessage}
           </p>
         )}
         {paginatedItems.map((e) => (
@@ -326,9 +413,12 @@ export function EnrollmentsTable() {
               }
               secondary={`${e.class_name ?? `#${e.class_id}`} · ${e.academic_year_name}`}
               status={
-                <Badge variant="secondary" className="text-[10px]">
-                  {statusLabels[e.status] ?? e.status}
-                </Badge>
+                <div className="flex flex-col items-end gap-1">
+                  <Badge variant="secondary" className="text-[10px]">
+                    {statusLabels[e.status] ?? e.status}
+                  </Badge>
+                  <AssignmentStatusBadge status={e.assignment_status} className="text-[10px]" />
+                </div>
               }
             />
             {isToValidate(e) && (

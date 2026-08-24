@@ -3,8 +3,6 @@ import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
   StudentDashboardSchema,
   StudentGradesResponseSchema,
-  StudentFeesResponseSchema,
-  StudentBulletinSchema,
   StudentAttendanceResponseSchema,
   type StudentDashboard,
   type StudentGradesResponse,
@@ -18,7 +16,57 @@ import {
 } from "@/lib/contracts/timetable"
 
 const TimetableSlotArraySchema = z.array(TimetableSlotSchema)
-const StudentBulletinArraySchema = z.array(StudentBulletinSchema)
+
+// Le BE /student/bulletins renvoie {items:[{id, trimester:number, average,
+// rank, mention, class_name, academic_year_name, file_url, generated_at}],
+// total}. On valide cette forme réelle avant de la normaliser vers le
+// contrat consommé par l'UI.
+const StudentBulletinRawSchema = z.object({
+  id: z.number(),
+  trimester: z.number(),
+  average: z.coerce.number().nullable(),
+  rank: z.number().nullable(),
+  mention: z.string().nullable(),
+  class_name: z.string(),
+  academic_year_name: z.string(),
+  file_url: z.string().nullable(),
+  generated_at: z.string().nullable(),
+  // Retenue pour impayé. Facultatifs plutôt que requis : le front peut être
+  // déployé avant le serveur qui les pose, et une liste de bulletins ne doit
+  // pas tomber entière parce que trois champs manquent.
+  is_withheld: z.boolean().optional(),
+  withheld_reason: z.string().nullable().optional(),
+  withheld_amount: z.coerce.number().nullable().optional(),
+})
+const StudentBulletinsRawSchema = z.object({
+  items: z.array(StudentBulletinRawSchema),
+  total: z.number(),
+})
+
+// Le BE /student/fees renvoie {total_due, total_paid, balance, fees:[{id,
+// fee_category_name, amount, status: paid|partial|pending, payments}]}. On
+// valide cette forme réelle puis on la normalise vers le contrat consommé par
+// l'UI (total_expected/total_remaining/category_name/paye|partiel|impaye).
+const FeePaymentRawSchema = z.object({ amount: z.coerce.number() }).passthrough()
+const StudentFeeRawSchema = z.object({
+  id: z.number(),
+  fee_category_name: z.string(),
+  amount: z.coerce.number(),
+  status: z.string(),
+  payments: z.array(FeePaymentRawSchema).default([]),
+})
+const StudentFeesRawSchema = z.object({
+  total_due: z.coerce.number(),
+  total_paid: z.coerce.number(),
+  balance: z.coerce.number(),
+  fees: z.array(StudentFeeRawSchema).default([]),
+})
+
+export function mapFeeStatus(status: string): "paye" | "partiel" | "impaye" {
+  if (status === "paid" || status === "paye") return "paye"
+  if (status === "partial" || status === "partiel") return "partiel"
+  return "impaye"
+}
 
 // Extrait l'item de la réponse API, qu'elle soit { data: T } ou T directement
 function unwrapResponse<T>(res: unknown): T {
@@ -85,20 +133,59 @@ export const studentPortalApi = {
     return safeValidate(TimetableSlotArraySchema, mapped, "GET /student/timetable")
   },
 
-  // Frais et paiements
+  // Frais et paiements — normalise la réponse BE vers le contrat UI.
   getFees: async (): Promise<StudentFeesResponse> => {
     const res = await apiFetch<unknown>("/student/fees")
-    return safeValidate(StudentFeesResponseSchema, unwrapResponse(res), "GET /student/fees")
+    const raw = safeValidate(StudentFeesRawSchema, unwrapResponse(res), "GET /student/fees")
+    return {
+      academic_year: "",
+      total_expected: raw.total_due,
+      total_paid: raw.total_paid,
+      total_remaining: raw.balance,
+      fees: (raw.fees ?? []).map((f) => {
+        const paid = (f.payments ?? []).reduce((sum, p) => sum + p.amount, 0)
+        return {
+          id: f.id,
+          category_name: f.fee_category_name,
+          total_amount: f.amount,
+          paid_amount: paid,
+          remaining: Math.max(0, f.amount - paid),
+          status: mapFeeStatus(f.status),
+          last_payment_date: null,
+        }
+      }),
+    }
   },
 
-  // Bulletins publiés
+  // Bulletins publiés — normalise l'enveloppe BE vers le contrat UI.
   getBulletins: async (): Promise<StudentBulletin[]> => {
     const res = await apiFetch<unknown>("/student/bulletins")
-    const arr = Array.isArray(res) ? res : unwrapResponse<StudentBulletin[]>(res)
-    return safeValidate(StudentBulletinArraySchema, arr, "GET /student/bulletins")
+    const raw = safeValidate(StudentBulletinsRawSchema, res, "GET /student/bulletins")
+    return raw.items.map((b) => ({
+      id: b.id,
+      trimester: `Trimestre ${b.trimester}`,
+      academic_year: b.academic_year_name,
+      general_average: b.average,
+      rank: b.rank,
+      // L'effectif de la classe n'est pas porté par cette réponse : le rang
+      // s'affiche seul plutôt que suivi d'un dénominateur inventé.
+      total_students: null,
+      // L'endpoint ne rend que les bulletins publiés.
+      status: "publie" as const,
+      published_at: b.generated_at,
+      is_withheld: b.is_withheld ?? false,
+      withheld_reason: b.withheld_reason ?? null,
+      withheld_amount: b.withheld_amount ?? null,
+    }))
   },
 
-  // Télécharger un bulletin en PDF (via apiFetchBlob centralisé)
+  /**
+   * Télécharger son bulletin en PDF.
+   *
+   * Route du portail, pas `/reports/bulletins/{id}/pdf` : cette dernière est
+   * gardée par `reports:read`, un droit qui ouvre les bulletins de toute
+   * l'école et qu'un élève n'a pas. Ici la garde est l'appartenance.
+   */
   downloadBulletin: async (bulletinId: number): Promise<Blob> => {
     return apiFetchBlob(`/student/bulletins/${bulletinId}/pdf`)
   },

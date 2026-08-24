@@ -18,7 +18,8 @@ export async function loginAs(
   password: string,
 ): Promise<void> {
   await page.goto('/login')
-  await page.getByPlaceholder('nom@etablissement.cd').fill(email)
+  await page.getByPlaceholder('ROSTAN').fill('local')
+  await page.getByPlaceholder('nom@etablissement.ci').fill(email)
   await page.getByPlaceholder('Entrez votre mot de passe').fill(password)
   await page.getByRole('button', { name: /Se connecter/i }).click()
   await expect(page).toHaveURL(ROLE_PATTERN, { timeout: 15_000 })

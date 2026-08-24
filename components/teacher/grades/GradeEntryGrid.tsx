@@ -1,131 +1,233 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import Link from "next/link"
-import type { Route } from "next"
-import {
-  Save,
-  Loader2,
-  CheckCircle2,
-  AlertTriangle,
-  AlertCircle,
-  CircleSlash,
-  Cloud,
-  CloudOff,
-  Mic,
-} from "lucide-react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { Save, Loader2, CheckCircle2 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { useGrades, useUpdateGrades, useEvaluations } from "@/lib/hooks/useGrades"
+import { useGrades, useUpdateGrades, useEvaluation } from "@/lib/hooks/useGrades"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { parseGradeInput, categorizeGrade, computeAverage } from "@/lib/utils/grade-parser"
-
-type CellStatus = "idle" | "dirty" | "pending" | "saved" | "error"
+import { parseGradeInput, computeAverage } from "@/lib/utils/grade-parser"
+import {
+  absenceWouldOverwriteGrade,
+  canLiftAbsence,
+  gradeStatesEqual,
+  normalizeGradeState,
+  reconcileGradeSave,
+  toGradePayloadEntry,
+  type GradeEntryState,
+} from "@/lib/utils/grade-reconciliation"
+import { GradeEntryHero } from "./entry/GradeEntryHero"
+import { GradeRow, type CellStatus } from "./entry/GradeRow"
+import {
+  AbsenceGuardDialog,
+  ABSENCE_LIFT_RULE,
+  type AbsenceGuard,
+} from "./entry/AbsenceGuardDialog"
 
 interface GradeEntryGridProps {
   evaluationId: number
-  /** Si fourni, affiche le hero card avec ces métadonnées */
+  /** Si fourni, affiche le hero premium avec ces métadonnées. */
   classId?: number
+  /**
+   * Lien du bouton « Mode dictée ». Dépend du portail : enseignant
+   * (`/teacher/...`) ou admin en saisie déléguée (`/admin/...`). À défaut côté
+   * enseignant, on tombe sur la route enseignant.
+   */
+  dicteeHref?: string
+  /**
+   * Écran des autorisations de reprise, quand le portail y donne accès. Sert à
+   * renvoyer l'administration au bon endroit quand elle bute sur un zéro
+   * d'office. L'enseignant n'a pas ce droit : il reçoit l'explication seule.
+   */
+  retakesHref?: string
 }
 
-/**
- * Délai après la dernière modif avant l'envoi BE. 1.5s = équilibre entre
- * réactivité (user a "sauvé") et batching (groupe les frappes successives).
- */
+/** Délai debounce après la dernière modif avant envoi BE. */
 const SAVE_DEBOUNCE_MS = 1500
-
-/**
- * Délai après lequel un cellStatus "saved" repasse en "idle" (visuel).
- */
+/** Délai après lequel un cellStatus « saved » repasse en « idle » (visuel). */
 const SAVED_INDICATOR_MS = 2500
 
-export function GradeEntryGrid({ evaluationId, classId }: GradeEntryGridProps) {
+export function GradeEntryGrid({
+  evaluationId,
+  classId,
+  dicteeHref,
+  retakesHref,
+}: GradeEntryGridProps) {
   const { data: grades, isLoading, error } = useGrades(evaluationId)
-  // Métadonnées de l'éval — fetch la liste de la classe (cache 5 min)
-  const { data: evals } = useEvaluations(classId ?? 0)
-  const evaluation = useMemo(
-    () => evals?.find((e) => e.id === evaluationId),
-    [evals, evaluationId],
-  )
+  const { data: evaluation } = useEvaluation(evaluationId)
 
   const updateMutation = useUpdateGrades(evaluationId)
   const [localGrades, setLocalGrades] = useState<Map<number, number | null>>(new Map())
   const [cellStatus, setCellStatus] = useState<Map<number, CellStatus>>(new Map())
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [absentStudents, setAbsentStudents] = useState<Set<number>>(new Set())
+  const [absenceGuard, setAbsenceGuard] = useState<{
+    studentId: number
+    guard: AbsenceGuard
+  } | null>(null)
   const dirtyStudentsRef = useRef<Set<number>>(new Set())
+  const localGradesRef = useRef<Map<number, number | null>>(new Map())
+  const absentStudentsRef = useRef<Set<number>>(new Set())
+  // Statut réellement enregistré côté serveur, par élève. C'est lui qui décide
+  // si la case « Abs. » peut encore être décochée.
+  const serverStatusRef = useRef<Map<number, string>>(new Map())
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveInFlightRef = useRef(false)
 
   // ─── Sync depuis serveur ───────────────────────────────────────────────
   useEffect(() => {
     if (grades) {
-      const map = new Map<number, number | null>()
-      grades.forEach((g) => map.set(g.student_id, g.value !== null ? Number(g.value) : null))
-      setLocalGrades(map)
+      serverStatusRef.current = new Map(grades.map((g) => [g.student_id, g.status]))
+      setLocalGrades((prev) => {
+        const map = new Map(prev)
+        grades.forEach((g) => {
+          if (!dirtyStudentsRef.current.has(g.student_id)) {
+            map.set(g.student_id, g.value !== null ? Number(g.value) : null)
+          }
+        })
+        localGradesRef.current = map
+        return map
+      })
+      // Les élèves déjà marqués absents côté serveur repartent cochés, sauf
+      // ceux que l'enseignant vient de modifier sans avoir encore sauvegardé.
+      setAbsentStudents((prev) => {
+        const next = new Set(prev)
+        grades.forEach((g) => {
+          if (dirtyStudentsRef.current.has(g.student_id)) return
+          if (g.status === "absent") next.add(g.student_id)
+          else next.delete(g.student_id)
+        })
+        absentStudentsRef.current = next
+        return next
+      })
     }
   }, [grades])
 
+  // Ce qui partira réellement au serveur pour cet élève : la note ET le zéro
+  // d'office, jamais l'un sans l'autre. Sert à construire le lot ET à vérifier
+  // ensuite que rien n'a bougé pendant l'envoi. Comparer la seule valeur
+  // laisserait passer pour « enregistré » un décochage que le backend a refusé.
+  const pendingStateFor = useCallback((studentId: number): GradeEntryState => {
+    return normalizeGradeState({
+      value: localGradesRef.current.get(studentId) ?? null,
+      absent: absentStudentsRef.current.has(studentId),
+    })
+  }, [])
+
   // ─── Save logic ────────────────────────────────────────────────────────
-  const flushSave = useCallback(() => {
+  const flushSave = useCallback(async () => {
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current)
       saveTimerRef.current = null
     }
     if (dirtyStudentsRef.current.size === 0 || !grades) return
+    if (saveInFlightRef.current) return
 
-    const dirtySet = dirtyStudentsRef.current
-    const payload = Array.from(dirtySet).map((studentId) => ({
-      student_id: studentId,
-      value: localGrades.get(studentId) ?? null,
-    }))
+    const payload = Array.from(dirtyStudentsRef.current).map((studentId) =>
+      toGradePayloadEntry(studentId, pendingStateFor(studentId)),
+    )
+    const sentByStudent = new Map<number, GradeEntryState>(
+      payload.map((entry) => [entry.student_id, { value: entry.value, absent: entry.absent }]),
+    )
 
     setCellStatus((prev) => {
       const next = new Map(prev)
-      dirtySet.forEach((id) => next.set(id, "pending"))
+      payload.forEach((entry) => next.set(entry.student_id, "pending"))
       return next
     })
 
-    updateMutation.mutate(
-      { grades: payload },
-      {
-        onSuccess: () => {
-          setLastSaved(new Date())
-          dirtyStudentsRef.current.clear()
-          setCellStatus((prev) => {
-            const next = new Map(prev)
-            dirtySet.forEach((id) => next.set(id, "saved"))
-            return next
+    saveInFlightRef.current = true
+
+    try {
+      const updated = await updateMutation.mutateAsync({ grades: payload })
+      const statusByStudent = new Map(updated.map((g) => [g.student_id, g.status]))
+      // Ce que le serveur vient d'écrire fait foi tout de suite : la case
+      // « Abs. » doit se verrouiller sans attendre le prochain rafraîchissement.
+      serverStatusRef.current = statusByStudent
+      const confirmedStudentIds: number[] = []
+      const refusedStudentIds: number[] = []
+      const outcomes = new Map<number, CellStatus>()
+
+      sentByStudent.forEach((sent, studentId) => {
+        const outcome = reconcileGradeSave({
+          sent,
+          current: pendingStateFor(studentId),
+          serverStatus: statusByStudent.get(studentId),
+        })
+        if (outcome === "saved") {
+          dirtyStudentsRef.current.delete(studentId)
+          confirmedStudentIds.push(studentId)
+          outcomes.set(studentId, "saved")
+        } else if (outcome === "refused") {
+          // Le backend a gardé le zéro d'office. Renvoyer la même chose
+          // échouerait à l'identique : on sort la ligne de la file d'attente,
+          // on la marque en erreur et on dit pourquoi. Rien n'est vert.
+          dirtyStudentsRef.current.delete(studentId)
+          refusedStudentIds.push(studentId)
+          outcomes.set(studentId, "error")
+        } else {
+          outcomes.set(studentId, "dirty")
+        }
+      })
+
+      if (refusedStudentIds.length > 0) {
+        // La case doit redire ce qui est réellement enregistré, sinon l'écran
+        // laisse croire que le zéro d'office a été levé.
+        const restored = new Set(absentStudentsRef.current)
+        refusedStudentIds.forEach((id) => restored.add(id))
+        absentStudentsRef.current = restored
+        setAbsentStudents(restored)
+        toast.error("Zéro d'office conservé", { description: ABSENCE_LIFT_RULE })
+      }
+
+      if (confirmedStudentIds.length > 0) {
+        setLastSaved(new Date())
+      }
+
+      setCellStatus((prev) => {
+        const next = new Map(prev)
+        outcomes.forEach((status, studentId) => next.set(studentId, status))
+        return next
+      })
+
+      setTimeout(() => {
+        setCellStatus((prev) => {
+          const next = new Map(prev)
+          confirmedStudentIds.forEach((id) => {
+            if (next.get(id) === "saved") next.set(id, "idle")
           })
-          // Repasse en idle après 2.5s pour ne pas polluer l'UI
-          setTimeout(() => {
-            setCellStatus((prev) => {
-              const next = new Map(prev)
-              dirtySet.forEach((id) => {
-                if (next.get(id) === "saved") next.set(id, "idle")
-              })
-              return next
-            })
-          }, SAVED_INDICATOR_MS)
-        },
-        onError: () => {
-          setCellStatus((prev) => {
-            const next = new Map(prev)
-            dirtySet.forEach((id) => next.set(id, "error"))
-            return next
-          })
-          toast.error("Échec de la sauvegarde — réessaie")
-          // Garde dirty pour retry au prochain edit ou save manuel
-        },
-      },
-    )
-  }, [grades, localGrades, updateMutation])
+          return next
+        })
+      }, SAVED_INDICATOR_MS)
+    } catch {
+      setCellStatus((prev) => {
+        const next = new Map(prev)
+        sentByStudent.forEach((sent, studentId) => {
+          // Ligne inchangée depuis l'envoi : c'est bien celle qui a échoué.
+          // Retouchée entre-temps : elle repart au prochain envoi.
+          const stillTheSame = gradeStatesEqual(sent, pendingStateFor(studentId))
+          next.set(studentId, stillTheSame ? "error" : "dirty")
+        })
+        return next
+      })
+      toast.error("Échec de la sauvegarde, réessaie")
+    } finally {
+      saveInFlightRef.current = false
+      if (dirtyStudentsRef.current.size > 0) {
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = setTimeout(() => {
+          void flushSave()
+        }, SAVE_DEBOUNCE_MS)
+      }
+    }
+  }, [grades, updateMutation, pendingStateFor])
 
   const scheduleSave = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(flushSave, SAVE_DEBOUNCE_MS)
   }, [flushSave])
 
-  // Cleanup au unmount
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
@@ -137,23 +239,79 @@ export function GradeEntryGrid({ evaluationId, classId }: GradeEntryGridProps) {
     function handler(e: BeforeUnloadEvent) {
       if (dirtyStudentsRef.current.size > 0) {
         e.preventDefault()
-        e.returnValue = "" // Chrome exige une string vide
+        e.returnValue = ""
       }
     }
     window.addEventListener("beforeunload", handler)
     return () => window.removeEventListener("beforeunload", handler)
   }, [])
 
-  function handleGradeChange(studentId: number, rawValue: string) {
-    const result = parseGradeInput(rawValue)
-    // `result.value` est null pour les cas absent / invalide / vide, et un
-    // number sinon. C'est exactement ce qu'on veut stocker. Les erreurs
-    // (hors borne, format) seront visibles via l'UI (couleur de cellule).
-    setLocalGrades((prev) => new Map(prev).set(studentId, result.value))
-    dirtyStudentsRef.current.add(studentId)
-    setCellStatus((prev) => new Map(prev).set(studentId, "dirty"))
-    scheduleSave()
-  }
+  const applyAbsent = useCallback(
+    (studentId: number, next: boolean) => {
+      const updated = new Set(absentStudentsRef.current)
+      if (next) updated.add(studentId)
+      else updated.delete(studentId)
+      absentStudentsRef.current = updated
+      setAbsentStudents(updated)
+      dirtyStudentsRef.current.add(studentId)
+      setCellStatus((prev) => new Map(prev).set(studentId, "dirty"))
+      scheduleSave()
+    },
+    [scheduleSave],
+  )
+
+  const setGradeValue = useCallback(
+    (studentId: number, value: number | null) => {
+      const nextGrades = new Map(localGradesRef.current).set(studentId, value)
+      localGradesRef.current = nextGrades
+      setLocalGrades(nextGrades)
+      dirtyStudentsRef.current.add(studentId)
+      setCellStatus((prev) => new Map(prev).set(studentId, "dirty"))
+      scheduleSave()
+    },
+    [scheduleSave],
+  )
+
+  const handleGradeChange = useCallback(
+    (studentId: number, rawValue: string) => {
+      const result = parseGradeInput(rawValue)
+      if (result.absent) {
+        // Taper « absent » dans la case vaut la case cochée et vaut le mot dit
+        // à voix haute en dictée : les trois façons de l'exprimer doivent
+        // enregistrer la même chose. Pas de confirmation ici, l'enseignant
+        // écrit littéralement par-dessus la note qu'il remplace.
+        applyAbsent(studentId, true)
+        return
+      }
+      setGradeValue(studentId, result.value)
+    },
+    [applyAbsent, setGradeValue],
+  )
+
+  const handleAbsentChange = useCallback(
+    (studentId: number, studentName: string, next: boolean) => {
+      if (!next && !canLiftAbsence(serverStatusRef.current.get(studentId))) {
+        // Le zéro d'office est déjà enregistré : le backend refusera, et de
+        // deux façons également silencieuses. Autant nommer la règle ici.
+        setAbsenceGuard({ studentId, guard: { kind: "lift-blocked", studentName } })
+        return
+      }
+      const localValue = localGradesRef.current.get(studentId) ?? null
+      const wouldOverwrite = absenceWouldOverwriteGrade({
+        value: localValue,
+        absent: absentStudentsRef.current.has(studentId),
+      })
+      if (next && wouldOverwrite && localValue !== null) {
+        setAbsenceGuard({
+          studentId,
+          guard: { kind: "overwrite", studentName, value: localValue },
+        })
+        return
+      }
+      applyAbsent(studentId, next)
+    },
+    [applyAbsent],
+  )
 
   // ─── Rendering ─────────────────────────────────────────────────────────
   if (error) {
@@ -179,90 +337,21 @@ export function GradeEntryGrid({ evaluationId, classId }: GradeEntryGridProps) {
 
   const gradedCount = Array.from(localGrades.values()).filter((v) => v !== null).length
   const totalCount = grades.length
-  const isAllGraded = gradedCount === totalCount && totalCount > 0
   const dirtyCount = dirtyStudentsRef.current.size
   const classAverage = computeAverage(localGrades.values())
 
   return (
     <div className="space-y-5">
-      {/* ─── Hero card ──────────────────────────────────────────────── */}
       {evaluation && (
-        <div className="rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium uppercase tracking-wide text-primary">
-                  {evaluation.type}
-                </span>
-                <span>{evaluation.subject_name}</span>
-                <span className="text-muted-foreground/40">·</span>
-                <span>{evaluation.class_name}</span>
-                <span className="text-muted-foreground/40">·</span>
-                <span>Trimestre {evaluation.trimester}</span>
-              </div>
-              <h2 className="mt-1 font-serif text-2xl tracking-tight text-foreground">
-                {evaluation.title}
-              </h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Coefficient {evaluation.coefficient} ·{" "}
-                {new Date(evaluation.date).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
-            </div>
-            {classId && (
-              <Button asChild size="sm" className="shrink-0 gap-2">
-                <Link
-                  href={
-                    `/teacher/grades/${classId}/${evaluationId}/dictee` as Route
-                  }
-                >
-                  <Mic className="h-4 w-4" />
-                  Mode dictée
-                </Link>
-              </Button>
-            )}
-          </div>
-
-          {/* Progression + Save indicator */}
-          <div className="mt-4 grid grid-cols-3 gap-3">
-            <KpiTile
-              label="Saisies"
-              value={`${gradedCount}/${totalCount}`}
-              tone={isAllGraded ? "success" : "neutral"}
-            />
-            <KpiTile
-              label="Moyenne classe"
-              value={classAverage !== null ? `${classAverage.toFixed(2)}` : "—"}
-              tone="neutral"
-            />
-            <KpiTile
-              label="Statut"
-              value={
-                dirtyCount > 0
-                  ? `${dirtyCount} non sauvé${dirtyCount > 1 ? "s" : ""}`
-                  : lastSaved
-                    ? "Synchronisé"
-                    : "Prêt"
-              }
-              tone={dirtyCount > 0 ? "warning" : "success"}
-              icon={dirtyCount > 0 ? CloudOff : Cloud}
-            />
-          </div>
-
-          {/* Progress bar */}
-          <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className={cn(
-                "h-full rounded-full transition-all duration-500",
-                isAllGraded ? "bg-emerald-500" : "bg-primary",
-              )}
-              style={{ width: `${totalCount > 0 ? (gradedCount / totalCount) * 100 : 0}%` }}
-            />
-          </div>
-        </div>
+        <GradeEntryHero
+          evaluation={evaluation}
+          gradedCount={gradedCount}
+          totalCount={totalCount}
+          classAverage={classAverage}
+          dirtyCount={dirtyCount}
+          lastSaved={lastSaved}
+          dicteeHref={classId ? dicteeHref ?? `/teacher/grades/${classId}/${evaluationId}/dictee` : undefined}
+        />
       )}
 
       {/* ─── Status bar (manual save + sync indicator) ────────────────── */}
@@ -277,9 +366,7 @@ export function GradeEntryGrid({ evaluationId, classId }: GradeEntryGridProps) {
           )}
           {dirtyCount > 0 && (
             <span className="flex items-center gap-1 text-amber-600">
-              <Loader2
-                className={cn("h-3 w-3", updateMutation.isPending && "animate-spin")}
-              />
+              <Loader2 className={cn("h-3 w-3", updateMutation.isPending && "animate-spin")} />
               {updateMutation.isPending ? "Synchronisation…" : "Modifications en attente"}
             </span>
           )}
@@ -288,7 +375,7 @@ export function GradeEntryGrid({ evaluationId, classId }: GradeEntryGridProps) {
           onClick={() => flushSave()}
           disabled={dirtyCount === 0 || updateMutation.isPending}
           size="sm"
-          className="h-10 self-end sm:self-auto"
+          className="h-11 self-end sm:h-10 sm:self-auto"
         >
           {updateMutation.isPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -299,194 +386,57 @@ export function GradeEntryGrid({ evaluationId, classId }: GradeEntryGridProps) {
         </Button>
       </div>
 
-      {/* ─── Grade entries ──────────────────────────────────────────── */}
+      <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+        Cochez « Abs. » pour un élève absent le jour de l&apos;épreuve : la note vaut zéro et
+        compte dans la moyenne. Une case laissée vide veut seulement dire « pas encore corrigé ».
+        {" "}
+        {ABSENCE_LIFT_RULE}
+      </p>
+
+      {/* ─── Grade entries — 1 colonne mobile, 2 colonnes desktop ─────── */}
       <div className="overflow-hidden rounded-xl border bg-card">
-        <div className="divide-y">
-          {grades.map((grade, index) => (
-            <GradeRow
-              key={grade.student_id}
-              index={index}
-              studentName={grade.student_name ?? `Élève #${grade.student_id}`}
-              value={localGrades.get(grade.student_id) ?? null}
-              status={cellStatus.get(grade.student_id) ?? "idle"}
-              originalStatus={grade.status}
-              onChange={(rawValue) => handleGradeChange(grade.student_id, rawValue)}
-            />
-          ))}
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          {grades.map((grade, index) => {
+            const serverValue =
+              grade.value !== null && grade.value !== undefined ? Number(grade.value) : null
+            const liveValue = localGrades.has(grade.student_id)
+              ? localGrades.get(grade.student_id) ?? null
+              : serverValue
+            const studentName = grade.student_name ?? `Élève #${grade.student_id}`
+            const isLeftColumn = index % 2 === 0
+            return (
+              <GradeRow
+                key={grade.student_id}
+                index={index}
+                studentName={studentName}
+                initialValue={serverValue}
+                value={liveValue}
+                status={cellStatus.get(grade.student_id) ?? "idle"}
+                originalStatus={grade.status}
+                onChange={(rawValue) => handleGradeChange(grade.student_id, rawValue)}
+                absent={absentStudents.has(grade.student_id)}
+                onAbsentChange={(next) =>
+                  handleAbsentChange(grade.student_id, studentName, next)
+                }
+                className={cn(
+                  "border-b border-border/60",
+                  isLeftColumn && "lg:border-r",
+                )}
+              />
+            )
+          })}
         </div>
       </div>
-    </div>
-  )
-}
 
-// ─────────────────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────────────────
-
-interface KpiTileProps {
-  label: string
-  value: string
-  tone: "success" | "warning" | "neutral"
-  icon?: React.ComponentType<{ className?: string }>
-}
-
-function KpiTile({ label, value, tone, icon: Icon }: KpiTileProps) {
-  return (
-    <div className="rounded-lg border bg-card/50 p-3">
-      <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-        {Icon && <Icon className="h-3 w-3" />}
-        {label}
-      </div>
-      <div
-        className={cn(
-          "mt-1 text-lg font-semibold tabular-nums",
-          tone === "success" && "text-emerald-600",
-          tone === "warning" && "text-amber-600",
-          tone === "neutral" && "text-foreground",
-        )}
-      >
-        {value}
-      </div>
-    </div>
-  )
-}
-
-interface GradeRowProps {
-  index: number
-  studentName: string
-  value: number | null
-  status: CellStatus
-  originalStatus: string
-  onChange: (rawValue: string) => void
-}
-
-function GradeRow({ index, studentName, value, status, originalStatus, onChange }: GradeRowProps) {
-  // rawInput est la source de vérité pour ce que l'utilisateur tape (incluant
-  // les états transitoires comme "12," avant complétion). On l'initialise UNE
-  // SEULE FOIS depuis la prop, puis le user contrôle. Pas de useEffect [value]
-  // qui écraserait sa frappe (ex: "12," → parser → 12 → reset à "12" sans virgule).
-  // Trade-off : si le serveur refetch avec une valeur différente, le row reste
-  // sur la valeur tapée. Acceptable — single editor at a time.
-  const [rawInput, setRawInput] = useState<string>(
-    value !== null ? String(value).replace(".", ",") : "",
-  )
-
-  const category = categorizeGrade(value, originalStatus)
-  const colorTone = useMemo(() => {
-    switch (category) {
-      case "difficulte":
-        return {
-          bg: "bg-rose-50/60",
-          text: "text-rose-700",
-          border: "border-rose-200",
-          Icon: AlertTriangle,
-          label: "En difficulté",
-        }
-      case "moyen":
-        return {
-          bg: "bg-amber-50/60",
-          text: "text-amber-700",
-          border: "border-amber-200",
-          Icon: null,
-          label: "Passable",
-        }
-      case "bon":
-        return {
-          bg: "bg-emerald-50/60",
-          text: "text-emerald-700",
-          border: "border-emerald-200",
-          Icon: CheckCircle2,
-          label: "Bon",
-        }
-      case "absent":
-        return {
-          bg: "bg-muted/40",
-          text: "text-muted-foreground",
-          border: "border-muted",
-          Icon: CircleSlash,
-          label: "Absent",
-        }
-      case "non_saisi":
-      default:
-        return {
-          bg: "",
-          text: "text-muted-foreground/60",
-          border: "border-input",
-          Icon: null,
-          label: "—",
-        }
-    }
-  }, [category])
-
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-3 px-4 py-3 transition-colors",
-        status === "saved" && "bg-emerald-50/40",
-        status === "error" && "bg-destructive/5",
-      )}
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <span className="w-7 shrink-0 font-mono text-xs text-muted-foreground/70">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-        <span className="truncate text-sm font-medium">{studentName}</span>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-2">
-        {/* Category badge — visible quand valeur saisie, cachée en non_saisi */}
-        {category !== "non_saisi" && colorTone.Icon && (
-          <span
-            className={cn(
-              "hidden items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium sm:inline-flex",
-              colorTone.bg,
-              colorTone.text,
-            )}
-            title={colorTone.label}
-          >
-            <colorTone.Icon className="h-3 w-3" />
-            {colorTone.label}
-          </span>
-        )}
-
-        {/* Input */}
-        <div className="relative">
-          <input
-            type="text"
-            inputMode="decimal"
-            pattern="[0-9]*[,.]?[0-9]*"
-            value={rawInput}
-            onChange={(e) => {
-              setRawInput(e.target.value)
-              onChange(e.target.value)
-            }}
-            placeholder="--"
-            tabIndex={index + 1}
-            className={cn(
-              "h-12 w-24 rounded-lg border-2 bg-background px-3 text-center text-base font-semibold tabular-nums transition-colors",
-              "placeholder:font-normal placeholder:text-muted-foreground/40",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-              status === "saved" && "border-emerald-400",
-              status === "error" && "border-destructive",
-              status === "pending" && "border-primary/60",
-              (status === "idle" || status === "dirty") && colorTone.border,
-              colorTone.text,
-            )}
-            aria-label={`Note de ${studentName} sur 20`}
-          />
-          <span className="pointer-events-none absolute -right-1 -top-1 text-[10px] text-muted-foreground/50">
-            /20
-          </span>
-        </div>
-
-        {/* Sync status icon */}
-        <div className="flex h-5 w-5 items-center justify-center">
-          {status === "pending" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-          {status === "saved" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-          {status === "error" && <AlertCircle className="h-4 w-4 text-destructive" />}
-          {status === "dirty" && <span className="h-2 w-2 rounded-full bg-amber-500" />}
-        </div>
-      </div>
+      <AbsenceGuardDialog
+        guard={absenceGuard?.guard ?? null}
+        retakesHref={retakesHref}
+        onCancel={() => setAbsenceGuard(null)}
+        onConfirm={() => {
+          if (absenceGuard) applyAbsent(absenceGuard.studentId, true)
+          setAbsenceGuard(null)
+        }}
+      />
     </div>
   )
 }
