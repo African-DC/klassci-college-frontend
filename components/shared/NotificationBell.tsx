@@ -3,12 +3,6 @@
 import Link from "next/link"
 import {
   Bell,
-  CreditCard,
-  ClipboardList,
-  FileText,
-  AlertCircle,
-  Settings,
-  UserCheck,
   Check,
   CheckCheck,
 } from "lucide-react"
@@ -21,31 +15,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useNotificationCount, useNotifications, useMarkAsRead, useMarkAllAsRead } from "@/lib/hooks/useNotifications"
-import type { Notification, NotificationType } from "@/lib/contracts/notification"
+import {
+  useMarkAllAsRead,
+  useMarkAsRead,
+  useMarkSeen,
+  useNotificationCount,
+  useNotifications,
+} from "@/lib/hooks/useNotifications"
+import type { Route } from "next"
+import type { Notification } from "@/lib/contracts/notification"
 import { cn } from "@/lib/utils"
-
-/** Icône par type de notification */
-const TYPE_ICONS: Record<NotificationType, React.ComponentType<{ className?: string }>> = {
-  payment_due: CreditCard,
-  payment_received: CreditCard,
-  grade_available: ClipboardList,
-  bulletin_published: FileText,
-  absence_recorded: AlertCircle,
-  enrollment_status: UserCheck,
-  system: Settings,
-}
-
-/** Couleur de fond par type */
-const TYPE_COLORS: Record<NotificationType, string> = {
-  payment_due: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  payment_received: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  grade_available: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  bulletin_published: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-  absence_recorded: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-  enrollment_status: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
-  system: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
-}
+import { idsAMarquerCommeVues, notificationTypeView } from "@/lib/notifications/type-view"
 
 /** Formater une date relative simple */
 function timeAgo(dateStr: string): string {
@@ -65,11 +45,25 @@ export function NotificationBell() {
   const { data: recent } = useNotifications({ size: 5 })
   const markAsRead = useMarkAsRead()
   const markAllAsRead = useMarkAllAsRead()
+  const markSeen = useMarkSeen()
 
   const unreadCount = countData?.count ?? 0
 
+  /**
+   * A l'ouverture, ce qui est affiche passe en lu.
+   *
+   * Ce qui est affiche, et rien de plus : les alertes plus bas dans le
+   * stock, et celles qui arriveront ensuite, restent a voir. Les effacer
+   * ferait disparaitre des taches que personne n'a lues.
+   */
+  function handleOpenChange(ouvert: boolean) {
+    if (!ouvert || !recent) return
+    const aMarquer = idsAMarquerCommeVues(recent)
+    if (aMarquer.length > 0) markSeen.mutate(aMarquer)
+  }
+
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5 text-muted-foreground" />
@@ -136,19 +130,22 @@ function NotificationItem({
   notification: Notification
   onMarkAsRead: () => void
 }) {
-  const Icon = TYPE_ICONS[notification.type]
+  const { Icon, tone } = notificationTypeView(notification.type)
+  // Le serveur pose la destination : lui seul sait quelle action il attend.
+  const lien = notification.action_url
 
-  return (
+  const contenu = (
     <div
       className={cn(
-        "flex items-start gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors",
+        "flex items-start gap-3 px-3 py-2.5 transition-colors",
+        lien ? "hover:bg-muted" : "hover:bg-muted/50",
         !notification.read && "bg-primary/5",
       )}
     >
       <div
         className={cn(
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-          TYPE_COLORS[notification.type],
+          tone,
         )}
       >
         <Icon className="h-4 w-4" />
@@ -178,5 +175,15 @@ function NotificationItem({
         </Button>
       )}
     </div>
+  )
+
+  // Sans destination, la notification reste une information : on ne
+  // fabrique pas un lien vers une page ou il n'y a rien a faire.
+  if (!lien) return contenu
+
+  return (
+    <Link href={lien as Route} className="block">
+      {contenu}
+    </Link>
   )
 }

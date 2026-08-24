@@ -3,12 +3,6 @@
 import { useState } from "react"
 import {
   Bell,
-  CreditCard,
-  ClipboardList,
-  FileText,
-  AlertCircle,
-  Settings,
-  UserCheck,
   Check,
   CheckCheck,
   Filter,
@@ -40,39 +34,7 @@ import {
 } from "@/lib/hooks/useNotifications"
 import type { Notification, NotificationType } from "@/lib/contracts/notification"
 import { cn } from "@/lib/utils"
-
-/** Icône par type de notification */
-const TYPE_ICONS: Record<NotificationType, React.ComponentType<{ className?: string }>> = {
-  payment_due: CreditCard,
-  payment_received: CreditCard,
-  grade_available: ClipboardList,
-  bulletin_published: FileText,
-  absence_recorded: AlertCircle,
-  enrollment_status: UserCheck,
-  system: Settings,
-}
-
-/** Couleur de fond par type */
-const TYPE_COLORS: Record<NotificationType, string> = {
-  payment_due: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  payment_received: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  grade_available: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  bulletin_published: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-  absence_recorded: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-  enrollment_status: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
-  system: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
-}
-
-/** Labels pour les types */
-const TYPE_LABELS: Record<NotificationType, string> = {
-  payment_due: "Paiement dû",
-  payment_received: "Paiement reçu",
-  grade_available: "Note disponible",
-  bulletin_published: "Bulletin publié",
-  absence_recorded: "Absence enregistrée",
-  enrollment_status: "Inscription",
-  system: "Système",
-}
+import { notificationTypeView } from "@/lib/notifications/type-view"
 
 /** Formater une date relative */
 function timeAgo(dateStr: string): string {
@@ -183,7 +145,7 @@ export function NotificationsPageClient() {
             <SelectItem value="all">Tous les types</SelectItem>
             {NOTIFICATION_TYPES.map((type) => (
               <SelectItem key={type} value={type}>
-                {TYPE_LABELS[type]}
+                {notificationTypeView(type).label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -241,7 +203,7 @@ function NotificationRow({
   notification: Notification
   onMarkAsRead: () => void
 }) {
-  const Icon = TYPE_ICONS[notification.type]
+  const { Icon, tone } = notificationTypeView(notification.type)
 
   return (
     <Card
@@ -254,7 +216,7 @@ function NotificationRow({
         <div
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-            TYPE_COLORS[notification.type],
+            tone,
           )}
         >
           <Icon className="h-5 w-5" />
@@ -266,7 +228,7 @@ function NotificationRow({
               {notification.title}
             </p>
             <Badge variant="secondary" className="text-[10px]">
-              {TYPE_LABELS[notification.type]}
+              {notificationTypeView(notification.type).label}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">{notification.body}</p>
