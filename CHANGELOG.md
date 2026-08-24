@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- La liste des élèves distingue désormais « En attente de validation » de « À inscrire », et affiche des libellés lisibles au lieu des valeurs de la base *(admin)*
 - Le motif d'annulation d'un versement s'affiche désormais à l'identique sur ordinateur et sur téléphone *(admin)*
 - Photo de l'élève correctement recadrée dans le journal des versements, au lieu d'être étirée quand elle n'est pas carrée *(admin)*
 - Annulation d'un versement déjà encaissé, depuis le tableau comme depuis le téléphone : c'est le cas courant, un montant saisi qui n'est pas dans la caisse *(admin)*

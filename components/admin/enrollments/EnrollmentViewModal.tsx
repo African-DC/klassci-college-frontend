@@ -1,18 +1,12 @@
 "use client"
 
 import { useEnrollment } from "@/lib/hooks/useEnrollments"
+import { enrollmentStatusView } from "@/lib/enrollment/status"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { AssignmentStatusBadge } from "@/components/shared/AssignmentStatusBadge"
 
-const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  prospect: { label: "Prospect", variant: "secondary" },
-  en_validation: { label: "En validation", variant: "secondary" },
-  valide: { label: "Validé", variant: "default" },
-  rejete: { label: "Rejeté", variant: "destructive" },
-  annule: { label: "Annulé", variant: "destructive" },
-}
 
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "—"
@@ -51,7 +45,7 @@ function ViewContent({ enrollmentId }: { enrollmentId: number }) {
     .filter(Boolean)
     .join(" ") || "—"
 
-  const status = statusConfig[enrollment.status]
+  const status = enrollmentStatusView(enrollment.status)
 
   return (
     <div className="grid grid-cols-2 gap-5">

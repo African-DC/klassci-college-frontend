@@ -1,5 +1,6 @@
 "use client"
 
+import { enrollmentStatusView } from "@/lib/enrollment/status"
 import {
   GraduationCap,
   CalendarDays,
@@ -13,20 +14,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { AssignmentStatusBadge } from "@/components/shared/AssignmentStatusBadge"
 import type { Enrollment } from "@/lib/contracts/enrollment"
 
-const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  prospect: { label: "Prospect", variant: "outline" },
-  en_validation: { label: "En validation", variant: "secondary" },
-  valide: { label: "Validé", variant: "default" },
-  rejete: { label: "Rejeté", variant: "destructive" },
-  annule: { label: "Annulé", variant: "destructive" },
-}
-
 interface EnrollmentOverviewTabProps {
   enrollment: Enrollment
 }
 
 export function EnrollmentOverviewTab({ enrollment }: EnrollmentOverviewTabProps) {
-  const status = statusConfig[enrollment.status] ?? { label: enrollment.status, variant: "outline" as const }
+  const status = enrollmentStatusView(enrollment.status)
 
   const studentName = [enrollment.student_first_name, enrollment.student_last_name]
     .filter(Boolean)
