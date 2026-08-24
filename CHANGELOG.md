@@ -61,6 +61,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
+- Le journal des paiements se charge au fil du défilement : la pagination affichait « Page 1/92 » sans permettre d'atteindre la seconde *(admin)*
+- Les chiffres du bandeau suivent les filtres, et chaque carte dit si elle les suit ou parle de l'année entière *(admin)*
 - Le créneau se trace directement sur la semaine de l'enseignant : on clique, on descend, l'heure de début et de fin suivent *(admin, directeur des études)*
 - La fenêtre d'ajout de créneau occupe la largeur disponible et montre la semaine à côté des champs, au lieu de la reléguer sous un ascenseur *(admin, directeur des études)*
 - Les états de la semaine se distinguent par leur matière et non par leur seule couleur : un cours est plein, une indisponibilité hachurée, une heure non déclarée tramée *(tous)*
