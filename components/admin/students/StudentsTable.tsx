@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { enrollmentStatusView } from "@/lib/enrollment/status"
 import Link from "next/link"
 import type { Route } from "next"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -212,7 +213,7 @@ export function StudentsTable({
           if (ce) {
             return (
               <Badge variant="outline" className="text-xs font-medium">
-                {ce.class_name}
+                {ce.class_name || "Classe à affecter"}
               </Badge>
             )
           }
@@ -227,9 +228,10 @@ export function StudentsTable({
           if (!ce) {
             return <span className="text-xs text-muted-foreground">—</span>
           }
+          const vue = enrollmentStatusView(ce.status)
           return (
-            <Badge variant="secondary" className="text-xs capitalize">
-              {ce.status}
+            <Badge variant={vue.variant} className="text-xs">
+              {vue.label}
             </Badge>
           )
         },
@@ -333,15 +335,15 @@ export function StudentsTable({
             }
             secondary={
               s.current_enrollment ? (
-                s.current_enrollment.class_name
+                s.current_enrollment.class_name || enrollmentStatusView(s.current_enrollment.status).label
               ) : (
                 <span className="text-amber-700">À inscrire</span>
               )
             }
             status={
               s.current_enrollment ? (
-                <Badge variant="secondary" className="text-[10px] capitalize">
-                  {s.current_enrollment.status}
+                <Badge variant={enrollmentStatusView(s.current_enrollment.status).variant} className="text-[10px]">
+                  {enrollmentStatusView(s.current_enrollment.status).label}
                 </Badge>
               ) : null
             }

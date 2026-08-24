@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- La liste des élèves distingue désormais « En attente de validation » de « À inscrire », et affiche des libellés lisibles au lieu des valeurs de la base *(admin)*
 - La photo de profil apparaît enfin dans la barre de navigation, au lieu des seules initiales *(tous)*
 - Le motif d'annulation d'un versement s'affiche désormais à l'identique sur ordinateur et sur téléphone *(admin)*
 - Photo de l'élève correctement recadrée dans le journal des versements, au lieu d'être étirée quand elle n'est pas carrée *(admin)*

@@ -1,5 +1,6 @@
 "use client"
 
+import { enrollmentStatusView } from "@/lib/enrollment/status"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -43,14 +44,6 @@ import { EnrollmentOverviewTab } from "./tabs/EnrollmentOverviewTab"
 import { EnrollmentPaymentsTab } from "./tabs/EnrollmentPaymentsTab"
 import { useEnrollment, useDeleteEnrollment } from "@/lib/hooks/useEnrollments"
 
-const statusConfig: Record<string, string> = {
-  prospect: "Prospect",
-  en_validation: "En validation",
-  valide: "Validé",
-  rejete: "Rejeté",
-  annule: "Annulé",
-}
-
 interface EnrollmentDetailClientProps {
   enrollmentId: number
 }
@@ -86,7 +79,7 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
     .join(" ") || `Élève #${enrollment.student_id}`
   const className = enrollment.class_name ?? `Classe #${enrollment.class_id}`
   const academicYear = enrollment.academic_year_name ?? ""
-  const statusLabel = statusConfig[enrollment.status] ?? enrollment.status
+  const statusLabel = enrollmentStatusView(enrollment.status).label
 
   const initials = `${enrollment.student_first_name?.[0] ?? ""}${enrollment.student_last_name?.[0] ?? ""}`.toUpperCase()
 
