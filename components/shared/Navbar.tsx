@@ -6,7 +6,9 @@ import { useSession } from "next-auth/react"
 import { useTheme } from "next-themes"
 import { Menu, LogOut, User, ChevronDown, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useMyProfile } from "@/lib/hooks/useProfile"
+import { getUploadUrl } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import {
   DropdownMenu,
@@ -30,6 +32,12 @@ export function Navbar({ onMenuClick }: NavbarProps) {
   const { theme, setTheme } = useTheme()
   const nom = displayName(session?.user)
   const initials = nom.slice(0, 2).toUpperCase()
+  // La photo vient du profil, pas de la session : NextAuth ne porte que
+  // l'identité, et la barre affichait donc les initiales même quand une
+  // photo existait. Le cache de la requête est partagé avec la page
+  // profil, donc changer sa photo met la barre à jour sans rechargement.
+  const { data: profile } = useMyProfile()
+  const photoSrc = getUploadUrl(profile?.photo_url)
 
   const role = session?.user?.role
   const profilePortal =
@@ -76,6 +84,9 @@ export function Navbar({ onMenuClick }: NavbarProps) {
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted transition-colors outline-none">
               <Avatar className="h-8 w-8">
+                {photoSrc ? (
+                  <AvatarImage src={photoSrc} alt="" className="object-cover" />
+                ) : null}
                 <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                   {initials}
                 </AvatarFallback>

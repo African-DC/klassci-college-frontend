@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 - La liste des élèves distingue désormais « En attente de validation » de « À inscrire », et affiche des libellés lisibles au lieu des valeurs de la base *(admin)*
+- La photo de profil apparaît enfin dans la barre de navigation, au lieu des seules initiales *(tous)*
 - Le motif d'annulation d'un versement s'affiche désormais à l'identique sur ordinateur et sur téléphone *(admin)*
 - Photo de l'élève correctement recadrée dans le journal des versements, au lieu d'être étirée quand elle n'est pas carrée *(admin)*
 - Annulation d'un versement déjà encaissé, depuis le tableau comme depuis le téléphone : c'est le cas courant, un montant saisi qui n'est pas dans la caisse *(admin)*
@@ -336,6 +337,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Page « Mes notes » du portail enseignant qui était inaccessible (lien sidebar vers une page absente) *(enseignant)* (#111).
 
 ### Security
+- Le mot de passe d'un enseignant créé depuis l'emploi du temps n'est plus déductible de son adresse, et s'affiche une fois pour être transmis *(admin)*
 - Un identifiant saisi puis validé avant que la page ne soit prête ne peut plus se retrouver dans l'adresse du navigateur *(tous)*
 
 - Endpoint d'exposition des permissions effectives sécurisé par JWT et tenant scope, consommé par le portail pour le gating UI *(tous)* (#108).
