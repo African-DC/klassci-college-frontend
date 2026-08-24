@@ -77,3 +77,39 @@ export function useValidateEnrollment() {
     },
   })
 }
+
+/**
+ * Valide plusieurs inscriptions d'un coup.
+ *
+ * Le retour distingue ce qui est passé de ce qui a refusé, avec le motif :
+ * un lot de trente dossiers dont deux échouent doit dire lesquels, sinon le
+ * secrétariat rouvre les trente pour comprendre.
+ */
+export function useBulkValidateEnrollments() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: number[]) => enrollmentsApi.bulkValidate(ids),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: enrollmentKeys.all })
+      const n = res.validated.length
+      if (n > 0) {
+        toast.success(
+          n === 1 ? "1 inscription validée" : `${n} inscriptions validées`,
+        )
+      }
+      if (res.failed.length > 0) {
+        toast.error(
+          res.failed.length === 1
+            ? "1 inscription n'a pas pu être validée"
+            : `${res.failed.length} inscriptions n'ont pas pu être validées`,
+          // Le premier motif suffit à orienter : les autres sont dans la liste,
+          // qui se recharge avec les statuts à jour.
+          { description: res.failed[0].reason },
+        )
+      }
+    },
+    onError: (error: Error) => {
+      toast.error("Validation impossible", { description: error.message })
+    },
+  })
+}

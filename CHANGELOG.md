@@ -16,6 +16,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Annulation d'un versement déjà encaissé, depuis le tableau comme depuis le téléphone : c'est le cas courant, un montant saisi qui n'est pas dans la caisse *(admin)*
 
 ### Added
+- Sélection de plusieurs inscriptions et validation en une fois, chaque refus étant signalé avec son motif *(admin)*
 - L'annulation d'un versement demande un motif écrit, affiché ensuite sous le statut dans le journal des paiements *(caissier, comptable, directeur)*
 - L'enseignant déclare ses indisponibilités depuis « Mon emploi du temps », sur la même grille que celle de sa fiche côté administration *(enseignant)*
 - Le formulaire de créneau affiche la semaine de l'enseignant choisi, cours dans les autres classes et plages fermées, et prévient avant d'enregistrer quand l'horaire visé ne passe pas *(directeur des études, secrétariat, admin)*

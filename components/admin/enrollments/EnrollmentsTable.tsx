@@ -5,7 +5,14 @@ import { useRouter } from "next/navigation"
 import type { Route } from "next"
 import type { ColumnDef } from "@tanstack/react-table"
 import { Check } from "lucide-react"
-import { useDeleteEnrollment, useEnrollments, useValidateEnrollment } from "@/lib/hooks/useEnrollments"
+import {
+  useBulkValidateEnrollments,
+  useDeleteEnrollment,
+  useEnrollments,
+  useValidateEnrollment,
+} from "@/lib/hooks/useEnrollments"
+import { Checkbox } from "@/components/ui/checkbox"
+import { enrollmentStatusView } from "@/lib/enrollment/status"
 import type { Enrollment } from "@/lib/contracts/enrollment"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -29,13 +36,6 @@ import { cn } from "@/lib/utils"
 // ce que l'admin doit traiter activement à la rentrée.
 const TO_VALIDATE_STATUSES = new Set<Enrollment["status"]>(["prospect", "en_validation"])
 
-const statusLabels: Record<Enrollment["status"], string> = {
-  prospect: "Prospect",
-  en_validation: "En validation",
-  valide: "Validé",
-  rejete: "Rejeté",
-  annule: "Annulé",
-}
 
 const PAGE_SIZE = 20
 
@@ -150,6 +150,11 @@ export function EnrollmentsTable() {
   const { data, isLoading, isError, error, refetch } = useEnrollments(params)
   const deleteMutation = useDeleteEnrollment()
   const validateMutation = useValidateEnrollment()
+  const bulkValidate = useBulkValidateEnrollments()
+  // La selection ne survit pas a un changement de page : on ne valide que
+  // ce qu'on a sous les yeux, sinon on signe pour des dossiers qu'on n'a
+  // pas relus.
+  const [selection, setSelection] = useState<Set<number>>(new Set())
 
   const allItems = data?.items ?? []
 
@@ -225,8 +230,50 @@ export function EnrollmentsTable() {
       ? "Aucune inscription trouvée"
       : "Aucune inscription ne correspond à cette affectation"
 
+  /** Les lignes affichees qu'on a le droit de valider. */
+  const validables = useMemo(
+    () => paginatedItems.filter((e) => TO_VALIDATE_STATUSES.has(e.status)),
+    [paginatedItems],
+  )
+  const toutSelectionne = validables.length > 0 && validables.every((e) => selection.has(e.id))
+
+  const basculer = useCallback((id: number) => {
+    setSelection((prec) => {
+      const suivant = new Set(prec)
+      if (suivant.has(id)) suivant.delete(id)
+      else suivant.add(id)
+      return suivant
+    })
+  }, [])
+
   const columns: ColumnDef<Enrollment>[] = useMemo(
     () => [
+      {
+        id: "selection",
+        header: () => (
+          <Checkbox
+            checked={toutSelectionne}
+            onCheckedChange={(v: boolean | "indeterminate") =>
+              setSelection(v ? new Set(validables.map((e) => e.id)) : new Set())
+            }
+            aria-label="Tout sélectionner"
+            disabled={validables.length === 0}
+          />
+        ),
+        cell: ({ row }) => {
+          // Une inscription deja validee n'a rien a offrir au lot : la case
+          // absente dit pourquoi mieux qu'une case grisee.
+          if (!TO_VALIDATE_STATUSES.has(row.original.status)) return null
+          return (
+            <Checkbox
+              checked={selection.has(row.original.id)}
+              onCheckedChange={() => basculer(row.original.id)}
+              onClick={(ev: React.MouseEvent) => ev.stopPropagation()}
+              aria-label={`Sélectionner ${row.original.student_last_name ?? ""}`}
+            />
+          )
+        },
+      },
       {
         accessorKey: "student_id",
         header: "Élève",
@@ -269,7 +316,7 @@ export function EnrollmentsTable() {
         header: "Statut",
         cell: ({ row }) => (
           <Badge variant="secondary" className="text-xs">
-            {statusLabels[row.original.status] ?? row.original.status}
+            {enrollmentStatusView(row.original.status).label}
           </Badge>
         ),
       },
@@ -296,7 +343,9 @@ export function EnrollmentsTable() {
         },
       },
     ],
-    [],
+    // Sans ces dependances, cocher une case ne redessine pas les cellules :
+    // l etat change, l ecran ne bouge pas.
+    [basculer, selection, toutSelectionne, validables],
   )
 
   return (
@@ -350,6 +399,36 @@ export function EnrollmentsTable() {
           onClick={() => handleAssignmentChipClick("non_renseigne")}
         />
       </div>
+
+      {/* La barre n'apparait qu'une fois quelque chose de selectionne : une
+          barre vide en permanence occupe la hauteur d'une ligne pour ne rien
+          dire, sur un ecran ou la liste est deja longue. */}
+      {selection.size > 0 && (
+        <div className="hidden items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-2.5 md:flex">
+          <p className="text-sm">
+            <span className="font-semibold">{selection.size}</span>{" "}
+            {selection.size === 1 ? "inscription sélectionnée" : "inscriptions sélectionnées"}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setSelection(new Set())}>
+              Annuler
+            </Button>
+            <Button
+              size="sm"
+              disabled={bulkValidate.isPending}
+              onClick={() =>
+                bulkValidate.mutate([...selection], {
+                  // On vide apres coup : les statuts ont change, garder la
+                  // selection proposerait de valider ce qui vient de l'etre.
+                  onSuccess: () => setSelection(new Set()),
+                })
+              }
+            >
+              {bulkValidate.isPending ? "Validation…" : "Valider la sélection"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Desktop : table dense via CrudTable. Mobile : liste minimaliste +
           bouton Valider distinct (Wave-style — la zone tap-to-drill n'avale
@@ -415,7 +494,7 @@ export function EnrollmentsTable() {
               status={
                 <div className="flex flex-col items-end gap-1">
                   <Badge variant="secondary" className="text-[10px]">
-                    {statusLabels[e.status] ?? e.status}
+                    {enrollmentStatusView(e.status).label}
                   </Badge>
                   <AssignmentStatusBadge status={e.assignment_status} className="text-[10px]" />
                 </div>

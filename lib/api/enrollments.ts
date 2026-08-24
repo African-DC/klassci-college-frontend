@@ -1,5 +1,5 @@
-import { EnrollmentSchema } from "@/lib/contracts/enrollment"
-import type { Enrollment, EnrollmentCreate, EnrollmentUpdate, NewEnrollment, ReEnrollment, FeeVariantOption } from "@/lib/contracts/enrollment"
+import { BulkValidateResultSchema, EnrollmentSchema } from "@/lib/contracts/enrollment"
+import type { BulkValidateResult, Enrollment, EnrollmentCreate, EnrollmentUpdate, NewEnrollment, ReEnrollment, FeeVariantOption } from "@/lib/contracts/enrollment"
 import { createCrudApi } from "./createCrudApi"
 import { apiFetch, safeValidate } from "./client"
 
@@ -32,5 +32,14 @@ export const enrollmentsApi = {
 
   validate: async (id: number) => {
     return apiFetch<Enrollment>(`/enrollments/${id}/validate`, { method: "POST" })
+  },
+
+  /** Valide une liste d'inscriptions ; un refus n'arrete pas les autres. */
+  bulkValidate: async (ids: number[]): Promise<BulkValidateResult> => {
+    const res = await apiFetch<unknown>("/enrollments/bulk-validate", {
+      method: "POST",
+      body: JSON.stringify({ enrollment_ids: ids }),
+    })
+    return safeValidate(BulkValidateResultSchema, res, "POST /enrollments/bulk-validate")
   },
 }
