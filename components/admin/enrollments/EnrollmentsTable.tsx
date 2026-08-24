@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { Route } from "next"
-import type { ColumnDef } from "@tanstack/react-table"
 import { Check } from "lucide-react"
 import {
   useBulkValidateEnrollments,
@@ -11,8 +10,10 @@ import {
   useEnrollments,
   useValidateEnrollment,
 } from "@/lib/hooks/useEnrollments"
-import { Checkbox } from "@/components/ui/checkbox"
 import { enrollmentStatusView } from "@/lib/enrollment/status"
+import { STATUTS_VALIDABLES, selectionVisible } from "@/lib/enrollment/selection"
+import { BulkValidateBar } from "@/components/admin/enrollments/BulkValidateBar"
+import { StudentInitialsAvatar, colonnesInscriptions } from "@/components/admin/enrollments/enrollment-columns"
 import type { Enrollment } from "@/lib/contracts/enrollment"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -34,35 +35,14 @@ import { cn } from "@/lib/utils"
 
 // Cohorte « À valider » = prospect + en_validation. La sémantique queue : c'est
 // ce que l'admin doit traiter activement à la rentrée.
-const TO_VALIDATE_STATUSES = new Set<Enrollment["status"]>(["prospect", "en_validation"])
+/** Reexporte pour les filtres locaux ; la source est `lib/enrollment/selection`. */
+const TO_VALIDATE_STATUSES = STATUTS_VALIDABLES
 
 
 const PAGE_SIZE = 20
 
 // Avatar inline avec initiales — pas de photo (les enrollments n'en exposent
 // pas, l'admin verra la photo dans la fiche élève).
-function StudentInitialsAvatar({
-  firstName,
-  lastName,
-  size = "md",
-}: {
-  firstName: string | null | undefined
-  lastName: string | null | undefined
-  size?: "sm" | "md"
-}) {
-  const initials = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase() || "?"
-  const sizeClass = size === "sm" ? "h-9 w-9" : "h-8 w-8"
-  return (
-    <div
-      className={cn(
-        sizeClass,
-        "flex shrink-0 items-center justify-center rounded-lg border border-border bg-primary/10",
-      )}
-    >
-      <span className="text-xs font-semibold text-primary">{initials}</span>
-    </div>
-  )
-}
 
 // Chip de filtre cohorte — duplication locale du pattern StudentsTable. À
 // extraire dans `components/shared/FilterChip.tsx` au 3e consommateur (rule
@@ -151,9 +131,8 @@ export function EnrollmentsTable() {
   const deleteMutation = useDeleteEnrollment()
   const validateMutation = useValidateEnrollment()
   const bulkValidate = useBulkValidateEnrollments()
-  // La selection ne survit pas a un changement de page : on ne valide que
-  // ce qu'on a sous les yeux, sinon on signe pour des dossiers qu'on n'a
-  // pas relus.
+  // Les cases cochees. Ce qui part au serveur est `selectionVisible`, son
+  // intersection avec la page affichee : voir plus bas.
   const [selection, setSelection] = useState<Set<number>>(new Set())
 
   const allItems = data?.items ?? []
@@ -235,7 +214,13 @@ export function EnrollmentsTable() {
     () => paginatedItems.filter((e) => TO_VALIDATE_STATUSES.has(e.status)),
     [paginatedItems],
   )
-  const toutSelectionne = validables.length > 0 && validables.every((e) => selection.has(e.id))
+  // Ce qui partira au serveur : voir `lib/enrollment/selection.ts`, ou le
+  // calcul est teste.
+  const aEnvoyer = useMemo(
+    () => selectionVisible(paginatedItems, selection),
+    [paginatedItems, selection],
+  )
+  const toutSelectionne = validables.length > 0 && validables.length === aEnvoyer.length
 
   const basculer = useCallback((id: number) => {
     setSelection((prec) => {
@@ -246,105 +231,19 @@ export function EnrollmentsTable() {
     })
   }, [])
 
-  const columns: ColumnDef<Enrollment>[] = useMemo(
-    () => [
-      {
-        id: "selection",
-        header: () => (
-          <Checkbox
-            checked={toutSelectionne}
-            onCheckedChange={(v: boolean | "indeterminate") =>
-              setSelection(v ? new Set(validables.map((e) => e.id)) : new Set())
-            }
-            aria-label="Tout sélectionner"
-            disabled={validables.length === 0}
-          />
-        ),
-        cell: ({ row }) => {
-          // Une inscription deja validee n'a rien a offrir au lot : la case
-          // absente dit pourquoi mieux qu'une case grisee.
-          if (!TO_VALIDATE_STATUSES.has(row.original.status)) return null
-          return (
-            <Checkbox
-              checked={selection.has(row.original.id)}
-              onCheckedChange={() => basculer(row.original.id)}
-              onClick={(ev: React.MouseEvent) => ev.stopPropagation()}
-              aria-label={`Sélectionner ${row.original.student_last_name ?? ""}`}
-            />
-          )
-        },
-      },
-      {
-        accessorKey: "student_id",
-        header: "Élève",
-        cell: ({ row }) => {
-          const e = row.original
-          return (
-            <div className="flex items-center gap-3">
-              <StudentInitialsAvatar
-                firstName={e.student_first_name}
-                lastName={e.student_last_name}
-              />
-              <div className="min-w-0">
-                <p className="truncate font-medium">
-                  {e.student_first_name} {e.student_last_name}
-                </p>
-                <p className="truncate text-[11px] text-muted-foreground">
-                  #{e.id} · {e.academic_year_name}
-                </p>
-              </div>
-            </div>
-          )
-        },
-      },
-      {
-        accessorKey: "class_id",
-        header: "Classe",
-        cell: ({ row }) => (
-          <Badge variant="outline" className="text-xs font-medium">
-            {row.original.class_name ?? `#${row.original.class_id}`}
-          </Badge>
-        ),
-      },
-      {
-        accessorKey: "assignment_status",
-        header: "Affectation",
-        cell: ({ row }) => <AssignmentStatusBadge status={row.original.assignment_status} />,
-      },
-      {
-        accessorKey: "status",
-        header: "Statut",
-        cell: ({ row }) => (
-          <Badge variant="secondary" className="text-xs">
-            {enrollmentStatusView(row.original.status).label}
-          </Badge>
-        ),
-      },
-      {
-        id: "validate-action",
-        header: "",
-        cell: ({ row }) => {
-          const e = row.original
-          if (!isToValidate(e)) return null
-          return (
-            <Button
-              type="button"
-              size="sm"
-              className="h-9 bg-emerald-600 text-white hover:bg-emerald-700"
-              onClick={(ev) => {
-                ev.stopPropagation()
-                setValidateTarget(e)
-              }}
-            >
-              <Check className="mr-1 h-4 w-4" />
-              Valider
-            </Button>
-          )
-        },
-      },
-    ],
+  const columns = useMemo(
+    () =>
+      colonnesInscriptions({
+        selection,
+        basculer,
+        toutSelectionne,
+        validables,
+        onValider: setValidateTarget,
+        onToutSelectionner: (tout: boolean) =>
+          setSelection(tout ? new Set(validables.map((e) => e.id)) : new Set()),
+      }),
     // Sans ces dependances, cocher une case ne redessine pas les cellules :
-    // l etat change, l ecran ne bouge pas.
+    // l'etat change, l'ecran ne bouge pas.
     [basculer, selection, toutSelectionne, validables],
   )
 
@@ -403,32 +302,18 @@ export function EnrollmentsTable() {
       {/* La barre n'apparait qu'une fois quelque chose de selectionne : une
           barre vide en permanence occupe la hauteur d'une ligne pour ne rien
           dire, sur un ecran ou la liste est deja longue. */}
-      {selection.size > 0 && (
-        <div className="hidden items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-2.5 md:flex">
-          <p className="text-sm">
-            <span className="font-semibold">{selection.size}</span>{" "}
-            {selection.size === 1 ? "inscription sélectionnée" : "inscriptions sélectionnées"}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setSelection(new Set())}>
-              Annuler
-            </Button>
-            <Button
-              size="sm"
-              disabled={bulkValidate.isPending}
-              onClick={() =>
-                bulkValidate.mutate([...selection], {
-                  // On vide apres coup : les statuts ont change, garder la
-                  // selection proposerait de valider ce qui vient de l'etre.
-                  onSuccess: () => setSelection(new Set()),
-                })
-              }
-            >
-              {bulkValidate.isPending ? "Validation…" : "Valider la sélection"}
-            </Button>
-          </div>
-        </div>
-      )}
+      <BulkValidateBar
+        nombre={aEnvoyer.length}
+        enCours={bulkValidate.isPending}
+        onAnnuler={() => setSelection(new Set())}
+        onValider={() =>
+          bulkValidate.mutate(aEnvoyer.map((e) => e.id), {
+            // On vide apres coup : les statuts ont change, garder la
+            // selection proposerait de valider ce qui vient de l'etre.
+            onSuccess: () => setSelection(new Set()),
+          })
+        }
+      />
 
       {/* Desktop : table dense via CrudTable. Mobile : liste minimaliste +
           bouton Valider distinct (Wave-style — la zone tap-to-drill n'avale
