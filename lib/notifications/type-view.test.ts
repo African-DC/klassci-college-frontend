@@ -7,7 +7,9 @@
  * couleur entre deux copies.
  */
 
+import { z } from "zod"
 import { describe, expect, it } from "vitest"
+import { NotificationSchema } from "@/lib/contracts/notification"
 import { idsAMarquerCommeVues, notificationTypeView } from "./type-view"
 
 describe("l'apparence d'un type de notification", () => {
@@ -29,11 +31,37 @@ describe("l'apparence d'un type de notification", () => {
   })
 
   it("ne fait pas disparaître une notification d'un type qu'il ne connaît pas", () => {
-    // Le serveur peut prendre de l'avance sur le client : mieux vaut une
-    // apparence neutre qu'une alerte invisible.
-    const inconnu = notificationTypeView("type_ajoute_demain")
-    expect(inconnu.label).toBeTruthy()
-    expect(inconnu.Icon).toBeDefined()
+    // Ce test passait déjà avant, en appelant la fonction directement — et il
+    // affirmait donc une propriété que le produit n'avait pas : le schéma
+    // était un enum strict, `safeValidate` levait, et une seule notification
+    // inconnue faisait disparaître toute la liste. Il traverse maintenant la
+    // couche qui cassait.
+    const brut = {
+      id: 1, user_id: 1, type: "type_ajoute_demain", channel: "in_app",
+      title: "Nouveau", body: "…", read: false, sent_at: null, read_at: null,
+      entity_type: null, entity_id: null, action_url: null,
+      created_at: new Date().toISOString(),
+    }
+    const valide = NotificationSchema.parse(brut)
+    const vue = notificationTypeView(valide.type)
+    expect(vue.label).toBeTruthy()
+    expect(vue.Icon).toBeDefined()
+  })
+
+  it("laisse passer une liste où une seule notification est d'un type inconnu", () => {
+    // Le cas qui comptait vraiment : une inconnue ne doit pas emporter les
+    // autres.
+    const ligne = (type: string, id: number) => ({
+      id, user_id: 1, type, channel: "in_app", title: `T${id}`, body: "…",
+      read: false, sent_at: null, read_at: null, entity_type: null,
+      entity_id: null, action_url: null, created_at: new Date().toISOString(),
+    })
+    const liste = z.array(NotificationSchema).parse([
+      ligne("payment_due", 1),
+      ligne("type_ajoute_demain", 2),
+      ligne("system", 3),
+    ])
+    expect(liste).toHaveLength(3)
   })
 
   it("donne à chaque type connu une icône et un libellé", () => {

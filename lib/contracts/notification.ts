@@ -15,7 +15,17 @@ export const NotificationChannelSchema = z.enum(["in_app", "sms", "whatsapp", "e
 export const NotificationSchema = z.object({
   id: z.number(),
   user_id: z.number(),
-  type: NotificationTypeSchema,
+  // Volontairement large, et non le `z.enum` strict.
+  //
+  // `safeValidate` leve quand la validation echoue : une seule notification
+  // d'un type que le client ne connait pas encore faisait donc tomber la
+  // liste entiere, et le panneau devenait noir. Une ligne sans style vaut
+  // mieux que toutes les autres invisibles.
+  //
+  // C'est `notificationTypeView` qui decide de l'apparence et retombe sur un
+  // rendu neutre. Le serveur prend de l'avance sur le client a chaque
+  // deploiement, puisque les deux ne partent pas ensemble.
+  type: z.string(),
   channel: NotificationChannelSchema,
   title: z.string(),
   body: z.string(),
