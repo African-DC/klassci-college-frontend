@@ -5,6 +5,9 @@ import { z } from "zod"
 export const NotificationTypeSchema = z.enum([
   "payment_due", "payment_received", "grade_available",
   "bulletin_published", "absence_recorded", "enrollment_status", "system",
+  // Les deux temps de la chaine d'inscription : quelqu'un doit encaisser,
+  // puis quelqu'un doit valider.
+  "enrollment_awaiting_payment", "enrollment_awaiting_validation",
 ])
 
 export const NotificationChannelSchema = z.enum(["in_app", "sms", "whatsapp", "email"])
@@ -19,6 +22,9 @@ export const NotificationSchema = z.object({
   read: z.boolean(),
   sent_at: z.string().nullable(),
   read_at: z.string().nullable(),
+  // Ou la notification mene. Le serveur le decide : lui seul sait quelle
+  // action il attend, puisque c'est lui qui a decide de prevenir.
+  action_url: z.string().nullish(),
   entity_type: z.string().nullable(),
   entity_id: z.number().nullable(),
   created_at: z.string(),
