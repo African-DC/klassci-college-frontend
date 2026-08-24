@@ -114,3 +114,62 @@ export function useMarkAllAsRead() {
     },
   })
 }
+
+/**
+ * Marquer comme lues les notifications que le panneau vient d'afficher.
+ *
+ * Distinct de `useMarkAllAsRead` : ouvrir la cloche ne veut pas dire avoir
+ * tout lu. Le stock contient des alertes plus bas dans la liste, et d'autres
+ * arrivent pendant que le panneau est ouvert — les effacer toutes ferait
+ * disparaître des tâches que personne n'a vues.
+ *
+ * La mise à jour optimiste ne touche que les identifiants concernés, et le
+ * compteur ne descend que du nombre de non-lues réellement affichées : le
+ * mettre à zéro mentirait sur ce qui reste.
+ */
+export function useMarkSeen() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: number[]) => notificationsApi.markSeen(ids),
+    onMutate: async (ids: number[]) => {
+      await queryClient.cancelQueries({ queryKey: notificationKeys.all })
+      const vus = new Set(ids)
+
+      const queries = queryClient.getQueriesData<Notification[]>({
+        queryKey: ["notifications", "list"],
+      })
+      let baisse = 0
+      for (const [key, data] of queries) {
+        if (!Array.isArray(data)) continue
+        queryClient.setQueryData(
+          key,
+          data.map((n) => {
+            if (!vus.has(n.id) || n.read) return n
+            baisse += 1
+            return { ...n, read: true }
+          }),
+        )
+      }
+
+      const prevCount = queryClient.getQueryData<{ count: number }>(notificationKeys.count())
+      if (prevCount) {
+        queryClient.setQueryData(notificationKeys.count(), {
+          count: Math.max(0, prevCount.count - baisse),
+        })
+      }
+      return { queries, prevCount }
+    },
+    onError: (_e, _ids, context) => {
+      // Rendre le compteur : une alerte effacée à tort est une tâche perdue.
+      for (const [key, data] of context?.queries ?? []) {
+        queryClient.setQueryData(key, data)
+      }
+      if (context?.prevCount) {
+        queryClient.setQueryData(notificationKeys.count(), context.prevCount)
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+    },
+  })
+}

@@ -166,8 +166,23 @@ export const paymentsApi = {
   },
 
   // Résumé financier (KPIs dashboard)
-  getSummary: async (academicYearId?: number): Promise<FinancialSummary> => {
-    const query = academicYearId ? `?academic_year_id=${academicYearId}` : ""
+  /**
+   * Les chiffres du bandeau, sur le perimetre de l'ecran.
+   *
+   * Les memes criteres que la liste : sans eux, filtrer sur « Annule »
+   * laissait le bandeau annoncer tout l'argent de l'annee au-dessus d'un
+   * tableau qui en montrait trois.
+   */
+  getSummary: async (
+    academicYearId?: number,
+    filtres?: PaymentListParams,
+  ): Promise<FinancialSummary> => {
+    const p = new URLSearchParams()
+    if (academicYearId) p.set("academic_year_id", String(academicYearId))
+    for (const [cle, valeur] of Object.entries(filtres ?? {})) {
+      if (valeur !== undefined && valeur !== null && valeur !== "") p.set(cle, String(valeur))
+    }
+    const query = p.toString() ? `?${p.toString()}` : ""
     const json = await apiFetch<unknown>(`/payments/summary${query}`)
     return safeValidate(
       FinancialSummarySchema,

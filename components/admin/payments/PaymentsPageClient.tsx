@@ -9,6 +9,7 @@ import {
 import { toast } from "sonner"
 import { PaymentsFilters } from "@/components/admin/payments/PaymentsFilters"
 import { usePaymentFilters } from "@/lib/hooks/usePaymentFilters"
+import { useScrollSentinel } from "@/lib/hooks/useScrollSentinel"
 import { PaymentConfirmDialog, type PaymentConfirmAction } from "@/components/admin/payments/PaymentConfirmDialog"
 import { PaymentReceiptDialog } from "@/components/admin/payments/PaymentReceiptDialog"
 import { PaymentsTable } from "@/components/admin/payments/PaymentsTable"
@@ -18,7 +19,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PageHero, heroAccentBtn, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
 import { PaymentCreateWizard } from "./PaymentCreateWizard"
 import {
-  usePayments,
+  useInfinitePayments,
   useFinancialSummary,
   useValidatePayment,
   useCancelPayment,
@@ -40,14 +41,32 @@ export function PaymentsPageClient() {
 
   const { filters, set, reset, params, activeCount } = usePaymentFilters()
 
-  const { data, isLoading } = usePayments(params)
-  const { data: summary } = useFinancialSummary()
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfinitePayments(params)
+  // Le bandeau recoit les memes criteres que la liste : sinon il annonce
+  // l'annee entiere au-dessus de trois lignes filtrees.
+  const { data: summary } = useFinancialSummary(undefined, params)
   const { mutate: validatePayment, isPending: validating } = useValidatePayment()
   const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
   const { data: feeCategories } = useFeeCategories()
   const { data: cashiers } = useCashiers()
 
-  const payments = useMemo(() => data?.items ?? [], [data])
+  // Les pages chargees, mises bout a bout.
+  const payments = useMemo(
+    () => data?.pages.flatMap((page) => page.items) ?? [],
+    [data],
+  )
+  const total = data?.pages[0]?.total ?? 0
+
+  const sentinelle = useScrollSentinel({
+    actif: Boolean(hasNextPage) && !isFetchingNextPage,
+    onApproche: () => void fetchNextPage(),
+  })
 
   // Le filtre « Encaissé par » n'a de sens qu'avec plusieurs guichets à
   // distinguer. Un caissier cloisonné ne reçoit que lui-même du serveur : lui
@@ -127,6 +146,15 @@ export function PaymentsPageClient() {
   // Son absence est donc le signal, et il n'y en a pas d'autre a inventer.
   const cloisonne = summary?.total_expected === null
 
+  // Un filtre actif change le sens de la moitie des chiffres. Le dire sur
+  // chaque carte evite de lire « 3 versements » en ayant oublie un filtre
+  // pose dix minutes plus tot, et de croire que la caisse est vide.
+  const filtre = activeCount > 0 || Boolean(filters.search)
+  const surLeFiltre = filtre ? "sur le filtre actif" : undefined
+  const horsFiltre = filtre ? "toute l'année, hors filtre" : undefined
+  const avec = (base: string | undefined, mention: string | undefined) =>
+    [base, mention].filter(Boolean).join(" · ") || undefined
+
   const heroKpis: HeroKpi[] | undefined = summary
     ? [
         {
@@ -136,26 +164,33 @@ export function PaymentsPageClient() {
           // n'est du ».
           value: cloisonne ? "—" : `${summary.total_expected!.toLocaleString("fr-FR")} F`,
           icon: Banknote,
+          // Le recouvrement parle de la dette de l'ecole, pas des lignes
+          // affichees : filtrer une dette sur un moyen de paiement ne veut
+          // rien dire. On le signale plutot que de laisser croire le contraire.
+          hint: horsFiltre,
         },
         {
           label: cloisonne ? "Encaissé par vous" : "Collecté",
           value: `${summary.total_paid.toLocaleString("fr-FR")} F`,
           icon: Wallet,
-          hint: `${summary.payment_count} paiement(s)`,
+          hint: avec(`${summary.payment_count} paiement(s)`, surLeFiltre),
         },
         {
           label: "En attente",
           value: `${summary.total_pending.toLocaleString("fr-FR")} F`,
           icon: AlertCircle,
+          hint: surLeFiltre,
         },
         {
           label: "Taux de recouvrement",
           value: cloisonne ? "—" : `${summary.completion_rate!.toFixed(1)}%`,
           icon: TrendingUp,
-          hint:
+          hint: avec(
             summary.total_cancelled > 0
               ? `${summary.total_cancelled.toLocaleString("fr-FR")} FCFA annulés`
               : undefined,
+            horsFiltre,
+          ),
         },
       ]
     : undefined
@@ -269,10 +304,17 @@ export function PaymentsPageClient() {
         </CardContent>
       </Card>
 
-      {/* Pagination info */}
-      {data && payments.length > 0 && (
-        <div className="text-xs text-muted-foreground text-right">
-          {data.total} paiement(s) — Page {data.page}/{data.size > 0 ? Math.ceil(data.total / data.size) : 1}
+      {/* La sentinelle : charger la suite en approchant du bas, plutot que
+          d'obliger a viser un numero de page. */}
+      <div ref={sentinelle} aria-hidden="true" className="h-px" />
+
+      {payments.length > 0 && (
+        <div className="pb-2 text-center text-xs text-muted-foreground">
+          {isFetchingNextPage
+            ? "Chargement…"
+            : hasNextPage
+              ? `${payments.length} sur ${total} versements`
+              : `${payments.length} versement(s), tout est affiché`}
         </div>
       )}
 
