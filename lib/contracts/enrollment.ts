@@ -135,3 +135,13 @@ export type ParentInput = z.infer<typeof ParentInputSchema>
 export type NewEnrollment = z.infer<typeof NewEnrollmentSchema>
 export type ReEnrollment = z.infer<typeof ReEnrollmentSchema>
 export type FeeVariantOption = z.infer<typeof FeeVariantOptionSchema>
+
+/** Ce que rend une validation en lot. */
+export const BulkValidateResultSchema = z.object({
+  validated: z.array(z.number()),
+  // Chaque refus avec son motif : sans lui, l'ecran ne peut que dire
+  // « certaines ont echoue », ce qui oblige a rouvrir chaque dossier.
+  failed: z.array(z.object({ enrollment_id: z.number(), reason: z.string() })),
+})
+
+export type BulkValidateResult = z.infer<typeof BulkValidateResultSchema>
