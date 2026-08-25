@@ -2,6 +2,9 @@
 
 import type { UseFormReturn } from "react-hook-form"
 import { ExternalLink, Info, Settings2 } from "lucide-react"
+import { AlerteDoublon } from "@/components/shared/AlerteDoublon"
+import { useDoublons } from "@/lib/hooks/useDoublons"
+import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import type { NewEnrollment } from "@/lib/contracts/enrollment"
 import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
 import { EnrollmentParentFields } from "@/components/forms/EnrollmentParentFields"
@@ -45,12 +48,33 @@ export function EnrollmentNewStudentStep({
   onToggleParentFields,
   onToggleParentAccount,
 }: EnrollmentNewStudentStepProps) {
+  // Le chemin le plus emprunté : la secrétaire saisit l'élève et son
+  // inscription d'un seul geste. C'est donc ici qu'une seconde fiche se
+  // crée le plus facilement, et ici que le signalement compte le plus.
+  // L'année en cours, pour pouvoir dire « il a déjà un dossier ouvert »
+  // plutôt que seulement « ce nom existe ».
+  const { academicYearId } = useCurrentAcademicYearId()
+  const saisie = form.watch()
+  const { data: doublons } = useDoublons({
+    last_name: saisie.last_name,
+    first_name: saisie.first_name,
+    birth_date: saisie.birth_date ?? undefined,
+    birth_place: saisie.birth_place ?? undefined,
+    enrollment_number: saisie.enrollment_number ?? undefined,
+    academic_year_id: academicYearId,
+  })
+
   return (
     <Form {...form}>
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
           Renseignez les informations de l&apos;élève.
         </p>
+
+        <AlerteDoublon
+          correspondances={doublons?.correspondances ?? []}
+          action="Poursuivre cette inscription"
+        />
 
         <StudentPhotoField value={photo} onChange={onPhotoChange} disabled={disabled} />
 

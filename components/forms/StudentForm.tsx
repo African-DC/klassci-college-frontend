@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/select"
 import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
 import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
+import { AlerteDoublon } from "@/components/shared/AlerteDoublon"
+import { useDoublons } from "@/lib/hooks/useDoublons"
 
 interface StudentFormProps {
   onSuccess: () => void
@@ -61,9 +63,25 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
     })
   }
 
+  // La saisie est surveillée pendant qu'elle se fait : signaler après
+  // l'enregistrement arriverait trop tard, la seconde fiche existerait.
+  const saisie = form.watch()
+  const { data: doublons } = useDoublons({
+    last_name: saisie.last_name,
+    first_name: saisie.first_name,
+    birth_date: saisie.birth_date || undefined,
+    birth_place: saisie.birth_place || undefined,
+    enrollment_number: saisie.enrollment_number || undefined,
+  })
+
   return (
     <Form {...form}>
       <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <AlerteDoublon
+          correspondances={doublons?.correspondances ?? []}
+          action="Créer cette fiche"
+        />
+
         <StudentPhotoField value={photo} onChange={setPhoto} disabled={isPending || attachPhoto.isPending} />
 
         <div className="grid grid-cols-2 gap-4">

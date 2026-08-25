@@ -20,6 +20,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Annulation d'un versement déjà encaissé, depuis le tableau comme depuis le téléphone : c'est le cas courant, un montant saisi qui n'est pas dans la caisse *(admin)*
 
 ### Added
+- Un élève déjà enregistré est signalé pendant la saisie : matricule identique, ressemblance du nom, ou inscription déjà ouverte sur l'année même non validée *(admin, secrétariat)*
 - Sélection de plusieurs inscriptions et validation en une fois, chaque refus étant signalé avec son motif *(admin)*
 - Ouvrir la cloche marque comme lues les notifications affichées, et cliquer dessus mène à l'écran où l'on fait l'action attendue *(tous)*
 - L'annulation d'un versement demande un motif écrit, affiché ensuite sous le statut dans le journal des paiements *(caissier, comptable, directeur)*

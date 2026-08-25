@@ -4,6 +4,8 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { StudentUpdateSchema, type StudentUpdate } from "@/lib/contracts/student"
 import { useStudent, useUpdateStudent } from "@/lib/hooks/useStudents"
+import { AlerteDoublon } from "@/components/shared/AlerteDoublon"
+import { useDoublons } from "@/lib/hooks/useDoublons"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -56,15 +58,37 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
       : undefined,
   })
 
+  // Appelés avant le retour anticipé : un hook conditionnel change l'ordre
+  // des hooks d'un rendu à l'autre, et React ne le pardonne pas.
+  //
+  // `ignorer_student_id` : sans lui, corriger une faute de frappe sur un nom
+  // ferait signaler la fiche à elle-même, et l'avertissement deviendrait un
+  // bruit qu'on apprend à cliquer sans lire.
+  const saisie = form.watch()
+  const { data: doublons } = useDoublons({
+    last_name: saisie.last_name,
+    first_name: saisie.first_name,
+    birth_date: saisie.birth_date ?? undefined,
+    birth_place: saisie.birth_place ?? undefined,
+    enrollment_number: saisie.enrollment_number ?? undefined,
+    ignorer_student_id: studentId,
+  })
+
   if (isLoading || !student) return <EditFormSkeleton />
 
   function onSubmit(data: StudentUpdate) {
     mutate(data, { onSuccess: onClose })
   }
 
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <AlerteDoublon
+          correspondances={doublons?.correspondances ?? []}
+          action="Enregistrer ces modifications"
+        />
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
