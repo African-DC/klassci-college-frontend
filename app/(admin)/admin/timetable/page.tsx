@@ -1,8 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react"
-import { Calendar, ChevronLeft, ChevronRight, FileDown, Wand2, Loader2 } from "lucide-react"
+import { CalendarRange, FileDown, Wand2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+import { PageHero, heroAccentBtn } from "@/components/shared/PageHero"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -14,17 +17,19 @@ import {
 import { useTimetableStore } from "@/lib/stores/useTimetableStore"
 import { useGenerateTimetable } from "@/lib/hooks/useTimetable"
 import { useClasses } from "@/lib/hooks/useClasses"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { timetableApi } from "@/lib/api/timetable"
 import { downloadBlob } from "@/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
 import { timetableKeys } from "@/lib/hooks/useTimetable"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { TimetableGrid } from "@/components/admin/timetable/TimetableGrid"
 import { TimetableHoursSidebar } from "@/components/admin/timetable/TimetableHoursSidebar"
 import { GenerateDiagnosticModal } from "@/components/admin/timetable/GenerateDiagnosticModal"
 import type { TimetableDiagnostic } from "@/lib/contracts/timetable"
 
 export default function TimetablePage() {
-  const { selectedClassId, setSelectedClassId, weekOffset, nextWeek, prevWeek, resetWeek } = useTimetableStore()
+  const { selectedClassId, setSelectedClassId } = useTimetableStore()
   const generateMutation = useGenerateTimetable()
   const queryClient = useQueryClient()
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -41,6 +46,12 @@ export default function TimetablePage() {
   const { data: classesData } = useClasses({ size: 100 })
   const classes = useMemo(() => classesData?.items ?? [], [classesData])
 
+  const { data: yearsData } = useAcademicYears()
+  const currentYearName =
+    (yearsData?.items ?? []).find((y) => y.is_current)?.name ??
+    (yearsData?.items ?? [])[0]?.name ??
+    ""
+
   // Cleanup polling on unmount or class change
   useEffect(() => {
     return () => {
@@ -48,18 +59,18 @@ export default function TimetablePage() {
     }
   }, [])
 
-  // Clear polling when class changes
-  useEffect(() => {
-    stopPolling()
-  }, [selectedClassId])
-
-  function stopPolling() {
+  const stopPolling = useCallback(() => {
     if (pollingRef.current) clearInterval(pollingRef.current)
     pollingRef.current = null
     setIsPolling(false)
-  }
+  }, [])
 
-  function startPolling(taskId: string) {
+  // Clear polling when class changes
+  useEffect(() => {
+    stopPolling()
+  }, [selectedClassId, stopPolling])
+
+  const startPolling = useCallback((taskId: string) => {
     setIsPolling(true)
     pollCountRef.current = 0
     pollFnRef.current = async () => {
@@ -84,7 +95,7 @@ export default function TimetablePage() {
       }
     }
     pollingRef.current = setInterval(() => { pollFnRef.current?.() }, 3000)
-  }
+  }, [queryClient, stopPolling])
 
   // Step 1: Run diagnostic before generating
   async function handleGenerateClick() {
@@ -120,7 +131,7 @@ export default function TimetablePage() {
       },
       onError: (error) => toast.error("Erreur", { description: error.message }),
     })
-  }, [selectedClassId, generateMutation, queryClient])
+  }, [selectedClassId, generateMutation, startPolling])
 
   const isGenerating = generateMutation.isPending || isPolling || loadingDiagnostic
 
@@ -128,7 +139,7 @@ export default function TimetablePage() {
     if (!selectedClassId) return
     setExportingPdf(true)
     try {
-      const blob = await timetableApi.exportPdf(selectedClassId, weekOffset)
+      const blob = await timetableApi.exportPdf(selectedClassId)
       const className = classes.find((c) => c.id === selectedClassId)?.name ?? "classe"
       downloadBlob(blob, `emploi-du-temps-${className}.pdf`)
       toast.success("PDF exporté avec succès")
@@ -142,115 +153,129 @@ export default function TimetablePage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Calendar className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Emploi du temps</h1>
-            <p className="text-sm text-muted-foreground">Gérez les créneaux horaires par classe</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleExportPdf}
-            disabled={!selectedClassId || exportingPdf}
-          >
-            {exportingPdf ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <FileDown className="mr-2 h-4 w-4" />
-            )}
-            Exporter PDF
-          </Button>
-          <Button
-            variant="outline"
+    <div className="space-y-5">
+      <PageHero
+        icon={CalendarRange}
+        title="Emploi du temps"
+        subtitle={
+          <>
+            Semaine type
+            {currentYearName ? (
+              <>
+                {" · "}
+                <span className="font-medium text-white">Année {currentYearName}</span>
+              </>
+            ) : null}
+            {" · modèle hebdomadaire valable toute l'année"}
+          </>
+        }
+        actions={
+          <button
+            type="button"
             onClick={handleGenerateClick}
             disabled={!selectedClassId || isGenerating}
+            className={cn(
+              heroAccentBtn,
+              (!selectedClassId || isGenerating) && "pointer-events-none opacity-60",
+            )}
           >
             {isGenerating ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
             ) : (
-              <Wand2 className="mr-2 h-4 w-4" />
+              <Wand2 aria-hidden="true" className="h-4 w-4" />
             )}
             Générer automatiquement
-          </Button>
-        </div>
-      </div>
+          </button>
+        }
+      />
 
-      {/* Controls */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-            Classe :
-          </label>
-          <Select
-            value={selectedClassId?.toString() ?? ""}
-            onValueChange={(v) => setSelectedClassId(v ? Number(v) : null)}
-          >
-            <SelectTrigger className="h-10 w-56">
-              <SelectValue placeholder="Sélectionner une classe" />
-            </SelectTrigger>
-            <SelectContent>
-              {classes.map((c) => (
-                <SelectItem key={c.id} value={c.id.toString()}>
-                  {c.name} {c.level_name ? `(${c.level_name})` : ""}
-                </SelectItem>
+      {/* Contrôles : sélection de classe + actions PDF */}
+      <Card className="border-0 shadow-sm ring-1 ring-border">
+        <CardContent className="space-y-3 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <label className="whitespace-nowrap text-sm font-medium text-muted-foreground">
+                Classe :
+              </label>
+              <Select
+                value={selectedClassId?.toString() ?? ""}
+                onValueChange={(v) => setSelectedClassId(v ? Number(v) : null)}
+              >
+                <SelectTrigger
+                  aria-label="Sélectionner une classe"
+                  className="h-11 w-full sm:h-10 sm:w-56"
+                >
+                  <SelectValue placeholder="Sélectionner une classe" />
+                </SelectTrigger>
+                <SelectContent>
+                  {classes.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
+                      {c.name} {c.level_name ? `(${c.level_name})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <PdfPreviewButton
+                fetchBlob={() => timetableApi.exportPdf(selectedClassId as number)}
+                label="l'emploi du temps"
+                disabled={!selectedClassId}
+                className="h-11 sm:h-10"
+              />
+              <Button
+                variant="outline"
+                onClick={handleExportPdf}
+                disabled={!selectedClassId || exportingPdf}
+                aria-label="Télécharger l'emploi du temps en PDF"
+                className="h-11 sm:h-10"
+              >
+                {exportingPdf ? (
+                  <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <FileDown aria-hidden="true" className="mr-2 h-4 w-4" />
+                )}
+                Exporter PDF
+              </Button>
+            </div>
+          </div>
+
+          {/* Sélection rapide de classe (chips) */}
+          {classes.length > 0 && (
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {classes.slice(0, 15).map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={cn(
+                    "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                    selectedClassId === c.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80",
+                  )}
+                  onClick={() => setSelectedClassId(c.id)}
+                >
+                  {c.name}
+                </button>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-9 w-9" onClick={prevWeek}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={resetWeek} className="text-sm min-w-[120px]">
-            {weekOffset === 0 ? "Cette semaine" : `Semaine ${weekOffset > 0 ? "+" : ""}${weekOffset}`}
-          </Button>
-          <Button variant="outline" size="icon" className="h-9 w-9" onClick={nextWeek}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Class tabs */}
-      {classes.length > 0 && (
-        <div className="flex gap-1 overflow-x-auto pb-1">
-          {classes.slice(0, 15).map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                selectedClassId === c.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted hover:bg-muted/80 text-muted-foreground"
-              }`}
-              onClick={() => setSelectedClassId(c.id)}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-      )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Grid + Sidebar */}
       {selectedClassId ? (
-        <div className="flex gap-4 items-start">
-          <div className="flex-1 min-w-0">
-            <TimetableGrid classId={selectedClassId} weekOffset={weekOffset} />
+        <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:items-start">
+          <div className="min-w-0 flex-1">
+            <TimetableGrid classId={selectedClassId} />
           </div>
-          <TimetableHoursSidebar classId={selectedClassId} weekOffset={weekOffset} />
+          <TimetableHoursSidebar classId={selectedClassId} />
         </div>
       ) : (
-        <div className="flex h-64 items-center justify-center rounded-lg border border-dashed bg-muted/20">
-          <p className="text-sm text-muted-foreground">
-            Sélectionnez une classe pour afficher l'emploi du temps
-          </p>
+        <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-xl border border-dashed bg-muted/20 text-muted-foreground">
+          <CalendarRange className="h-8 w-8 opacity-40" aria-hidden="true" />
+          <p className="text-sm">Sélectionnez une classe pour afficher l&apos;emploi du temps</p>
         </div>
       )}
 

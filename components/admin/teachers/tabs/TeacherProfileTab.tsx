@@ -1,9 +1,9 @@
 "use client"
 
-import { User, BookOpen, Phone, CalendarDays, Mail, ShieldCheck } from "lucide-react"
+import { User, Users, Briefcase, BookOpen, Phone, CalendarDays, Mail, ShieldCheck } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import type { Teacher } from "@/lib/contracts/teacher"
+import { teacherContractLabel, teacherGenreLabel, type Teacher } from "@/lib/contracts/teacher"
 
 interface TeacherProfileTabProps {
   teacher: Teacher
@@ -85,7 +85,13 @@ export function TeacherProfileTab({ teacher, fullData }: TeacherProfileTabProps)
           <div className="grid gap-5 sm:grid-cols-3">
             <InfoField label="Nom" value={teacher.last_name} icon={User} />
             <InfoField label="Prénom" value={teacher.first_name} icon={User} />
+            <InfoField label="Sexe" value={teacherGenreLabel(teacher.genre)} icon={Users} />
             <InfoField label="Spécialité" value={teacher.speciality} icon={BookOpen} />
+            <InfoField
+              label="Type de contrat"
+              value={teacherContractLabel(teacher.contract_type)}
+              icon={Briefcase}
+            />
             <InfoField label="Téléphone" value={teacher.phone} icon={Phone} />
             <InfoField label="Créé le" value={createdAt} icon={CalendarDays} />
           </div>

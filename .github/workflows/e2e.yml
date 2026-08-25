@@ -21,7 +21,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: klassci_test
+          MYSQL_DATABASE: klasscie2e
         ports: ['3306:3306']
         options: >-
           --health-cmd="mysqladmin ping --silent"
@@ -55,9 +55,9 @@ jobs:
       # `LOCAL_TENANT_ID` is read by the BE TenantMiddleware as the fallback
       # when no JWT / X-Tenant-Slug / subdomain identifies a tenant. Without
       # it, requests against http://127.0.0.1 land on `local` and crash on
-      # `Unknown database 'local'` since we only created klassci_test.
-      TENANT_ID: klassci_test
-      LOCAL_TENANT_ID: klassci_test
+      # `Unknown database 'local'` since we only created klasscie2e.
+      TENANT_ID: klasscie2e
+      LOCAL_TENANT_ID: klasscie2e
 
     steps:
       # ─── Checkout FE + sibling BE ──────────────────────────────────────
@@ -68,7 +68,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: African-DC/klassci-college-backend
-          ref: main
+          ref: develop
           path: be-repo
 
       # ─── Toolchains ────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ jobs:
             sleep 2
           done
 
-      - name: Run alembic migrations on klassci_test
+      - name: Run alembic migrations on klasscie2e
         working-directory: be-repo
         run: alembic upgrade head
 
@@ -107,12 +107,12 @@ jobs:
           import asyncio
           from app.services.tenant_service import seed_tenant_data
           asyncio.run(seed_tenant_data(
-              'klassci_test',
+              'klasscie2e',
               school_name='KLASSCI E2E',
               admin_email='admin@klassci.com',
               admin_password='Admin@2026',
           ))
-          " || echo "Tenant data may already be seeded — proceeding"
+          "
 
       - name: Seed deterministic test users
         working-directory: be-repo

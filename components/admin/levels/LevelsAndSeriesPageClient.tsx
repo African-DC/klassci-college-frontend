@@ -11,6 +11,7 @@ import {
   GraduationCap,
   BookOpen,
   GripVertical,
+  AlertTriangle,
 } from "lucide-react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
@@ -27,6 +28,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { DataError } from "@/components/shared/DataError"
+import { PageHero, heroGlassBtn, heroAccentBtn, type HeroKpi } from "@/components/shared/PageHero"
+import { ListSearchBar } from "@/components/shared/list/ListSearchBar"
+import { matchesSearch } from "@/lib/utils/list-search"
 import { useLevels, useDeleteLevel } from "@/lib/hooks/useLevels"
 import { useSeriesList, useDeleteSeries, seriesKeys } from "@/lib/hooks/useSeries"
 import { seriesApi } from "@/lib/api/series"
@@ -51,6 +55,7 @@ export function LevelsAndSeriesPageClient() {
   const [editSeriesId, setEditSeriesId] = useState<number | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: "level" | "series"; id: number; name: string } | null>(null)
   const [dragOverLevelId, setDragOverLevelId] = useState<number | null>(null)
+  const [search, setSearch] = useState("")
 
   const queryClient = useQueryClient()
 
@@ -90,6 +95,33 @@ export function LevelsAndSeriesPageClient() {
 
   const sortedLevels = [...levels].sort((a, b) => a.order - b.order)
 
+  // KPIs (données peu nombreuses : calcul direct à chaque render).
+  const noSeriesCount = levels.filter((l) => (seriesByLevel.get(l.id)?.length ?? 0) === 0).length
+  const avgSeries = levels.length > 0 ? (allSeries.length / levels.length).toFixed(1) : "0"
+  const kpis: HeroKpi[] = [
+    { label: "Niveaux", value: levels.length, icon: GraduationCap },
+    { label: "Séries", value: allSeries.length, icon: BookOpen },
+    { label: "Séries / niveau", value: avgSeries, icon: Layers },
+    { label: "Niveaux sans série", value: noSeriesCount, icon: AlertTriangle },
+  ]
+
+  // Recherche : filtre les niveaux par nom OU par nom de série. Quand un niveau
+  // matche par son nom, on garde toutes ses séries ; sinon on ne montre que les
+  // séries qui matchent.
+  const q = search.trim()
+  const seriesToShow = (levelId: number, levelName: string): Series[] => {
+    const list = seriesByLevel.get(levelId) ?? []
+    if (!q || matchesSearch([levelName], q)) return list
+    return list.filter((s) => matchesSearch([s.name, `série ${s.name}`], q))
+  }
+  const displayLevels = !q
+    ? sortedLevels
+    : sortedLevels.filter(
+        (l) =>
+          matchesSearch([l.name], q) ||
+          (seriesByLevel.get(l.id) ?? []).some((s) => matchesSearch([s.name], q)),
+      )
+
   const toggleExpand = (levelId: number) => {
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -128,40 +160,42 @@ export function LevelsAndSeriesPageClient() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Layers className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="font-serif text-xl tracking-tight">Niveaux & Séries</h1>
-            <p className="text-sm text-muted-foreground">Structure académique de l&apos;établissement</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs"
-            onClick={() => setExpanded(new Set(levels.map((l) => l.id)))}
-          >
-            Tout déplier
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs"
-            onClick={() => setExpanded(new Set())}
-          >
-            Tout replier
-          </Button>
-          <Button size="sm" onClick={() => setLevelCreateOpen(true)}>
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Nouveau niveau
-          </Button>
-        </div>
-      </div>
+      {/* Hero signature KLASSCI (dégradé bleu + KPIs intégrés) */}
+      <PageHero
+        icon={Layers}
+        title="Niveaux & Séries"
+        subtitle="Structure académique de l'établissement"
+        actions={
+          <>
+            <button
+              type="button"
+              className={heroGlassBtn}
+              onClick={() => setExpanded(new Set(levels.map((l) => l.id)))}
+            >
+              Tout déplier
+            </button>
+            <button
+              type="button"
+              className={heroGlassBtn}
+              onClick={() => setExpanded(new Set())}
+            >
+              Tout replier
+            </button>
+            <button type="button" className={heroAccentBtn} onClick={() => setLevelCreateOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Nouveau niveau
+            </button>
+          </>
+        }
+        kpis={kpis}
+      />
+
+      <ListSearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Rechercher un niveau ou une série…"
+        aria-label="Rechercher un niveau ou une série"
+      />
 
       {/* Tree */}
       {sortedLevels.length === 0 ? (
@@ -175,9 +209,15 @@ export function LevelsAndSeriesPageClient() {
         </div>
       ) : (
         <div className="rounded-lg border bg-card overflow-hidden select-none p-3 space-y-1">
-          {sortedLevels.map((level) => {
-            const isOpen = expanded.has(level.id)
-            const levelSeries = seriesByLevel.get(level.id) ?? []
+          {displayLevels.length === 0 && (
+            <p className="px-2 py-10 text-center text-sm text-muted-foreground">
+              Aucun niveau ou série ne correspond à « {search} ».
+            </p>
+          )}
+          {displayLevels.map((level) => {
+            // En recherche, on force l'ouverture pour révéler les séries matchées.
+            const isOpen = q ? true : expanded.has(level.id)
+            const levelSeries = seriesToShow(level.id, level.name)
 
             return (
               <div

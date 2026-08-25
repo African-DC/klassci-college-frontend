@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table"
 import { toast } from "sonner"
 import { downloadBlob } from "@/lib/utils"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { CouncilDecisionBadge } from "./CouncilDecisionBadge"
 import { CouncilValidateButton } from "./CouncilValidateButton"
 import { useUpdateDecisions } from "@/lib/hooks/useCouncil"
@@ -45,7 +46,11 @@ interface CouncilDeliberationTableProps {
 
 export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyChange }: CouncilDeliberationTableProps) {
   const isReadOnly = minutes.is_published
-  const { mutate: saveDecisions, isPending: isSaving } = useUpdateDecisions(classId, trimester)
+  const { mutate: saveDecisions, isPending: isSaving } = useUpdateDecisions(
+    classId,
+    trimester,
+    minutes.academic_year_id,
+  )
 
   // État local des décisions modifiées
   const [localDecisions, setLocalDecisions] = useState<
@@ -151,14 +156,18 @@ export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyC
   const handleDownloadPdf = useCallback(async () => {
     setIsDownloading(true)
     try {
-      const blob = await councilApi.downloadPdf(minutes.id)
+      const blob = await councilApi.downloadPdf(
+        minutes.class_id,
+        minutes.trimester,
+        minutes.academic_year_id,
+      )
       downloadBlob(blob, `pv-conseil-${minutes.id}.pdf`)
     } catch {
       toast.error("Impossible de télécharger le PDF")
     } finally {
       setIsDownloading(false)
     }
-  }, [minutes.id])
+  }, [minutes.id, minutes.class_id, minutes.trimester, minutes.academic_year_id])
 
   const hasChanges = localDecisions.size > 0
 
@@ -266,17 +275,30 @@ export function CouncilDeliberationTable({ minutes, classId, trimester, onDirtyC
             minutesId={minutes.id}
             classId={classId}
             trimester={trimester}
+            academicYearId={minutes.academic_year_id}
             disabled={isReadOnly || stats.pending > 0}
           />
         </div>
-        <Button variant="outline" onClick={handleDownloadPdf} disabled={isDownloading}>
-          {isDownloading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="mr-2 h-4 w-4" />
-          )}
-          Exporter PDF
-        </Button>
+        <div className="flex items-center gap-2">
+          <PdfPreviewButton
+            fetchBlob={() =>
+              councilApi.downloadPdf(
+                minutes.class_id,
+                minutes.trimester,
+                minutes.academic_year_id,
+              )
+            }
+            label="le PV de conseil"
+          />
+          <Button variant="outline" onClick={handleDownloadPdf} disabled={isDownloading} aria-label="Télécharger le PV de conseil en PDF">
+            {isDownloading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            Exporter PDF
+          </Button>
+        </div>
       </div>
     </div>
   )

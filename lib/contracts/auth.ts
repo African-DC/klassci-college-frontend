@@ -2,9 +2,22 @@ import { z } from "zod"
 
 // Miroir de app/schemas/auth.py (backend)
 
-export const UserRoleSchema = z.enum(["admin", "teacher", "student", "parent", "super_admin"])
+export const UserRoleSchema = z.enum([
+  "admin",
+  "director",
+  "staff",
+  "accountant",
+  "teacher",
+  "student",
+  "parent",
+  "super_admin",
+])
 
 export const LoginRequestSchema = z.object({
+  school_code: z
+    .string({ required_error: "Le code établissement est requis" })
+    .trim()
+    .min(2, "Indiquez le code de votre établissement"),
   email: z
     .string({ required_error: "L'email est requis" })
     .email("Email invalide"),
@@ -19,6 +32,7 @@ export const UserSchema = z.object({
   role: UserRoleSchema,
   first_name: z.string(),
   last_name: z.string(),
+  must_change_password: z.boolean().optional(),
 })
 
 export const LoginResponseSchema = z.object({

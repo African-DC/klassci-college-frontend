@@ -50,6 +50,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
           last_name: student.last_name,
           enrollment_number: student.enrollment_number ?? undefined,
           birth_date: student.birth_date ?? undefined,
+          birth_place: student.birth_place ?? undefined,
           genre: student.genre ?? undefined,
         }
       : undefined,
@@ -130,19 +131,35 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="birth_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Date de naissance</FormLabel>
-              <FormControl>
-                <Input type="date" className="h-11" {...field} value={field.value ?? ""} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="birth_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Date de naissance</FormLabel>
+                <FormControl>
+                  <Input type="date" className="h-11" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="birth_place"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lieu de naissance</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex : Bouaké" className="h-11" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">

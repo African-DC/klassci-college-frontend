@@ -26,7 +26,12 @@ interface TeacherEvaluationsTabProps {
 }
 
 export function TeacherEvaluationsTab({ teacherId }: TeacherEvaluationsTabProps) {
-  const { data: evaluations, isLoading } = useTeacherEvaluations(teacherId)
+  const { data: page, isLoading } = useTeacherEvaluations(teacherId)
+  const evaluations = page?.items
+  // `total` vient de l'enveloppe : c'est le compte de l'enseignant, pas
+  // celui de la page rendue.
+  const schoolTotal = page?.total ?? 0
+  const isTruncated = schoolTotal > (evaluations?.length ?? 0)
 
   if (isLoading) {
     return (
@@ -112,6 +117,11 @@ export function TeacherEvaluationsTab({ teacherId }: TeacherEvaluationsTabProps)
             })}
           </TableBody>
         </Table>
+        <p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
+          {isTruncated
+            ? `${evaluations.length} des ${schoolTotal} évaluations de cet enseignant, les plus récentes d'abord.`
+            : `${schoolTotal} évaluation${schoolTotal > 1 ? "s" : ""}.`}
+        </p>
       </CardContent>
     </Card>
   )

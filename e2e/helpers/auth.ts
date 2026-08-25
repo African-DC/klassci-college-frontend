@@ -18,7 +18,13 @@ export async function loginAs(
   password: string,
 ): Promise<void> {
   await page.goto('/login')
-  await page.getByPlaceholder('nom@etablissement.cd').fill(email)
+  // Le code de l’établissement decide de la base que le backend ouvre.
+  // La CI provisionne `klasscie2e` (voir e2e.yml : MYSQL_DATABASE et
+  // TENANT_ID) ; taper `local` faisait chercher une base qui n’existe pas,
+  // et le backend répondait 500 sur chaque connexion : les douze tests
+  // échouaient sur la meme cause, en restant sur /login.
+  await page.getByPlaceholder('ROSTAN').fill(process.env.E2E_SCHOOL_CODE ?? 'klasscie2e')
+  await page.getByPlaceholder('nom@etablissement.ci').fill(email)
   await page.getByPlaceholder('Entrez votre mot de passe').fill(password)
   await page.getByRole('button', { name: /Se connecter/i }).click()
   await expect(page).toHaveURL(ROLE_PATTERN, { timeout: 15_000 })

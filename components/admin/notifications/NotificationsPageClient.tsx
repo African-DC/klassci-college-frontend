@@ -3,20 +3,21 @@
 import { useState } from "react"
 import {
   Bell,
-  CreditCard,
-  ClipboardList,
-  FileText,
-  AlertCircle,
-  Settings,
-  UserCheck,
   Check,
   CheckCheck,
   Filter,
+  MailOpen,
+  Mail,
+  Inbox,
+  Layers,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PageHero, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
+import { ListSearchBar } from "@/components/shared/list/ListSearchBar"
+import { matchesSearch } from "@/lib/utils/list-search"
 import {
   Select,
   SelectContent,
@@ -33,39 +34,7 @@ import {
 } from "@/lib/hooks/useNotifications"
 import type { Notification, NotificationType } from "@/lib/contracts/notification"
 import { cn } from "@/lib/utils"
-
-/** Icône par type de notification */
-const TYPE_ICONS: Record<NotificationType, React.ComponentType<{ className?: string }>> = {
-  payment_due: CreditCard,
-  payment_received: CreditCard,
-  grade_available: ClipboardList,
-  bulletin_published: FileText,
-  absence_recorded: AlertCircle,
-  enrollment_status: UserCheck,
-  system: Settings,
-}
-
-/** Couleur de fond par type */
-const TYPE_COLORS: Record<NotificationType, string> = {
-  payment_due: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  payment_received: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  grade_available: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  bulletin_published: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-  absence_recorded: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-  enrollment_status: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
-  system: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
-}
-
-/** Labels pour les types */
-const TYPE_LABELS: Record<NotificationType, string> = {
-  payment_due: "Paiement dû",
-  payment_received: "Paiement reçu",
-  grade_available: "Note disponible",
-  bulletin_published: "Bulletin publié",
-  absence_recorded: "Absence enregistrée",
-  enrollment_status: "Inscription",
-  system: "Système",
-}
+import { notificationTypeView } from "@/lib/notifications/type-view"
 
 /** Formater une date relative */
 function timeAgo(dateStr: string): string {
@@ -97,6 +66,7 @@ const NOTIFICATION_TYPES: NotificationType[] = [
 export function NotificationsPageClient() {
   const [typeFilter, setTypeFilter] = useState<NotificationType | "all">("all")
   const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">("all")
+  const [search, setSearch] = useState("")
 
   const params = {
     ...(typeFilter !== "all" && { type: typeFilter }),
@@ -105,44 +75,64 @@ export function NotificationsPageClient() {
   }
 
   const { data: notifications, isLoading, isError, refetch } = useNotifications(params)
+  // Liste non filtrée pour les KPIs (totaux indépendants des filtres actifs).
+  const { data: allNotifications } = useNotifications({})
   const { data: countData } = useNotificationCount()
   const markAsRead = useMarkAsRead()
   const markAllAsRead = useMarkAllAsRead()
 
   const unreadCount = countData?.count ?? 0
 
+  const all = allNotifications ?? []
+  const total = all.length
+  const distinctTypes = new Set(all.map((n) => n.type)).size
+  const kpis: HeroKpi[] = [
+    { label: "Total", value: total, icon: Inbox },
+    { label: "Non lues", value: unreadCount, icon: Mail },
+    { label: "Lues", value: Math.max(total - unreadCount, 0), icon: MailOpen },
+    { label: "Types actifs", value: distinctTypes, icon: Layers },
+  ]
+
+  // Recherche client sur titre + corps (par-dessus les filtres serveur type/lu).
+  const visibleNotifications = (notifications ?? []).filter((n) =>
+    matchesSearch([n.title, n.body], search),
+  )
+
   return (
     <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Bell className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="font-serif text-2xl tracking-tight">Notifications</h1>
-            <p className="text-sm text-muted-foreground">
-              {unreadCount > 0
-                ? `${unreadCount} notification${unreadCount > 1 ? "s" : ""} non lue${unreadCount > 1 ? "s" : ""}`
-                : "Toutes les notifications sont lues"}
-            </p>
-          </div>
-        </div>
-        {unreadCount > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => markAllAsRead.mutate()}
-            disabled={markAllAsRead.isPending}
-          >
-            <CheckCheck className="mr-2 h-4 w-4" />
-            Tout marquer comme lu
-          </Button>
-        )}
-      </div>
+      {/* Hero signature KLASSCI (dégradé bleu + KPIs intégrés) */}
+      <PageHero
+        icon={Bell}
+        title="Notifications"
+        subtitle={
+          unreadCount > 0
+            ? `${unreadCount} notification${unreadCount > 1 ? "s" : ""} non lue${unreadCount > 1 ? "s" : ""}`
+            : "Toutes les notifications sont lues"
+        }
+        actions={
+          unreadCount > 0 ? (
+            <button
+              type="button"
+              className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+              onClick={() => markAllAsRead.mutate()}
+              disabled={markAllAsRead.isPending}
+            >
+              <CheckCheck className="h-4 w-4" />
+              Tout marquer comme lu
+            </button>
+          ) : undefined
+        }
+        kpis={kpis}
+      />
 
-      {/* Filtres */}
-      <div className="flex gap-3">
+      {/* Recherche + Filtres */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <ListSearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Rechercher dans les notifications…"
+          aria-label="Rechercher une notification"
+        />
         <Select
           value={typeFilter}
           onValueChange={(v) => setTypeFilter(v as NotificationType | "all")}
@@ -155,7 +145,7 @@ export function NotificationsPageClient() {
             <SelectItem value="all">Tous les types</SelectItem>
             {NOTIFICATION_TYPES.map((type) => (
               <SelectItem key={type} value={type}>
-                {TYPE_LABELS[type]}
+                {notificationTypeView(type).label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -184,14 +174,16 @@ export function NotificationsPageClient() {
           message="Impossible de charger les notifications."
           onRetry={() => refetch()}
         />
-      ) : !notifications || notifications.length === 0 ? (
+      ) : visibleNotifications.length === 0 ? (
         <div className="py-16 text-center">
           <Bell className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">Aucune notification.</p>
+          <p className="text-sm text-muted-foreground">
+            {search ? `Aucune notification ne correspond à « ${search} ».` : "Aucune notification."}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
-          {notifications.map((notification) => (
+          {visibleNotifications.map((notification) => (
             <NotificationRow
               key={notification.id}
               notification={notification}
@@ -211,7 +203,7 @@ function NotificationRow({
   notification: Notification
   onMarkAsRead: () => void
 }) {
-  const Icon = TYPE_ICONS[notification.type]
+  const { Icon, tone } = notificationTypeView(notification.type)
 
   return (
     <Card
@@ -224,7 +216,7 @@ function NotificationRow({
         <div
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-            TYPE_COLORS[notification.type],
+            tone,
           )}
         >
           <Icon className="h-5 w-5" />
@@ -236,7 +228,7 @@ function NotificationRow({
               {notification.title}
             </p>
             <Badge variant="secondary" className="text-[10px]">
-              {TYPE_LABELS[notification.type]}
+              {notificationTypeView(notification.type).label}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">{notification.body}</p>

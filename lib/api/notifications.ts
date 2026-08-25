@@ -53,4 +53,21 @@ export const notificationsApi = {
     const res = await apiFetch<unknown>("/notifications/read-all", { method: "POST" })
     return safeValidate(MarkAllReadSchema, res, "POST /notifications/read-all")
   },
+
+  /**
+   * Marquer comme lues les notifications que le panneau vient d'afficher.
+   *
+   * Distinct de `markAllAsRead` : ouvrir la cloche ne veut pas dire avoir
+   * tout lu. Le stock contient des alertes plus bas dans la liste, et
+   * d'autres arrivent pendant que le panneau est ouvert — les effacer
+   * toutes ferait disparaitre des taches que personne n'a vues.
+   */
+  markSeen: async (ids: number[]): Promise<{ updated: number }> => {
+    if (ids.length === 0) return { updated: 0 }
+    const res = await apiFetch<unknown>("/notifications/mark-seen", {
+      method: "POST",
+      body: JSON.stringify({ notification_ids: ids }),
+    })
+    return safeValidate(MarkAllReadSchema, res, "POST /notifications/mark-seen")
+  },
 }

@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
-import { Eye, Download, DownloadCloud, Send, ChevronLeft, ChevronRight } from "lucide-react"
+import { Download, DownloadCloud, Send, ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import {
   Table,
   TableBody,
@@ -59,6 +60,15 @@ interface BulletinListProps {
 
 export function BulletinList({ params, onPageChange }: BulletinListProps) {
   const { data, isLoading, isError } = useBulletins(params)
+  // Le bandeau « publiez-les » doit parler de la classe entière, pas de la
+  // page affichée : une seule ligne suffit, c'est le `total` de l'enveloppe
+  // qui répond.
+  const { data: draftsProbe } = useBulletins({
+    ...params,
+    is_published: false,
+    page: 1,
+    size: 1,
+  })
   const { mutate: publish, isPending: isPublishing } = usePublishBulletins()
   const [previewId, setPreviewId] = useState<number | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
@@ -79,10 +89,11 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
   }, [])
 
   const bulletins = useMemo(() => data?.items ?? [], [data])
-  const hasDrafts = useMemo(
-    () => bulletins.some((b) => !b.is_published),
-    [bulletins],
-  )
+  const hasDrafts = (draftsProbe?.total ?? 0) > 0
+  // `total` vient de l'enveloppe : il compte les bulletins de la classe et
+  // du trimestre choisis, pas les lignes de la page affichée.
+  const schoolTotal = data?.total ?? 0
+  const isPaged = schoolTotal > bulletins.length
 
   const handleDownloadAll = useCallback(async () => {
     if (bulletins.length === 0) return
@@ -170,7 +181,9 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
           ) : (
             <>
               <DownloadCloud className="mr-2 h-3 w-3" />
-              Télécharger tout
+              {/* Le bouton ne télécharge que ce qui est chargé : le dire
+                  plutôt que promettre « tout » sur une liste paginée. */}
+              {isPaged ? "Télécharger cette page" : "Télécharger tout"}
             </>
           )}
         </Button>
@@ -257,17 +270,13 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-end gap-1">
-                      <Button
+                      <PdfPreviewButton
+                        fetchBlob={() => bulletinsApi.downloadPdf(bulletin.id)}
+                        label={`le bulletin de ${bulletin.student_name}`}
+                        iconOnly
                         size="icon"
                         variant="ghost"
-                        onClick={() => setPreviewId(bulletin.id)}
-                        title="Voir le détail"
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span className="sr-only">
-                          Voir le bulletin de {bulletin.student_name}
-                        </span>
-                      </Button>
+                      />
                       <Button
                         size="icon"
                         variant="ghost"
@@ -290,7 +299,7 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
       </div>
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>{data?.total ?? 0} bulletin(s)</span>
+        <span>{schoolTotal} bulletin(s)</span>
         <div className="flex items-center gap-2">
           <Button
             size="icon"

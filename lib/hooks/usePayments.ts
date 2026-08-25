@@ -1,8 +1,15 @@
 "use client"
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query"
 import { toast } from "sonner"
 import { paymentsApi } from "@/lib/api/payments"
+import { pageSuivante } from "./pagination"
 import type {
   EnrollmentPaymentCreate,
   Payment,
@@ -14,12 +21,19 @@ import type { PaginatedResponse } from "@/lib/contracts"
 export const paymentKeys = {
   all: ["payments"] as const,
   list: (params: PaymentListParams) => ["payments", "list", params] as const,
-  summary: (academicYearId?: number) => ["payments", "summary", academicYearId] as const,
+  summary: (academicYearId?: number, filtres?: PaymentListParams) =>
+    ["payments", "summary", academicYearId, filtres] as const,
+  cashiers: ["payments", "cashiers"] as const,
   byEnrollment: (enrollmentId: number) =>
     ["payments", "enrollment", enrollmentId] as const,
   preview: (enrollmentId: number, amount: number) =>
     ["payments", "preview", enrollmentId, amount] as const,
 }
+
+/** Les seules entrées du cache qui contiennent une page de versements. */
+const estListePaginee = (cle: readonly unknown[]): boolean =>
+  cle[1] === "list" || cle[1] === "enrollment"
+
 
 export function usePayments(params: PaymentListParams = {}) {
   return useQuery({
@@ -29,11 +43,33 @@ export function usePayments(params: PaymentListParams = {}) {
   })
 }
 
-export function useFinancialSummary(academicYearId?: number) {
+/**
+ * Les chiffres du bandeau, calcules sur le perimetre de l'ecran.
+ *
+ * Les filtres partent au serveur : agreger ce qui est charge donnerait des
+ * totaux faux des la deuxieme page, et un bandeau qui ignore les filtres
+ * annonce l'annee entiere au-dessus d'une liste qui montre trois lignes.
+ */
+export function useFinancialSummary(academicYearId?: number, filtres?: PaymentListParams) {
   return useQuery({
-    queryKey: paymentKeys.summary(academicYearId),
-    queryFn: () => paymentsApi.getSummary(academicYearId),
+    queryKey: paymentKeys.summary(academicYearId, filtres),
+    queryFn: () => paymentsApi.getSummary(academicYearId, filtres),
     staleTime: 1000 * 60 * 5,
+  })
+}
+
+/**
+ * Les encaisseurs proposables dans le filtre « Encaissé par ».
+ *
+ * Le serveur décide de ce que l'appelant a le droit d'y voir : un caissier
+ * cloisonné ne reçoit que lui-même. Le composant n'a donc pas à connaître les
+ * droits de celui qui ouvre l'écran.
+ */
+export function useCashiers() {
+  return useQuery({
+    queryKey: paymentKeys.cashiers,
+    queryFn: () => paymentsApi.listCashiers(),
+    staleTime: 1000 * 60 * 10,
   })
 }
 
@@ -107,23 +143,47 @@ export function useRecordEnrollmentPayment(enrollmentId: number) {
   })
 }
 
-/** Met à jour optimistiquement le statut d'un paiement dans le cache paginé */
+/**
+ * Met à jour optimistiquement le statut d'un paiement dans les listes paginées.
+ *
+ * Le préfixe `["payments"]` ramène aussi `["payments", "summary", …]`, dont la
+ * valeur est un récapitulatif financier sans `items`, et `["payments",
+ * "cashiers"]`, qui est une simple liste. Écrire dedans jetait
+ * « Cannot read properties of undefined » avant que la requête ne parte : la
+ * validation et l'annulation d'un versement échouaient sur l'écran des
+ * paiements, qui affiche justement le récapitulatif à côté de la liste.
+ */
 function optimisticStatusUpdate(
   queryClient: ReturnType<typeof useQueryClient>,
   paymentId: number,
   newStatus: Payment["status"],
 ) {
-  // Met à jour dans toutes les listes paginées en cache
-  queryClient.setQueriesData<PaginatedResponse<Payment>>(
-    { queryKey: paymentKeys.all },
-    (old) => {
-      if (!old) return old
-      return {
-        ...old,
-        items: old.items.map((p) =>
-          p.id === paymentId ? { ...p, status: newStatus } : p,
-        ),
+  const remplace = (p: Payment) => (p.id === paymentId ? { ...p, status: newStatus } : p)
+
+  // Deux formes de cache cohabitent sous le meme prefixe depuis le
+  // defilement continu : la page unique `{items}` et la liste accumulee
+  // `{pages}`. Ne traiter que la premiere ne jetait pas d erreur, elle ne
+  // faisait rien : la ligne qu on venait de valider restait inchangee
+  // jusqu au rechargement, qui redemande toutes les pages chargees.
+  queryClient.setQueriesData<unknown>(
+    { queryKey: paymentKeys.all, predicate: (q) => estListePaginee(q.queryKey) },
+    (old: unknown) => {
+      if (!old || typeof old !== "object") return old
+
+      const accumulee = old as { pages?: PaginatedResponse<Payment>[] }
+      if (Array.isArray(accumulee.pages)) {
+        return {
+          ...accumulee,
+          pages: accumulee.pages.map((page) => ({
+            ...page,
+            items: page.items.map(remplace),
+          })),
+        }
       }
+
+      const page = old as PaginatedResponse<Payment>
+      if (!Array.isArray(page.items)) return old
+      return { ...page, items: page.items.map(remplace) }
     },
   )
 }
@@ -158,8 +218,9 @@ export function useValidatePayment() {
 export function useCancelPayment() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => paymentsApi.cancel(id),
-    onMutate: async (id) => {
+    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+      paymentsApi.cancel(id, reason),
+    onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: paymentKeys.all })
       const snapshots = queryClient.getQueriesData<PaginatedResponse<Payment>>({
         queryKey: paymentKeys.all,
@@ -178,5 +239,24 @@ export function useCancelPayment() {
       queryClient.invalidateQueries({ queryKey: paymentKeys.all })
       queryClient.invalidateQueries({ queryKey: paymentKeys.summary() })
     },
+  })
+}
+
+
+/**
+ * Le journal des versements, charge au fil du defilement.
+ *
+ * La pagination existait a l'ecran sans etre navigable : le pied de page
+ * annoncait « Page 1/92 » et rien ne permettait d'atteindre la seconde.
+ */
+export function useInfinitePayments(params: PaymentListParams = {}) {
+  return useInfiniteQuery({
+    queryKey: [...paymentKeys.list(params), "infinite"] as const,
+    queryFn: ({ pageParam }: { pageParam: number }) => paymentsApi.list({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    // La condition d arret vit dans `./pagination`, ou elle est testee.
+    getNextPageParam: (derniere: PaginatedResponse<Payment>, pages: unknown[]) =>
+      pageSuivante(derniere, pages.length),
+    staleTime: 1000 * 60 * 5,
   })
 }

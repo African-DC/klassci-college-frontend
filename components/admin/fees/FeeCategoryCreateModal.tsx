@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { FeeEntitlementsField } from "@/components/admin/fees/FeeEntitlementsField"
 import { useCreateFeeCategory } from "@/lib/hooks/useFees"
 import { FeeCategoryCreateSchema, type FeeCategoryCreate } from "@/lib/contracts/fee"
 
@@ -19,7 +20,7 @@ interface FeeCategoryCreateModalProps {
 export function FeeCategoryCreateModal({ open, onClose }: FeeCategoryCreateModalProps) {
   const form = useForm<FeeCategoryCreate>({
     resolver: zodResolver(FeeCategoryCreateSchema),
-    defaultValues: { name: "", description: null, is_mandatory: true },
+    defaultValues: { name: "", description: null, entitlements: [], is_mandatory: true },
   })
 
   const { mutate, isPending } = useCreateFeeCategory()
@@ -35,7 +36,7 @@ export function FeeCategoryCreateModal({ open, onClose }: FeeCategoryCreateModal
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nouvelle catégorie de frais</DialogTitle>
         </DialogHeader>
@@ -66,6 +67,18 @@ export function FeeCategoryCreateModal({ open, onClose }: FeeCategoryCreateModal
                       {...field}
                       value={field.value ?? ""}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="entitlements"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FeeEntitlementsField value={field.value} onChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

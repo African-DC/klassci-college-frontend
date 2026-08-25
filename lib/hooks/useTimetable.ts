@@ -13,18 +13,37 @@ import type {
 
 export const timetableKeys = {
   all: ["timetable"] as const,
-  byClass: (classId: number, weekOffset?: number) =>
-    ["timetable", "class", classId, weekOffset ?? 0] as const,
+  byClass: (classId: number) => ["timetable", "class", classId] as const,
   byTeacher: (teacherId: number) => ["timetable", "teacher", teacherId] as const,
   mine: () => ["timetable", "mine"] as const,
   availabilities: (teacherId: number) =>
     ["timetable", "availabilities", teacherId] as const,
+  myAvailabilities: () => ["timetable", "availabilities", "mine"] as const,
+  teacherWeek: (teacherId: number) => ["timetable", "week", teacherId] as const,
+  myWeek: () => ["timetable", "week", "mine"] as const,
 }
 
-export function useTimetable(classId: number, weekOffset: number = 0) {
+/**
+ * Les seules entrées du cache qui contiennent une liste de créneaux.
+ *
+ * `getQueriesData` fait une correspondance par **préfixe** : demander
+ * `["timetable"]` ramène aussi `["timetable", "week", 7]`, dont la valeur est
+ * un objet `TeacherWeek`, et `["timetable", "availabilities", 7]`, dont la
+ * valeur est une liste de plages. Étaler l'un ou mapper l'autre casse la mise
+ * à jour optimiste avant même que la requête ne parte — c'est ce qui faisait
+ * échouer l'enregistrement d'un créneau sur « r is not iterable ».
+ *
+ * Le générique `getQueriesData<TimetableSlot[]>` ne protège de rien : c'est
+ * une affirmation que le cache ne garantit pas, et TypeScript la croit.
+ */
+const estListeDeCreneaux = ([cle]: [readonly unknown[], unknown]): boolean =>
+  cle[1] === "class" || cle[1] === "teacher" || cle[1] === "mine"
+
+
+export function useTimetable(classId: number) {
   return useQuery({
-    queryKey: timetableKeys.byClass(classId, weekOffset),
-    queryFn: () => timetableApi.listByClass(classId, weekOffset),
+    queryKey: timetableKeys.byClass(classId),
+    queryFn: () => timetableApi.listByClass(classId),
     enabled: !!classId,
     staleTime: 1000 * 60 * 5,
   })
@@ -53,9 +72,9 @@ export function useCreateSlot() {
     mutationFn: (data: TimetableSlotCreate) => timetableApi.create(data),
     onMutate: async (newSlot) => {
       await queryClient.cancelQueries({ queryKey: timetableKeys.all })
-      const queries = queryClient.getQueriesData<TimetableSlot[]>({
-        queryKey: timetableKeys.all,
-      })
+      const queries = queryClient
+        .getQueriesData<TimetableSlot[]>({ queryKey: timetableKeys.all })
+        .filter(estListeDeCreneaux)
       const optimistic: TimetableSlot = {
         id: -Date.now(),
         class_id: newSlot.class_id,
@@ -100,9 +119,9 @@ export function useUpdateSlot(id: number) {
     mutationFn: (data: TimetableSlotUpdate) => timetableApi.update(id, data),
     onMutate: async (updatedFields) => {
       await queryClient.cancelQueries({ queryKey: timetableKeys.all })
-      const queries = queryClient.getQueriesData<TimetableSlot[]>({
-        queryKey: timetableKeys.all,
-      })
+      const queries = queryClient
+        .getQueriesData<TimetableSlot[]>({ queryKey: timetableKeys.all })
+        .filter(estListeDeCreneaux)
       for (const [key, data] of queries) {
         if (data) {
           queryClient.setQueryData(
@@ -136,9 +155,9 @@ export function useDeleteSlot() {
     mutationFn: (id: number) => timetableApi.remove(id),
     onMutate: async (deletedId) => {
       await queryClient.cancelQueries({ queryKey: timetableKeys.all })
-      const queries = queryClient.getQueriesData<TimetableSlot[]>({
-        queryKey: timetableKeys.all,
-      })
+      const queries = queryClient
+        .getQueriesData<TimetableSlot[]>({ queryKey: timetableKeys.all })
+        .filter(estListeDeCreneaux)
       for (const [key, data] of queries) {
         if (data) {
           queryClient.setQueryData(
@@ -241,4 +260,78 @@ export function useDeleteAvailability(teacherId: number) {
       toast.error("Erreur", { description: err.message })
     },
   })
+}
+
+// ---------------------------------------------------------------------------
+// Semaine d'un enseignant, et disponibilites vues du portail enseignant
+// ---------------------------------------------------------------------------
+
+/** La semaine occupee de l'enseignant choisi, pour l'afficher avant l'horaire. */
+export function useTeacherWeek(teacherId: number | undefined) {
+  return useQuery({
+    queryKey: timetableKeys.teacherWeek(teacherId ?? 0),
+    queryFn: () => timetableApi.teacherWeek(teacherId as number),
+    enabled: !!teacherId,
+    staleTime: 1000 * 30,
+    // Les plages se corrigent souvent dans un autre onglet, sur la fiche de
+    // l'enseignant. Relire au retour evite de poser un creneau contre une
+    // semaine perimee, sans que personne ait a penser au bouton.
+    refetchOnWindowFocus: true,
+  })
+}
+
+export function useMyWeek() {
+  return useQuery({
+    queryKey: timetableKeys.myWeek(),
+    queryFn: () => timetableApi.myWeek(),
+    staleTime: 1000 * 60,
+  })
+}
+
+export function useMyAvailabilities() {
+  return useQuery({
+    queryKey: timetableKeys.myAvailabilities(),
+    queryFn: () => timetableApi.myAvailabilities(),
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+/** Les trois ecritures du portail enseignant invalident les memes lectures. */
+function useMyAvailabilityMutation<TVars>(
+  mutationFn: (vars: TVars) => Promise<unknown>,
+  successMessage?: string,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: timetableKeys.myAvailabilities() })
+      queryClient.invalidateQueries({ queryKey: timetableKeys.myWeek() })
+      if (successMessage) toast.success(successMessage)
+    },
+    onError: (err) => {
+      toast.error("Enregistrement impossible", { description: err.message })
+    },
+  })
+}
+
+export function useDeclareMyAvailability() {
+  return useMyAvailabilityMutation(
+    (data: TeacherAvailabilityCreate) => timetableApi.declareMyAvailability(data),
+    "Disponibilité enregistrée",
+  )
+}
+
+export function useUpdateMyAvailability() {
+  return useMyAvailabilityMutation(
+    ({ id, data }: { id: number; data: TeacherAvailabilityUpdate }) =>
+      timetableApi.updateMyAvailability(id, data),
+  )
+}
+
+export function useDeleteMyAvailability() {
+  return useMyAvailabilityMutation(
+    (id: number) => timetableApi.deleteMyAvailability(id),
+    "Disponibilité retirée",
+  )
 }

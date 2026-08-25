@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { enrollmentStatusView } from "@/lib/enrollment/status"
 import Link from "next/link"
 import type { Route } from "next"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -10,9 +11,12 @@ import type { Student } from "@/lib/contracts/student"
 import { Badge } from "@/components/ui/badge"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
+import { ExportMenu } from "@/components/export/ExportMenu"
 import { getUploadUrl, cn } from "@/lib/utils"
 import { StudentEditModal } from "./StudentEditModal"
 import { useDebounce } from "@/lib/hooks/useDebounce"
+import { useSettings } from "@/lib/hooks/useSettings"
+import { buildStudentsExportPayload } from "./students-export"
 
 // Mini-icône genre inline à côté du nom (KEEP IN DATA pour DREN/bulletin compliance,
 // mais hidden de la colonne dédiée).
@@ -152,7 +156,22 @@ export function StudentsTable({
 
   const { data, isLoading, isError, error, refetch } = useStudents(params)
   const { data: filters } = useStudentFilters()
+  const { data: settings } = useSettings()
   const deleteMutation = useDeleteStudent()
+
+  // Résumé lisible des filtres actifs pour l'entête du document exporté.
+  const exportFilters = useMemo(() => {
+    const parts: string[] = []
+    if (activeChip === "unenrolled") {
+      parts.push("À inscrire")
+    } else if (activeChip.startsWith("class:")) {
+      const classId = Number(activeChip.split(":")[1])
+      const name = filters?.by_class?.find((c) => c.class_id === classId)?.class_name
+      parts.push(`Classe ${name ?? classId}`)
+    }
+    if (debouncedSearch) parts.push(`Recherche « ${debouncedSearch} »`)
+    return parts.length > 0 ? parts.join(" · ") : undefined
+  }, [activeChip, debouncedSearch, filters])
 
   const handleChipClick = useCallback((key: ChipKey) => {
     setActiveChip(key)
@@ -194,7 +213,7 @@ export function StudentsTable({
           if (ce) {
             return (
               <Badge variant="outline" className="text-xs font-medium">
-                {ce.class_name}
+                {ce.class_name || "Classe à affecter"}
               </Badge>
             )
           }
@@ -209,9 +228,10 @@ export function StudentsTable({
           if (!ce) {
             return <span className="text-xs text-muted-foreground">—</span>
           }
+          const vue = enrollmentStatusView(ce.status)
           return (
-            <Badge variant="secondary" className="text-xs capitalize">
-              {ce.status}
+            <Badge variant={vue.variant} className="text-xs">
+              {vue.label}
             </Badge>
           )
         },
@@ -224,34 +244,43 @@ export function StudentsTable({
 
   return (
     <div className="space-y-4">
-      {/* Barre de filtre-chips. Horizontal-scroll sur mobile (Itel S661 320px ne
-          tient pas 14 chips wrap), wrap sur desktop. Le persona est mobile, on
-          design pour mobile d'abord. */}
-      <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-x-visible">
-        <FilterChip
-          label="Tous"
-          count={filters?.total ?? data?.total ?? 0}
-          isActive={activeChip === "all"}
-          onClick={() => handleChipClick("all")}
+      {/* Barre de filtre-chips + export. Horizontal-scroll sur mobile (Itel S661
+          320px ne tient pas 14 chips wrap), wrap sur desktop. Le persona est
+          mobile, on design pour mobile d'abord. */}
+      <div className="flex items-start gap-2">
+        <div className="flex flex-1 gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-x-visible">
+          <FilterChip
+            label="Tous"
+            count={filters?.total ?? data?.total ?? 0}
+            isActive={activeChip === "all"}
+            onClick={() => handleChipClick("all")}
+          />
+          {(filters?.no_current_enrollment_count ?? 0) > 0 && (
+            <FilterChip
+              label="À inscrire"
+              count={filters!.no_current_enrollment_count}
+              isActive={activeChip === "unenrolled"}
+              onClick={() => handleChipClick("unenrolled")}
+              tone="warning"
+            />
+          )}
+          {(filters?.by_class ?? []).map((c) => (
+            <FilterChip
+              key={c.class_id}
+              label={c.class_name}
+              count={c.count}
+              isActive={activeChip === `class:${c.class_id}`}
+              onClick={() => handleChipClick(`class:${c.class_id}`)}
+            />
+          ))}
+        </div>
+        <ExportMenu
+          filename="eleves"
+          disabled={items.length === 0}
+          getPayload={() =>
+            buildStudentsExportPayload({ students: items, settings, filters: exportFilters })
+          }
         />
-        {(filters?.no_current_enrollment_count ?? 0) > 0 && (
-          <FilterChip
-            label="À inscrire"
-            count={filters!.no_current_enrollment_count}
-            isActive={activeChip === "unenrolled"}
-            onClick={() => handleChipClick("unenrolled")}
-            tone="warning"
-          />
-        )}
-        {(filters?.by_class ?? []).map((c) => (
-          <FilterChip
-            key={c.class_id}
-            label={c.class_name}
-            count={c.count}
-            isActive={activeChip === `class:${c.class_id}`}
-            onClick={() => handleChipClick(`class:${c.class_id}`)}
-          />
-        ))}
       </div>
 
       {/* Desktop : table dense via CrudTable. Mobile : liste minimale via
@@ -306,15 +335,15 @@ export function StudentsTable({
             }
             secondary={
               s.current_enrollment ? (
-                s.current_enrollment.class_name
+                s.current_enrollment.class_name || enrollmentStatusView(s.current_enrollment.status).label
               ) : (
                 <span className="text-amber-700">À inscrire</span>
               )
             }
             status={
               s.current_enrollment ? (
-                <Badge variant="secondary" className="text-[10px] capitalize">
-                  {s.current_enrollment.status}
+                <Badge variant={enrollmentStatusView(s.current_enrollment.status).variant} className="text-[10px]">
+                  {enrollmentStatusView(s.current_enrollment.status).label}
                 </Badge>
               ) : null
             }

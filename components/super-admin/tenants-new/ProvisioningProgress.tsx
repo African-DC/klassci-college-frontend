@@ -65,27 +65,58 @@ export function ProvisioningProgress({
         </p>
       </div>
 
-      <ul className="space-y-3">
-        {STAGES.map((stage, i) => (
-          <li key={stage.label} className="flex items-center gap-3">
-            {i < reached ? (
-              <Check className="h-5 w-5 shrink-0 text-emerald-600" />
-            ) : i === reached && status === "pending" ? (
-              <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary" />
-            ) : status === "error" && i === reached ? (
-              <AlertCircle className="h-5 w-5 shrink-0 text-destructive" />
-            ) : (
-              <span className="h-5 w-5 shrink-0 rounded-full border-2 border-muted" />
-            )}
-            <span className={i < reached ? "font-medium" : "text-muted-foreground"}>
-              {stage.label}
-            </span>
-          </li>
-        ))}
+      <ul
+        role="list"
+        aria-label="Étapes du provisionnement"
+        aria-live="polite"
+        className="space-y-3"
+      >
+        {STAGES.map((stage, i) => {
+          const stageStatus =
+            i < reached
+              ? "complete"
+              : i === reached && status === "pending"
+                ? "in-progress"
+                : status === "error" && i === reached
+                  ? "error"
+                  : "pending"
+          return (
+            <li key={stage.label} className="flex items-center gap-3">
+              {stageStatus === "complete" && (
+                <Check aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-600" />
+              )}
+              {stageStatus === "in-progress" && (
+                <Loader2 aria-hidden="true" className="h-5 w-5 shrink-0 animate-spin text-primary" />
+              )}
+              {stageStatus === "error" && (
+                <AlertCircle aria-hidden="true" className="h-5 w-5 shrink-0 text-destructive" />
+              )}
+              {stageStatus === "pending" && (
+                <span aria-hidden="true" className="h-5 w-5 shrink-0 rounded-full border-2 border-muted" />
+              )}
+              <span className={i < reached ? "font-medium" : "text-muted-foreground"}>
+                {stage.label}
+              </span>
+              <span className="sr-only">
+                {stageStatus === "complete"
+                  ? " — terminé"
+                  : stageStatus === "in-progress"
+                    ? " — en cours"
+                    : stageStatus === "error"
+                      ? " — échec"
+                      : " — en attente"}
+              </span>
+            </li>
+          )
+        })}
       </ul>
 
       {status === "error" && errorMessage && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+        >
           {errorMessage}
         </div>
       )}

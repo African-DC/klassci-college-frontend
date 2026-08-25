@@ -14,6 +14,7 @@ export const StudentSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
   birth_date: z.string().nullish(),
+  birth_place: z.string().nullish(),
   genre: z.enum(["M", "F"]).nullish(),
   enrollment_number: z.string().nullish(),
   city: z.string().nullish(),
@@ -45,6 +46,7 @@ export const StudentCreateSchema = z.object({
   email: z.string({ required_error: "L'email est requis" }).email("Email invalide"),
   password: z.string({ required_error: "Le mot de passe est requis" }).min(8, "8 caractères minimum"),
   birth_date: z.string().optional(),
+  birth_place: z.string().optional(),
   genre: z.enum(["M", "F"]).optional(),
   enrollment_number: z.string().optional(),
   city: z.string().optional(),
@@ -55,6 +57,7 @@ export const StudentUpdateSchema = z.object({
   first_name: z.string().min(1).optional(),
   last_name: z.string().min(1).optional(),
   birth_date: z.string().optional(),
+  birth_place: z.string().optional(),
   genre: z.enum(["M", "F"]).optional(),
   enrollment_number: z.string().optional(),
   city: z.string().optional(),
@@ -89,6 +92,7 @@ export const StudentFullSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
   birth_date: z.string().nullish(),
+  birth_place: z.string().nullish(),
   genre: z.string().nullish(),
   enrollment_number: z.string().nullish(),
   photo_url: z.string().nullish(),
@@ -110,10 +114,16 @@ export const StudentFullSchema = z.object({
   attendance_absent: z.number(),
   attendance_late: z.number(),
   attendance_rate: z.number(),
-  fees_expected: z.number(),
-  fees_paid: z.number(),
-  fees_remaining: z.number(),
-  fees_rate: z.number(),
+  // `null` quand l'appelant n'a pas le droit de lire les montants. Le backend
+  // renvoie volontairement `null` et pas `0` : un zéro se lirait « la famille
+  // ne doit rien », ce qui serait faux.
+  fees_expected: z.number().nullish(),
+  fees_paid: z.number().nullish(),
+  fees_remaining: z.number().nullish(),
+  fees_rate: z.number().nullish(),
+  /** `a_jour`, `en_retard` ou `sans_echeancier` — sans aucun montant. */
+  fee_status: z.string().nullish(),
+  last_payment_date: z.string().nullish(),
   trimester_grades: z.array(StudentTrimesterGradesSchema),
   trimester_absences: z.array(StudentTrimesterAbsencesSchema),
 })

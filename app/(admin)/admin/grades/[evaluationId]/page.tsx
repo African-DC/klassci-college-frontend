@@ -26,7 +26,7 @@ export default async function AdminGradeEntryPage({
   const { classId } = await searchParams
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto max-w-6xl space-y-5">
       <Button
         variant="ghost"
         size="sm"
@@ -41,11 +41,11 @@ export default async function AdminGradeEntryPage({
 
       {/* Banner délégation — saisie au nom du prof titulaire. L'audit trail
           (entered_by_user_id) capture qui saisit côté BE. */}
-      <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50/60 px-4 py-3 text-sm text-amber-900">
-        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+      <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50/60 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
         <div>
           <p className="font-medium">Saisie déléguée</p>
-          <p className="text-xs text-amber-800/80">
+          <p className="text-xs text-amber-800/80 dark:text-amber-300/80">
             Vous saisissez les notes au nom de l&apos;enseignant titulaire. L&apos;audit
             système enregistre votre intervention pour traçabilité.
           </p>
@@ -55,6 +55,12 @@ export default async function AdminGradeEntryPage({
       <GradeEntryGrid
         evaluationId={Number(evaluationId)}
         classId={classId ? Number(classId) : undefined}
+        dicteeHref={
+          classId
+            ? `/admin/grades/${evaluationId}/dictee?classId=${classId}`
+            : undefined
+        }
+        retakesHref="/admin/retakes"
       />
     </div>
   )

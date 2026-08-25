@@ -1,29 +1,20 @@
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 
-type KpiVariant = "blue" | "orange" | "emerald" | "rose"
+/**
+ * Tons sémantiques restreints (règle "1 accent + monochrome") :
+ * - default : icône muted, base monochrome
+ * - primary : bleu KLASSCI, métrique structurante (élèves)
+ * - accent  : orange KLASSCI, action/argent (paiements)
+ * - destructive : alerte active (> 0)
+ */
+type KpiTone = "default" | "primary" | "accent" | "destructive"
 
-const variantStyles: Record<KpiVariant, { bg: string; icon: string; ring: string }> = {
-  blue: {
-    bg: "bg-primary/8 dark:bg-primary/15",
-    icon: "text-primary",
-    ring: "ring-primary/20",
-  },
-  orange: {
-    bg: "bg-accent/10 dark:bg-accent/15",
-    icon: "text-accent",
-    ring: "ring-accent/20",
-  },
-  emerald: {
-    bg: "bg-emerald-500/10 dark:bg-emerald-500/15",
-    icon: "text-emerald-600 dark:text-emerald-400",
-    ring: "ring-emerald-500/20",
-  },
-  rose: {
-    bg: "bg-rose-500/10 dark:bg-rose-500/15",
-    icon: "text-rose-600 dark:text-rose-400",
-    ring: "ring-rose-500/20",
-  },
+const toneStyles: Record<KpiTone, string> = {
+  default: "bg-muted text-muted-foreground",
+  primary: "bg-primary/10 text-primary",
+  accent: "bg-accent/10 text-accent",
+  destructive: "bg-destructive/10 text-destructive",
 }
 
 interface KpiCardProps {
@@ -31,11 +22,7 @@ interface KpiCardProps {
   value: React.ReactNode
   description?: React.ReactNode
   icon: React.ComponentType<{ className?: string }>
-  variant?: KpiVariant
-  trend?: {
-    value: number
-    positive: boolean
-  }
+  tone?: KpiTone
   className?: string
 }
 
@@ -44,36 +31,37 @@ export function KpiCard({
   value,
   description,
   icon: Icon,
-  variant = "blue",
-  trend,
+  tone = "default",
   className,
 }: KpiCardProps) {
-  const styles = variantStyles[variant]
+  // aria-label : nom accessible complet (titre + valeur) pour lecteurs d'écran.
+  // role=group + aria-live=polite annonce les revalidations TanStack Query.
+  const valueText = typeof value === "string" || typeof value === "number" ? String(value) : ""
+  const accessibleLabel = valueText ? `${title} : ${valueText}` : title
 
   return (
-    <Card className={cn("relative overflow-hidden border-0 shadow-sm ring-1", styles.ring, className)}>
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <div className="text-3xl font-bold tracking-tight">{value}</div>
-            {description && (
-              <p className="text-xs text-muted-foreground">{description}</p>
-            )}
-            {trend && (
-              <p
-                className={cn(
-                  "text-xs font-medium",
-                  trend.positive ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"
-                )}
-              >
-                {trend.positive ? "+" : ""}{trend.value}% vs mois dernier
-              </p>
-            )}
-          </div>
-          <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl", styles.bg)}>
-            <Icon className={cn("h-6 w-6", styles.icon)} />
-          </div>
+    <Card
+      role="group"
+      aria-label={accessibleLabel}
+      aria-live="polite"
+      aria-atomic="true"
+      className={cn("shadow-sm", className)}
+    >
+      <CardContent className="flex items-start justify-between gap-4 p-6">
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <div className="text-3xl font-bold tracking-tight tabular-nums">{value}</div>
+          {description && (
+            <div className="pt-1 text-xs text-muted-foreground">{description}</div>
+          )}
+        </div>
+        <div
+          className={cn(
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg",
+            toneStyles[tone],
+          )}
+        >
+          <Icon aria-hidden="true" className="h-5 w-5" />
         </div>
       </CardContent>
     </Card>

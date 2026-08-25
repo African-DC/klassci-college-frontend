@@ -27,17 +27,23 @@ export const teachersApi = {
     // FormData multipart upload — can't go through apiFetch (JSON-encoded).
     // 401 → handleExpiredSession contract replicated manually.
     const session = await getSession()
+    if (session?.error === "RefreshTokenError") {
+      void handleExpiredSession()
+      throw new Error("Session expirée")
+    }
     const formData = new FormData()
     formData.append("file", file)
+    const headers: Record<string, string> = session?.accessToken
+      ? { Authorization: `Bearer ${session.accessToken}` }
+      : {}
+    const hadToken = "Authorization" in headers
     const res = await fetch(`${getBaseUrl()}/admin/teachers/${teacherId}/photo`, {
       method: "POST",
-      headers: {
-        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
-      },
+      headers,
       body: formData,
     })
     if (res.status === 401) {
-      if (session?.accessToken) await handleExpiredSession()
+      if (hadToken) void handleExpiredSession()
       throw new Error("Session expirée")
     }
     if (!res.ok) throw new Error("Upload failed")

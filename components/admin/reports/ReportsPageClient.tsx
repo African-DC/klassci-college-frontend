@@ -10,10 +10,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PageHero } from "@/components/shared/PageHero"
 import { BulletinList } from "./BulletinList"
 import { BulletinGenerateButton } from "./BulletinGenerateButton"
+import { ReportsNav } from "./ReportsNav"
 import { useClasses } from "@/lib/hooks/useClasses"
-import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import type { BulletinListParams } from "@/lib/contracts/bulletin"
 
 export function ReportsPageClient() {
@@ -25,10 +27,11 @@ export function ReportsPageClient() {
 
   const { data: classesData, isLoading: classesLoading } = useClasses()
   const classes = classesData?.items
-  const { data: academicYearsData, isLoading: yearsLoading } = useAcademicYears()
-  const academicYears = academicYearsData?.items
-
-  const activeYearId = academicYearId ?? academicYears?.[0]?.id
+  const {
+    academicYearId: activeYearId,
+    years: academicYears,
+    isLoading: yearsLoading,
+  } = useCurrentAcademicYearId(academicYearId)
 
   const params: BulletinListParams = {
     ...(classId && { class_id: classId }),
@@ -46,24 +49,20 @@ export function ReportsPageClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <FileText className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="font-serif text-2xl tracking-tight">Bulletins scolaires</h1>
-            <p className="text-sm text-muted-foreground">
-              Génération et consultation des bulletins par classe et trimestre
-            </p>
-          </div>
-        </div>
-        <BulletinGenerateButton
-          classId={classId}
-          trimester={trimester}
-          academicYearId={activeYearId}
-        />
-      </div>
+      <PageHero
+        icon={FileText}
+        title="Bulletins scolaires"
+        subtitle="Génération et consultation des bulletins par classe et trimestre"
+        actions={
+          <BulletinGenerateButton
+            classId={classId}
+            trimester={trimester}
+            academicYearId={activeYearId}
+          />
+        }
+      />
+
+      <ReportsNav current="bulletins" />
 
       {/* Filtres */}
       <div className="flex flex-wrap items-center gap-3">

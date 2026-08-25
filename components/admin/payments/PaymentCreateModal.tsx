@@ -5,27 +5,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { useCreatePayment } from "@/lib/hooks/usePayments"
 import { PaymentCreateSchema, type PaymentCreate } from "@/lib/contracts/payment"
+import { PaymentMethodSelect } from "@/components/admin/payments/PaymentMethodSelect"
 
 interface PaymentCreateModalProps {
   open: boolean
   onClose: () => void
-}
-
-const METHOD_LABELS: Record<string, string> = {
-  cash: "Espèces",
-  mobile_money: "Mobile Money",
-  bank_transfer: "Virement bancaire",
-  cheque: "Chèque",
 }
 
 export function PaymentCreateModal({ open, onClose }: PaymentCreateModalProps) {
@@ -101,20 +88,12 @@ export function PaymentCreateModal({ open, onClose }: PaymentCreateModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Méthode de paiement *</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {Object.entries(METHOD_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <PaymentMethodSelect
+                      value={field.value}
+                      onChange={(v) => field.onChange(v as PaymentCreate["method"])}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

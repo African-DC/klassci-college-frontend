@@ -1,13 +1,14 @@
-import { ParentSchema } from "@/lib/contracts/parent"
-import type { Parent, ParentCreate, ParentUpdate } from "@/lib/contracts/parent"
+import { ParentSchema, ParentFullSchema } from "@/lib/contracts/parent"
+import type { Parent, ParentCreate, ParentUpdate, ParentFull } from "@/lib/contracts/parent"
 import { createCrudApi } from "./createCrudApi"
-import { apiFetch } from "./client"
+import { apiFetch, safeValidate } from "./client"
 
 export const parentsApi = {
   ...createCrudApi<Parent, ParentCreate, ParentUpdate>("/admin/parents", ParentSchema),
 
-  getFull: async (id: number): Promise<Record<string, unknown>> => {
-    return apiFetch<Record<string, unknown>>(`/admin/parents/${id}/full`)
+  getFull: async (id: number): Promise<ParentFull> => {
+    const json = await apiFetch<unknown>(`/admin/parents/${id}/full`)
+    return safeValidate(ParentFullSchema, json, `GET /admin/parents/${id}/full`)
   },
 
   getStudentParents: async (studentId: number): Promise<Parent[]> => {

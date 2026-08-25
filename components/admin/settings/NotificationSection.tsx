@@ -57,15 +57,15 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Canaux */}
-            <div className="space-y-4">
+            <div className="space-y-2">
               <p className="text-sm font-semibold">Canaux de diffusion</p>
               <FormField
                 control={form.control}
                 name="notify_by_email"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex items-center justify-between gap-3 rounded-lg border px-4 py-2.5">
                     <div className="space-y-0.5">
                       <FormLabel className="text-sm">Email</FormLabel>
                       <FormDescription className="text-xs">
@@ -82,7 +82,7 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
                 control={form.control}
                 name="notify_by_sms"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex items-center justify-between gap-3 rounded-lg border px-4 py-2.5">
                     <div className="space-y-0.5">
                       <FormLabel className="text-sm">SMS</FormLabel>
                       <FormDescription className="text-xs">
@@ -100,13 +100,14 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
             <Separator />
 
             {/* Types */}
-            <div className="space-y-4">
+            <div className="space-y-2">
               <p className="text-sm font-semibold">Types de notifications</p>
+              <div className="grid gap-2 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="notify_grades"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex items-center justify-between gap-3 rounded-lg border px-4 py-2.5">
                     <div className="space-y-0.5">
                       <FormLabel className="text-sm">Notes</FormLabel>
                       <FormDescription className="text-xs">
@@ -123,7 +124,7 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
                 control={form.control}
                 name="notify_absences"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex items-center justify-between gap-3 rounded-lg border px-4 py-2.5">
                     <div className="space-y-0.5">
                       <FormLabel className="text-sm">Absences</FormLabel>
                       <FormDescription className="text-xs">
@@ -140,7 +141,7 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
                 control={form.control}
                 name="notify_payments"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex items-center justify-between gap-3 rounded-lg border px-4 py-2.5">
                     <div className="space-y-0.5">
                       <FormLabel className="text-sm">Paiements</FormLabel>
                       <FormDescription className="text-xs">
@@ -157,7 +158,7 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
                 control={form.control}
                 name="notify_enrollment"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex items-center justify-between gap-3 rounded-lg border px-4 py-2.5">
                     <div className="space-y-0.5">
                       <FormLabel className="text-sm">Inscriptions</FormLabel>
                       <FormDescription className="text-xs">
@@ -174,7 +175,7 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
                 control={form.control}
                 name="notify_reenrollment"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex items-center justify-between gap-3 rounded-lg border px-4 py-2.5">
                     <div className="space-y-0.5">
                       <FormLabel className="text-sm">Réinscriptions</FormLabel>
                       <FormDescription className="text-xs">
@@ -187,6 +188,7 @@ export function NotificationSection({ settings }: NotificationSectionProps) {
                   </FormItem>
                 )}
               />
+              </div>
             </div>
 
             <div className="flex justify-end pt-2">

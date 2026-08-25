@@ -23,6 +23,18 @@ export const EvaluationSchema = z.object({
   created_at: z.string(),
 })
 
+/**
+ * Enveloppe paginee de `/evaluations`. `total` porte le compte de l'ecole
+ * pour les filtres demandes : un compteur d'ecran le lit ici, jamais en
+ * comptant `items`, qui ne decrit que la page rendue.
+ */
+export const EvaluationListResponseSchema = z.object({
+  items: z.array(EvaluationSchema),
+  total: z.number(),
+  page: z.number(),
+  size: z.number(),
+})
+
 export const GradeSchema = z.object({
   student_id: z.number(),
   student_name: z.string(),
@@ -56,11 +68,16 @@ export const GradeBatchUpdateSchema = z.object({
   grades: z.array(z.object({
     student_id: z.number(),
     value: z.number().nullable(),
+    // Élève absent le jour de l'épreuve : zéro d'office qui compte dans la
+    // moyenne. Distinct d'une case vide, qui veut seulement dire « pas encore
+    // corrigé ». C'est ce marquage qu'un billet d'annulation de zéro lève.
+    absent: z.boolean().optional(),
   })),
 })
 
 export type EvaluationType = z.infer<typeof EvaluationTypeSchema>
 export type Evaluation = z.infer<typeof EvaluationSchema>
+export type EvaluationListResponse = z.infer<typeof EvaluationListResponseSchema>
 export type Grade = z.infer<typeof GradeSchema>
 export type EvaluationCreate = z.infer<typeof EvaluationCreateSchema>
 export type GradeBatchUpdate = z.infer<typeof GradeBatchUpdateSchema>

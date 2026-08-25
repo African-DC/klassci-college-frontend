@@ -20,8 +20,8 @@ export type WizardData = z.infer<typeof wizardSchema>
 export const STEPS = [
   {
     id: "school",
-    title: "École",
-    description: "Identifiant et nom de l'établissement",
+    title: "Établissement",
+    description: "Identifiant tenant et nom public de l'établissement",
     fields: ["tenant_slug", "school_name"] as const,
   },
   {
@@ -33,13 +33,13 @@ export const STEPS = [
   {
     id: "optional",
     title: "Détails optionnels",
-    description: "Adresse, téléphone, code ministère",
+    description: "Adresse, téléphone, email et code ministère",
     fields: ["school_address", "school_phone", "school_email", "ministry_code"] as const,
   },
   {
     id: "review",
     title: "Vérification",
-    description: "Confirmer avant provisioning",
+    description: "Contrôle final avant provisioning",
     fields: [] as const,
   },
 ] as const

@@ -2,30 +2,62 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { councilApi } from "@/lib/api/council"
+import { councilApi, type CouncilGenerateInput } from "@/lib/api/council"
 import type { CouncilDecisionUpdate } from "@/lib/contracts/council"
 
 export const councilKeys = {
   all: ["council"] as const,
-  minutes: (classId: number, trimester: string) =>
-    ["council", "minutes", classId, trimester] as const,
+  minutes: (classId: number, trimester: string, academicYearId: number) =>
+    ["council", "minutes", classId, trimester, academicYearId] as const,
 }
 
-// Récupérer le PV d'une classe/trimestre
-export function useCouncilMinutes(classId: number | undefined, trimester: string | undefined) {
-  const enabled = !!classId && !!trimester
+// Récupérer le PV d'une classe/trimestre/année.
+export function useCouncilMinutes(
+  classId: number | undefined,
+  trimester: string | undefined,
+  academicYearId: number | undefined,
+) {
+  const enabled = !!classId && !!trimester && !!academicYearId
   return useQuery({
     queryKey: enabled
-      ? councilKeys.minutes(classId as number, trimester as string)
+      ? councilKeys.minutes(classId as number, trimester as string, academicYearId as number)
       : ["council", "minutes", "none"],
-    queryFn: () => councilApi.getMinutes(classId as number, trimester as string),
+    queryFn: () =>
+      councilApi.getMinutes(classId as number, trimester as string, academicYearId as number),
     enabled,
     staleTime: 1000 * 60 * 5,
+    // Le PV peut ne pas exister encore (404) : pas de retry en boucle.
+    retry: false,
   })
 }
 
-// Mettre à jour les décisions — invalidation ciblée sur la classe/trimestre
-export function useUpdateDecisions(classId: number, trimester: string) {
+// Générer le PV à partir des bulletins.
+export function useGenerateCouncil(
+  classId: number,
+  trimester: string,
+  academicYearId: number,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: CouncilGenerateInput) => councilApi.generateMinutes(data),
+    onSuccess: () => {
+      toast.success("Procès-verbal généré")
+      queryClient.invalidateQueries({
+        queryKey: councilKeys.minutes(classId, trimester, academicYearId),
+      })
+    },
+    onError: (err) => {
+      toast.error("Génération impossible", { description: err.message })
+    },
+  })
+}
+
+// Mettre à jour les décisions — invalidation ciblée sur la classe/trimestre/année.
+export function useUpdateDecisions(
+  classId: number,
+  trimester: string,
+  academicYearId: number,
+) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({
@@ -37,7 +69,9 @@ export function useUpdateDecisions(classId: number, trimester: string) {
     }) => councilApi.updateDecisions(minutesId, decisions),
     onSuccess: () => {
       toast.success("Décisions enregistrées")
-      queryClient.invalidateQueries({ queryKey: councilKeys.minutes(classId, trimester) })
+      queryClient.invalidateQueries({
+        queryKey: councilKeys.minutes(classId, trimester, academicYearId),
+      })
     },
     onError: (err) => {
       toast.error("Erreur", { description: err.message })
@@ -45,14 +79,20 @@ export function useUpdateDecisions(classId: number, trimester: string) {
   })
 }
 
-// Valider le PV — invalidation ciblée sur la classe/trimestre
-export function useValidateCouncil(classId: number, trimester: string) {
+// Valider le PV — invalidation ciblée sur la classe/trimestre/année.
+export function useValidateCouncil(
+  classId: number,
+  trimester: string,
+  academicYearId: number,
+) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (minutesId: number) => councilApi.validate(minutesId),
     onSuccess: () => {
       toast.success("Procès-verbal validé avec succès")
-      queryClient.invalidateQueries({ queryKey: councilKeys.minutes(classId, trimester) })
+      queryClient.invalidateQueries({
+        queryKey: councilKeys.minutes(classId, trimester, academicYearId),
+      })
     },
     onError: (err) => {
       toast.error("Erreur", { description: err.message })

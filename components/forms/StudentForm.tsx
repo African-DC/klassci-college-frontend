@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { StudentCreateSchema, type StudentCreate } from "@/lib/contracts/student"
@@ -21,12 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
+import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
 
 interface StudentFormProps {
   onSuccess: () => void
 }
 
 export function StudentForm({ onSuccess }: StudentFormProps) {
+  const [photo, setPhoto] = useState<File | null>(null)
   const form = useForm<StudentCreate>({
     resolver: zodResolver(StudentCreateSchema),
     defaultValues: {
@@ -36,6 +40,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
       password: "",
       enrollment_number: "",
       birth_date: "",
+      birth_place: "",
       genre: undefined,
       city: "",
       commune: "",
@@ -43,11 +48,14 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
   })
 
   const { mutate, isPending, error } = useCreateStudent()
+  const attachPhoto = useAttachStudentPhoto()
 
   function onSubmit(data: StudentCreate) {
     mutate(data, {
-      onSuccess: () => {
+      onSuccess: async (student) => {
+        await attachPhoto.mutateAsync({ studentId: student.id, photo })
         form.reset()
+        setPhoto(null)
         onSuccess()
       },
     })
@@ -55,7 +63,9 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <StudentPhotoField value={photo} onChange={setPhoto} disabled={isPending || attachPhoto.isPending} />
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -154,19 +164,35 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="birth_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Date de naissance</FormLabel>
-              <FormControl>
-                <Input type="date" className="h-11" {...field} value={field.value ?? ""} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="birth_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Date de naissance</FormLabel>
+                <FormControl>
+                  <Input type="date" className="h-11" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="birth_place"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lieu de naissance</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex : Bouaké" className="h-11" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <FormField
@@ -204,8 +230,8 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
           </div>
         )}
 
-        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending ? "Enregistrement..." : "Enregistrer l'élève"}
+        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending || attachPhoto.isPending}>
+          {attachPhoto.isPending ? "Envoi de la photo..." : isPending ? "Enregistrement..." : "Enregistrer l'élève"}
         </Button>
       </form>
     </Form>

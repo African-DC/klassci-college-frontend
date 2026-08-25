@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { Download, FileSpreadsheet, Loader2, Users, UserCheck, TrendingUp, BarChart3, Building } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Download, Eye, FileSpreadsheet, Loader2, Users, UserCheck, TrendingUp, BarChart3, Building } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -25,17 +24,20 @@ const SuccessRateChart = dynamic(() => import("./SuccessRateChart").then(m => m.
   loading: () => <Skeleton className="h-64 w-full" />,
 })
 import { LevelStatsTable } from "./LevelStatsTable"
+import { PageHero, heroAccentBtn, heroGlassBtn } from "@/components/shared/PageHero"
+import { ReportsNav } from "../ReportsNav"
 import { useDrenStats } from "@/lib/hooks/useDrenStats"
-import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import { drenApi } from "@/lib/api/dren"
+import { openPdfPreview } from "@/lib/pdf/preview"
 
 export function DrenPageClient() {
-  const { data: academicYearsData } = useAcademicYears()
-  const academicYears = academicYearsData?.items
   const [academicYearId, setAcademicYearId] = useState<number | undefined>(undefined)
-  const activeYearId = academicYearId ?? academicYears?.[0]?.id
+  const { academicYearId: activeYearId, years: academicYears } =
+    useCurrentAcademicYearId(academicYearId)
   const { data: stats, isLoading, isError } = useDrenStats(activeYearId)
   const [downloading, setDownloading] = useState<"excel" | "pdf" | null>(null)
+  const [previewingPdf, setPreviewingPdf] = useState(false)
 
   // Téléchargement authentifié via blob
   const handleDownload = useCallback(async (type: "excel" | "pdf") => {
@@ -54,32 +56,60 @@ export function DrenPageClient() {
     }
   }, [activeYearId])
 
+  // Aperçu inline du PDF (même blob authentifié que le téléchargement)
+  const handlePreviewPdf = useCallback(async () => {
+    if (!activeYearId) return
+    setPreviewingPdf(true)
+    try {
+      await openPdfPreview(() => drenApi.downloadPdf(activeYearId))
+    } finally {
+      setPreviewingPdf(false)
+    }
+  }, [activeYearId])
+
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Building className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="font-serif text-2xl tracking-tight">Statistiques DREN</h1>
-            <p className="text-sm text-muted-foreground">
-              Tableau de bord des indicateurs pour la Direction Régionale
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => handleDownload("excel")} disabled={downloading === "excel"}>
-            {downloading === "excel" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileSpreadsheet className="mr-2 h-4 w-4" />}
-            Excel
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleDownload("pdf")} disabled={downloading === "pdf"}>
-            {downloading === "pdf" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-            PDF
-          </Button>
-        </div>
-      </div>
+      <PageHero
+        icon={Building}
+        title="Statistiques DREN"
+        subtitle="Tableau de bord des indicateurs pour la Direction Régionale"
+        actions={
+          <>
+            <button
+              type="button"
+              className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+              onClick={() => handleDownload("excel")}
+              disabled={downloading === "excel"}
+            >
+              {downloading === "excel" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+              Excel
+            </button>
+            <button
+              type="button"
+              className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+              onClick={handlePreviewPdf}
+              disabled={previewingPdf || !activeYearId}
+              aria-label="Aperçu du PDF des statistiques DREN"
+            >
+              {previewingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+              Aperçu
+            </button>
+            <button
+              type="button"
+              className={`${heroAccentBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+              onClick={() => handleDownload("pdf")}
+              disabled={downloading === "pdf"}
+              aria-label="Télécharger le PDF des statistiques DREN"
+            >
+              {downloading === "pdf" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              PDF
+            </button>
+          </>
+        }
+      />
+
+      <ReportsNav current="dren" />
 
       {/* Filtre année */}
       <Select

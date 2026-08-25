@@ -9,9 +9,9 @@ import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
+import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
 import { useEnrollments, enrollmentKeys } from "@/lib/hooks/useEnrollments"
 import { studentKeys, useStudentFees } from "@/lib/hooks/useStudents"
 import { StudentPaymentModal } from "./StudentPaymentModal"
@@ -19,10 +19,6 @@ import { StudentPaymentModal } from "./StudentPaymentModal"
 interface PaymentsTabProps {
   studentId: number
   fullData?: Record<string, unknown>
-}
-
-function formatFCFA(amount: number): string {
-  return `${amount.toLocaleString("fr-FR")} FCFA`
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -45,7 +41,6 @@ export function PaymentsTab({ studentId }: PaymentsTabProps) {
   const totalExpected = (fees ?? []).reduce((sum, f) => sum + f.amount, 0)
   const totalPaid = (fees ?? []).reduce((sum, f) => sum + f.paid, 0)
   const feesRemaining = Math.max(0, totalExpected - totalPaid)
-  const feesRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0
 
   async function handleRegenerateFees() {
     if (enrollments.length === 0) return
@@ -104,56 +99,28 @@ export function PaymentsTab({ studentId }: PaymentsTabProps) {
 
   return (
     <div className="space-y-4">
-      {/* Hero section */}
-      <Card className="border-0 shadow-sm ring-1 ring-border bg-primary text-primary-foreground">
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="grid gap-4 sm:grid-cols-2 flex-1">
-              <div>
-                <p className="text-xs text-primary-foreground/70">Total attendu</p>
-                <p className="text-2xl font-bold">{formatFCFA(totalExpected as number)}</p>
-              </div>
-              <div className="sm:text-right">
-                <p className="text-xs text-primary-foreground/70">Total payé</p>
-                <p className="text-2xl font-bold">{formatFCFA(totalPaid as number)}</p>
-              </div>
-            </div>
-          </div>
-          <Progress
-            value={feesRate}
-            className="h-3 bg-primary-foreground/20 [&>div]:bg-primary-foreground"
-          />
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-primary-foreground/80">
-              Reste à payer : <span className="font-semibold">{formatFCFA(feesRemaining as number)}</span>
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-10 text-xs text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10 border border-primary-foreground/30 sm:h-9"
-                onClick={handleRegenerateFees}
-                disabled={regenerating}
-              >
-                <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
-                {regenerating ? "Régénération..." : "Régénérer les frais"}
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="h-10 text-xs sm:h-9"
-                onClick={() => setPaymentOpen(true)}
-              >
-                <Plus className="mr-1.5 h-3.5 w-3.5" />
-                Enregistrer un paiement
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <FeeSummaryHero totalExpected={totalExpected} totalPaid={totalPaid} totalRemaining={feesRemaining} />
 
-      {/* Enrollments payment list */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* Actions */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-11 sm:h-10"
+          onClick={handleRegenerateFees}
+          disabled={regenerating}
+        >
+          <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
+          {regenerating ? "Régénération..." : "Régénérer les frais"}
+        </Button>
+        <Button size="sm" className="h-11 sm:h-10" onClick={() => setPaymentOpen(true)}>
+          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          Enregistrer un paiement
+        </Button>
+      </div>
+
+      {/* Détail par inscription — lien vers la fiche paiement complète */}
+      <div className="grid gap-3 sm:grid-cols-2">
         {enrollments.map((enrollment) => {
           const e = enrollment as Record<string, unknown>
           const status = String(e.status ?? "")

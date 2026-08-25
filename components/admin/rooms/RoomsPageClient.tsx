@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { PageHero, heroAccentBtn, premiumCardHover, type HeroKpi } from "@/components/shared/PageHero"
+import { useAdminSummary } from "@/lib/hooks/useDashboard"
 import {
   Dialog,
   DialogContent,
@@ -76,16 +78,27 @@ export function RoomsPageClient() {
   }), [debouncedSearch, typeFilter])
 
   const { data, isLoading, isError, error, refetch } = useRooms(params)
+  const { data: summary } = useAdminSummary()
   const { data: classesData } = useClasses({ size: 100 })
   const deleteMutation = useDeleteRoom()
   const rooms = data?.items ?? []
   const allClasses = classesData?.items ?? []
 
-  // Classes without a room
+  // Classes without a room (bannière actionnable)
   const classesWithoutRoom = useMemo(() => {
     const roomClassIds = new Set(rooms.filter((r) => r.class_id).map((r) => r.class_id))
     return allClasses.filter((c) => !c.room_id && !roomClassIds.has(c.id))
   }, [allClasses, rooms])
+
+  const roomsKpis: HeroKpi[] = useMemo(() => {
+    const r = summary?.rooms
+    return [
+      { label: "Salles", value: r?.total ?? 0, icon: DoorOpen },
+      { label: "Capacité totale", value: r?.capacity ?? 0, icon: Users },
+      { label: "Salles de classe", value: r?.classrooms ?? 0, icon: School },
+      { label: "Classes sans salle", value: r?.classes_without_room ?? 0, icon: AlertTriangle },
+    ]
+  }, [summary])
 
   // Batch create mutation
   const batchMutation = useMutation({
@@ -115,24 +128,18 @@ export function RoomsPageClient() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <DoorOpen className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Salles</h1>
-            <p className="text-sm text-muted-foreground">
-              {rooms.length} salle{rooms.length !== 1 ? "s" : ""} configurée{rooms.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-        </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nouvelle salle
-        </Button>
-      </div>
+      <PageHero
+        icon={DoorOpen}
+        title="Salles"
+        subtitle={`${rooms.length} salle${rooms.length !== 1 ? "s" : ""} configurée${rooms.length !== 1 ? "s" : ""}`}
+        actions={
+          <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
+            <Plus aria-hidden="true" className="h-4 w-4" />
+            Nouvelle salle
+          </button>
+        }
+        kpis={roomsKpis}
+      />
 
       {/* Classes without room — banner */}
       {classesWithoutRoom.length > 0 && (
@@ -287,7 +294,7 @@ function RoomCard({
   const colorClass = typeColors[room.room_type] ?? typeColors.other
 
   return (
-    <Card className="group relative overflow-hidden hover:shadow-md transition-shadow">
+    <Card className={`group relative overflow-hidden ${premiumCardHover}`}>
       <CardContent className="p-5">
         {/* Icon + Type */}
         <div className="flex items-start justify-between mb-3">

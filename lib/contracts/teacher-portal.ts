@@ -68,6 +68,25 @@ export const TeacherClassAttendanceStatsSchema = z.object({
   students: z.array(TeacherStudentAttendanceSummarySchema),
 })
 
+// Roster d'une classe pour l'appel
+export const TeacherRosterStudentSchema = z.object({
+  student_id: z.number(),
+  first_name: z.string(),
+  last_name: z.string(),
+  matricule: z.string().nullish(),
+  photo_url: z.string().nullish(),
+})
+
+export const TeacherClassRosterSchema = z.object({
+  class_id: z.number(),
+  class_name: z.string(),
+  academic_year_id: z.number(),
+  students: z.array(TeacherRosterStudentSchema),
+})
+
+export type TeacherRosterStudent = z.infer<typeof TeacherRosterStudentSchema>
+export type TeacherClassRoster = z.infer<typeof TeacherClassRosterSchema>
+
 export type TeacherNextCourse = z.infer<typeof TeacherNextCourseSchema>
 export type TeacherClass = z.infer<typeof TeacherClassSchema>
 export type TeacherUpcomingEval = z.infer<typeof TeacherUpcomingEvalSchema>

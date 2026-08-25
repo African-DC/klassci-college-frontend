@@ -54,7 +54,10 @@ export function StudentGradesClient() {
           value={trimester ?? "all"}
           onValueChange={(v) => setTrimester(v === "all" ? undefined : v)}
         >
-          <SelectTrigger className="w-44">
+          <SelectTrigger
+            aria-label="Filtrer par trimestre"
+            className="h-11 w-full sm:h-10 sm:w-44"
+          >
             <SelectValue placeholder="Trimestre" />
           </SelectTrigger>
           <SelectContent>
@@ -71,8 +74,11 @@ export function StudentGradesClient() {
       ) : isError ? (
         <DataError message="Impossible de charger les notes." onRetry={() => refetch()} />
       ) : !data ? (
-        <div className="py-12 text-center text-sm text-muted-foreground">
-          Aucune note disponible.
+        <div className="rounded-lg border bg-muted/30 py-12 text-center">
+          <p className="text-sm text-muted-foreground">Aucune note disponible.</p>
+          <p className="mt-1 text-xs text-muted-foreground/80">
+            Vos résultats apparaîtront ici dès que vos enseignants saisiront les notes.
+          </p>
         </div>
       ) : (
         <>

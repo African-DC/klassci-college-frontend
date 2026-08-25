@@ -63,9 +63,11 @@ export const ParentChildFeeItemSchema = z.object({
 })
 
 export const ParentChildFeesResponseSchema = z.object({
-  child_name: z.string(),
-  class_name: z.string(),
-  academic_year: z.string(),
+  // Le BE ne renvoie pas le nom/classe/année de l'enfant sur cet endpoint :
+  // champs optionnels, l'en-tête dégrade proprement si absents.
+  child_name: z.string().nullish(),
+  class_name: z.string().nullish(),
+  academic_year: z.string().nullish(),
   total_expected: z.coerce.number(),
   total_paid: z.coerce.number(),
   total_remaining: z.coerce.number(),
@@ -83,6 +85,12 @@ export const ParentChildBulletinSchema = z.object({
   academic_year_name: z.string(),
   is_published: z.boolean(),
   generated_at: z.string().nullable(),
+  // Retenue pour impayé : le bulletin existe et reste annoncé, mais moyenne,
+  // rang et mention reviennent vides. Facultatifs plutôt que requis, le front
+  // pouvant être déployé avant le serveur qui les pose.
+  is_withheld: z.boolean().optional(),
+  withheld_reason: z.string().nullable().optional(),
+  withheld_amount: z.coerce.number().nullable().optional(),
 })
 
 export const ParentChildBulletinsResponseSchema = z.object({

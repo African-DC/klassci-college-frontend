@@ -3,7 +3,9 @@
 import { useState } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Building2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageHero } from "@/components/shared/PageHero"
 import { useCreateTenant } from "@/lib/hooks/super-admin/useTenants"
 import { ProvisioningProgress } from "./ProvisioningProgress"
 import { StepAdmin } from "./StepAdmin"
@@ -37,13 +39,18 @@ export function WizardShell() {
   }
 
   function onSubmit(data: WizardData) {
-    const cleaned = {
-      ...data,
-      school_address: data.school_address || undefined,
-      school_phone: data.school_phone || undefined,
-      school_email: data.school_email || undefined,
-      ministry_code: data.ministry_code || undefined,
+    const cleaned: WizardData = {
+      tenant_slug: data.tenant_slug,
+      school_name: data.school_name,
+      admin_email: data.admin_email,
+      admin_password: data.admin_password,
     }
+
+    if (data.school_address) cleaned.school_address = data.school_address
+    if (data.school_phone) cleaned.school_phone = data.school_phone
+    if (data.school_email) cleaned.school_email = data.school_email
+    if (data.ministry_code) cleaned.ministry_code = data.ministry_code
+
     mutation.mutate(cleaned)
   }
 
@@ -59,7 +66,13 @@ export function WizardShell() {
 
   return (
     <FormProvider {...methods}>
-      <div className="mx-auto max-w-2xl space-y-6">
+      <div className="mx-auto max-w-3xl space-y-5">
+        <PageHero
+          icon={Building2}
+          title="Nouvel établissement"
+          subtitle="Créer un tenant, son administrateur initial et ses paramètres de base"
+        />
+
         <ol className="flex gap-2">
           {STEPS.map((s, i) => (
             <li
@@ -80,10 +93,7 @@ export function WizardShell() {
           <p className="text-sm text-muted-foreground">{STEPS[step].description}</p>
         </div>
 
-        <form
-          onSubmit={methods.handleSubmit(onSubmit)}
-          className="rounded-md border bg-card p-6"
-        >
+        <form method="post" onSubmit={methods.handleSubmit(onSubmit)} className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
           {step === 0 && <StepSchool />}
           {step === 1 && <StepAdmin />}
           {step === 2 && <StepOptional />}
@@ -95,15 +105,18 @@ export function WizardShell() {
               variant="outline"
               onClick={() => setStep((s) => Math.max(0, s - 1))}
               disabled={step === 0}
+              className="h-11 sm:h-10"
             >
               Retour
             </Button>
             {step < STEPS.length - 1 ? (
-              <Button type="button" onClick={next}>
+              <Button type="button" onClick={next} className="h-11 sm:h-10">
                 Suivant
               </Button>
             ) : (
-              <Button type="submit">Créer le tenant</Button>
+              <Button type="submit" className="h-11 sm:h-10">
+                Créer l'établissement
+              </Button>
             )}
           </div>
         </form>

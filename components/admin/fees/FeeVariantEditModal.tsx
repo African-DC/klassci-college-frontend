@@ -1,6 +1,8 @@
 "use client"
 
+import { useMemo } from "react"
 import { useForm } from "react-hook-form"
+import { ASSIGNMENT_SCOPES } from "@/lib/contracts/fee"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -20,31 +22,62 @@ import { useLevels } from "@/lib/hooks/useLevels"
 interface FeeVariantEditModalProps {
   variant: FeeVariant | null
   onClose: () => void
+  /**
+   * Appelé quand l'enregistrement a bel et bien changé le montant.
+   *
+   * C'est l'instant où la question se pose : l'école vient de corriger un
+   * tarif, et les élèves déjà inscrits gardent l'ancien. Ne rien demander
+   * ici laisserait l'écart s'installer sans que personne ne le voie.
+   */
+  onAmountChanged?: (updated: FeeVariant) => void
 }
 
-export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalProps) {
+export function FeeVariantEditModal({
+  variant,
+  onClose,
+  onAmountChanged,
+}: FeeVariantEditModalProps) {
   const form = useForm<FeeVariantUpdate>({
     resolver: zodResolver(FeeVariantUpdateSchema),
     values: variant ? {
       fee_category_id: variant.fee_category_id,
       level_id: variant.level_id,
       series_id: variant.series_id,
+      assignment_scope: variant.assignment_scope ?? null,
       amount: variant.amount,
       academic_year_id: variant.academic_year_id,
     } : undefined,
   })
 
   const { data: categories } = useFeeCategories()
-  const mandatoryCategories = categories?.filter((c) => c.is_mandatory) ?? []
+  // Liste des catégories sélectionnables : les obligatoires + la catégorie
+  // courante de la variante si elle n'y figure pas (sinon le Select ne peut
+  // pas afficher la valeur pré-remplie et paraît vide à l'ouverture).
+  const selectableCategories = useMemo(() => {
+    const mandatory = categories?.filter((c) => c.is_mandatory) ?? []
+    if (variant && !mandatory.some((c) => c.id === variant.fee_category_id)) {
+      const current = categories?.find((c) => c.id === variant.fee_category_id)
+      if (current) return [current, ...mandatory]
+    }
+    return mandatory
+  }, [categories, variant])
   const { data: levelsData } = useLevels()
   const levels = levelsData?.items ?? []
   const { mutate, isPending } = useUpdateFeeVariant()
 
   function onSubmit(data: FeeVariantUpdate) {
     if (!variant) return
+    const ancienMontant = variant.amount
     mutate(
       { id: variant.id, data },
-      { onSuccess: () => onClose() },
+      {
+        onSuccess: (updated) => {
+          onClose()
+          // Seulement si le montant a bougé : ouvrir la question après une
+          // simple correction de portée ferait du bruit pour rien.
+          if (updated.amount !== ancienMontant) onAmountChanged?.(updated)
+        },
+      },
     )
   }
 
@@ -72,7 +105,7 @@ export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalPro
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mandatoryCategories.map((c) => (
+                      {selectableCategories.map((c) => (
                         <SelectItem key={c.id} value={c.id.toString()}>
                           {c.name}
                         </SelectItem>
@@ -110,6 +143,34 @@ export function FeeVariantEditModal({ variant, onClose }: FeeVariantEditModalPro
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="assignment_scope"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>À qui s&apos;applique ce montant</FormLabel>
+                  <Select
+                    value={field.value ?? "tous"}
+                    onValueChange={(v) => field.onChange(v === "tous" ? null : v)}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-11 sm:h-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {ASSIGNMENT_SCOPES.map((scope) => (
+                        <SelectItem key={scope.value ?? "tous"} value={scope.value ?? "tous"}>
+                          {scope.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="amount"
