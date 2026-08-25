@@ -1,5 +1,6 @@
 "use client"
 
+import { useListeInfinie } from "./useListeInfinie"
 import { useQuery } from "@tanstack/react-query"
 import { studentPortalApi } from "@/lib/api/student-portal"
 
@@ -59,4 +60,11 @@ export function useStudentAttendance(params?: { status?: string; page?: number }
     queryFn: () => studentPortalApi.getAttendance(params),
     staleTime: 1000 * 60 * 5,
   })
+}
+
+/** useStudentAttendance, chargé au fil du défilement. */
+export function useInfiniteStudentAttendance(params?: { status?: string }) {
+  return useListeInfinie(studentPortalKeys.attendance(params), (page) =>
+    studentPortalApi.getAttendance({ ...params, page }),
+  )
 }

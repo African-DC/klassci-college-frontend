@@ -1,5 +1,6 @@
 "use client"
 
+import { useListeInfinie } from "./useListeInfinie"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { attendanceApi } from "@/lib/api/attendance"
@@ -105,4 +106,9 @@ export function useAttendanceHistory(params: AttendanceHistoryParams) {
     queryFn: () => attendanceApi.getHistory(params as Record<string, string | number | undefined>),
     staleTime: 1000 * 60 * 5,
   })
+}
+
+/** useAttendanceHistory, chargé au fil du défilement. */
+export function useInfiniteAttendanceHistory(params: AttendanceHistoryParams) {
+  return useListeInfinie(attendanceKeys.history(params), (page) => attendanceApi.getHistory({ ...params, page } as Record<string, string | number | undefined>))
 }

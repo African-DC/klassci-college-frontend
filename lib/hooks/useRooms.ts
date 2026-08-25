@@ -7,6 +7,7 @@ import { createCrudHooks } from "./createCrudHooks"
 const {
   keys: roomKeys,
   useList,
+  useInfiniteList,
   useDetail,
   useCreate,
   useUpdate,
@@ -19,6 +20,7 @@ const {
 
 export { roomKeys }
 export const useRooms = useList
+export const useInfiniteRooms = useInfiniteList
 export const useRoom = useDetail
 export const useCreateRoom = useCreate
 export const useUpdateRoom = useUpdate

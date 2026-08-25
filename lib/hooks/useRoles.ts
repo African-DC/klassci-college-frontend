@@ -8,6 +8,7 @@ import { createCrudHooks } from "./createCrudHooks"
 const {
   keys: roleKeys,
   useList,
+  useInfiniteList,
   useDetail,
   useCreate,
   useUpdate,
@@ -20,6 +21,7 @@ const {
 
 export { roleKeys }
 export const useRoles = useList
+export const useInfiniteRoles = useInfiniteList
 export const useRole = useDetail
 export const useCreateRole = useCreate
 export const useUpdateRole = useUpdate

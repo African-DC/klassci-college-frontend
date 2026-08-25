@@ -19,7 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { useStudentAttendance } from "@/lib/hooks/useStudentPortal"
+import { useInfiniteStudentAttendance } from "@/lib/hooks/useStudentPortal"
+import { useScrollSentinel } from "@/lib/hooks/useScrollSentinel"
 import { DataError } from "@/components/shared/DataError"
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className?: string }> = {
@@ -35,10 +36,13 @@ function getStatusConfig(status: string) {
 
 export function StudentAttendanceClient() {
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined)
-  const [page, setPage] = useState(1)
-  const { data, isLoading, isError, refetch } = useStudentAttendance({
+  const { data, isLoading, isError, refetch, scrollInfini } = useInfiniteStudentAttendance({
     status: statusFilter,
-    page,
+  })
+
+  const sentinelle = useScrollSentinel({
+    actif: scrollInfini.resteAcharger && !scrollInfini.chargeEnCours,
+    onApproche: scrollInfini.chargerSuite,
   })
 
   return (
@@ -60,7 +64,6 @@ export function StudentAttendanceClient() {
           value={statusFilter ?? "all"}
           onValueChange={(v) => {
             setStatusFilter(v === "all" ? undefined : v)
-            setPage(1)
           }}
         >
           <SelectTrigger
@@ -169,34 +172,16 @@ export function StudentAttendanceClient() {
             })}
           </div>
 
-          {/* Pagination — touch targets h-11 sur mobile */}
-          {data.total > data.size && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground tabular-nums">
-                Page {data.page} sur {Math.ceil(data.total / data.size)}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  aria-label="Page précédente"
-                  className="inline-flex h-11 items-center rounded-md border bg-card px-4 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 sm:h-9 sm:px-3"
-                  disabled={data.page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  Précédent
-                </button>
-                <button
-                  type="button"
-                  aria-label="Page suivante"
-                  className="inline-flex h-11 items-center rounded-md border bg-card px-4 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 sm:h-9 sm:px-3"
-                  disabled={data.page >= Math.ceil(data.total / data.size)}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Suivant
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Charger la suite en approchant du bas : sur un téléphone,
+              viser « Suivant » au pouce coûte plus que de descendre. */}
+          <div ref={sentinelle} aria-hidden="true" className="h-px" />
+          <p className="text-center text-xs text-muted-foreground tabular-nums" aria-live="polite">
+              {scrollInfini.chargeEnCours
+                ? "Chargement…"
+                : scrollInfini.resteAcharger
+                  ? `${data.items.length} sur ${data.total}`
+                  : `${data.total} enregistrement${data.total > 1 ? "s" : ""}`}
+          </p>
         </>
       )}
     </div>

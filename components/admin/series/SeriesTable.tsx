@@ -1,15 +1,14 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
-import { useSeriesList, useDeleteSeries } from "@/lib/hooks/useSeries"
+import { useInfiniteSeriesList, useDeleteSeries } from "@/lib/hooks/useSeries"
 import type { Series } from "@/lib/contracts/series"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { SeriesEditModal } from "./SeriesEditModal"
 
 export function SeriesTable() {
-  const [page, setPage] = useState(1)
-  const { data, isLoading, isError, error, refetch } = useSeriesList({ page })
+  const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteSeriesList({})
   const deleteMutation = useDeleteSeries()
 
   const columns: ColumnDef<Series>[] = useMemo(() => [
@@ -43,8 +42,7 @@ export function SeriesTable() {
       emptyMessage="Aucune serie trouvee"
       errorMessage="Impossible de charger les series"
       deleteDescription="Cette action est irreversible. La serie sera definitivement supprimee."
-      page={page}
-      onPageChange={setPage}
+      scrollInfini={scrollInfini}
     />
   )
 }

@@ -9,6 +9,7 @@ import { createCrudHooks } from "./createCrudHooks"
 const {
   keys: enrollmentKeys,
   useList,
+  useInfiniteList,
   useDetail,
   useCreate,
   useUpdate,
@@ -21,6 +22,7 @@ const {
 
 export { enrollmentKeys }
 export const useEnrollments = useList
+export const useInfiniteEnrollments = useInfiniteList
 export const useEnrollment = useDetail
 export const useCreateEnrollment = useCreate
 export const useUpdateEnrollment = useUpdate

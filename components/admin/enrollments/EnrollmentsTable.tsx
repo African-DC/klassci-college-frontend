@@ -7,7 +7,7 @@ import { Check } from "lucide-react"
 import {
   useBulkValidateEnrollments,
   useDeleteEnrollment,
-  useEnrollments,
+  useInfiniteEnrollments,
   useValidateEnrollment,
 } from "@/lib/hooks/useEnrollments"
 import { enrollmentStatusView } from "@/lib/enrollment/status"
@@ -107,27 +107,24 @@ function matchesAssignmentChip(enrollment: Enrollment, chip: AssignmentChipKey):
 
 export function EnrollmentsTable() {
   const router = useRouter()
-  const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
   const [activeChip, setActiveChip] = useState<ChipKey>("a_valider")
   const [assignmentChip, setAssignmentChip] = useState<AssignmentChipKey>("tous")
   const [validateTarget, setValidateTarget] = useState<Enrollment | null>(null)
   const debouncedSearch = useDebounce(search)
 
-  // On charge tout d'un coup (size=100, max BE actuel) pour dériver les
-  // counts client-side sans endpoint /filters dédié. Acceptable ≤100
-  // enrollments par tenant — au delà, on ajoutera GET /admin/enrollments/filters
-  // (déféré). 100 est la limite Pydantic `Query(20, le=100)` côté BE.
+  // Les pages arrivent par cent au fil du défilement. Les compteurs des
+  // puces se calculent sur ce qui est chargé, faute d'endpoint de comptage :
+  // ils se complètent donc en descendant, et le disent (voir `partiels`).
   const params = useMemo(
     () => ({
       size: 100,
-      page: 1,
-      ...(debouncedSearch ? { search: debouncedSearch } : {}),
+        ...(debouncedSearch ? { search: debouncedSearch } : {}),
     }),
     [debouncedSearch],
   )
 
-  const { data, isLoading, isError, error, refetch } = useEnrollments(params)
+  const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteEnrollments(params)
   const deleteMutation = useDeleteEnrollment()
   const validateMutation = useValidateEnrollment()
   const bulkValidate = useBulkValidateEnrollments()
@@ -173,24 +170,17 @@ export function EnrollmentsTable() {
     [statusFilteredItems, assignmentChip],
   )
 
-  const paginatedItems = useMemo(
-    () => filteredItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [filteredItems, page],
-  )
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
-    setPage(1)
   }, [])
 
   const handleChipClick = useCallback((key: ChipKey) => {
     setActiveChip(key)
-    setPage(1)
   }, [])
 
   const handleAssignmentChipClick = useCallback((key: AssignmentChipKey) => {
     setAssignmentChip(key)
-    setPage(1)
   }, [])
 
   const handleValidate = useCallback(() => {
@@ -211,14 +201,14 @@ export function EnrollmentsTable() {
 
   /** Les lignes affichees qu'on a le droit de valider. */
   const validables = useMemo(
-    () => paginatedItems.filter((e) => TO_VALIDATE_STATUSES.has(e.status)),
-    [paginatedItems],
+    () => filteredItems.filter((e) => TO_VALIDATE_STATUSES.has(e.status)),
+    [filteredItems],
   )
   // Ce qui partira au serveur : voir `lib/enrollment/selection.ts`, ou le
   // calcul est teste.
   const aEnvoyer = useMemo(
-    () => selectionVisible(paginatedItems, selection),
-    [paginatedItems, selection],
+    () => selectionVisible(filteredItems, selection),
+    [filteredItems, selection],
   )
   const toutSelectionne = validables.length > 0 && validables.length === aEnvoyer.length
 
@@ -249,6 +239,18 @@ export function EnrollmentsTable() {
 
   return (
     <div className="space-y-4">
+      {/* Les compteurs portent sur les lignes déjà chargées, faute d'un
+          endpoint de comptage. Tant que le défilement n'a pas tout tiré,
+          on le dit : un « 12 » qui devient « 47 » en descendant, sans
+          explication, fait douter de tout le reste de l'écran. */}
+      {scrollInfini.resteAcharger && (
+        <p className="text-xs text-muted-foreground">
+          Compteurs établis sur les {allItems.length} inscriptions déjà chargées
+          {typeof data?.total === "number" ? ` sur ${data.total}` : ""}. Ils se
+          complètent en descendant.
+        </p>
+      )}
+
       {/* Chips bar — pipeline de validation. « À valider » sélectionnée par
           défaut car c'est la queue d'action de l'admin. */}
       <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-x-visible">
@@ -321,11 +323,13 @@ export function EnrollmentsTable() {
       <div className="hidden md:block">
         <CrudTable<Enrollment>
           data={{
-            items: paginatedItems,
-            total: filteredItems.length,
-            page,
-            size: PAGE_SIZE,
-            total_pages: Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE)),
+            items: filteredItems,
+            // `total` vient du serveur : les puces retirent des lignes de
+            // l'affichage, elles ne changent pas ce que la base contient.
+            total: data?.total ?? filteredItems.length,
+            size: data?.size ?? PAGE_SIZE,
+            page: 1,
+            total_pages: 1,
           }}
           columns={columns}
           isLoading={isLoading}
@@ -340,8 +344,7 @@ export function EnrollmentsTable() {
           errorMessage="Impossible de charger les inscriptions"
           deleteTitle="Supprimer l'inscription"
           deleteDescription="Cette action est irréversible. L'inscription sera définitivement supprimée."
-          page={page}
-          onPageChange={setPage}
+          scrollInfini={scrollInfini}
           searchPlaceholder="Rechercher une inscription..."
           searchValue={search}
           onSearchChange={handleSearchChange}
@@ -354,12 +357,12 @@ export function EnrollmentsTable() {
             Chargement…
           </p>
         )}
-        {!isLoading && paginatedItems.length === 0 && (
+        {!isLoading && filteredItems.length === 0 && (
           <p className="rounded-lg border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
             {emptyMessage}
           </p>
         )}
-        {paginatedItems.map((e) => (
+        {filteredItems.map((e) => (
           <div key={e.id} className="space-y-2">
             <MobileEntityListItem
               href={`/admin/enrollments/${e.id}` as Route}

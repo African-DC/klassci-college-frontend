@@ -1,15 +1,14 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
-import { useLevels, useDeleteLevel } from "@/lib/hooks/useLevels"
+import { useInfiniteLevels, useDeleteLevel } from "@/lib/hooks/useLevels"
 import type { Level } from "@/lib/contracts/level"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { LevelEditModal } from "./LevelEditModal"
 
 export function LevelsTable() {
-  const [page, setPage] = useState(1)
-  const { data, isLoading, isError, error, refetch } = useLevels({ page })
+  const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteLevels({})
   const deleteMutation = useDeleteLevel()
 
   const columns: ColumnDef<Level>[] = useMemo(() => [
@@ -43,8 +42,7 @@ export function LevelsTable() {
       emptyMessage="Aucun niveau trouve"
       errorMessage="Impossible de charger les niveaux"
       deleteDescription="Cette action est irreversible. Le niveau sera definitivement supprime."
-      page={page}
-      onPageChange={setPage}
+      scrollInfini={scrollInfini}
     />
   )
 }

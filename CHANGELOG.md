@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- Les montées de dépendances passent la validation de nom de branche, au lieu de forcer une fusion qui contourne tous les contrôles *(technique)*
 - Les boutons Valider, Annuler, Restaurer et Supprimer s'annoncent à nouveau avec une espace : un lecteur d'écran disait « Annulerle versement » *(admin)*
 - Valider ou annuler un versement met à jour la ligne immédiatement, y compris au-delà de la première page chargée *(admin)*
 - La carte « Collecté » ne prétend plus suivre le filtre quand elle parle de l'année entière *(admin)*
@@ -65,6 +66,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
+- Toutes les listes chargent la suite en approchant du bas, au lieu de boutons de page : élèves, inscriptions, enseignants, parents, personnel, classes, niveaux, séries, salles, rôles, corbeille, appels, bulletins, convocations, billets d'annulation *(admin, élève)*
+- Les pieds de liste distinguent ce qui est affiché de ce que l'établissement compte, et les compteurs des puces d'inscription déclarent quand ils ne portent que sur le chargé *(admin)*
 - Montées de dépendances de `main` reportées sur `develop` : lucide-react 1.14, jsdom 29, postcss 8.5.13 *(technique)*
 - Le journal des paiements se charge au fil du défilement : la pagination affichait « Page 1/92 » sans permettre d'atteindre la seconde *(admin)*
 - Les chiffres du bandeau suivent les filtres, et chaque carte dit si elle les suit ou parle de l'année entière *(admin)*

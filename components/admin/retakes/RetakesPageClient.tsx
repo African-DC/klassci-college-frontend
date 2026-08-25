@@ -11,9 +11,9 @@ import { usePermissions } from "@/lib/hooks/usePermissions"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import {
   useDownloadRetakeAuthorization,
-  useRetakeAuthorizations,
+  useInfiniteRetakeAuthorizations,
 } from "@/lib/hooks/useRetakes"
-import { RegisterPagination } from "@/components/shared/school-life/RegisterPagination"
+import { RegisterFooter } from "@/components/shared/school-life/RegisterFooter"
 import { RetakeCreateModal } from "./RetakeCreateModal"
 import { RetakesList } from "./RetakesList"
 import type { RetakeAuthorization } from "@/lib/contracts/school-life"
@@ -29,7 +29,6 @@ const PAGE_SIZE = 20
 
 export function RetakesPageClient() {
   const [trimester, setTrimester] = useState(0)
-  const [page, setPage] = useState(1)
   const [createOpen, setCreateOpen] = useState(false)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
 
@@ -43,11 +42,10 @@ export function RetakesPageClient() {
   const years = yearsData?.items ?? []
   const currentYearId = (years.find((year) => year.is_current) ?? years[0])?.id
 
-  const { data, isLoading, error, refetch } = useRetakeAuthorizations(
+  const { data, isLoading, error, refetch, scrollInfini } = useInfiniteRetakeAuthorizations(
     {
       ...(currentYearId ? { academic_year_id: currentYearId } : {}),
       ...(trimester ? { trimester } : {}),
-      page,
       size: PAGE_SIZE,
     },
     canManage && Boolean(currentYearId),
@@ -59,7 +57,6 @@ export function RetakesPageClient() {
 
   function changeTrimester(next: number) {
     setTrimester(next)
-    setPage(1)
   }
 
   const kpis: HeroKpi[] = [
@@ -155,11 +152,10 @@ export function RetakesPageClient() {
             onDownload={handleDownload}
             downloadingId={downloadingId}
           />
-          <RegisterPagination
+          <RegisterFooter
             total={total}
-            page={data?.page ?? page}
-            size={data?.size ?? PAGE_SIZE}
-            onPageChange={setPage}
+            charges={items.length}
+            scrollInfini={scrollInfini}
             noun="billet"
           />
         </div>
