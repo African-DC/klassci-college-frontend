@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- Les boutons Valider, Annuler, Restaurer et Supprimer s'annoncent à nouveau avec une espace : un lecteur d'écran disait « Annulerle versement » *(admin)*
 - Valider ou annuler un versement met à jour la ligne immédiatement, y compris au-delà de la première page chargée *(admin)*
 - La carte « Collecté » ne prétend plus suivre le filtre quand elle parle de l'année entière *(admin)*
 - La liste des élèves distingue désormais « En attente de validation » de « À inscrire », et affiche des libellés lisibles au lieu des valeurs de la base *(admin)*
@@ -64,6 +65,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
+- Montées de dépendances de `main` reportées sur `develop` : lucide-react 1.14, jsdom 29, postcss 8.5.13 *(technique)*
 - Le journal des paiements se charge au fil du défilement : la pagination affichait « Page 1/92 » sans permettre d'atteindre la seconde *(admin)*
 - Les chiffres du bandeau suivent les filtres, et chaque carte dit si elle les suit ou parle de l'année entière *(admin)*
 - Le créneau se trace directement sur la semaine de l'enseignant : on clique, on descend, l'heure de début et de fin suivent *(admin, directeur des études)*
