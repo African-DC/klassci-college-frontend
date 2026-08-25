@@ -64,7 +64,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
-- Montées de dépendances de  reportées sur  : lucide-react 1.14, jsdom 29, postcss 8.5.13 *(technique)*
+- Montées de dépendances de `main` reportées sur `develop` : lucide-react 1.14, jsdom 29, postcss 8.5.13 *(technique)*
 - Le journal des paiements se charge au fil du défilement : la pagination affichait « Page 1/92 » sans permettre d'atteindre la seconde *(admin)*
 - Les chiffres du bandeau suivent les filtres, et chaque carte dit si elle les suit ou parle de l'année entière *(admin)*
 - Le créneau se trace directement sur la semaine de l'enseignant : on clique, on descend, l'heure de début et de fin suivent *(admin, directeur des études)*
