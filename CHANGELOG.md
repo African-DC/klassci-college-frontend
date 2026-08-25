@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- Les montées de dépendances passent la validation de nom de branche, au lieu de forcer une fusion qui contourne tous les contrôles *(technique)*
 - Les boutons Valider, Annuler, Restaurer et Supprimer s'annoncent à nouveau avec une espace : un lecteur d'écran disait « Annulerle versement » *(admin)*
 - Valider ou annuler un versement met à jour la ligne immédiatement, y compris au-delà de la première page chargée *(admin)*
 - La carte « Collecté » ne prétend plus suivre le filtre quand elle parle de l'année entière *(admin)*
