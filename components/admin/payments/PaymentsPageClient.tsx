@@ -173,7 +173,14 @@ export function PaymentsPageClient() {
           label: cloisonne ? "Encaissé par vous" : "Collecté",
           value: `${summary.total_paid.toLocaleString("fr-FR")} F`,
           icon: Wallet,
-          hint: avec(`${summary.payment_count} paiement(s)`, surLeFiltre),
+          // Cloisonne, ce montant est la recette de la personne, agregee sur
+          // les memes versements que le compte : la carte entiere suit le
+          // filtre. Sinon c'est ce que l'ecole a percu sur sa dette, qui ne
+          // le suit pas, et melanger les deux ferait affirmer a la carte une
+          // portee qu'elle n'a pas.
+          hint: cloisonne
+            ? avec(`${summary.payment_count} paiement(s)`, surLeFiltre)
+            : avec(`${summary.payment_count} paiement(s) sur le filtre`, horsFiltre),
         },
         {
           label: "En attente",

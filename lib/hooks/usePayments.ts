@@ -158,16 +158,32 @@ function optimisticStatusUpdate(
   paymentId: number,
   newStatus: Payment["status"],
 ) {
-  queryClient.setQueriesData<PaginatedResponse<Payment>>(
+  const remplace = (p: Payment) => (p.id === paymentId ? { ...p, status: newStatus } : p)
+
+  // Deux formes de cache cohabitent sous le meme prefixe depuis le
+  // defilement continu : la page unique `{items}` et la liste accumulee
+  // `{pages}`. Ne traiter que la premiere ne jetait pas d erreur, elle ne
+  // faisait rien : la ligne qu on venait de valider restait inchangee
+  // jusqu au rechargement, qui redemande toutes les pages chargees.
+  queryClient.setQueriesData<unknown>(
     { queryKey: paymentKeys.all, predicate: (q) => estListePaginee(q.queryKey) },
-    (old) => {
-      if (!old?.items) return old
-      return {
-        ...old,
-        items: old.items.map((p) =>
-          p.id === paymentId ? { ...p, status: newStatus } : p,
-        ),
+    (old: unknown) => {
+      if (!old || typeof old !== "object") return old
+
+      const accumulee = old as { pages?: PaginatedResponse<Payment>[] }
+      if (Array.isArray(accumulee.pages)) {
+        return {
+          ...accumulee,
+          pages: accumulee.pages.map((page) => ({
+            ...page,
+            items: page.items.map(remplace),
+          })),
+        }
       }
+
+      const page = old as PaginatedResponse<Payment>
+      if (!Array.isArray(page.items)) return old
+      return { ...page, items: page.items.map(remplace) }
     },
   )
 }
