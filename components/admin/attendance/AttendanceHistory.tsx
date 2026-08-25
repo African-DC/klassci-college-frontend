@@ -1,8 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import {
@@ -21,7 +19,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { AttendanceStatusBadge } from "./AttendanceStatusBadge"
-import { useAttendanceHistory } from "@/lib/hooks/useAttendance"
+import { useInfiniteAttendanceHistory } from "@/lib/hooks/useAttendance"
+import { useScrollSentinel } from "@/lib/hooks/useScrollSentinel"
 import type { AttendanceStatus, AttendanceHistoryParams } from "@/lib/contracts/attendance"
 
 // Formater une date avec guard contre les valeurs invalides
@@ -38,17 +37,20 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [statusFilter, setStatusFilter] = useState<AttendanceStatus | undefined>(undefined)
-  const [page, setPage] = useState(1)
 
   const params: AttendanceHistoryParams = {
     ...(classId && { class_id: classId }),
     ...(dateFrom && { date_from: dateFrom }),
     ...(dateTo && { date_to: dateTo }),
     ...(statusFilter && { status: statusFilter }),
-    page,
   }
 
-  const { data, isLoading } = useAttendanceHistory(params)
+  const { data, isLoading, scrollInfini } = useInfiniteAttendanceHistory(params)
+
+  const sentinelle = useScrollSentinel({
+    actif: scrollInfini.resteAcharger && !scrollInfini.chargeEnCours,
+    onApproche: scrollInfini.chargerSuite,
+  })
   const records = data?.items ?? []
 
   return (
@@ -61,7 +63,7 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
             id="history-date-from"
             type="date"
             value={dateFrom}
-            onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
+            onChange={(e) => { setDateFrom(e.target.value) }}
             className="w-40"
           />
         </div>
@@ -71,13 +73,13 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
             id="history-date-to"
             type="date"
             value={dateTo}
-            onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
+            onChange={(e) => { setDateTo(e.target.value) }}
             className="w-40"
           />
         </div>
         <Select
           value={statusFilter ?? "all"}
-          onValueChange={(v) => { setStatusFilter(v === "all" ? undefined : (v as AttendanceStatus)); setPage(1) }}
+          onValueChange={(v) => { setStatusFilter(v === "all" ? undefined : (v as AttendanceStatus)) }}
         >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Statut" />
@@ -132,36 +134,19 @@ export function AttendanceHistory({ classId }: AttendanceHistoryProps) {
         </div>
       )}
 
-      {data && data.size > 0 && Math.ceil(data.total / data.size) > 0 && (() => {
-        const totalPages = Math.ceil(data.total / data.size)
-        return (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            {data.total} enregistrement(s) — Page {data.page}/{totalPages}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-            >
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Précédent
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page >= totalPages}
-            >
-              Suivant
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        )
-      })()}
+      {/* Charger la suite en approchant du bas. Le compte distingue ce qui
+          est affiché de ce que le serveur annonce : un registre d'appel
+          couvre l'année, on n'en voit jamais le fond. */}
+      <div ref={sentinelle} aria-hidden="true" className="h-px" />
+      {records.length > 0 && (
+        <p className="text-center text-xs text-muted-foreground" aria-live="polite">
+          {scrollInfini.chargeEnCours
+            ? "Chargement…"
+            : scrollInfini.resteAcharger
+              ? `${records.length} sur ${data?.total ?? records.length}`
+              : `${records.length} enregistrement${records.length > 1 ? "s" : ""}, tout est affiché`}
+        </p>
+      )}
     </div>
   )
 }

@@ -10,8 +10,6 @@ import {
   flexRender,
 } from "@tanstack/react-table"
 import {
-  ChevronLeft,
-  ChevronRight,
   Eye,
   Pencil,
   Trash2,
@@ -50,6 +48,7 @@ import {
 } from "@/components/ui/dialog"
 import { DataError } from "@/components/shared/DataError"
 import type { PaginatedResponse } from "@/lib/contracts"
+import { useScrollSentinel } from "@/lib/hooks/useScrollSentinel"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -82,8 +81,16 @@ interface CrudTableProps<T extends { id: number }> {
   deleteTitle?: string
   deleteDescription?: string
   onRowClick?: (item: T) => void
-  page?: number
-  onPageChange?: (page: number) => void
+
+  /**
+   * Fourni par `useInfiniteList` : la table charge alors la suite en
+   * approchant du bas, au lieu d'afficher des boutons de page.
+   */
+  scrollInfini?: {
+    chargerSuite: () => void
+    resteAcharger: boolean
+    chargeEnCours: boolean
+  }
   // Search
   searchPlaceholder?: string
   searchValue?: string
@@ -138,8 +145,8 @@ export function CrudTable<T extends { id: number }>({
   deleteTitle = "Confirmer la suppression",
   deleteDescription = "Cette action est irréversible. L'élément sera définitivement supprimé.",
   onRowClick,
-  page,
-  onPageChange,
+
+  scrollInfini,
   searchPlaceholder,
   searchValue,
   onSearchChange,
@@ -152,6 +159,13 @@ export function CrudTable<T extends { id: number }>({
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [sorting, setSorting] = useState<SortingState>([])
   const [filtersOpen, setFiltersOpen] = useState(false)
+
+  // Inactive tant qu'aucun chargement continu n'est fourni : les tables qui
+  // gardent des boutons de page ne posent alors aucun observateur.
+  const sentinelle = useScrollSentinel({
+    actif: Boolean(scrollInfini?.resteAcharger) && !scrollInfini?.chargeEnCours,
+    onApproche: () => scrollInfini?.chargerSuite(),
+  })
 
   const getItemLabelRef = useRef(getItemLabel)
   getItemLabelRef.current = getItemLabel
@@ -364,37 +378,24 @@ export function CrudTable<T extends { id: number }>({
         </Table>
       </div>
 
-      {/* Pagination */}
-      {data && data.size > 0 && Math.ceil(data.total / data.size) > 1 && onPageChange && (() => {
-        const totalPages = Math.ceil(data.total / data.size)
-        return (
-          <div className="flex items-center justify-between pt-4">
-            <p className="text-sm text-muted-foreground">
-              Page {data.page} sur {totalPages} — {data.total} résultat{data.total > 1 ? "s" : ""}
+      {/* Le defilement continu remplace les boutons de page quand il est
+          fourni : viser un numero de page au pouce, sur cinq pouces, etait
+          le geste que personne ne faisait. */}
+      {scrollInfini && (
+        <>
+          <div ref={sentinelle} aria-hidden="true" className="h-px" />
+          {data && data.items.length > 0 && (
+            <p className="pt-3 text-center text-xs text-muted-foreground">
+              {scrollInfini.chargeEnCours
+                ? "Chargement…"
+                : scrollInfini.resteAcharger
+                  ? `${data.items.length} sur ${data.total}`
+                  : `${data.items.length} résultat${data.items.length > 1 ? "s" : ""}, tout est affiché`}
             </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(data.page - 1)}
-                disabled={data.page <= 1}
-              >
-                <ChevronLeft className="mr-1 h-4 w-4" />
-                Précédent
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(data.page + 1)}
-                disabled={data.page >= totalPages}
-              >
-                Suivant
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )
-      })()}
+          )}
+        </>
+      )}
+
 
       {renderViewModal?.({ itemId: viewId, open: viewId !== null, onClose: () => setViewId(null) })}
       {renderEditModal({ itemId: editId, open: editId !== null, onClose: () => setEditId(null) })}

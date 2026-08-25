@@ -23,7 +23,6 @@ export function ReportsPageClient() {
   const [trimester, setTrimester] = useState<number | undefined>(undefined)
   const [academicYearId, setAcademicYearId] = useState<number | undefined>(undefined)
   const [isPublished, setIsPublished] = useState<boolean | undefined>(undefined)
-  const [page, setPage] = useState(1)
 
   const { data: classesData, isLoading: classesLoading } = useClasses()
   const classes = classesData?.items
@@ -38,14 +37,10 @@ export function ReportsPageClient() {
     ...(trimester && { trimester }),
     ...(activeYearId && { academic_year_id: activeYearId }),
     ...(isPublished !== undefined && { is_published: isPublished }),
-    page,
   }
 
   const filtersReady = !!classId && !!trimester
 
-  function handlePageChange(newPage: number) {
-    setPage(newPage)
-  }
 
   return (
     <div className="space-y-6">
@@ -71,7 +66,7 @@ export function ReportsPageClient() {
         ) : (
           <Select
             value={activeYearId?.toString() ?? ""}
-            onValueChange={(v) => { setAcademicYearId(Number(v)); setPage(1) }}
+            onValueChange={(v) => { setAcademicYearId(Number(v)) }}
           >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Année" />
@@ -91,7 +86,7 @@ export function ReportsPageClient() {
         ) : (
           <Select
             value={classId?.toString() ?? ""}
-            onValueChange={(v) => { setClassId(Number(v)); setPage(1) }}
+            onValueChange={(v) => { setClassId(Number(v)) }}
           >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Classe" />
@@ -108,7 +103,7 @@ export function ReportsPageClient() {
 
         <Select
           value={trimester?.toString() ?? ""}
-          onValueChange={(v) => { setTrimester(Number(v)); setPage(1) }}
+          onValueChange={(v) => { setTrimester(Number(v)) }}
         >
           <SelectTrigger className="w-44">
             <SelectValue placeholder="Trimestre" />
@@ -122,7 +117,7 @@ export function ReportsPageClient() {
 
         <Select
           value={isPublished === undefined ? "all" : isPublished ? "published" : "draft"}
-          onValueChange={(v) => { setIsPublished(v === "all" ? undefined : v === "published"); setPage(1) }}
+          onValueChange={(v) => { setIsPublished(v === "all" ? undefined : v === "published") }}
         >
           <SelectTrigger className="w-36">
             <SelectValue placeholder="Statut" />
@@ -137,7 +132,7 @@ export function ReportsPageClient() {
 
       {/* Liste ou message */}
       {filtersReady ? (
-        <BulletinList params={params} onPageChange={handlePageChange} />
+        <BulletinList params={params} />
       ) : (
         <div className="py-16 text-center">
           <p className="text-sm text-muted-foreground">

@@ -1,10 +1,16 @@
 "use client"
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query"
 import { toast } from "sonner"
 import type { CrudApi } from "@/lib/api/createCrudApi"
 import type { PaginatedResponse } from "@/lib/contracts"
 import { dashboardKeys } from "./useDashboard"
+import { pageSuivante } from "./pagination"
 
 interface CrudLabels {
   created: string
@@ -33,6 +39,49 @@ export function createCrudHooks<
       queryFn: () => api.list(params),
       staleTime: 1000 * 60 * 5,
     })
+  }
+
+  /**
+   * La même liste, chargée au fil du défilement.
+   *
+   * Les pages s'empilent sous une seule clé, et `aplatie` rend la forme
+   * qu'attend `CrudTable` : `total` et `size` viennent de la première page,
+   * `items` de toutes. La table n'a donc pas à savoir d'où viennent ses
+   * lignes.
+   *
+   * `total` reste celui annoncé par le serveur, jamais le nombre de lignes
+   * chargées : c'est ce qui permet au pied de dire « 40 sur 312 » plutôt que
+   * de laisser croire que 40 est le compte.
+   */
+  function useInfiniteList(params: Record<string, unknown> = {}) {
+    const requete = useInfiniteQuery({
+      queryKey: [...keys.list(params), "infinite"] as const,
+      queryFn: ({ pageParam }: { pageParam: number }) =>
+        api.list({ ...params, page: pageParam }),
+      initialPageParam: 1,
+      // La condition d'arrêt vit dans `./pagination`, où elle est testée.
+      getNextPageParam: (derniere: PaginatedResponse<T>, pages: unknown[]) =>
+        pageSuivante(derniere, pages.length),
+      staleTime: 1000 * 60 * 5,
+    })
+
+    const pages = requete.data?.pages
+    const aplatie: PaginatedResponse<T> | undefined = pages?.length
+      ? {
+          ...pages[0],
+          items: pages.flatMap((page) => page.items),
+        }
+      : undefined
+
+    return {
+      ...requete,
+      data: aplatie,
+      scrollInfini: {
+        chargerSuite: () => void requete.fetchNextPage(),
+        resteAcharger: Boolean(requete.hasNextPage),
+        chargeEnCours: requete.isFetchingNextPage,
+      },
+    }
   }
 
   function useDetail(id: number) {
@@ -172,5 +221,5 @@ export function createCrudHooks<
     })
   }
 
-  return { keys, useList, useDetail, useCreate, useUpdate, useDelete }
+  return { keys, useList, useInfiniteList, useDetail, useCreate, useUpdate, useDelete }
 }

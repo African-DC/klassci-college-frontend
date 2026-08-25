@@ -1,5 +1,6 @@
 "use client"
 
+import { useListeInfinie } from "./useListeInfinie"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { bulletinsApi } from "@/lib/api/bulletins"
@@ -17,6 +18,13 @@ export function useBulletins(params: BulletinListParams = {}) {
     queryFn: () => bulletinsApi.list(params),
     staleTime: 1000 * 60 * 5,
   })
+}
+
+/** useBulletins, chargé au fil du défilement. */
+export function useInfiniteBulletins(params: BulletinListParams = {}) {
+  return useListeInfinie(bulletinKeys.list(params), (page) =>
+    bulletinsApi.list({ ...params, page }),
+  )
 }
 
 export function useBulletin(id: number | null) {

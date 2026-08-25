@@ -6,7 +6,11 @@ import { enrollmentStatusView } from "@/lib/enrollment/status"
 import Link from "next/link"
 import type { Route } from "next"
 import type { ColumnDef } from "@tanstack/react-table"
-import { useDeleteStudent, useStudentFilters, useStudents } from "@/lib/hooks/useStudents"
+import {
+  useDeleteStudent,
+  useInfiniteStudents,
+  useStudentFilters,
+} from "@/lib/hooks/useStudents"
 import type { Student } from "@/lib/contracts/student"
 import { Badge } from "@/components/ui/badge"
 import { CrudTable } from "@/components/shared/CrudTable"
@@ -125,7 +129,6 @@ export function StudentsTable({
   onChipsConsumed,
 }: StudentsTableProps) {
   const router = useRouter()
-  const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
   const [activeChip, setActiveChip] = useState<ChipKey>("all")
   const debouncedSearch = useDebounce(search)
@@ -140,11 +143,10 @@ export function StudentsTable({
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
-    setPage(1)
   }, [])
 
   const params = useMemo(() => {
-    const p: Record<string, unknown> = { page }
+    const p: Record<string, unknown> = {}
     if (debouncedSearch) p.search = debouncedSearch
     if (activeChip.startsWith("class:")) {
       p.class_id = Number(activeChip.split(":")[1])
@@ -152,9 +154,9 @@ export function StudentsTable({
       p.unenrolled_only = true
     }
     return p
-  }, [page, debouncedSearch, activeChip])
+  }, [debouncedSearch, activeChip])
 
-  const { data, isLoading, isError, error, refetch } = useStudents(params)
+  const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteStudents(params)
   const { data: filters } = useStudentFilters()
   const { data: settings } = useSettings()
   const deleteMutation = useDeleteStudent()
@@ -175,7 +177,6 @@ export function StudentsTable({
 
   const handleChipClick = useCallback((key: ChipKey) => {
     setActiveChip(key)
-    setPage(1)
   }, [])
 
   const columns: ColumnDef<Student>[] = useMemo(
@@ -303,8 +304,7 @@ export function StudentsTable({
           emptyMessage="Aucun élève trouvé"
           errorMessage="Impossible de charger les élèves"
           deleteDescription="Cette action est irréversible. L'élève sera définitivement supprimé."
-          page={page}
-          onPageChange={setPage}
+          scrollInfini={scrollInfini}
           searchPlaceholder="Rechercher un élève..."
           searchValue={search}
           onSearchChange={handleSearchChange}

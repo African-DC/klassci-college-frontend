@@ -6,8 +6,9 @@ import { PageHero, type HeroKpi } from "@/components/shared/PageHero"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useArchiveList } from "@/lib/hooks/useArchive"
+import { useInfiniteArchiveList } from "@/lib/hooks/useArchive"
 import { usePermissions } from "@/lib/hooks/usePermissions"
+import { useScrollSentinel } from "@/lib/hooks/useScrollSentinel"
 import { PERSON_ENTITIES, type ArchiveQuery } from "@/lib/contracts/archive"
 import { formatStamp } from "@/components/admin/audit/audit-labels"
 import { ArchiveCards } from "./ArchiveCards"
@@ -26,20 +27,24 @@ const PAGE_SIZE = 25
  */
 export function ArchiveClient() {
   const [entityType, setEntityType] = useState<string | undefined>(undefined)
-  const [page, setPage] = useState(1)
 
   const { has } = usePermissions()
   const canPurge = has("archive:purge")
 
   const query: ArchiveQuery = useMemo(
-    () => ({ page, size: PAGE_SIZE, ...(entityType ? { entity_type: entityType } : {}) }),
-    [page, entityType],
+    () => ({ size: PAGE_SIZE, ...(entityType ? { entity_type: entityType } : {}) }),
+    [entityType],
   )
-  const { data, isLoading, isError, error, refetch, isFetching } = useArchiveList(query)
+  const { data, isLoading, isError, error, refetch, isFetching, scrollInfini } =
+    useInfiniteArchiveList(query)
+
+  const sentinelle = useScrollSentinel({
+    actif: scrollInfini.resteAcharger && !scrollInfini.chargeEnCours,
+    onApproche: scrollInfini.chargerSuite,
+  })
 
   const items = useMemo(() => data?.items ?? [], [data])
   const total = data?.total ?? 0
-  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   const kpis: HeroKpi[] = useMemo(() => {
     const students = items.filter((entry) => entry.entity_type === "student").length
@@ -65,10 +70,9 @@ export function ArchiveClient() {
   }, [items, total])
 
   function changeFilter(next: string | undefined) {
-    // Changer de filtre ramène en page 1 : rester en page 4 d'un résultat qui
-    // n'en compte plus qu'une donne un écran vide sans explication.
+    // Changer de filtre change la clé de requête : le défilement repart de la
+    // première page de lui-même, il n'y a plus de compteur à remettre à zéro.
     setEntityType(next)
-    setPage(1)
   }
 
   return (
@@ -125,30 +129,16 @@ export function ArchiveClient() {
               <ArchiveTable items={items} canPurge={canPurge} />
               <ArchiveCards items={items} canPurge={canPurge} />
 
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-xs text-muted-foreground">
-                  Page {page} sur {lastPage} · {total} élément{total > 1 ? "s" : ""}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="h-11 sm:h-10"
-                    disabled={page <= 1 || isFetching}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    Précédent
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-11 sm:h-10"
-                    disabled={page >= lastPage || isFetching}
-                    onClick={() => setPage((current) => Math.min(lastPage, current + 1))}
-                  >
-                    Suivant
-                  </Button>
-                </div>
-              </div>
-            </>
+              {/* Charger la suite en approchant du bas : viser un numéro de
+                  page au pouce était le geste que personne ne faisait. */}
+              <div ref={sentinelle} aria-hidden="true" className="h-px" />
+              <p className="text-center text-xs text-muted-foreground" aria-live="polite">
+                {scrollInfini.chargeEnCours
+                  ? "Chargement…"
+                  : scrollInfini.resteAcharger
+                    ? `${items.length} sur ${total}`
+                    : `${total} élément${total > 1 ? "s" : ""}, tout est affiché`}
+              </p>            </>
           )}
         </CardContent>
       </Card>

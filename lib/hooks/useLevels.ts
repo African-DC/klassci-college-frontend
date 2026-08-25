@@ -7,6 +7,7 @@ import { createCrudHooks } from "./createCrudHooks"
 const {
   keys: levelKeys,
   useList,
+  useInfiniteList,
   useDetail,
   useCreate,
   useUpdate,
@@ -19,6 +20,7 @@ const {
 
 export { levelKeys }
 export const useLevels = useList
+export const useInfiniteLevels = useInfiniteList
 export const useLevel = useDetail
 export const useCreateLevel = useCreate
 export const useUpdateLevel = useUpdate

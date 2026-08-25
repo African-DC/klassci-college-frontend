@@ -10,6 +10,7 @@ import { useAcademicYearStore } from "@/lib/stores/useAcademicYearStore"
 const {
   keys: academicYearKeys,
   useList,
+  useInfiniteList,
   useDetail,
   useCreate,
   useUpdate,
@@ -26,6 +27,7 @@ const {
 
 export { academicYearKeys }
 export const useAcademicYears = useList
+export const useInfiniteAcademicYears = useInfiniteList
 export const useAcademicYear = useDetail
 export const useCreateAcademicYear = useCreate
 export const useUpdateAcademicYear = useUpdate

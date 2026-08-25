@@ -1,5 +1,6 @@
 "use client"
 
+import { useListeInfinie } from "./useListeInfinie"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { summonsApi, type SummonsRegisterFilters } from "@/lib/api/summons"
@@ -24,6 +25,11 @@ export function useSummonsRegister(filters: SummonsRegisterFilters = {}, enabled
     staleTime: 1000 * 30,
     enabled,
   })
+}
+
+/** useSummonsRegister, chargé au fil du défilement. */
+export function useInfiniteSummonsRegister(filters: SummonsRegisterFilters = {}, enabled = true) {
+  return useListeInfinie(summonsKeys.register(filters), (page) => summonsApi.list({ ...filters, page }), { enabled })
 }
 
 export function useCreateSummons() {

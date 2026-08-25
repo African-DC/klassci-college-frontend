@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import type { Route } from "next"
 import type { ColumnDef } from "@tanstack/react-table"
 import { School } from "lucide-react"
-import { useClasses, useDeleteClass } from "@/lib/hooks/useClasses"
+import { useInfiniteClasses, useDeleteClass } from "@/lib/hooks/useClasses"
 import { useLevels } from "@/lib/hooks/useLevels"
 import type { Class } from "@/lib/contracts/class"
 import { CrudTable, type FilterConfig } from "@/components/shared/CrudTable"
@@ -65,7 +65,6 @@ function CapacityPill({ enrolled, max }: { enrolled?: number; max?: number | nul
 
 export function ClassesTable() {
   const router = useRouter()
-  const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
   const [filters, setFilters] = useState<Record<string, string>>({})
   const debouncedSearch = useDebounce(search)
@@ -82,21 +81,18 @@ export function ClassesTable() {
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
-    setPage(1)
   }, [])
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
-    setPage(1)
   }, [])
 
   const params = useMemo(() => ({
-    page,
     ...(debouncedSearch && { search: debouncedSearch }),
     ...(filters.level_id && { level_id: Number(filters.level_id) }),
-  }), [page, debouncedSearch, filters])
+  }), [debouncedSearch, filters])
 
-  const { data, isLoading, isError, error, refetch } = useClasses(params)
+  const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteClasses(params)
   const deleteMutation = useDeleteClass()
 
   const columns: ColumnDef<Class>[] = useMemo(() => [
@@ -159,8 +155,7 @@ export function ClassesTable() {
           emptyMessage="Aucune classe trouvée"
           errorMessage="Impossible de charger les classes"
           deleteDescription="Cette action est irréversible. La classe sera définitivement supprimée."
-          page={page}
-          onPageChange={setPage}
+          scrollInfini={scrollInfini}
           searchPlaceholder="Rechercher une classe..."
           searchValue={search}
           onSearchChange={handleSearchChange}

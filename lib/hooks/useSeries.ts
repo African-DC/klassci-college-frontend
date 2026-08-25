@@ -7,6 +7,7 @@ import { createCrudHooks } from "./createCrudHooks"
 const {
   keys: seriesKeys,
   useList,
+  useInfiniteList,
   useDetail,
   useCreate,
   useUpdate,
@@ -19,6 +20,7 @@ const {
 
 export { seriesKeys }
 export const useSeriesList = useList
+export const useInfiniteSeriesList = useInfiniteList
 export const useSeriesDetail = useDetail
 export const useCreateSeries = useCreate
 export const useUpdateSeries = useUpdate

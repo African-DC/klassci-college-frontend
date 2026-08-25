@@ -1,5 +1,6 @@
 "use client"
 
+import { useListeInfinie } from "./useListeInfinie"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { archiveApi } from "@/lib/api/archive"
@@ -25,6 +26,11 @@ export function useArchiveList(query: ArchiveQuery) {
     queryFn: () => archiveApi.list(query),
     staleTime: 15_000,
   })
+}
+
+/** useArchiveList, chargé au fil du défilement. */
+export function useInfiniteArchiveList(query: ArchiveQuery) {
+  return useListeInfinie(archiveKeys.list(query), (page) => archiveApi.list({ ...query, page }))
 }
 
 /**
