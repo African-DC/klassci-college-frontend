@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- Valider ou annuler un versement met à jour la ligne immédiatement, y compris au-delà de la première page chargée *(admin)*
+- La carte « Collecté » ne prétend plus suivre le filtre quand elle parle de l'année entière *(admin)*
 - La liste des élèves distingue désormais « En attente de validation » de « À inscrire », et affiche des libellés lisibles au lieu des valeurs de la base *(admin)*
 - La photo de profil apparaît enfin dans la barre de navigation, au lieu des seules initiales *(tous)*
 - Le motif d'annulation d'un versement s'affiche désormais à l'identique sur ordinateur et sur téléphone *(admin)*
