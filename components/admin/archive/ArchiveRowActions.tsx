@@ -47,10 +47,10 @@ export function ArchiveRowActions({ entry, canPurge, stacked = false }: ArchiveR
         className={cn("h-11 sm:h-9", buttonWidth)}
         disabled={isBusy}
         onClick={() => restore.mutate({ entity, id: entry.entity_id })}
+        aria-label={`Restaurer ${subject}`}
       >
         <RotateCcw className="h-4 w-4" aria-hidden="true" />
         <span>Restaurer</span>
-        <span className="sr-only"> {subject}</span>
       </Button>
 
       {canPurge && (
@@ -63,10 +63,10 @@ export function ArchiveRowActions({ entry, canPurge, stacked = false }: ArchiveR
           )}
           disabled={isBusy}
           onClick={() => setPurgeOpen(true)}
+          aria-label={`Supprimer définitivement ${subject}`}
         >
           <Trash2 className="h-4 w-4" aria-hidden="true" />
           <span>Supprimer</span>
-          <span className="sr-only"> définitivement {subject}</span>
         </Button>
       )}
 
