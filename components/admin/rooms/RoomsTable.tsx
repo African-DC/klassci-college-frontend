@@ -1,15 +1,14 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
-import { useRooms, useDeleteRoom } from "@/lib/hooks/useRooms"
+import { useInfiniteRooms, useDeleteRoom } from "@/lib/hooks/useRooms"
 import type { Room } from "@/lib/contracts/room"
 import { CrudTable } from "@/components/shared/CrudTable"
 import { RoomEditModal } from "./RoomEditModal"
 
 export function RoomsTable() {
-  const [page, setPage] = useState(1)
-  const { data, isLoading, isError, error, refetch } = useRooms({ page })
+  const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteRooms({})
   const deleteMutation = useDeleteRoom()
 
   const columns: ColumnDef<Room>[] = useMemo(() => [
@@ -43,8 +42,7 @@ export function RoomsTable() {
       emptyMessage="Aucune salle trouvee"
       errorMessage="Impossible de charger les salles"
       deleteDescription="Cette action est irreversible. La salle sera definitivement supprimee."
-      page={page}
-      onPageChange={setPage}
+      scrollInfini={scrollInfini}
     />
   )
 }

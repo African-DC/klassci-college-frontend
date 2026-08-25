@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Route } from "next"
 import { Phone, Mail, MessageCircle, UserCircle2 } from "lucide-react"
-import { useParents, useDeleteParent } from "@/lib/hooks/useParents"
+import { useInfiniteParents, useDeleteParent } from "@/lib/hooks/useParents"
 import type { Parent } from "@/lib/contracts/parent"
 import type { PaginatedResponse } from "@/lib/contracts"
 import { CrudTable } from "@/components/shared/CrudTable"
@@ -75,16 +75,14 @@ function ParentAvatar({ parent }: { parent: Parent }) {
 
 export function ParentsTable() {
   const router = useRouter()
-  const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
   const debouncedSearch = useDebounce(search)
 
   const params = useMemo(() => ({
-    page,
     ...(debouncedSearch && { search: debouncedSearch }),
-  }), [page, debouncedSearch])
+  }), [debouncedSearch])
 
-  const { data, isLoading, isError, error, refetch } = useParents(params)
+  const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteParents(params)
   const deleteMutation = useDeleteParent()
 
   // Filtre compte (avec/sans) appliqué côté client sur la page chargée.
@@ -189,9 +187,8 @@ export function ParentsTable() {
           deleteDescription="Cette action est irréversible. Le parent sera définitivement supprimé et les liens avec les enfants retirés."
           searchPlaceholder="Rechercher un parent (nom, prénom, téléphone)..."
           searchValue={search}
-          onSearchChange={(v) => { setSearch(v); setPage(1) }}
-          page={page}
-          onPageChange={setPage}
+          onSearchChange={(v) => { setSearch(v) }}
+          scrollInfini={scrollInfini}
         />
       </div>
 

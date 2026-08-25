@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import type { Route } from "next"
 import type { ColumnDef } from "@tanstack/react-table"
 import { Phone, MessageCircle, Mail } from "lucide-react"
-import { useTeachers, useDeleteTeacher } from "@/lib/hooks/useTeachers"
+import { useInfiniteTeachers, useDeleteTeacher } from "@/lib/hooks/useTeachers"
 import { teacherContractLabel, type Teacher } from "@/lib/contracts/teacher"
 import { Badge } from "@/components/ui/badge"
 import { CrudTable, type FilterConfig } from "@/components/shared/CrudTable"
@@ -87,23 +87,20 @@ function ContactActions({ teacher }: { teacher: Teacher }) {
 
 export function TeachersTable() {
   const router = useRouter()
-  const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
   const [filters, setFilters] = useState<Record<string, string>>({})
   const debouncedSearch = useDebounce(search)
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
-    setPage(1)
   }, [])
 
   const params = useMemo(() => ({
-    page,
     ...(debouncedSearch && { search: debouncedSearch }),
     ...(filters.speciality && { speciality: filters.speciality }),
-  }), [page, debouncedSearch, filters])
+  }), [debouncedSearch, filters])
 
-  const { data, isLoading, isError, error, refetch } = useTeachers(params)
+  const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteTeachers(params)
   const deleteMutation = useDeleteTeacher()
 
   const filterConfigs: FilterConfig[] = useMemo(() => [
@@ -184,9 +181,8 @@ export function TeachersTable() {
           deleteDescription="Cette action est irréversible. L'enseignant sera définitivement supprimé."
           searchPlaceholder="Rechercher un enseignant..."
           searchValue={search}
-          onSearchChange={(v) => { setSearch(v); setPage(1) }}
-          page={page}
-          onPageChange={setPage}
+          onSearchChange={(v) => { setSearch(v) }}
+          scrollInfini={scrollInfini}
           filterConfigs={filterConfigs}
           filterValues={filters}
           onFilterChange={handleFilterChange}

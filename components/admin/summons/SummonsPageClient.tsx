@@ -9,8 +9,8 @@ import { DataError } from "@/components/shared/DataError"
 import { cn } from "@/lib/utils"
 import { usePermissions } from "@/lib/hooks/usePermissions"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
-import { useDownloadSummons, useSummonsRegister } from "@/lib/hooks/useSummons"
-import { RegisterPagination } from "@/components/shared/school-life/RegisterPagination"
+import { useDownloadSummons, useInfiniteSummonsRegister } from "@/lib/hooks/useSummons"
+import { RegisterFooter } from "@/components/shared/school-life/RegisterFooter"
 import { SummonsCreateModal } from "./SummonsCreateModal"
 import { SummonsOutcomeModal } from "./SummonsOutcomeModal"
 import { SummonsRegisterList } from "./SummonsRegisterList"
@@ -35,7 +35,6 @@ const PAGE_SIZE = 20
 export function SummonsPageClient() {
   const [outcome, setOutcome] = useState("")
   const [trimester, setTrimester] = useState(0)
-  const [page, setPage] = useState(1)
   const [createOpen, setCreateOpen] = useState(false)
   const [outcomeTarget, setOutcomeTarget] = useState<ParentSummons | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
@@ -54,10 +53,9 @@ export function SummonsPageClient() {
     ...(currentYearId ? { academic_year_id: currentYearId } : {}),
     ...(outcome ? { outcome } : {}),
     ...(trimester ? { trimester } : {}),
-    page,
     size: PAGE_SIZE,
   }
-  const { data, isLoading, error, refetch } = useSummonsRegister(
+  const { data, isLoading, error, refetch, scrollInfini } = useInfiniteSummonsRegister(
     filters,
     canManage && Boolean(currentYearId),
   )
@@ -68,12 +66,10 @@ export function SummonsPageClient() {
 
   function changeOutcome(next: string) {
     setOutcome(next)
-    setPage(1)
   }
 
   function changeTrimester(next: number) {
     setTrimester(next)
-    setPage(1)
   }
 
   const kpis: HeroKpi[] = [
@@ -194,11 +190,10 @@ export function SummonsPageClient() {
             onDownload={handleDownload}
             downloadingId={downloadingId}
           />
-          <RegisterPagination
+          <RegisterFooter
             total={data?.total ?? 0}
-            page={data?.page ?? page}
-            size={data?.size ?? PAGE_SIZE}
-            onPageChange={setPage}
+            charges={items.length}
+            scrollInfini={scrollInfini}
             noun="convocation"
           />
         </div>

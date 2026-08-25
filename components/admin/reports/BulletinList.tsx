@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
-import { Download, DownloadCloud, Send, ChevronLeft, ChevronRight } from "lucide-react"
+import { Download, DownloadCloud, Send } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
@@ -16,7 +16,12 @@ import {
 import { BulletinStatusBadge } from "./BulletinStatusBadge"
 import { BulletinPreviewModal } from "./BulletinPreviewModal"
 import { BulletinListSkeleton } from "./BulletinListSkeleton"
-import { useBulletins, usePublishBulletins } from "@/lib/hooks/useBulletins"
+import {
+  useBulletins,
+  useInfiniteBulletins,
+  usePublishBulletins,
+} from "@/lib/hooks/useBulletins"
+import { useScrollSentinel } from "@/lib/hooks/useScrollSentinel"
 import { bulletinsApi } from "@/lib/api/bulletins"
 import { cn, downloadBlob, getUploadUrl } from "@/lib/utils"
 import { getMentionBadgeClass } from "./mention"
@@ -59,7 +64,12 @@ interface BulletinListProps {
 }
 
 export function BulletinList({ params, onPageChange }: BulletinListProps) {
-  const { data, isLoading, isError } = useBulletins(params)
+  const { data, isLoading, isError, scrollInfini } = useInfiniteBulletins(params)
+
+  const sentinelle = useScrollSentinel({
+    actif: scrollInfini.resteAcharger && !scrollInfini.chargeEnCours,
+    onApproche: scrollInfini.chargerSuite,
+  })
   // Le bandeau « publiez-les » doit parler de la classe entière, pas de la
   // page affichée : une seule ligne suffit, c'est le `total` de l'enveloppe
   // qui répond.
@@ -298,32 +308,17 @@ export function BulletinList({ params, onPageChange }: BulletinListProps) {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>{schoolTotal} bulletin(s)</span>
-        <div className="flex items-center gap-2">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7"
-            disabled={!data || data.page <= 1}
-            onClick={() => onPageChange?.(Math.max(1, (data?.page ?? 1) - 1))}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            <span className="sr-only">Page précédente</span>
-          </Button>
-          <span>Page {data?.page ?? 1}/{data && data.size > 0 ? Math.ceil(data.total / data.size) : 1}</span>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7"
-            disabled={!data || data.size <= 0 || data.page >= Math.ceil(data.total / data.size)}
-            onClick={() => onPageChange?.((data?.page ?? 1) + 1)}
-          >
-            <ChevronRight className="h-4 w-4" />
-            <span className="sr-only">Page suivante</span>
-          </Button>
-        </div>
-      </div>
+      {/* Charger la suite en approchant du bas. Le compte dit ce qui est
+          affiché face à ce que l'établissement compte, sans laisser croire
+          que la liste est complète. */}
+      <div ref={sentinelle} aria-hidden="true" className="h-px" />
+      <p className="text-center text-xs text-muted-foreground" aria-live="polite">
+        {scrollInfini.chargeEnCours
+          ? "Chargement…"
+          : scrollInfini.resteAcharger
+            ? `${data?.items.length ?? 0} sur ${schoolTotal}`
+            : `${schoolTotal} bulletin${schoolTotal > 1 ? "s" : ""}, tout est affiché`}
+      </p>
 
       <BulletinPreviewModal
         bulletinId={previewId}

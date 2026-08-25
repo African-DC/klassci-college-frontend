@@ -8,6 +8,7 @@ import { createCrudHooks } from "./createCrudHooks"
 const {
   keys: teacherKeys,
   useList,
+  useInfiniteList,
   useDetail,
   useCreate,
   useUpdate,
@@ -20,6 +21,7 @@ const {
 
 export { teacherKeys }
 export const useTeachers = useList
+export const useInfiniteTeachers = useInfiniteList
 export const useTeacher = useDetail
 export const useCreateTeacher = useCreate
 export const useUpdateTeacher = useUpdate

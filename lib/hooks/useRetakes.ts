@@ -1,5 +1,6 @@
 "use client"
 
+import { useListeInfinie } from "./useListeInfinie"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { retakesApi, type RetakeListFilters } from "@/lib/api/retakes"
@@ -25,6 +26,11 @@ export function useRetakeAuthorizations(filters: RetakeListFilters = {}, enabled
     staleTime: 1000 * 30,
     enabled,
   })
+}
+
+/** useRetakeAuthorizations, chargé au fil du défilement. */
+export function useInfiniteRetakeAuthorizations(filters: RetakeListFilters = {}, enabled = true) {
+  return useListeInfinie(retakeKeys.list(filters), (page) => retakesApi.list({ ...filters, page }), { enabled })
 }
 
 /**
