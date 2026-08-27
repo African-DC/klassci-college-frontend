@@ -21,8 +21,6 @@ export interface ChampsIdentite extends FieldValues {
   enrollment_number?: string | null
 }
 
-const CHAMPS_SURVEILLES = ["last_name", "first_name", "birth_date", "enrollment_number"] as const
-
 /**
  * Le branchement du signalement sur un formulaire d'élève.
  *
@@ -50,17 +48,21 @@ export function useDoublonsFormulaire<T extends ChampsIdentite>(
   // On s'abonne aux seuls champs du signalement : `form.watch()` sans argument
   // redessine le formulaire entier à chaque touche de n'importe quel champ, et
   // la personne saisit sur un téléphone d'entrée de gamme.
-  const valeurs = form.watch(CHAMPS_SURVEILLES as unknown as Path<T>[])
-
-  // L'objet est construit depuis les NOMS, pas depuis l'ordre du tableau :
-  // avec une destructuration positionnelle, réordonner `CHAMPS_SURVEILLES`
-  // enverrait silencieusement la date de naissance dans le champ du prénom.
-  const saisie = Object.fromEntries(
-    CHAMPS_SURVEILLES.map((champ, i) => [champ, (valeurs[i] as string | null) || undefined]),
-  ) as Record<(typeof CHAMPS_SURVEILLES)[number], string | undefined>
+  // Les noms et la destructuration sont sur le même écran : réordonner l'un
+  // sans l'autre se voit. Une version antérieure gardait le tableau à trente
+  // lignes de là et payait ce décalage par trois échappements de type.
+  const [last_name, first_name, birth_date, enrollment_number] = form.watch([
+    "last_name",
+    "first_name",
+    "birth_date",
+    "enrollment_number",
+  ] as Path<T>[]) as (string | null | undefined)[]
 
   const { data, isFetching, isError } = useDoublons({
-    ...saisie,
+    last_name: last_name ?? undefined,
+    first_name: first_name ?? undefined,
+    birth_date: birth_date ?? undefined,
+    enrollment_number: enrollment_number ?? undefined,
     academic_year_id: academicYearId,
     ignorer_student_id: options.ignorerStudentId,
   })

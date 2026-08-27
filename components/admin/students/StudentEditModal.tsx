@@ -72,7 +72,6 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
     mutate(data, { onSuccess: onClose })
   }
 
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">

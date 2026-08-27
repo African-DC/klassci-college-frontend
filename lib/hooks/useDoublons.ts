@@ -25,10 +25,14 @@ export function useDoublons(params: DoublonsParams) {
   const matricule = useDebounce(params.enrollment_number ?? "", 400)
   const naissance = useDebounce(params.birth_date ?? "", 400)
 
+  // Même règle que `StudentIdentity.suffisante` côté serveur : le nom, plus
+  // au moins un second élément. Une version antérieure déclenchait dès que
+  // l'un des trois champs atteignait trois caractères, donc le nom seul
+  // partait en requête que le serveur refusait de traiter.
   const assezSaisi =
-    nom.trim().length >= LONGUEUR_MINIMALE ||
-    prenom.trim().length >= LONGUEUR_MINIMALE ||
-    matricule.trim().length >= LONGUEUR_MINIMALE
+    matricule.trim().length >= LONGUEUR_MINIMALE ||
+    (nom.trim().length >= LONGUEUR_MINIMALE &&
+      (prenom.trim().length > 0 || naissance.trim().length > 0))
 
   const requete: DoublonsParams = {
     academic_year_id: params.academic_year_id,
