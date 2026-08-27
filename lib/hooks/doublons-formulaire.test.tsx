@@ -75,3 +75,103 @@ describe("le branchement du signalement sur un formulaire", () => {
     ).toHaveLength(0)
   })
 })
+
+describe("ce que le hook rend, et pas seulement ce qu'il demande", () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  /**
+   * Les deux tests ci-dessus n'observent que les clés de cache. Chacune des
+   * quatre valeurs rendues pouvait donc être remplacée par une constante sans
+   * qu'un test bouge — dont `tronque`, le signal qu'une passe de revue venait
+   * de rattraper dans le composant, et `echec`, qui empêche une vérification
+   * ratée de passer pour un feu vert.
+   */
+  function monter(reponse: unknown, options?: { ignorerStudentId?: number }) {
+    const { client, wrapper } = enveloppe()
+    const rendu = renderHook(
+      () => {
+        const form = useForm<Champs>({
+          defaultValues: { last_name: "KOUASSI", first_name: "Aya" },
+        })
+        return useDoublonsFormulaire(form, options)
+      },
+      { wrapper },
+    )
+    act(() => void vi.advanceTimersByTime(400))
+    const cle = client.getQueryCache().getAll()[0]?.queryKey
+    if (cle) act(() => void client.setQueryData(cle, reponse))
+    // Le cache est semé après le premier rendu : sans ce nouveau rendu, le
+    // hook renvoie encore son état initial.
+    act(() => rendu.rerender())
+    return rendu
+  }
+
+  const correspondance = {
+    student_id: 112,
+    last_name: "KOUASSI",
+    first_name: "Aya",
+    enrollment_number: "ECER0882",
+    birth_date: null,
+    motif: "ressemblance" as const,
+    score: 0.94,
+    juge_sur_peu: true,
+    inscription_annee_courante: null,
+  }
+
+  it("transmet les correspondances reçues", () => {
+    const { result } = monter({ correspondances: [correspondance], total: 1, tronque: false })
+    expect(result.current.correspondances).toHaveLength(1)
+    expect(result.current.correspondances[0].enrollment_number).toBe("ECER0882")
+  })
+
+  it("transmet la troncature", () => {
+    const { result } = monter({ correspondances: [], total: 0, tronque: true })
+    expect(result.current.tronque).toBe(true)
+  })
+
+  it("passe l'élève à ignorer, pour qu'une fiche ne se signale pas elle-même", () => {
+    const { client, wrapper } = enveloppe()
+    renderHook(
+      () => {
+        const form = useForm<Champs>({
+          defaultValues: { last_name: "KOUASSI", first_name: "Aya" },
+        })
+        return useDoublonsFormulaire(form, { ignorerStudentId: 42 })
+      },
+      { wrapper },
+    )
+    act(() => void vi.advanceTimersByTime(400))
+    const cles = client.getQueryCache().getAll().map((q) => JSON.stringify(q.queryKey))
+    expect(cles.some((c) => c.includes('"ignorer_student_id":42'))).toBe(true)
+  })
+})
+
+describe("l'échec doit remonter jusqu'à l'écran", () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it("rend `echec` quand la requête a échoué", async () => {
+    // Sans cette remontée, une vérification ratée se tait, et le silence de
+    // l'écran veut dire « rien trouvé ». C'est le seul résultat que toute la
+    // conception cherche à empêcher.
+    vi.useRealTimers()
+    const { client, wrapper } = enveloppe()
+    const { result } = renderHook(
+      () => {
+        const form = useForm<Champs>({
+          defaultValues: { last_name: "KOUASSI", first_name: "Aya" },
+        })
+        return useDoublonsFormulaire(form)
+      },
+      { wrapper },
+    )
+
+    await vi.waitFor(() => expect(client.getQueryCache().getAll().length).toBeGreaterThan(0))
+    const requete = client.getQueryCache().getAll()[0]
+    act(() => {
+      requete.setState({ ...requete.state, status: "error", error: new Error("réseau"), fetchStatus: "idle" })
+    })
+    await vi.waitFor(() => expect(result.current.echec).toBe(true))
+  })
+})

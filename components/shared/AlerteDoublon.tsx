@@ -119,12 +119,19 @@ export function AlerteDoublon({
 
           {dejaInscrit?.inscription_annee_courante && (
             <p className="text-muted-foreground">
-              {nomComplet(dejaInscrit)} a déjà une inscription{" "}
-              {enrollmentStatusView(dejaInscrit.inscription_annee_courante.status).label.toLowerCase()}
+              {/* Le libellé est celui d'un badge : « Dossier ouvert », « Inscrit ».
+                  Le couler dans la phrase donnait « a déjà une inscription dossier
+                  ouvert en 3eme 2 ». Entre parenthèses, il redevient lisible quel
+                  que soit le statut. */}
+              {nomComplet(dejaInscrit)} a déjà un dossier pour cette année
               {dejaInscrit.inscription_annee_courante.class_name
                 ? ` en ${dejaInscrit.inscription_annee_courante.class_name}`
                 : ""}{" "}
-              pour cette année. {action ? `${action} en créerait une seconde.` : ""}
+              (statut :{" "}
+              {enrollmentStatusView(
+                dejaInscrit.inscription_annee_courante.status,
+              ).label.toLowerCase()}
+              ).{action ? ` ${action} en créerait un second.` : ""}
             </p>
           )}
 

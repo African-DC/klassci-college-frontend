@@ -84,9 +84,10 @@ describe("l'alerte de doublon", () => {
     )
     // « Dossier ouvert » est le libellé canonique de `prospect`. L'ancien texte
     // disait « en attente de validation », qui désigne l'état SUIVANT.
+    // La phrase entière est vérifiée par le bloc dédié plus bas.
     expect(screen.getByText(/dossier ouvert/i)).toBeInTheDocument()
     expect(screen.getByText(/3eme 2/)).toBeInTheDocument()
-    expect(screen.getByText(/en créerait une seconde/i)).toBeInTheDocument()
+    expect(screen.getByText(/en créerait un second/i)).toBeInTheDocument()
   })
 
   it("mène à la fiche existante plutôt que de laisser chercher", () => {
@@ -185,5 +186,41 @@ describe("une liste vide a quatre sens", () => {
     // Une recherche qui a échoué n'a rien vérifié du tout : le dire avant.
     render(<AlerteDoublon correspondances={[]} echec tronque />)
     expect(screen.getByText(/impossible/i)).toBeInTheDocument()
+  })
+})
+
+describe("la phrase que la secrétaire lit avant de décider", () => {
+  it.each([
+    ["prospect", "dossier ouvert"],
+    ["en_validation", "en attente de validation"],
+    ["valide", "inscrit"],
+  ])("reste du français pour le statut %s", (statut, attendu) => {
+    // Le libellé vient d'un badge. Coulé dans la phrase, il donnait
+    // « a déjà une inscription dossier ouvert en 3eme 2 » — et `prospect`
+    // est justement le cas pour lequel la fonctionnalité existe.
+    //
+    // On lit le paragraphe ENTIER : JSX le découpe en nœuds de texte, et
+    // chercher un fragment isolé ne voit jamais la phrase.
+    const { container } = render(
+      <AlerteDoublon
+        action="Créer cette fiche"
+        correspondances={[
+          correspondance({
+            inscription_annee_courante: {
+              enrollment_id: 818,
+              status: statut as "prospect",
+              class_name: "3eme 2",
+            },
+          }),
+        ]}
+      />,
+    )
+    const phrase = Array.from(container.querySelectorAll("p"))
+      .map((p) => p.textContent ?? "")
+      .find((t) => t.includes("a déjà un dossier"))
+    expect(phrase).toBeDefined()
+    expect(phrase).toContain("a déjà un dossier pour cette année en 3eme 2")
+    expect(phrase).toContain(`(statut : ${attendu})`)
+    expect(phrase).toContain("en créerait un second")
   })
 })
