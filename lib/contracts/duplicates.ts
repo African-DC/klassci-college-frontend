@@ -17,12 +17,12 @@ export const CorrespondanceSchema = z.object({
   motif: z.enum(["matricule", "ressemblance"]),
   score: z.number().nullable(),
   /**
-   * Vrai quand ni la date ni le lieu de naissance n'étaient disponibles.
+   * Vrai quand un des champs d'état civil n'a pas pu être comparé.
    *
-   * Le score ne porte alors que sur le nom et le prénom. L'écran doit le dire :
-   * un « 96 % » obtenu sur deux champs n'a pas la valeur d'un « 96 % » obtenu
-   * sur quatre, et les fiches reprises de l'ancien système sont toutes dans ce
-   * cas.
+   * Le score ne porte alors que sur une partie de l'identité. Les fiches
+   * reprises de l'ancien système sont toutes dans ce cas : sans cette
+   * réserve, un « 100 % » obtenu sur le seul nom se lirait comme une
+   * correspondance complète.
    */
   juge_sur_peu: z.boolean(),
   inscription_annee_courante: InscriptionExistanteSchema.nullable(),
@@ -47,7 +47,6 @@ export interface DoublonsParams {
   last_name?: string
   first_name?: string
   birth_date?: string
-  birth_place?: string
   enrollment_number?: string
   academic_year_id?: number
   ignorer_student_id?: number

@@ -124,7 +124,7 @@ export function AlerteDoublon({
                 )}
                 {c.birth_date && (
                   <span className="text-xs text-muted-foreground">
-                    née le {new Date(c.birth_date).toLocaleDateString("fr-FR")}
+                    né(e) le {new Date(c.birth_date).toLocaleDateString("fr-FR")}
                   </span>
                 )}
                 {c.motif === "ressemblance" && c.score !== null && (
@@ -134,7 +134,7 @@ export function AlerteDoublon({
                         seul nom et prénom n'engage pas autant que « 96 % »
                         calculé sur l'état civil complet, et les fiches reprises
                         de l'ancien système sont toutes dans le premier cas. */}
-                    {c.juge_sur_peu ? ", sur le nom et le prénom seuls" : ""}
+                    {c.juge_sur_peu ? ", état civil incomplet" : ""}
                   </span>
                 )}
               </li>
@@ -144,6 +144,12 @@ export function AlerteDoublon({
           {correspondances.length > 4 && (
             <p className="text-xs text-muted-foreground">
               et {correspondances.length - 4} autre{correspondances.length - 4 > 1 ? "s" : ""}.
+            </p>
+          )}
+
+          {echec && (
+            <p className="text-xs text-muted-foreground">
+              La dernière vérification a échoué : cette liste peut être périmée.
             </p>
           )}
 

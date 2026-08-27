@@ -24,7 +24,6 @@ export function useDoublons(params: DoublonsParams) {
   const prenom = useDebounce(params.first_name ?? "", 400)
   const matricule = useDebounce(params.enrollment_number ?? "", 400)
   const naissance = useDebounce(params.birth_date ?? "", 400)
-  const lieu = useDebounce(params.birth_place ?? "", 400)
 
   const assezSaisi =
     nom.trim().length >= LONGUEUR_MINIMALE ||
@@ -38,7 +37,6 @@ export function useDoublons(params: DoublonsParams) {
     first_name: prenom || undefined,
     enrollment_number: matricule || undefined,
     birth_date: naissance || undefined,
-    birth_place: lieu || undefined,
   }
 
   return useQuery({

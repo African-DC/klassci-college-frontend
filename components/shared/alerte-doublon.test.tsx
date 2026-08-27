@@ -42,12 +42,14 @@ describe("l'alerte de doublon", () => {
     expect(screen.getByText(/matricule appartient déjà/i)).toBeInTheDocument()
   })
 
-  it("dit quand le score ne porte que sur le nom et le prénom", () => {
+  it("dit quand une partie de l état civil manque", () => {
     // La moitié du sens : « 94 % » calculé sur deux champs n'engage pas autant
     // que « 94 % » calculé sur l'état civil complet, et toutes les fiches
     // reprises de l'ancien système sont dans ce cas.
     render(<AlerteDoublon correspondances={[correspondance()]} />)
-    expect(screen.getByText(/sur le nom et le prénom seuls/i)).toBeInTheDocument()
+    // La réserve ne nomme plus les champs : elle disait « le nom et le prénom »
+    // pour une comparaison qui n avait vu que le nom.
+    expect(screen.getByText(/état civil incomplet/i)).toBeInTheDocument()
   })
 
   it("ne le dit pas quand la naissance a servi", () => {
@@ -60,7 +62,7 @@ describe("l'alerte de doublon", () => {
         ]}
       />,
     )
-    expect(screen.queryByText(/sur le nom et le prénom seuls/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/état civil incomplet/i)).not.toBeInTheDocument()
   })
 
   it("signale une inscription déjà ouverte, même non validée", () => {
@@ -144,5 +146,22 @@ describe("ce que l'écran donne pour trancher", () => {
     // `role="alert"` interrompt. Un matricule déjà pris mérite l'interruption.
     render(<AlerteDoublon correspondances={[correspondance({ motif: "matricule" })]} />)
     expect(screen.getByRole("alert")).toBeInTheDocument()
+  })
+})
+
+describe("une liste périmée ne doit pas passer pour une vérification fraîche", () => {
+  it("le dit quand la dernière vérification a échoué, liste non vide", () => {
+    // TanStack conserve les données précédentes après un échec de
+    // rechargement : sans ce message, la personne lit une liste ancienne
+    // comme si elle venait d'être établie.
+    render(<AlerteDoublon correspondances={[correspondance()]} echec />)
+    expect(screen.getByText(/dernière vérification a échoué/i)).toBeInTheDocument()
+    expect(screen.getByText(/périmée/i)).toBeInTheDocument()
+  })
+
+  it("ne suppose pas le genre de l'élève", () => {
+    // « née le » pour tout le monde était faux pour la moitié de l'effectif.
+    render(<AlerteDoublon correspondances={[correspondance({ birth_date: "2010-03-14" })]} />)
+    expect(screen.getByText(/né\(e\) le/)).toBeInTheDocument()
   })
 })
