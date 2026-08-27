@@ -3,8 +3,7 @@
 import type { UseFormReturn } from "react-hook-form"
 import { ExternalLink, Info, Settings2 } from "lucide-react"
 import { AlerteDoublon } from "@/components/shared/AlerteDoublon"
-import { useDoublons } from "@/lib/hooks/useDoublons"
-import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
+import { useDoublonsFormulaire } from "@/lib/hooks/useDoublonsFormulaire"
 import type { NewEnrollment } from "@/lib/contracts/enrollment"
 import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
 import { EnrollmentParentFields } from "@/components/forms/EnrollmentParentFields"
@@ -51,27 +50,7 @@ export function EnrollmentNewStudentStep({
   // Le chemin le plus emprunté : la secrétaire saisit l'élève et son
   // inscription d'un seul geste. C'est donc ici qu'une seconde fiche se
   // crée le plus facilement, et ici que le signalement compte le plus.
-  // L'année en cours, pour pouvoir dire « il a déjà un dossier ouvert »
-  // plutôt que seulement « ce nom existe ».
-  const { academicYearId } = useCurrentAcademicYearId()
-  // On s'abonne aux seuls champs du signalement : `form.watch()` sans
-  // argument redessine le formulaire entier à chaque touche de n'importe
-  // quel champ, et la personne saisit sur un téléphone d'entrée de gamme.
-  const [nom, prenom, naissance, lieu, matricule] = form.watch([
-    "last_name",
-    "first_name",
-    "birth_date",
-    "birth_place",
-    "enrollment_number",
-  ])
-  const { data: doublons } = useDoublons({
-    last_name: nom,
-    first_name: prenom,
-    birth_date: naissance ?? undefined,
-    birth_place: lieu ?? undefined,
-    enrollment_number: matricule ?? undefined,
-    academic_year_id: academicYearId,
-  })
+  const { correspondances } = useDoublonsFormulaire(form)
 
   return (
     <Form {...form}>
@@ -81,7 +60,7 @@ export function EnrollmentNewStudentStep({
         </p>
 
         <AlerteDoublon
-          correspondances={doublons?.correspondances ?? []}
+          correspondances={correspondances}
           action="Poursuivre cette inscription"
         />
 

@@ -4,6 +4,10 @@ import Link from "next/link"
 import type { Route } from "next"
 import { AlertTriangle, ArrowRight, Info } from "lucide-react"
 import type { Correspondance } from "@/lib/contracts/duplicates"
+// Le vocabulaire des statuts a un seul propriétaire : en garder une copie
+// ici, c'est ce qui a fait afficher « en attente de validation » pour un
+// dossier simplement ouvert.
+import { enrollmentStatusView } from "@/lib/enrollment/status"
 import { cn } from "@/lib/utils"
 
 interface AlerteDoublonProps {
@@ -13,11 +17,6 @@ interface AlerteDoublonProps {
   className?: string
 }
 
-const LIBELLE_STATUT: Record<string, string> = {
-  prospect: "en attente de validation",
-  en_validation: "en cours de validation",
-  valide: "validée",
-}
 
 function nomComplet(c: Correspondance) {
   return [c.last_name, c.first_name].filter(Boolean).join(" ")
@@ -34,13 +33,15 @@ function nomComplet(c: Correspondance) {
 export function AlerteDoublon({ correspondances, action, className }: AlerteDoublonProps) {
   if (correspondances.length === 0) return null
 
-  const certain = correspondances.some((c) => c.bloquant)
+  // Derive du motif plutot que recu a part : un booleen expedie a cote de sa
+  // propre source peut diverger d elle.
+  const certain = correspondances.some((c) => c.motif === "matricule")
   const dejaInscrit = correspondances.find((c) => c.inscription_annee_courante)
 
   return (
     <div
-      role="status"
-      aria-live="polite"
+      role={certain ? "alert" : "status"}
+      aria-live={certain ? "assertive" : "polite"}
       className={cn(
         "rounded-lg border p-3 text-sm",
         certain
@@ -67,8 +68,7 @@ export function AlerteDoublon({ correspondances, action, className }: AlerteDoub
           {dejaInscrit?.inscription_annee_courante && (
             <p className="text-muted-foreground">
               {nomComplet(dejaInscrit)} a déjà une inscription{" "}
-              {LIBELLE_STATUT[dejaInscrit.inscription_annee_courante.status] ??
-                dejaInscrit.inscription_annee_courante.status}
+              {enrollmentStatusView(dejaInscrit.inscription_annee_courante.status).label.toLowerCase()}
               {dejaInscrit.inscription_annee_courante.class_name
                 ? ` en ${dejaInscrit.inscription_annee_courante.class_name}`
                 : ""}{" "}

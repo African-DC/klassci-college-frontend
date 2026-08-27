@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { StudentUpdateSchema, type StudentUpdate } from "@/lib/contracts/student"
 import { useStudent, useUpdateStudent } from "@/lib/hooks/useStudents"
 import { AlerteDoublon } from "@/components/shared/AlerteDoublon"
-import { useDoublons } from "@/lib/hooks/useDoublons"
+import { useDoublonsFormulaire } from "@/lib/hooks/useDoublonsFormulaire"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -64,24 +64,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
   // `ignorer_student_id` : sans lui, corriger une faute de frappe sur un nom
   // ferait signaler la fiche à elle-même, et l'avertissement deviendrait un
   // bruit qu'on apprend à cliquer sans lire.
-  // On s'abonne aux seuls champs du signalement : `form.watch()` sans
-  // argument redessine le formulaire entier à chaque touche de n'importe
-  // quel champ, et la personne saisit sur un téléphone d'entrée de gamme.
-  const [nom, prenom, naissance, lieu, matricule] = form.watch([
-    "last_name",
-    "first_name",
-    "birth_date",
-    "birth_place",
-    "enrollment_number",
-  ])
-  const { data: doublons } = useDoublons({
-    last_name: nom,
-    first_name: prenom,
-    birth_date: naissance ?? undefined,
-    birth_place: lieu ?? undefined,
-    enrollment_number: matricule ?? undefined,
-    ignorer_student_id: studentId,
-  })
+  const { correspondances } = useDoublonsFormulaire(form, { ignorerStudentId: studentId })
 
   if (isLoading || !student) return <EditFormSkeleton />
 
@@ -94,7 +77,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <AlerteDoublon
-          correspondances={doublons?.correspondances ?? []}
+          correspondances={correspondances}
           action="Enregistrer ces modifications"
         />
 

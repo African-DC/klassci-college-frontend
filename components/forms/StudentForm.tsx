@@ -25,7 +25,7 @@ import {
 import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
 import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
 import { AlerteDoublon } from "@/components/shared/AlerteDoublon"
-import { useDoublons } from "@/lib/hooks/useDoublons"
+import { useDoublonsFormulaire } from "@/lib/hooks/useDoublonsFormulaire"
 
 interface StudentFormProps {
   onSuccess: () => void
@@ -65,29 +65,13 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
 
   // La saisie est surveillée pendant qu'elle se fait : signaler après
   // l'enregistrement arriverait trop tard, la seconde fiche existerait.
-  // On s'abonne aux seuls champs du signalement : `form.watch()` sans
-  // argument redessine le formulaire entier à chaque touche de n'importe
-  // quel champ, et la personne saisit sur un téléphone d'entrée de gamme.
-  const [nom, prenom, naissance, lieu, matricule] = form.watch([
-    "last_name",
-    "first_name",
-    "birth_date",
-    "birth_place",
-    "enrollment_number",
-  ])
-  const { data: doublons } = useDoublons({
-    last_name: nom,
-    first_name: prenom,
-    birth_date: naissance ?? undefined,
-    birth_place: lieu ?? undefined,
-    enrollment_number: matricule ?? undefined,
-  })
+  const { correspondances } = useDoublonsFormulaire(form)
 
   return (
     <Form {...form}>
       <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <AlerteDoublon
-          correspondances={doublons?.correspondances ?? []}
+          correspondances={correspondances}
           action="Créer cette fiche"
         />
 

@@ -24,7 +24,6 @@ function correspondance(surcharge: Partial<Correspondance> = {}): Correspondance
     score: 0.94,
     champs_compares: ["last_name", "first_name"],
     juge_sur_peu: true,
-    bloquant: false,
     inscription_annee_courante: null,
     ...surcharge,
   }
@@ -39,7 +38,7 @@ describe("l'alerte de doublon", () => {
   it("annonce un matricule identique comme une certitude", () => {
     render(
       <AlerteDoublon
-        correspondances={[correspondance({ motif: "matricule", bloquant: true, score: null })]}
+        correspondances={[correspondance({ motif: "matricule", score: null })]}
       />,
     )
     expect(screen.getByText(/matricule appartient déjà/i)).toBeInTheDocument()
@@ -77,14 +76,16 @@ describe("l'alerte de doublon", () => {
           correspondance({
             inscription_annee_courante: {
               enrollment_id: 818,
-              status: "prospect",
+              status: "prospect" as const,
               class_name: "3eme 2",
             },
           }),
         ]}
       />,
     )
-    expect(screen.getByText(/en attente de validation/i)).toBeInTheDocument()
+    // « Dossier ouvert » est le libellé canonique de `prospect`. L'ancien texte
+    // disait « en attente de validation », qui désigne l'état SUIVANT.
+    expect(screen.getByText(/dossier ouvert/i)).toBeInTheDocument()
     expect(screen.getByText(/3eme 2/)).toBeInTheDocument()
     expect(screen.getByText(/en créerait une seconde/i)).toBeInTheDocument()
   })

@@ -8,35 +8,6 @@ import { useDebounce } from "./useDebounce"
 /** En dessous, il n'y a pas de quoi interroger le serveur. */
 const LONGUEUR_MINIMALE = 3
 
-/** L'ordre est figé : c'est lui qui rend la clé de cache stable. */
-const CHAMPS = [
-  "last_name",
-  "first_name",
-  "birth_date",
-  "birth_place",
-  "enrollment_number",
-  "academic_year_id",
-  "ignorer_student_id",
-] as const
-
-/**
- * La clé de cache, construite depuis les valeurs déjà temporisées.
- *
- * C'est la clé qui déclenche la requête. Y laisser entrer un champ non
- * temporisé suffit à repartir une requête par touche : la temporisation des
- * autres champs n'y change rien, et la promesse de ne pas interroger le
- * serveur à chaque lettre serait fausse pour ceux-là.
- *
- * Les valeurs vides sont retirées plutôt que distinguées : « undefined » et
- * chaîne vide désignent la même absence, et les garder séparées doublerait le
- * cache sans rien apporter.
- */
-export function cleDoublons(params: DoublonsParams): Array<[string, unknown]> {
-  return CHAMPS.map((champ) => [champ, params[champ]] as [string, unknown]).filter(
-    ([, valeur]) => valeur !== undefined && valeur !== null && valeur !== "",
-  )
-}
-
 /**
  * Cherche les doublons pendant que la personne saisit.
  *
@@ -71,7 +42,7 @@ export function useDoublons(params: DoublonsParams, actif = true) {
   }
 
   return useQuery({
-    queryKey: ["doublons", cleDoublons(requete)] as const,
+    queryKey: ["doublons", requete] as const,
     queryFn: () => duplicatesApi.chercher(requete),
     enabled: actif && assezSaisi,
     staleTime: 1000 * 30,

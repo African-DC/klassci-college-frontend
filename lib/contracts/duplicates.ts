@@ -15,7 +15,7 @@ export const CorrespondanceSchema = z.object({
   birth_date: z.string().nullable(),
   birth_place: z.string().nullable(),
   /** « matricule » (certain) ou « ressemblance ». */
-  motif: z.string(),
+  motif: z.enum(["matricule", "ressemblance"]),
   score: z.number().nullable(),
   champs_compares: z.array(z.string()),
   /**
@@ -27,7 +27,6 @@ export const CorrespondanceSchema = z.object({
    * cas.
    */
   juge_sur_peu: z.boolean(),
-  bloquant: z.boolean(),
   inscription_annee_courante: InscriptionExistanteSchema.nullable(),
 })
 
