@@ -3,7 +3,7 @@
  *
  * C'est la clé de cache qui déclenche la requête : un seul champ non temporisé
  * qui y entre suffit à repartir à chaque touche, et la promesse du hook devient
- * fausse pour celui-là. La date et le lieu de naissance étaient dans ce cas.
+ * fausse pour celui-là. La date de naissance était dans ce cas.
  *
  * Le test exerce `useDoublons` lui-même. Une version antérieure appelait
  * `useDebounce` directement : elle restait verte même en retirant le câblage du
