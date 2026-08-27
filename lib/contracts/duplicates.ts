@@ -13,7 +13,7 @@ export const MatchSchema = z.object({
   first_name: z.string(),
   enrollment_number: z.string().nullable(),
   birth_date: z.string().nullable(),
-  /** « matricule » (certain) ou « ressemblance ». */
+  /** Certitude (matricule identique) ou ressemblance de l'état civil. */
   reason: z.enum(["enrollment_number", "similarity"]),
   score: z.number().nullable(),
   /**

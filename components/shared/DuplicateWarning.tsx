@@ -85,7 +85,7 @@ export function AlerteDoublon({
     return <EtatSansCorrespondance echec={echec} enCours={enCours} truncated={truncated} className={className} />
   }
 
-  // Derive du reason plutot que recu a part : un booleen expedie a cote de sa
+  // Dérivé du motif plutôt que reçu à part : un booleen expedie a cote de sa
   // propre source peut diverger d'elle.
   const certain = matches.some((c) => c.reason === "enrollment_number")
   const dejaInscrit = matches.find((c) => c.current_year_enrollment)
