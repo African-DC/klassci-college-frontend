@@ -75,9 +75,12 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        {/* Pas d'`action` ici : la fiche modifiée s'exclut elle-même, donc la
+            correspondance est toujours un AUTRE élève. « Enregistrer en
+            créerait un second » serait faux, et une secrétaire qui le croit
+            renonce à une correction de nom légitime. */}
         <AlerteDoublon
           {...doublons}
-          action="Enregistrer ces modifications"
         />
 
         <div className="grid grid-cols-2 gap-4">

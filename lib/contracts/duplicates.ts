@@ -30,7 +30,6 @@ export const CorrespondanceSchema = z.object({
 
 export const DoublonsSchema = z.object({
   correspondances: z.array(CorrespondanceSchema),
-  total: z.number(),
   /**
    * Vrai quand le plafond de candidats a été atteint.
    *

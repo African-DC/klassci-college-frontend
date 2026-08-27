@@ -42,6 +42,8 @@ describe("la temporisation de la recherche de doublons", () => {
   afterEach(() => vi.useRealTimers())
 
   it.each([
+    // Le nom aussi : il portait le titre du test sans etre couvert.
+    ["last_name", "KOUASS", "KOUASSI"],
     ["birth_date", "2010-03-1", "2010-03-14"],
     ["enrollment_number", "ECER08", "ECER088"],
   ])("retient %s comme elle retient le nom", (champ, avantSaisie, apresSaisie) => {
@@ -66,7 +68,9 @@ describe("la temporisation de la recherche de doublons", () => {
   it("ne part pas tant que la saisie est trop courte", () => {
     // « KO » remonterait la moitié de l'établissement.
     const { client, wrapper } = enveloppe()
-    renderHook(() => useDoublons({ last_name: "KO" }), { wrapper })
+    // Avec un prénom : sans lui, c'est la règle « nom seul » qui bloque, et
+    // le test resterait vert avec le seuil de longueur ramené à 1.
+    renderHook(() => useDoublons({ last_name: "KO", first_name: "Aya" }), { wrapper })
     act(() => void vi.advanceTimersByTime(1000))
     expect(client.getQueryCache().getAll().filter((q) => q.state.fetchStatus !== "idle")).toHaveLength(0)
   })

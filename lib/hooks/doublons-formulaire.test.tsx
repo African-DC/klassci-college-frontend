@@ -120,13 +120,13 @@ describe("ce que le hook rend, et pas seulement ce qu'il demande", () => {
   }
 
   it("transmet les correspondances reçues", () => {
-    const { result } = monter({ correspondances: [correspondance], total: 1, tronque: false })
+    const { result } = monter({ correspondances: [correspondance], tronque: false })
     expect(result.current.correspondances).toHaveLength(1)
     expect(result.current.correspondances[0].enrollment_number).toBe("ECER0882")
   })
 
   it("transmet la troncature", () => {
-    const { result } = monter({ correspondances: [], total: 0, tronque: true })
+    const { result } = monter({ correspondances: [], tronque: true })
     expect(result.current.tronque).toBe(true)
   })
 
@@ -173,5 +173,54 @@ describe("l'échec doit remonter jusqu'à l'écran", () => {
       requete.setState({ ...requete.state, status: "error", error: new Error("réseau"), fetchStatus: "idle" })
     })
     await vi.waitFor(() => expect(result.current.echec).toBe(true))
+  })
+})
+
+describe("les deux dernières garanties du hook", () => {
+  it("rend `enCours` pendant la requête", async () => {
+    // Sans cela, les 400 ms de temporisation plus l'aller-retour se lisent
+    // comme « aucun doublon » sur la connexion d'une école.
+    vi.useRealTimers()
+    const { client, wrapper } = enveloppe()
+    const { result } = renderHook(
+      () => {
+        const form = useForm<Champs>({
+          defaultValues: { last_name: "KOUASSI", first_name: "Aya" },
+        })
+        return useDoublonsFormulaire(form)
+      },
+      { wrapper },
+    )
+    await vi.waitFor(() => expect(client.getQueryCache().getAll().length).toBeGreaterThan(0))
+    const requete = client.getQueryCache().getAll()[0]
+    act(() => requete.setState({ ...requete.state, fetchStatus: "fetching" }))
+    await vi.waitFor(() => expect(result.current.enCours).toBe(true))
+  })
+
+  it("surveille les quatre champs, dans le bon champ", () => {
+    // Le tableau des noms et la destructuration sont côte à côte pour que le
+    // décalage se voie ; ce test le rend impossible.
+    vi.useFakeTimers()
+    const { client, wrapper } = enveloppe()
+    renderHook(
+      () => {
+        const form = useForm<Champs>({
+          defaultValues: {
+            last_name: "KOUASSI",
+            first_name: "Aya",
+            birth_date: "2010-03-14",
+            enrollment_number: "ECER0882",
+          },
+        })
+        return useDoublonsFormulaire(form)
+      },
+      { wrapper },
+    )
+    act(() => void vi.advanceTimersByTime(400))
+    const cle = JSON.stringify(client.getQueryCache().getAll()[0]?.queryKey)
+    expect(cle).toContain('"last_name":"KOUASSI"')
+    expect(cle).toContain('"first_name":"Aya"')
+    expect(cle).toContain('"birth_date":"2010-03-14"')
+    expect(cle).toContain('"enrollment_number":"ECER0882"')
   })
 })

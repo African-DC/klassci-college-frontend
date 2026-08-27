@@ -224,3 +224,21 @@ describe("la phrase que la secrétaire lit avant de décider", () => {
     expect(phrase).toContain("en créerait un second")
   })
 })
+
+describe("le nombre de correspondances", () => {
+  it("reste au singulier pour une seule", () => {
+    // « 1 élèves déjà enregistrés ressemblent » est la première ligne que la
+    // secrétaire lit, et ce serait du français cassé.
+    render(<AlerteDoublon correspondances={[correspondance()]} />)
+    expect(screen.getByText(/^Un élève déjà enregistré ressemble/)).toBeInTheDocument()
+  })
+
+  it("passe au pluriel au-delà", () => {
+    render(
+      <AlerteDoublon
+        correspondances={[correspondance({ student_id: 1 }), correspondance({ student_id: 2 })]}
+      />,
+    )
+    expect(screen.getByText(/^2 élèves déjà enregistrés ressemblent/)).toBeInTheDocument()
+  })
+})
