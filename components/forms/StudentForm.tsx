@@ -24,8 +24,8 @@ import {
 } from "@/components/ui/select"
 import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
 import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
-import { AlerteDoublon } from "@/components/shared/DuplicateWarning"
-import { useDoublonsFormulaire } from "@/lib/hooks/useFormDuplicates"
+import { DuplicateWarning } from "@/components/shared/DuplicateWarning"
+import { useFormDuplicates } from "@/lib/hooks/useFormDuplicates"
 
 interface StudentFormProps {
   onSuccess: () => void
@@ -63,15 +63,15 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
     })
   }
 
-  // La saisie est surveillée pendant qu'elle se fait : signaler après
+  // La typed est surveillée pendant qu'elle se fait : signaler après
   // l'enregistrement arriverait trop tard, la seconde fiche existerait.
-  const doublons = useDoublonsFormulaire(form)
+  const duplicates = useFormDuplicates(form)
 
   return (
     <Form {...form}>
       <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-        <AlerteDoublon
-          {...doublons}
+        <DuplicateWarning
+          {...duplicates}
           action="Créer cette fiche"
         />
 

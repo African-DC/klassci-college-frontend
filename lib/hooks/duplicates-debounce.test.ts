@@ -5,7 +5,7 @@
  * qui y entre suffit à repartir à chaque touche, et la promesse du hook devient
  * fausse pour celui-là. La date de naissance était dans ce cas.
  *
- * Le test exerce `useDoublons` lui-même. Une version antérieure appelait
+ * Le test exerce `useDuplicates` lui-même. Une version antérieure appelait
  * `useDebounce` directement : elle restait verte même en retirant le câblage du
  * lieu de naissance, donc elle ne gardait rien.
  */
@@ -16,7 +16,7 @@ import { act } from "react"
 import type { ReactNode } from "react"
 import { createElement } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { useDoublons } from "./useDuplicates"
+import { useDuplicates } from "./useDuplicates"
 
 function enveloppe() {
   const client = new QueryClient({
@@ -37,7 +37,7 @@ function cles(client: QueryClient): string[] {
     .map((q) => JSON.stringify(q.queryKey))
 }
 
-describe("la temporisation de la recherche de doublons", () => {
+describe("la temporisation de la recherche de duplicates", () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
@@ -53,7 +53,7 @@ describe("la temporisation de la recherche de doublons", () => {
     // un seul oubli suffit à repartir une requête par touche.
     const { client, wrapper } = enveloppe()
     const { rerender } = renderHook((props: { valeur: string }) =>
-      useDoublons({ last_name: "KOUASSI", first_name: "Aya", [champ]: props.valeur }), {
+      useDuplicates({ last_name: "KOUASSI", first_name: "Aya", [champ]: props.valeur }), {
       wrapper,
       initialProps: { valeur: avantSaisie },
     })
@@ -67,12 +67,12 @@ describe("la temporisation de la recherche de doublons", () => {
     expect(cles(client).length).toBeGreaterThan(avant.length)
   })
 
-  it("ne part pas tant que la saisie est trop courte", () => {
+  it("ne part pas tant que la typed est trop courte", () => {
     // « KO » remonterait la moitié de l'établissement.
     const { client, wrapper } = enveloppe()
     // Avec un prénom : sans lui, c'est la règle « nom seul » qui bloque, et
     // le test resterait vert avec le seuil de longueur ramené à 1.
-    renderHook(() => useDoublons({ last_name: "KO", first_name: "Aya" }), { wrapper })
+    renderHook(() => useDuplicates({ last_name: "KO", first_name: "Aya" }), { wrapper })
     act(() => void vi.advanceTimersByTime(1000))
     expect(client.getQueryCache().getAll().filter((q) => q.state.fetchStatus !== "idle")).toHaveLength(0)
   })

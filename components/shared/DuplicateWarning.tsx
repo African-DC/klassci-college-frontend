@@ -10,12 +10,12 @@ import type { Match } from "@/lib/contracts/duplicates"
 import { enrollmentStatusView } from "@/lib/enrollment/status"
 import { cn } from "@/lib/utils"
 
-interface AlerteDoublonProps {
+interface DuplicateWarningProps {
   matches: Match[]
   /** Une vérification en cours ne doit pas ressembler à « aucun doublon ». */
-  enCours?: boolean
+  pending?: boolean
   /** Ni une vérification impossible : le silence serait pris pour un feu vert. */
-  echec?: boolean
+  failed?: boolean
   /** Le serveur a arrêté sa recherche avant la fin. */
   truncated?: boolean
   /** Le libellé de l'action en cours, pour que le message reste concret. */
@@ -23,7 +23,7 @@ interface AlerteDoublonProps {
   className?: string
 }
 
-function nomComplet(c: Match) {
+function fullName(c: Match) {
   return [c.last_name, c.first_name].filter(Boolean).join(" ")
 }
 
@@ -39,21 +39,21 @@ function nomComplet(c: Match) {
  * documentation des deux côtés expliquait pourquoi il ne fallait pas se taire,
  * et l'écran se taisait.
  */
-function EtatSansCorrespondance({
-  echec,
-  enCours,
+function NoMatchState({
+  failed,
+  pending,
   truncated,
   className,
 }: {
-  echec: boolean
-  enCours: boolean
+  failed: boolean
+  pending: boolean
   truncated: boolean
   className?: string
 }) {
-  const message = echec
-    ? "Vérification des doublons impossible. Contrôlez le matricule avant de continuer."
-    : enCours
-      ? "Vérification des doublons…"
+  const message = failed
+    ? "Vérification des duplicates impossible. Contrôlez le matricule avant de continuer."
+    : pending
+      ? "Vérification des duplicates…"
       : truncated
         ? "Recherche interrompue avant la fin : rien trouvé parmi les premières fiches examinées. Contrôlez le matricule avant de continuer."
         : null
@@ -73,22 +73,22 @@ function EtatSansCorrespondance({
  * est une certitude et se dit comme telle. Une ressemblance est une question,
  * et se pose comme une question.
  */
-export function AlerteDoublon({
+export function DuplicateWarning({
   matches,
   action,
   className,
-  enCours = false,
-  echec = false,
+  pending = false,
+  failed = false,
   truncated = false,
-}: AlerteDoublonProps) {
+}: DuplicateWarningProps) {
   if (matches.length === 0) {
-    return <EtatSansCorrespondance echec={echec} enCours={enCours} truncated={truncated} className={className} />
+    return <NoMatchState failed={failed} pending={pending} truncated={truncated} className={className} />
   }
 
   // Dérivé du motif plutôt que reçu à part : un booleen expedie a cote de sa
   // propre source peut diverger d'elle.
   const certain = matches.some((c) => c.reason === "enrollment_number")
-  const dejaInscrit = matches.find((c) => c.current_year_enrollment)
+  const alreadyEnrolled = matches.find((c) => c.current_year_enrollment)
 
   return (
     <div
@@ -113,23 +113,23 @@ export function AlerteDoublon({
             {certain
               ? "Ce matricule appartient déjà à un élève."
               : matches.length === 1
-                ? "Un élève déjà enregistré ressemble à cette saisie."
-                : `${matches.length} élèves déjà enregistrés ressemblent à cette saisie.`}
+                ? "Un élève déjà enregistré ressemble à cette typed."
+                : `${matches.length} élèves déjà enregistrés ressemblent à cette typed.`}
           </p>
 
-          {dejaInscrit?.current_year_enrollment && (
+          {alreadyEnrolled?.current_year_enrollment && (
             <p className="text-muted-foreground">
               {/* Le libellé est celui d'un badge : « Dossier ouvert », « Inscrit ».
                   Le couler dans la phrase donnait « a déjà une inscription dossier
                   ouvert en 3eme 2 ». Entre parenthèses, il redevient lisible quel
                   que soit le statut. */}
-              {nomComplet(dejaInscrit)} a déjà un dossier pour cette année
-              {dejaInscrit.current_year_enrollment.class_name
-                ? ` en ${dejaInscrit.current_year_enrollment.class_name}`
+              {fullName(alreadyEnrolled)} a déjà un dossier pour cette année
+              {alreadyEnrolled.current_year_enrollment.class_name
+                ? ` en ${alreadyEnrolled.current_year_enrollment.class_name}`
                 : ""}{" "}
               (statut :{" "}
               {enrollmentStatusView(
-                dejaInscrit.current_year_enrollment.status,
+                alreadyEnrolled.current_year_enrollment.status,
               ).label.toLowerCase()}
               ).{action ? ` ${action} en créerait un second.` : ""}
             </p>
@@ -142,7 +142,7 @@ export function AlerteDoublon({
                   href={`/admin/students/${c.student_id}` as Route}
                   className="inline-flex h-11 items-center gap-1 font-medium underline underline-offset-2 sm:h-auto"
                 >
-                  {nomComplet(c)}
+                  {fullName(c)}
                   <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </Link>
                 {c.enrollment_number && (
@@ -175,7 +175,7 @@ export function AlerteDoublon({
             </p>
           )}
 
-          {echec && (
+          {failed && (
             <p className="text-xs text-muted-foreground">
               La dernière vérification a échoué : cette liste peut être périmée.
             </p>

@@ -2,7 +2,7 @@
 
 import type { FieldValues, Path, UseFormReturn } from "react-hook-form"
 import { useCurrentAcademicYearId } from "./useCurrentAcademicYear"
-import { useDoublons } from "./useDuplicates"
+import { useDuplicates } from "./useDuplicates"
 import type { Match } from "@/lib/contracts/duplicates"
 
 /**
@@ -14,7 +14,7 @@ import type { Match } from "@/lib/contracts/duplicates"
  * qui n'aurait aucun de ces champs compilerait et ne comparerait rien — c'est
  * le prix de la souplesse, et il vaut mieux le dire que le nier.
  */
-export interface ChampsIdentite extends FieldValues {
+export interface IdentityFields extends FieldValues {
   last_name?: string | null
   first_name?: string | null
   birth_date?: string | null
@@ -34,13 +34,13 @@ export interface ChampsIdentite extends FieldValues {
  * L'année vient d'ici par défaut : aucun appelant n'a plus à y penser, et la
  * divergence redevient impossible.
  */
-export function useDoublonsFormulaire<T extends ChampsIdentite>(
+export function useFormDuplicates<T extends IdentityFields>(
   form: UseFormReturn<T>,
-  options: { ignorerStudentId?: number } = {},
+  options: { excludeStudentId?: number } = {},
 ): {
   matches: Match[]
-  enCours: boolean
-  echec: boolean
+  pending: boolean
+  failed: boolean
   truncated: boolean
 } {
   const { academicYearId } = useCurrentAcademicYearId()
@@ -58,13 +58,13 @@ export function useDoublonsFormulaire<T extends ChampsIdentite>(
     "enrollment_number",
   ] as Path<T>[]) as (string | null | undefined)[]
 
-  const { data, isFetching, isError } = useDoublons({
+  const { data, isFetching, isError } = useDuplicates({
     last_name: last_name ?? undefined,
     first_name: first_name ?? undefined,
     birth_date: birth_date ?? undefined,
     enrollment_number: enrollment_number ?? undefined,
     academic_year_id: academicYearId,
-    exclude_student_id: options.ignorerStudentId,
+    exclude_student_id: options.excludeStudentId,
   })
 
   return {
@@ -72,8 +72,8 @@ export function useDoublonsFormulaire<T extends ChampsIdentite>(
     // Sans ces deux-là, une vérification en cours et une vérification
     // impossible ressemblent toutes deux à « aucun doublon » — sur un
     // formulaire dont le seul objet est d'empêcher une erreur.
-    enCours: isFetching,
-    echec: isError,
+    pending: isFetching,
+    failed: isError,
     truncated: data?.truncated ?? false,
   }
 }

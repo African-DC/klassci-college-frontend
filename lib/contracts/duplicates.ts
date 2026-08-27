@@ -22,7 +22,7 @@ export const MatchSchema = z.object({
    * Le score ne porte alors que sur une partie de l'identité. Les fiches
    * reprises de l'ancien système sont toutes dans ce cas : sans cette
    * réserve, un « 100 % » obtenu sur le seul nom se lirait comme une
-   * correspondance complète.
+   * match complète.
    */
   partial_identity: z.boolean(),
   current_year_enrollment: ExistingEnrollmentSchema.nullable(),

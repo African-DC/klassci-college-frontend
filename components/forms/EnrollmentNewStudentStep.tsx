@@ -2,8 +2,8 @@
 
 import type { UseFormReturn } from "react-hook-form"
 import { ExternalLink, Info, Settings2 } from "lucide-react"
-import { AlerteDoublon } from "@/components/shared/DuplicateWarning"
-import { useDoublonsFormulaire } from "@/lib/hooks/useFormDuplicates"
+import { DuplicateWarning } from "@/components/shared/DuplicateWarning"
+import { useFormDuplicates } from "@/lib/hooks/useFormDuplicates"
 import type { NewEnrollment } from "@/lib/contracts/enrollment"
 import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
 import { EnrollmentParentFields } from "@/components/forms/EnrollmentParentFields"
@@ -50,7 +50,7 @@ export function EnrollmentNewStudentStep({
   // Le chemin le plus emprunté : la secrétaire saisit l'élève et son
   // inscription d'un seul geste. C'est donc ici qu'une seconde fiche se
   // crée le plus facilement, et ici que le signalement compte le plus.
-  const doublons = useDoublonsFormulaire(form)
+  const duplicates = useFormDuplicates(form)
 
   return (
     <Form {...form}>
@@ -59,8 +59,8 @@ export function EnrollmentNewStudentStep({
           Renseignez les informations de l&apos;élève.
         </p>
 
-        <AlerteDoublon
-          {...doublons}
+        <DuplicateWarning
+          {...duplicates}
           action="Poursuivre cette inscription"
         />
 

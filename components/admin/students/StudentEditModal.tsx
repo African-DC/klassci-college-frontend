@@ -4,8 +4,8 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { StudentUpdateSchema, type StudentUpdate } from "@/lib/contracts/student"
 import { useStudent, useUpdateStudent } from "@/lib/hooks/useStudents"
-import { AlerteDoublon } from "@/components/shared/DuplicateWarning"
-import { useDoublonsFormulaire } from "@/lib/hooks/useFormDuplicates"
+import { DuplicateWarning } from "@/components/shared/DuplicateWarning"
+import { useFormDuplicates } from "@/lib/hooks/useFormDuplicates"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -64,7 +64,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
   // `exclude_student_id` : sans lui, corriger une faute de frappe sur un nom
   // ferait signaler la fiche à elle-même, et l'avertissement deviendrait un
   // bruit qu'on apprend à cliquer sans lire.
-  const doublons = useDoublonsFormulaire(form, { ignorerStudentId: studentId })
+  const duplicates = useFormDuplicates(form, { excludeStudentId: studentId })
 
   if (isLoading || !student) return <EditFormSkeleton />
 
@@ -76,11 +76,11 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         {/* Pas d'`action` ici : la fiche modifiée s'exclut elle-même, donc la
-            correspondance est toujours un AUTRE élève. « Enregistrer en
+            match est toujours un AUTRE élève. « Enregistrer en
             créerait un second » serait faux, et une secrétaire qui le croit
             renonce à une correction de nom légitime. */}
-        <AlerteDoublon
-          {...doublons}
+        <DuplicateWarning
+          {...duplicates}
         />
 
         <div className="grid grid-cols-2 gap-4">

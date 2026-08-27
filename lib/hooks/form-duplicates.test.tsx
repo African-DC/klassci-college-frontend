@@ -15,7 +15,8 @@ import type { ReactNode } from "react"
 import { createElement } from "react"
 import { useForm } from "react-hook-form"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { useDoublonsFormulaire } from "./useFormDuplicates"
+import { useFormDuplicates } from "./useFormDuplicates"
+import type { Match } from "@/lib/contracts/duplicates"
 
 vi.mock("./useCurrentAcademicYear", () => ({
   useCurrentAcademicYearId: () => ({ academicYearId: 7, years: [], isLoading: false }),
@@ -48,7 +49,7 @@ describe("le branchement du signalement sur un formulaire", () => {
         const form = useForm<Champs>({
           defaultValues: { last_name: "KOUASSI", first_name: "Aya" },
         })
-        return useDoublonsFormulaire(form)
+        return useFormDuplicates(form)
       },
       { wrapper },
     )
@@ -65,7 +66,7 @@ describe("le branchement du signalement sur un formulaire", () => {
     renderHook(
       () => {
         const form = useForm<Champs>({ defaultValues: { last_name: "KOUASSI" } })
-        return useDoublonsFormulaire(form)
+        return useFormDuplicates(form)
       },
       { wrapper },
     )
@@ -84,17 +85,17 @@ describe("ce que le hook rend, et pas seulement ce qu'il demande", () => {
    * Les deux tests ci-dessus n'observent que les clés de cache. Chacune des
    * quatre valeurs rendues pouvait donc être remplacée par une constante sans
    * qu'un test bouge — dont `truncated`, le signal qu'une passe de revue venait
-   * de rattraper dans le composant, et `echec`, qui empêche une vérification
+   * de rattraper dans le composant, et `failed`, qui empêche une vérification
    * ratée de passer pour un feu vert.
    */
-  function monter(reponse: unknown, options?: { ignorerStudentId?: number }) {
+  function monter(reponse: unknown, options?: { excludeStudentId?: number }) {
     const { client, wrapper } = enveloppe()
     const rendu = renderHook(
       () => {
         const form = useForm<Champs>({
           defaultValues: { last_name: "KOUASSI", first_name: "Aya" },
         })
-        return useDoublonsFormulaire(form, options)
+        return useFormDuplicates(form, options)
       },
       { wrapper },
     )
@@ -107,20 +108,22 @@ describe("ce que le hook rend, et pas seulement ce qu'il demande", () => {
     return rendu
   }
 
-  const correspondance = {
+  // Annotée : sans le type, `monter(reponse: unknown)` blanchissait une
+  // valeur hors énumération et la fixture mentait sur le contrat.
+  const match: Match = {
     student_id: 112,
     last_name: "KOUASSI",
     first_name: "Aya",
     enrollment_number: "ECER0882",
     birth_date: null,
-    reason: "ressemblance" as const,
+    reason: "similarity" as const,
     score: 0.94,
     partial_identity: true,
     current_year_enrollment: null,
   }
 
   it("transmet les matches reçues", () => {
-    const { result } = monter({ matches: [correspondance], truncated: false })
+    const { result } = monter({ matches: [match], truncated: false })
     expect(result.current.matches).toHaveLength(1)
     expect(result.current.matches[0].enrollment_number).toBe("ECER0882")
   })
@@ -137,7 +140,7 @@ describe("ce que le hook rend, et pas seulement ce qu'il demande", () => {
         const form = useForm<Champs>({
           defaultValues: { last_name: "KOUASSI", first_name: "Aya" },
         })
-        return useDoublonsFormulaire(form, { ignorerStudentId: 42 })
+        return useFormDuplicates(form, { excludeStudentId: 42 })
       },
       { wrapper },
     )
@@ -151,7 +154,7 @@ describe("l'échec doit remonter jusqu'à l'écran", () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
-  it("rend `echec` quand la requête a échoué", async () => {
+  it("rend `failed` quand la requête a échoué", async () => {
     // Sans cette remontée, une vérification ratée se tait, et le silence de
     // l'écran veut dire « rien trouvé ». C'est le seul résultat que toute la
     // conception cherche à empêcher.
@@ -162,22 +165,22 @@ describe("l'échec doit remonter jusqu'à l'écran", () => {
         const form = useForm<Champs>({
           defaultValues: { last_name: "KOUASSI", first_name: "Aya" },
         })
-        return useDoublonsFormulaire(form)
+        return useFormDuplicates(form)
       },
       { wrapper },
     )
 
     await vi.waitFor(() => expect(client.getQueryCache().getAll().length).toBeGreaterThan(0))
-    const requete = client.getQueryCache().getAll()[0]
+    const query = client.getQueryCache().getAll()[0]
     act(() => {
-      requete.setState({ ...requete.state, status: "error", error: new Error("réseau"), fetchStatus: "idle" })
+      query.setState({ ...query.state, status: "error", error: new Error("réseau"), fetchStatus: "idle" })
     })
-    await vi.waitFor(() => expect(result.current.echec).toBe(true))
+    await vi.waitFor(() => expect(result.current.failed).toBe(true))
   })
 })
 
 describe("les deux dernières garanties du hook", () => {
-  it("rend `enCours` pendant la requête", async () => {
+  it("rend `pending` pendant la requête", async () => {
     // Sans cela, les 400 ms de temporisation plus l'aller-retour se lisent
     // comme « aucun doublon » sur la connexion d'une école.
     vi.useRealTimers()
@@ -187,14 +190,14 @@ describe("les deux dernières garanties du hook", () => {
         const form = useForm<Champs>({
           defaultValues: { last_name: "KOUASSI", first_name: "Aya" },
         })
-        return useDoublonsFormulaire(form)
+        return useFormDuplicates(form)
       },
       { wrapper },
     )
     await vi.waitFor(() => expect(client.getQueryCache().getAll().length).toBeGreaterThan(0))
-    const requete = client.getQueryCache().getAll()[0]
-    act(() => requete.setState({ ...requete.state, fetchStatus: "fetching" }))
-    await vi.waitFor(() => expect(result.current.enCours).toBe(true))
+    const query = client.getQueryCache().getAll()[0]
+    act(() => query.setState({ ...query.state, fetchStatus: "fetching" }))
+    await vi.waitFor(() => expect(result.current.pending).toBe(true))
   })
 
   it("envoie chaque champ surveillé dans le bon paramètre", () => {
@@ -212,7 +215,7 @@ describe("les deux dernières garanties du hook", () => {
             enrollment_number: "ECER0882",
           },
         })
-        return useDoublonsFormulaire(form)
+        return useFormDuplicates(form)
       },
       { wrapper },
     )

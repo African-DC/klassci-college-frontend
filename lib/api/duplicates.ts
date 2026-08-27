@@ -6,15 +6,15 @@ export const duplicatesApi = {
   /**
    * Les fiches qui pourraient déjà être cet élève.
    *
-   * Ne modifie rien : c'est une lecture, appelée pendant la saisie.
+   * Ne modifie rien : c'est une lecture, appelée pendant la typed.
    */
-  async chercher(params: DuplicatesParams): Promise<Duplicates> {
+  async search(params: DuplicatesParams): Promise<Duplicates> {
     const query = new URLSearchParams()
     for (const [cle, valeur] of Object.entries(params)) {
       if (valeur === undefined || valeur === null || valeur === "") continue
       query.set(cle, String(valeur))
     }
     const brut = await apiFetch<unknown>(`/admin/students/duplicates?${query.toString()}`)
-    return safeValidate(DuplicatesSchema, brut, "duplicatesApi.chercher")
+    return safeValidate(DuplicatesSchema, brut, "duplicatesApi.search")
   },
 }

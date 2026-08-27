@@ -6,10 +6,10 @@ import type { DuplicatesParams } from "@/lib/contracts/duplicates"
 import { useDebounce } from "./useDebounce"
 
 /** En dessous, il n'y a pas de quoi interroger le serveur. */
-const LONGUEUR_MINIMALE = 3
+const MIN_LENGTH = 3
 
 /**
- * Cherche les doublons pendant que la personne saisit.
+ * Cherche les duplicates pendant que la personne saisit.
  *
  * La recherche est temporisée : interroger le serveur à chaque touche coûterait
  * une requête par lettre, sur une connexion qui n'est pas la nôtre. Elle ne part
@@ -17,7 +17,7 @@ const LONGUEUR_MINIMALE = 3
  * l'établissement et le signalement deviendrait du bruit qu'on apprend à
  * ignorer.
  */
-export function useDoublons(params: DuplicatesParams) {
+export function useDuplicates(params: DuplicatesParams) {
   // Tous les champs saisis au clavier sont temporisés, pas seulement les trois
   // qui décident du déclenchement.
   const nom = useDebounce(params.last_name ?? "", 400)
@@ -29,12 +29,12 @@ export function useDoublons(params: DuplicatesParams) {
   // au moins un second élément. Une version antérieure déclenchait dès que
   // l'un des trois champs atteignait trois caractères, donc le nom seul
   // partait en requête que le serveur refusait de traiter.
-  const assezSaisi =
-    matricule.trim().length >= LONGUEUR_MINIMALE ||
-    (nom.trim().length >= LONGUEUR_MINIMALE &&
+  const enoughTyped =
+    matricule.trim().length >= MIN_LENGTH ||
+    (nom.trim().length >= MIN_LENGTH &&
       (prenom.trim().length > 0 || naissance.trim().length > 0))
 
-  const requete: DuplicatesParams = {
+  const query: DuplicatesParams = {
     academic_year_id: params.academic_year_id,
     exclude_student_id: params.exclude_student_id,
     last_name: nom || undefined,
@@ -44,9 +44,9 @@ export function useDoublons(params: DuplicatesParams) {
   }
 
   return useQuery({
-    queryKey: ["doublons", requete] as const,
-    queryFn: () => duplicatesApi.chercher(requete),
-    enabled: assezSaisi,
+    queryKey: ["duplicates", query] as const,
+    queryFn: () => duplicatesApi.search(query),
+    enabled: enoughTyped,
     staleTime: 1000 * 30,
     // Une erreur ici ne doit pas empêcher de créer un élève : le signalement
     // est une aide, pas une condition.
