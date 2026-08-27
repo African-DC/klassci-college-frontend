@@ -42,13 +42,13 @@ describe("l'alerte de doublon", () => {
     expect(screen.getByText(/matricule appartient déjà/i)).toBeInTheDocument()
   })
 
-  it("dit quand une partie de l état civil manque", () => {
+  it("dit quand une partie de l'état civil manque", () => {
     // La moitié du sens : « 94 % » calculé sur deux champs n'engage pas autant
     // que « 94 % » calculé sur l'état civil complet, et toutes les fiches
     // reprises de l'ancien système sont dans ce cas.
     render(<AlerteDoublon correspondances={[correspondance()]} />)
     // La réserve ne nomme plus les champs : elle disait « le nom et le prénom »
-    // pour une comparaison qui n avait vu que le nom.
+    // pour une comparaison qui n'avait vu que le nom.
     expect(screen.getByText(/état civil incomplet/i)).toBeInTheDocument()
   })
 
@@ -240,5 +240,20 @@ describe("le nombre de correspondances", () => {
       />,
     )
     expect(screen.getByText(/^2 élèves déjà enregistrés ressemblent/)).toBeInTheDocument()
+  })
+})
+
+describe("le pourcentage, seul chiffre que la secrétaire pèse", () => {
+  it("affiche le score arrondi", () => {
+    // Le qualificatif « état civil incomplet » était testé ; le nombre qu'il
+    // qualifie ne l'était pas.
+    render(<AlerteDoublon correspondances={[correspondance({ score: 0.8437 })]} />)
+    expect(screen.getByText(/84 % de ressemblance/)).toBeInTheDocument()
+  })
+
+  it("n'en affiche aucun pour un matricule identique", () => {
+    // Une certitude ne se chiffre pas : elle ne passe pas par le score.
+    render(<AlerteDoublon correspondances={[correspondance({ motif: "matricule", score: null })]} />)
+    expect(screen.queryByText(/de ressemblance/)).not.toBeInTheDocument()
   })
 })

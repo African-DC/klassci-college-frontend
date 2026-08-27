@@ -28,14 +28,6 @@ function nomComplet(c: Correspondance) {
 }
 
 /**
- * Ce que le guichet doit voir avant de créer une fiche de plus.
- *
- * Le ton change avec la certitude, parce qu'un avertissement qui crie pareil
- * dans tous les cas finit par être cliqué sans être lu. Un matricule identique
- * est une certitude et se dit comme telle. Une ressemblance est une question,
- * et se pose comme une question.
- */
-/**
  * Pourquoi il n'y a rien à montrer.
  *
  * Une liste vide a quatre sens : vérifié et propre, en cours, échoué, ou
@@ -73,6 +65,14 @@ function EtatSansCorrespondance({
     </p>
   )
 }
+/**
+ * Ce que le guichet doit voir avant de créer une fiche de plus.
+ *
+ * Le ton change avec la certitude, parce qu'un avertissement qui crie pareil
+ * dans tous les cas finit par être cliqué sans être lu. Un matricule identique
+ * est une certitude et se dit comme telle. Une ressemblance est une question,
+ * et se pose comme une question.
+ */
 export function AlerteDoublon({
   correspondances,
   action,
@@ -86,7 +86,7 @@ export function AlerteDoublon({
   }
 
   // Derive du motif plutot que recu a part : un booleen expedie a cote de sa
-  // propre source peut diverger d elle.
+  // propre source peut diverger d'elle.
   const certain = correspondances.some((c) => c.motif === "matricule")
   const dejaInscrit = correspondances.find((c) => c.inscription_annee_courante)
 

@@ -197,7 +197,7 @@ describe("les deux dernières garanties du hook", () => {
     await vi.waitFor(() => expect(result.current.enCours).toBe(true))
   })
 
-  it("surveille les quatre champs, dans le bon champ", () => {
+  it("envoie chaque champ surveillé dans le bon paramètre", () => {
     // Le tableau des noms et la destructuration sont côte à côte pour que le
     // décalage se voie ; ce test le rend impossible.
     vi.useFakeTimers()

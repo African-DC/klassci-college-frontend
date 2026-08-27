@@ -29,7 +29,7 @@ function enveloppe() {
   }
 }
 
-/** Les clés de requête présentes dans le cache, hors clés vides. */
+/** Toutes les clés de requête présentes dans le cache. */
 function cles(client: QueryClient): string[] {
   return client
     .getQueryCache()
@@ -44,6 +44,8 @@ describe("la temporisation de la recherche de doublons", () => {
   it.each([
     // Le nom aussi : il portait le titre du test sans etre couvert.
     ["last_name", "KOUASS", "KOUASSI"],
+    // Le prénom : tapé à chaque création, et le seul qui manquait.
+    ["first_name", "Ay", "Aya"],
     ["birth_date", "2010-03-1", "2010-03-14"],
     ["enrollment_number", "ECER08", "ECER088"],
   ])("retient %s comme elle retient le nom", (champ, avantSaisie, apresSaisie) => {
