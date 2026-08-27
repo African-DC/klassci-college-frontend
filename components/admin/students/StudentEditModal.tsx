@@ -64,7 +64,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
   // `ignorer_student_id` : sans lui, corriger une faute de frappe sur un nom
   // ferait signaler la fiche à elle-même, et l'avertissement deviendrait un
   // bruit qu'on apprend à cliquer sans lire.
-  const { correspondances, enCours, echec, tronque } = useDoublonsFormulaire(form, { ignorerStudentId: studentId })
+  const doublons = useDoublonsFormulaire(form, { ignorerStudentId: studentId })
 
   if (isLoading || !student) return <EditFormSkeleton />
 
@@ -76,10 +76,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <AlerteDoublon
-          correspondances={correspondances}
-          enCours={enCours}
-          echec={echec}
-          tronque={tronque}
+          {...doublons}
           action="Enregistrer ces modifications"
         />
 

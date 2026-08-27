@@ -23,7 +23,6 @@ interface AlerteDoublonProps {
   className?: string
 }
 
-
 function nomComplet(c: Correspondance) {
   return [c.last_name, c.first_name].filter(Boolean).join(" ")
 }
@@ -36,6 +35,44 @@ function nomComplet(c: Correspondance) {
  * est une certitude et se dit comme telle. Une ressemblance est une question,
  * et se pose comme une question.
  */
+/**
+ * Pourquoi il n'y a rien à montrer.
+ *
+ * Une liste vide a quatre sens : vérifié et propre, en cours, échoué, ou
+ * interrompu avant la fin. Les rendre tous identiques revient à annoncer un
+ * feu vert dans trois cas sur quatre. Les réunir ici garde la question
+ * visible : le jour où une cinquième raison apparaît, elle se pose ici.
+ *
+ * `tronque` avait justement été oublié : le serveur levait le drapeau, la
+ * documentation des deux côtés expliquait pourquoi il ne fallait pas se taire,
+ * et l'écran se taisait.
+ */
+function EtatSansCorrespondance({
+  echec,
+  enCours,
+  tronque,
+  className,
+}: {
+  echec: boolean
+  enCours: boolean
+  tronque: boolean
+  className?: string
+}) {
+  const message = echec
+    ? "Vérification des doublons impossible. Contrôlez le matricule avant de continuer."
+    : enCours
+      ? "Vérification des doublons…"
+      : tronque
+        ? "Recherche interrompue avant la fin : rien trouvé parmi les premières fiches examinées. Contrôlez le matricule avant de continuer."
+        : null
+
+  if (message === null) return null
+  return (
+    <p role="status" className={cn("text-sm text-muted-foreground", className)}>
+      {message}
+    </p>
+  )
+}
 export function AlerteDoublon({
   correspondances,
   action,
@@ -45,23 +82,7 @@ export function AlerteDoublon({
   tronque = false,
 }: AlerteDoublonProps) {
   if (correspondances.length === 0) {
-    // Le silence de l'écran doit vouloir dire « vérifié, rien trouvé ». Tant
-    // que ce n'est pas le cas, il faut le dire.
-    if (echec) {
-      return (
-        <p role="status" className={cn("text-sm text-muted-foreground", className)}>
-          Vérification des doublons impossible. Contrôlez le matricule avant de continuer.
-        </p>
-      )
-    }
-    if (enCours) {
-      return (
-        <p role="status" className={cn("text-sm text-muted-foreground", className)}>
-          Vérification des doublons…
-        </p>
-      )
-    }
-    return null
+    return <EtatSansCorrespondance echec={echec} enCours={enCours} tronque={tronque} className={className} />
   }
 
   // Derive du motif plutot que recu a part : un booleen expedie a cote de sa

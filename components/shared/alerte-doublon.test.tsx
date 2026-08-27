@@ -165,3 +165,25 @@ describe("une liste périmée ne doit pas passer pour une vérification fraîche
     expect(screen.getByText(/né\(e\) le/)).toBeInTheDocument()
   })
 })
+
+describe("une liste vide a quatre sens", () => {
+  it("dit qu'une recherche interrompue n'est pas une recherche propre", () => {
+    // Le serveur lève ce drapeau quand il s'arrête au plafond de candidats.
+    // L'écran l'ignorait : « je me suis arrêté et je n'ai rien vu » et
+    // « vérifié, rien trouvé » rendaient le même vide.
+    render(<AlerteDoublon correspondances={[]} tronque />)
+    expect(screen.getByText(/interrompue avant la fin/i)).toBeInTheDocument()
+    expect(screen.getByText(/contrôlez le matricule/i)).toBeInTheDocument()
+  })
+
+  it("ne dit rien quand la recherche est allée au bout sans rien trouver", () => {
+    const { container } = render(<AlerteDoublon correspondances={[]} />)
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it("l'échec prime sur la troncature", () => {
+    // Une recherche qui a échoué n'a rien vérifié du tout : le dire avant.
+    render(<AlerteDoublon correspondances={[]} echec tronque />)
+    expect(screen.getByText(/impossible/i)).toBeInTheDocument()
+  })
+})

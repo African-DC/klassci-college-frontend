@@ -65,16 +65,13 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
 
   // La saisie est surveillée pendant qu'elle se fait : signaler après
   // l'enregistrement arriverait trop tard, la seconde fiche existerait.
-  const { correspondances, enCours, echec, tronque } = useDoublonsFormulaire(form)
+  const doublons = useDoublonsFormulaire(form)
 
   return (
     <Form {...form}>
       <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <AlerteDoublon
-          correspondances={correspondances}
-          enCours={enCours}
-          echec={echec}
-          tronque={tronque}
+          {...doublons}
           action="Créer cette fiche"
         />
 
