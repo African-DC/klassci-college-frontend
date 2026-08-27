@@ -12,6 +12,12 @@ import { cn } from "@/lib/utils"
 
 interface AlerteDoublonProps {
   correspondances: Correspondance[]
+  /** Une vérification en cours ne doit pas ressembler à « aucun doublon ». */
+  enCours?: boolean
+  /** Ni une vérification impossible : le silence serait pris pour un feu vert. */
+  echec?: boolean
+  /** Le serveur a arrêté sa recherche avant la fin. */
+  tronque?: boolean
   /** Le libellé de l'action en cours, pour que le message reste concret. */
   action?: string
   className?: string
@@ -30,8 +36,33 @@ function nomComplet(c: Correspondance) {
  * est une certitude et se dit comme telle. Une ressemblance est une question,
  * et se pose comme une question.
  */
-export function AlerteDoublon({ correspondances, action, className }: AlerteDoublonProps) {
-  if (correspondances.length === 0) return null
+export function AlerteDoublon({
+  correspondances,
+  action,
+  className,
+  enCours = false,
+  echec = false,
+  tronque = false,
+}: AlerteDoublonProps) {
+  if (correspondances.length === 0) {
+    // Le silence de l'écran doit vouloir dire « vérifié, rien trouvé ». Tant
+    // que ce n'est pas le cas, il faut le dire.
+    if (echec) {
+      return (
+        <p role="status" className={cn("text-sm text-muted-foreground", className)}>
+          Vérification des doublons impossible. Contrôlez le matricule avant de continuer.
+        </p>
+      )
+    }
+    if (enCours) {
+      return (
+        <p role="status" className={cn("text-sm text-muted-foreground", className)}>
+          Vérification des doublons…
+        </p>
+      )
+    }
+    return null
+  }
 
   // Derive du motif plutot que recu a part : un booleen expedie a cote de sa
   // propre source peut diverger d elle.
@@ -91,6 +122,11 @@ export function AlerteDoublon({ correspondances, action, className }: AlerteDoub
                     {c.enrollment_number}
                   </span>
                 )}
+                {c.birth_date && (
+                  <span className="text-xs text-muted-foreground">
+                    née le {new Date(c.birth_date).toLocaleDateString("fr-FR")}
+                  </span>
+                )}
                 {c.motif === "ressemblance" && c.score !== null && (
                   <span className="text-xs text-muted-foreground">
                     {Math.round(c.score * 100)} % de ressemblance
@@ -108,6 +144,13 @@ export function AlerteDoublon({ correspondances, action, className }: AlerteDoub
           {correspondances.length > 4 && (
             <p className="text-xs text-muted-foreground">
               et {correspondances.length - 4} autre{correspondances.length - 4 > 1 ? "s" : ""}.
+            </p>
+          )}
+
+          {tronque && (
+            <p className="text-xs text-muted-foreground">
+              La recherche s'est arrêtée avant la fin : d'autres fiches peuvent
+              correspondre.
             </p>
           )}
 

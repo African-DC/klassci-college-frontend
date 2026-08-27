@@ -13,11 +13,9 @@ export const CorrespondanceSchema = z.object({
   first_name: z.string(),
   enrollment_number: z.string().nullable(),
   birth_date: z.string().nullable(),
-  birth_place: z.string().nullable(),
   /** « matricule » (certain) ou « ressemblance ». */
   motif: z.enum(["matricule", "ressemblance"]),
   score: z.number().nullable(),
-  champs_compares: z.array(z.string()),
   /**
    * Vrai quand ni la date ni le lieu de naissance n'étaient disponibles.
    *
@@ -33,6 +31,13 @@ export const CorrespondanceSchema = z.object({
 export const DoublonsSchema = z.object({
   correspondances: z.array(CorrespondanceSchema),
   total: z.number(),
+  /**
+   * Vrai quand le plafond de candidats a été atteint.
+   *
+   * Sans ce signal, « rien trouvé » se lit comme une certitude alors que la
+   * recherche s'est arrêtée avant d'avoir tout regardé.
+   */
+  tronque: z.boolean(),
 })
 
 export type Correspondance = z.infer<typeof CorrespondanceSchema>

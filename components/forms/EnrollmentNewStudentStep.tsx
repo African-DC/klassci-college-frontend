@@ -50,7 +50,7 @@ export function EnrollmentNewStudentStep({
   // Le chemin le plus emprunté : la secrétaire saisit l'élève et son
   // inscription d'un seul geste. C'est donc ici qu'une seconde fiche se
   // crée le plus facilement, et ici que le signalement compte le plus.
-  const { correspondances } = useDoublonsFormulaire(form)
+  const { correspondances, enCours, echec, tronque } = useDoublonsFormulaire(form)
 
   return (
     <Form {...form}>
@@ -61,6 +61,9 @@ export function EnrollmentNewStudentStep({
 
         <AlerteDoublon
           correspondances={correspondances}
+          enCours={enCours}
+          echec={echec}
+          tronque={tronque}
           action="Poursuivre cette inscription"
         />
 

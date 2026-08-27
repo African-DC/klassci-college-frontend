@@ -41,19 +41,22 @@ describe("la temporisation de la recherche de doublons", () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
-  it("retient le lieu de naissance comme elle retient le nom", () => {
+  it.each([
+    ["birth_date", "2010-03-1", "2010-03-14"],
+    ["enrollment_number", "ECER08", "ECER088"],
+  ])("retient %s comme elle retient le nom", (champ, avantSaisie, apresSaisie) => {
+    // Chaque champ qui entre dans la clé doit passer par la temporisation :
+    // un seul oubli suffit à repartir une requête par touche.
     const { client, wrapper } = enveloppe()
-    const { rerender } = renderHook((p: { lieu: string }) =>
-      useDoublons({ last_name: "KOUASSI", first_name: "Aya", birth_place: p.lieu }), {
+    const { rerender } = renderHook((props: { valeur: string }) =>
+      useDoublons({ last_name: "KOUASSI", first_name: "Aya", [champ]: props.valeur }), {
       wrapper,
-      initialProps: { lieu: "Boua" },
+      initialProps: { valeur: avantSaisie },
     })
     act(() => void vi.advanceTimersByTime(400))
     const avant = cles(client)
 
-    // Une touche de plus dans le lieu de naissance.
-    rerender({ lieu: "Bouak" })
-    // Sans temporisation, une clé neuve apparaîtrait immédiatement.
+    rerender({ valeur: apresSaisie })
     expect(cles(client)).toEqual(avant)
 
     act(() => void vi.advanceTimersByTime(400))

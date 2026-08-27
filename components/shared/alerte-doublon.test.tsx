@@ -19,10 +19,8 @@ function correspondance(surcharge: Partial<Correspondance> = {}): Correspondance
     first_name: "Wacaltchin laetitia",
     enrollment_number: "ECER0863",
     birth_date: null,
-    birth_place: null,
     motif: "ressemblance",
     score: 0.94,
-    champs_compares: ["last_name", "first_name"],
     juge_sur_peu: true,
     inscription_annee_courante: null,
     ...surcharge,
@@ -58,7 +56,6 @@ describe("l'alerte de doublon", () => {
         correspondances={[
           correspondance({
             juge_sur_peu: false,
-            champs_compares: ["last_name", "first_name", "birth_date", "birth_place"],
           }),
         ]}
       />,
@@ -103,5 +100,49 @@ describe("l'alerte de doublon", () => {
     render(<AlerteDoublon correspondances={beaucoup} />)
     expect(screen.getAllByRole("link")).toHaveLength(4)
     expect(screen.getByText(/et 3 autres/i)).toBeInTheDocument()
+  })
+})
+
+describe("ce que l'écran dit quand il n'a rien à montrer", () => {
+  it("distingue « en cours de vérification » de « rien trouvé »", () => {
+    // Sans cela, les 400 ms de temporisation plus l'aller-retour réseau
+    // ressemblent à un feu vert, sur un formulaire dont l'objet est
+    // d'empêcher une erreur.
+    render(<AlerteDoublon correspondances={[]} enCours />)
+    expect(screen.getByText(/vérification des doublons/i)).toBeInTheDocument()
+  })
+
+  it("distingue « vérification impossible » de « rien trouvé »", () => {
+    render(<AlerteDoublon correspondances={[]} echec />)
+    expect(screen.getByText(/impossible/i)).toBeInTheDocument()
+    expect(screen.getByText(/contrôlez le matricule/i)).toBeInTheDocument()
+  })
+
+  it("ne dit rien quand la vérification est faite et propre", () => {
+    const { container } = render(<AlerteDoublon correspondances={[]} />)
+    expect(container).toBeEmptyDOMElement()
+  })
+})
+
+describe("ce que l'écran donne pour trancher", () => {
+  it("affiche la date de naissance, qui est l'élément décisif", () => {
+    render(
+      <AlerteDoublon
+        correspondances={[correspondance({ birth_date: "2010-03-14" })]}
+      />,
+    )
+    expect(screen.getByText(/14\/03\/2010/)).toBeInTheDocument()
+  })
+
+  it("prévient quand la recherche s'est arrêtée avant la fin", () => {
+    render(<AlerteDoublon correspondances={[correspondance()]} tronque />)
+    expect(screen.getByText(/arrêtée avant la fin/i)).toBeInTheDocument()
+  })
+
+  it("annonce une collision de matricule au lieu de la classer", () => {
+    // `role="status"` est lu quand le lecteur d'écran en a le temps ;
+    // `role="alert"` interrompt. Un matricule déjà pris mérite l'interruption.
+    render(<AlerteDoublon correspondances={[correspondance({ motif: "matricule" })]} />)
+    expect(screen.getByRole("alert")).toBeInTheDocument()
   })
 })

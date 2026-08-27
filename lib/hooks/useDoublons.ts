@@ -17,7 +17,7 @@ const LONGUEUR_MINIMALE = 3
  * l'établissement et le signalement deviendrait du bruit qu'on apprend à
  * ignorer.
  */
-export function useDoublons(params: DoublonsParams, actif = true) {
+export function useDoublons(params: DoublonsParams) {
   // Tous les champs saisis au clavier sont temporisés, pas seulement les trois
   // qui décident du déclenchement.
   const nom = useDebounce(params.last_name ?? "", 400)
@@ -44,7 +44,7 @@ export function useDoublons(params: DoublonsParams, actif = true) {
   return useQuery({
     queryKey: ["doublons", requete] as const,
     queryFn: () => duplicatesApi.chercher(requete),
-    enabled: actif && assezSaisi,
+    enabled: assezSaisi,
     staleTime: 1000 * 30,
     // Une erreur ici ne doit pas empêcher de créer un élève : le signalement
     // est une aide, pas une condition.
