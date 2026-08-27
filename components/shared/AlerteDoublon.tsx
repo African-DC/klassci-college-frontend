@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import type { Route } from "next"
 import { AlertTriangle, ArrowRight, Info } from "lucide-react"
 import type { Correspondance } from "@/lib/contracts/duplicates"
 import { cn } from "@/lib/utils"
@@ -79,7 +80,7 @@ export function AlerteDoublon({ correspondances, action, className }: AlerteDoub
             {correspondances.slice(0, 4).map((c) => (
               <li key={c.student_id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <Link
-                  href={`/admin/students/${c.student_id}` as never}
+                  href={`/admin/students/${c.student_id}` as Route}
                   className="inline-flex h-11 items-center gap-1 font-medium underline underline-offset-2 sm:h-auto"
                 >
                   {nomComplet(c)}

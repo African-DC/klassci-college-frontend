@@ -64,13 +64,22 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
   // `ignorer_student_id` : sans lui, corriger une faute de frappe sur un nom
   // ferait signaler la fiche à elle-même, et l'avertissement deviendrait un
   // bruit qu'on apprend à cliquer sans lire.
-  const saisie = form.watch()
+  // On s'abonne aux seuls champs du signalement : `form.watch()` sans
+  // argument redessine le formulaire entier à chaque touche de n'importe
+  // quel champ, et la personne saisit sur un téléphone d'entrée de gamme.
+  const [nom, prenom, naissance, lieu, matricule] = form.watch([
+    "last_name",
+    "first_name",
+    "birth_date",
+    "birth_place",
+    "enrollment_number",
+  ])
   const { data: doublons } = useDoublons({
-    last_name: saisie.last_name,
-    first_name: saisie.first_name,
-    birth_date: saisie.birth_date ?? undefined,
-    birth_place: saisie.birth_place ?? undefined,
-    enrollment_number: saisie.enrollment_number ?? undefined,
+    last_name: nom,
+    first_name: prenom,
+    birth_date: naissance ?? undefined,
+    birth_place: lieu ?? undefined,
+    enrollment_number: matricule ?? undefined,
     ignorer_student_id: studentId,
   })
 
