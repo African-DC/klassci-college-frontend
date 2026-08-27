@@ -2,8 +2,8 @@
 
 import type { FieldValues, Path, UseFormReturn } from "react-hook-form"
 import { useCurrentAcademicYearId } from "./useCurrentAcademicYear"
-import { useDoublons } from "./useDoublons"
-import type { Correspondance } from "@/lib/contracts/duplicates"
+import { useDoublons } from "./useDuplicates"
+import type { Match } from "@/lib/contracts/duplicates"
 
 /**
  * Les champs d'état civil que la détection compare.
@@ -38,10 +38,10 @@ export function useDoublonsFormulaire<T extends ChampsIdentite>(
   form: UseFormReturn<T>,
   options: { ignorerStudentId?: number } = {},
 ): {
-  correspondances: Correspondance[]
+  matches: Match[]
   enCours: boolean
   echec: boolean
-  tronque: boolean
+  truncated: boolean
 } {
   const { academicYearId } = useCurrentAcademicYearId()
 
@@ -64,16 +64,16 @@ export function useDoublonsFormulaire<T extends ChampsIdentite>(
     birth_date: birth_date ?? undefined,
     enrollment_number: enrollment_number ?? undefined,
     academic_year_id: academicYearId,
-    ignorer_student_id: options.ignorerStudentId,
+    exclude_student_id: options.ignorerStudentId,
   })
 
   return {
-    correspondances: data?.correspondances ?? [],
+    matches: data?.matches ?? [],
     // Sans ces deux-là, une vérification en cours et une vérification
     // impossible ressemblent toutes deux à « aucun doublon » — sur un
     // formulaire dont le seul objet est d'empêcher une erreur.
     enCours: isFetching,
     echec: isError,
-    tronque: data?.tronque ?? false,
+    truncated: data?.truncated ?? false,
   }
 }

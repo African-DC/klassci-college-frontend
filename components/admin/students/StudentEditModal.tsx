@@ -4,8 +4,8 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { StudentUpdateSchema, type StudentUpdate } from "@/lib/contracts/student"
 import { useStudent, useUpdateStudent } from "@/lib/hooks/useStudents"
-import { AlerteDoublon } from "@/components/shared/AlerteDoublon"
-import { useDoublonsFormulaire } from "@/lib/hooks/useDoublonsFormulaire"
+import { AlerteDoublon } from "@/components/shared/DuplicateWarning"
+import { useDoublonsFormulaire } from "@/lib/hooks/useFormDuplicates"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -61,7 +61,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
   // Appelés avant le retour anticipé : un hook conditionnel change l'ordre
   // des hooks d'un rendu à l'autre, et React ne le pardonne pas.
   //
-  // `ignorer_student_id` : sans lui, corriger une faute de frappe sur un nom
+  // `exclude_student_id` : sans lui, corriger une faute de frappe sur un nom
   // ferait signaler la fiche à elle-même, et l'avertissement deviendrait un
   // bruit qu'on apprend à cliquer sans lire.
   const doublons = useDoublonsFormulaire(form, { ignorerStudentId: studentId })

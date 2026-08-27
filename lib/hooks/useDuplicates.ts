@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { duplicatesApi } from "@/lib/api/duplicates"
-import type { DoublonsParams } from "@/lib/contracts/duplicates"
+import type { DuplicatesParams } from "@/lib/contracts/duplicates"
 import { useDebounce } from "./useDebounce"
 
 /** En dessous, il n'y a pas de quoi interroger le serveur. */
@@ -17,7 +17,7 @@ const LONGUEUR_MINIMALE = 3
  * l'établissement et le signalement deviendrait du bruit qu'on apprend à
  * ignorer.
  */
-export function useDoublons(params: DoublonsParams) {
+export function useDoublons(params: DuplicatesParams) {
   // Tous les champs saisis au clavier sont temporisés, pas seulement les trois
   // qui décident du déclenchement.
   const nom = useDebounce(params.last_name ?? "", 400)
@@ -34,9 +34,9 @@ export function useDoublons(params: DoublonsParams) {
     (nom.trim().length >= LONGUEUR_MINIMALE &&
       (prenom.trim().length > 0 || naissance.trim().length > 0))
 
-  const requete: DoublonsParams = {
+  const requete: DuplicatesParams = {
     academic_year_id: params.academic_year_id,
-    ignorer_student_id: params.ignorer_student_id,
+    exclude_student_id: params.exclude_student_id,
     last_name: nom || undefined,
     first_name: prenom || undefined,
     enrollment_number: matricule || undefined,

@@ -2,8 +2,8 @@
 
 import type { UseFormReturn } from "react-hook-form"
 import { ExternalLink, Info, Settings2 } from "lucide-react"
-import { AlerteDoublon } from "@/components/shared/AlerteDoublon"
-import { useDoublonsFormulaire } from "@/lib/hooks/useDoublonsFormulaire"
+import { AlerteDoublon } from "@/components/shared/DuplicateWarning"
+import { useDoublonsFormulaire } from "@/lib/hooks/useFormDuplicates"
 import type { NewEnrollment } from "@/lib/contracts/enrollment"
 import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
 import { EnrollmentParentFields } from "@/components/forms/EnrollmentParentFields"

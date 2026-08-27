@@ -9,34 +9,34 @@
 
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
-import { AlerteDoublon } from "./AlerteDoublon"
-import type { Correspondance } from "@/lib/contracts/duplicates"
+import { AlerteDoublon } from "./DuplicateWarning"
+import type { Match } from "@/lib/contracts/duplicates"
 
-function correspondance(surcharge: Partial<Correspondance> = {}): Correspondance {
+function correspondance(surcharge: Partial<Match> = {}): Match {
   return {
     student_id: 112,
     last_name: "CAMARA",
     first_name: "Wacaltchin laetitia",
     enrollment_number: "ECER0863",
     birth_date: null,
-    motif: "ressemblance",
+    reason: "similarity",
     score: 0.94,
-    juge_sur_peu: true,
-    inscription_annee_courante: null,
+    partial_identity: true,
+    current_year_enrollment: null,
     ...surcharge,
   }
 }
 
 describe("l'alerte de doublon", () => {
   it("ne s'affiche pas quand il n'y a rien à dire", () => {
-    const { container } = render(<AlerteDoublon correspondances={[]} />)
+    const { container } = render(<AlerteDoublon matches={[]} />)
     expect(container).toBeEmptyDOMElement()
   })
 
   it("annonce un matricule identique comme une certitude", () => {
     render(
       <AlerteDoublon
-        correspondances={[correspondance({ motif: "matricule", score: null })]}
+        matches={[correspondance({ reason: "enrollment_number", score: null })]}
       />,
     )
     expect(screen.getByText(/matricule appartient déjà/i)).toBeInTheDocument()
@@ -46,7 +46,7 @@ describe("l'alerte de doublon", () => {
     // La moitié du sens : « 94 % » calculé sur deux champs n'engage pas autant
     // que « 94 % » calculé sur l'état civil complet, et toutes les fiches
     // reprises de l'ancien système sont dans ce cas.
-    render(<AlerteDoublon correspondances={[correspondance()]} />)
+    render(<AlerteDoublon matches={[correspondance()]} />)
     // La réserve ne nomme plus les champs : elle disait « le nom et le prénom »
     // pour une comparaison qui n'avait vu que le nom.
     expect(screen.getByText(/état civil incomplet/i)).toBeInTheDocument()
@@ -55,9 +55,9 @@ describe("l'alerte de doublon", () => {
   it("ne le dit pas quand la naissance a servi", () => {
     render(
       <AlerteDoublon
-        correspondances={[
+        matches={[
           correspondance({
-            juge_sur_peu: false,
+            partial_identity: false,
           }),
         ]}
       />,
@@ -71,9 +71,9 @@ describe("l'alerte de doublon", () => {
     render(
       <AlerteDoublon
         action="Poursuivre cette inscription"
-        correspondances={[
+        matches={[
           correspondance({
-            inscription_annee_courante: {
+            current_year_enrollment: {
               enrollment_id: 818,
               status: "prospect" as const,
               class_name: "3eme 2",
@@ -91,7 +91,7 @@ describe("l'alerte de doublon", () => {
   })
 
   it("mène à la fiche existante plutôt que de laisser chercher", () => {
-    render(<AlerteDoublon correspondances={[correspondance()]} />)
+    render(<AlerteDoublon matches={[correspondance()]} />)
     const lien = screen.getByRole("link", { name: /CAMARA/ })
     expect(lien).toHaveAttribute("href", "/admin/students/112")
   })
@@ -100,7 +100,7 @@ describe("l'alerte de doublon", () => {
     const beaucoup = Array.from({ length: 7 }, (_, i) =>
       correspondance({ student_id: i + 1, first_name: `Eleve ${i}` }),
     )
-    render(<AlerteDoublon correspondances={beaucoup} />)
+    render(<AlerteDoublon matches={beaucoup} />)
     expect(screen.getAllByRole("link")).toHaveLength(4)
     expect(screen.getByText(/et 3 autres/i)).toBeInTheDocument()
   })
@@ -111,18 +111,18 @@ describe("ce que l'écran dit quand il n'a rien à montrer", () => {
     // Sans cela, les 400 ms de temporisation plus l'aller-retour réseau
     // ressemblent à un feu vert, sur un formulaire dont l'objet est
     // d'empêcher une erreur.
-    render(<AlerteDoublon correspondances={[]} enCours />)
+    render(<AlerteDoublon matches={[]} enCours />)
     expect(screen.getByText(/vérification des doublons/i)).toBeInTheDocument()
   })
 
   it("distingue « vérification impossible » de « rien trouvé »", () => {
-    render(<AlerteDoublon correspondances={[]} echec />)
+    render(<AlerteDoublon matches={[]} echec />)
     expect(screen.getByText(/impossible/i)).toBeInTheDocument()
     expect(screen.getByText(/contrôlez le matricule/i)).toBeInTheDocument()
   })
 
   it("ne dit rien quand la vérification est faite et propre", () => {
-    const { container } = render(<AlerteDoublon correspondances={[]} />)
+    const { container } = render(<AlerteDoublon matches={[]} />)
     expect(container).toBeEmptyDOMElement()
   })
 })
@@ -131,21 +131,21 @@ describe("ce que l'écran donne pour trancher", () => {
   it("affiche la date de naissance, qui est l'élément décisif", () => {
     render(
       <AlerteDoublon
-        correspondances={[correspondance({ birth_date: "2010-03-14" })]}
+        matches={[correspondance({ birth_date: "2010-03-14" })]}
       />,
     )
     expect(screen.getByText(/14\/03\/2010/)).toBeInTheDocument()
   })
 
   it("prévient quand la recherche s'est arrêtée avant la fin", () => {
-    render(<AlerteDoublon correspondances={[correspondance()]} tronque />)
+    render(<AlerteDoublon matches={[correspondance()]} truncated />)
     expect(screen.getByText(/arrêtée avant la fin/i)).toBeInTheDocument()
   })
 
   it("annonce une collision de matricule au lieu de la classer", () => {
     // `role="status"` est lu quand le lecteur d'écran en a le temps ;
     // `role="alert"` interrompt. Un matricule déjà pris mérite l'interruption.
-    render(<AlerteDoublon correspondances={[correspondance({ motif: "matricule" })]} />)
+    render(<AlerteDoublon matches={[correspondance({ reason: "enrollment_number" })]} />)
     expect(screen.getByRole("alert")).toBeInTheDocument()
   })
 })
@@ -155,14 +155,14 @@ describe("une liste périmée ne doit pas passer pour une vérification fraîche
     // TanStack conserve les données précédentes après un échec de
     // rechargement : sans ce message, la personne lit une liste ancienne
     // comme si elle venait d'être établie.
-    render(<AlerteDoublon correspondances={[correspondance()]} echec />)
+    render(<AlerteDoublon matches={[correspondance()]} echec />)
     expect(screen.getByText(/dernière vérification a échoué/i)).toBeInTheDocument()
     expect(screen.getByText(/périmée/i)).toBeInTheDocument()
   })
 
   it("ne suppose pas le genre de l'élève", () => {
     // « née le » pour tout le monde était faux pour la moitié de l'effectif.
-    render(<AlerteDoublon correspondances={[correspondance({ birth_date: "2010-03-14" })]} />)
+    render(<AlerteDoublon matches={[correspondance({ birth_date: "2010-03-14" })]} />)
     expect(screen.getByText(/né\(e\) le/)).toBeInTheDocument()
   })
 })
@@ -172,19 +172,19 @@ describe("une liste vide a quatre sens", () => {
     // Le serveur lève ce drapeau quand il s'arrête au plafond de candidats.
     // L'écran l'ignorait : « je me suis arrêté et je n'ai rien vu » et
     // « vérifié, rien trouvé » rendaient le même vide.
-    render(<AlerteDoublon correspondances={[]} tronque />)
+    render(<AlerteDoublon matches={[]} truncated />)
     expect(screen.getByText(/interrompue avant la fin/i)).toBeInTheDocument()
     expect(screen.getByText(/contrôlez le matricule/i)).toBeInTheDocument()
   })
 
   it("ne dit rien quand la recherche est allée au bout sans rien trouver", () => {
-    const { container } = render(<AlerteDoublon correspondances={[]} />)
+    const { container } = render(<AlerteDoublon matches={[]} />)
     expect(container).toBeEmptyDOMElement()
   })
 
   it("l'échec prime sur la troncature", () => {
     // Une recherche qui a échoué n'a rien vérifié du tout : le dire avant.
-    render(<AlerteDoublon correspondances={[]} echec tronque />)
+    render(<AlerteDoublon matches={[]} echec truncated />)
     expect(screen.getByText(/impossible/i)).toBeInTheDocument()
   })
 })
@@ -204,9 +204,9 @@ describe("la phrase que la secrétaire lit avant de décider", () => {
     const { container } = render(
       <AlerteDoublon
         action="Créer cette fiche"
-        correspondances={[
+        matches={[
           correspondance({
-            inscription_annee_courante: {
+            current_year_enrollment: {
               enrollment_id: 818,
               status: statut as "prospect",
               class_name: "3eme 2",
@@ -225,18 +225,18 @@ describe("la phrase que la secrétaire lit avant de décider", () => {
   })
 })
 
-describe("le nombre de correspondances", () => {
+describe("le nombre de matches", () => {
   it("reste au singulier pour une seule", () => {
     // « 1 élèves déjà enregistrés ressemblent » est la première ligne que la
     // secrétaire lit, et ce serait du français cassé.
-    render(<AlerteDoublon correspondances={[correspondance()]} />)
+    render(<AlerteDoublon matches={[correspondance()]} />)
     expect(screen.getByText(/^Un élève déjà enregistré ressemble/)).toBeInTheDocument()
   })
 
   it("passe au pluriel au-delà", () => {
     render(
       <AlerteDoublon
-        correspondances={[correspondance({ student_id: 1 }), correspondance({ student_id: 2 })]}
+        matches={[correspondance({ student_id: 1 }), correspondance({ student_id: 2 })]}
       />,
     )
     expect(screen.getByText(/^2 élèves déjà enregistrés ressemblent/)).toBeInTheDocument()
@@ -247,13 +247,13 @@ describe("le pourcentage, seul chiffre que la secrétaire pèse", () => {
   it("affiche le score arrondi", () => {
     // Le qualificatif « état civil incomplet » était testé ; le nombre qu'il
     // qualifie ne l'était pas.
-    render(<AlerteDoublon correspondances={[correspondance({ score: 0.8437 })]} />)
+    render(<AlerteDoublon matches={[correspondance({ score: 0.8437 })]} />)
     expect(screen.getByText(/84 % de ressemblance/)).toBeInTheDocument()
   })
 
   it("n'en affiche aucun pour un matricule identique", () => {
     // Une certitude ne se chiffre pas : elle ne passe pas par le score.
-    render(<AlerteDoublon correspondances={[correspondance({ motif: "matricule", score: null })]} />)
+    render(<AlerteDoublon matches={[correspondance({ reason: "enrollment_number", score: null })]} />)
     expect(screen.queryByText(/de ressemblance/)).not.toBeInTheDocument()
   })
 })

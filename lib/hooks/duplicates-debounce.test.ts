@@ -16,7 +16,7 @@ import { act } from "react"
 import type { ReactNode } from "react"
 import { createElement } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { useDoublons } from "./useDoublons"
+import { useDoublons } from "./useDuplicates"
 
 function enveloppe() {
   const client = new QueryClient({

@@ -15,7 +15,7 @@ import type { ReactNode } from "react"
 import { createElement } from "react"
 import { useForm } from "react-hook-form"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { useDoublonsFormulaire } from "./useDoublonsFormulaire"
+import { useDoublonsFormulaire } from "./useFormDuplicates"
 
 vi.mock("./useCurrentAcademicYear", () => ({
   useCurrentAcademicYearId: () => ({ academicYearId: 7, years: [], isLoading: false }),
@@ -83,7 +83,7 @@ describe("ce que le hook rend, et pas seulement ce qu'il demande", () => {
   /**
    * Les deux tests ci-dessus n'observent que les clés de cache. Chacune des
    * quatre valeurs rendues pouvait donc être remplacée par une constante sans
-   * qu'un test bouge — dont `tronque`, le signal qu'une passe de revue venait
+   * qu'un test bouge — dont `truncated`, le signal qu'une passe de revue venait
    * de rattraper dans le composant, et `echec`, qui empêche une vérification
    * ratée de passer pour un feu vert.
    */
@@ -113,21 +113,21 @@ describe("ce que le hook rend, et pas seulement ce qu'il demande", () => {
     first_name: "Aya",
     enrollment_number: "ECER0882",
     birth_date: null,
-    motif: "ressemblance" as const,
+    reason: "ressemblance" as const,
     score: 0.94,
-    juge_sur_peu: true,
-    inscription_annee_courante: null,
+    partial_identity: true,
+    current_year_enrollment: null,
   }
 
-  it("transmet les correspondances reçues", () => {
-    const { result } = monter({ correspondances: [correspondance], tronque: false })
-    expect(result.current.correspondances).toHaveLength(1)
-    expect(result.current.correspondances[0].enrollment_number).toBe("ECER0882")
+  it("transmet les matches reçues", () => {
+    const { result } = monter({ matches: [correspondance], truncated: false })
+    expect(result.current.matches).toHaveLength(1)
+    expect(result.current.matches[0].enrollment_number).toBe("ECER0882")
   })
 
   it("transmet la troncature", () => {
-    const { result } = monter({ correspondances: [], tronque: true })
-    expect(result.current.tronque).toBe(true)
+    const { result } = monter({ matches: [], truncated: true })
+    expect(result.current.truncated).toBe(true)
   })
 
   it("passe l'élève à ignorer, pour qu'une fiche ne se signale pas elle-même", () => {
@@ -143,7 +143,7 @@ describe("ce que le hook rend, et pas seulement ce qu'il demande", () => {
     )
     act(() => void vi.advanceTimersByTime(400))
     const cles = client.getQueryCache().getAll().map((q) => JSON.stringify(q.queryKey))
-    expect(cles.some((c) => c.includes('"ignorer_student_id":42'))).toBe(true)
+    expect(cles.some((c) => c.includes('"exclude_student_id":42'))).toBe(true)
   })
 })
 

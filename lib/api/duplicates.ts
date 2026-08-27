@@ -1,5 +1,5 @@
-import { DoublonsSchema } from "@/lib/contracts/duplicates"
-import type { Doublons, DoublonsParams } from "@/lib/contracts/duplicates"
+import { DuplicatesSchema } from "@/lib/contracts/duplicates"
+import type { Duplicates, DuplicatesParams } from "@/lib/contracts/duplicates"
 import { apiFetch, safeValidate } from "./client"
 
 export const duplicatesApi = {
@@ -8,13 +8,13 @@ export const duplicatesApi = {
    *
    * Ne modifie rien : c'est une lecture, appelée pendant la saisie.
    */
-  async chercher(params: DoublonsParams): Promise<Doublons> {
+  async chercher(params: DuplicatesParams): Promise<Duplicates> {
     const query = new URLSearchParams()
     for (const [cle, valeur] of Object.entries(params)) {
       if (valeur === undefined || valeur === null || valeur === "") continue
       query.set(cle, String(valeur))
     }
-    const brut = await apiFetch<unknown>(`/admin/students/doublons?${query.toString()}`)
-    return safeValidate(DoublonsSchema, brut, "duplicatesApi.chercher")
+    const brut = await apiFetch<unknown>(`/admin/students/duplicates?${query.toString()}`)
+    return safeValidate(DuplicatesSchema, brut, "duplicatesApi.chercher")
   },
 }

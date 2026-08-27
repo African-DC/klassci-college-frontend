@@ -24,8 +24,8 @@ import {
 } from "@/components/ui/select"
 import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
 import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
-import { AlerteDoublon } from "@/components/shared/AlerteDoublon"
-import { useDoublonsFormulaire } from "@/lib/hooks/useDoublonsFormulaire"
+import { AlerteDoublon } from "@/components/shared/DuplicateWarning"
+import { useDoublonsFormulaire } from "@/lib/hooks/useFormDuplicates"
 
 interface StudentFormProps {
   onSuccess: () => void

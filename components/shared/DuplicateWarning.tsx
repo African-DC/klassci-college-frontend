@@ -3,7 +3,7 @@
 import Link from "next/link"
 import type { Route } from "next"
 import { AlertTriangle, ArrowRight, Info } from "lucide-react"
-import type { Correspondance } from "@/lib/contracts/duplicates"
+import type { Match } from "@/lib/contracts/duplicates"
 // Le vocabulaire des statuts a un seul propriétaire : en garder une copie
 // ici, c'est ce qui a fait afficher « en attente de validation » pour un
 // dossier simplement ouvert.
@@ -11,19 +11,19 @@ import { enrollmentStatusView } from "@/lib/enrollment/status"
 import { cn } from "@/lib/utils"
 
 interface AlerteDoublonProps {
-  correspondances: Correspondance[]
+  matches: Match[]
   /** Une vérification en cours ne doit pas ressembler à « aucun doublon ». */
   enCours?: boolean
   /** Ni une vérification impossible : le silence serait pris pour un feu vert. */
   echec?: boolean
   /** Le serveur a arrêté sa recherche avant la fin. */
-  tronque?: boolean
+  truncated?: boolean
   /** Le libellé de l'action en cours, pour que le message reste concret. */
   action?: string
   className?: string
 }
 
-function nomComplet(c: Correspondance) {
+function nomComplet(c: Match) {
   return [c.last_name, c.first_name].filter(Boolean).join(" ")
 }
 
@@ -35,26 +35,26 @@ function nomComplet(c: Correspondance) {
  * feu vert dans trois cas sur quatre. Les réunir ici garde la question
  * visible : le jour où une cinquième raison apparaît, elle se pose ici.
  *
- * `tronque` avait justement été oublié : le serveur levait le drapeau, la
+ * `truncated` avait justement été oublié : le serveur levait le drapeau, la
  * documentation des deux côtés expliquait pourquoi il ne fallait pas se taire,
  * et l'écran se taisait.
  */
 function EtatSansCorrespondance({
   echec,
   enCours,
-  tronque,
+  truncated,
   className,
 }: {
   echec: boolean
   enCours: boolean
-  tronque: boolean
+  truncated: boolean
   className?: string
 }) {
   const message = echec
     ? "Vérification des doublons impossible. Contrôlez le matricule avant de continuer."
     : enCours
       ? "Vérification des doublons…"
-      : tronque
+      : truncated
         ? "Recherche interrompue avant la fin : rien trouvé parmi les premières fiches examinées. Contrôlez le matricule avant de continuer."
         : null
 
@@ -74,21 +74,21 @@ function EtatSansCorrespondance({
  * et se pose comme une question.
  */
 export function AlerteDoublon({
-  correspondances,
+  matches,
   action,
   className,
   enCours = false,
   echec = false,
-  tronque = false,
+  truncated = false,
 }: AlerteDoublonProps) {
-  if (correspondances.length === 0) {
-    return <EtatSansCorrespondance echec={echec} enCours={enCours} tronque={tronque} className={className} />
+  if (matches.length === 0) {
+    return <EtatSansCorrespondance echec={echec} enCours={enCours} truncated={truncated} className={className} />
   }
 
-  // Derive du motif plutot que recu a part : un booleen expedie a cote de sa
+  // Derive du reason plutot que recu a part : un booleen expedie a cote de sa
   // propre source peut diverger d'elle.
-  const certain = correspondances.some((c) => c.motif === "matricule")
-  const dejaInscrit = correspondances.find((c) => c.inscription_annee_courante)
+  const certain = matches.some((c) => c.reason === "enrollment_number")
+  const dejaInscrit = matches.find((c) => c.current_year_enrollment)
 
   return (
     <div
@@ -112,31 +112,31 @@ export function AlerteDoublon({
           <p className="font-medium">
             {certain
               ? "Ce matricule appartient déjà à un élève."
-              : correspondances.length === 1
+              : matches.length === 1
                 ? "Un élève déjà enregistré ressemble à cette saisie."
-                : `${correspondances.length} élèves déjà enregistrés ressemblent à cette saisie.`}
+                : `${matches.length} élèves déjà enregistrés ressemblent à cette saisie.`}
           </p>
 
-          {dejaInscrit?.inscription_annee_courante && (
+          {dejaInscrit?.current_year_enrollment && (
             <p className="text-muted-foreground">
               {/* Le libellé est celui d'un badge : « Dossier ouvert », « Inscrit ».
                   Le couler dans la phrase donnait « a déjà une inscription dossier
                   ouvert en 3eme 2 ». Entre parenthèses, il redevient lisible quel
                   que soit le statut. */}
               {nomComplet(dejaInscrit)} a déjà un dossier pour cette année
-              {dejaInscrit.inscription_annee_courante.class_name
-                ? ` en ${dejaInscrit.inscription_annee_courante.class_name}`
+              {dejaInscrit.current_year_enrollment.class_name
+                ? ` en ${dejaInscrit.current_year_enrollment.class_name}`
                 : ""}{" "}
               (statut :{" "}
               {enrollmentStatusView(
-                dejaInscrit.inscription_annee_courante.status,
+                dejaInscrit.current_year_enrollment.status,
               ).label.toLowerCase()}
               ).{action ? ` ${action} en créerait un second.` : ""}
             </p>
           )}
 
           <ul className="space-y-1.5">
-            {correspondances.slice(0, 4).map((c) => (
+            {matches.slice(0, 4).map((c) => (
               <li key={c.student_id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <Link
                   href={`/admin/students/${c.student_id}` as Route}
@@ -155,23 +155,23 @@ export function AlerteDoublon({
                     né(e) le {new Date(c.birth_date).toLocaleDateString("fr-FR")}
                   </span>
                 )}
-                {c.motif === "ressemblance" && c.score !== null && (
+                {c.reason === "similarity" && c.score !== null && (
                   <span className="text-xs text-muted-foreground">
                     {Math.round(c.score * 100)} % de ressemblance
                     {/* Dire sur quoi le score porte : « 96 % » calculé sur le
                         seul nom et prénom n'engage pas autant que « 96 % »
                         calculé sur l'état civil complet, et les fiches reprises
                         de l'ancien système sont toutes dans le premier cas. */}
-                    {c.juge_sur_peu ? ", état civil incomplet" : ""}
+                    {c.partial_identity ? ", état civil incomplet" : ""}
                   </span>
                 )}
               </li>
             ))}
           </ul>
 
-          {correspondances.length > 4 && (
+          {matches.length > 4 && (
             <p className="text-xs text-muted-foreground">
-              et {correspondances.length - 4} autre{correspondances.length - 4 > 1 ? "s" : ""}.
+              et {matches.length - 4} autre{matches.length - 4 > 1 ? "s" : ""}.
             </p>
           )}
 
@@ -181,7 +181,7 @@ export function AlerteDoublon({
             </p>
           )}
 
-          {tronque && (
+          {truncated && (
             <p className="text-xs text-muted-foreground">
               La recherche s'est arrêtée avant la fin : d'autres fiches peuvent
               correspondre.

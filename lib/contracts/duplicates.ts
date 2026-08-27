@@ -1,20 +1,20 @@
 import { z } from "zod"
 
 /** L'inscription déjà ouverte pour l'année visée, validée ou non. */
-export const InscriptionExistanteSchema = z.object({
+export const ExistingEnrollmentSchema = z.object({
   enrollment_id: z.number(),
   status: z.string(),
   class_name: z.string().nullable(),
 })
 
-export const CorrespondanceSchema = z.object({
+export const MatchSchema = z.object({
   student_id: z.number(),
   last_name: z.string(),
   first_name: z.string(),
   enrollment_number: z.string().nullable(),
   birth_date: z.string().nullable(),
   /** « matricule » (certain) ou « ressemblance ». */
-  motif: z.enum(["matricule", "ressemblance"]),
+  reason: z.enum(["enrollment_number", "similarity"]),
   score: z.number().nullable(),
   /**
    * Vrai quand un des champs d'état civil n'a pas pu être comparé.
@@ -24,29 +24,29 @@ export const CorrespondanceSchema = z.object({
    * réserve, un « 100 % » obtenu sur le seul nom se lirait comme une
    * correspondance complète.
    */
-  juge_sur_peu: z.boolean(),
-  inscription_annee_courante: InscriptionExistanteSchema.nullable(),
+  partial_identity: z.boolean(),
+  current_year_enrollment: ExistingEnrollmentSchema.nullable(),
 })
 
-export const DoublonsSchema = z.object({
-  correspondances: z.array(CorrespondanceSchema),
+export const DuplicatesSchema = z.object({
+  matches: z.array(MatchSchema),
   /**
    * Vrai quand le plafond de candidats a été atteint.
    *
    * Sans ce signal, « rien trouvé » se lit comme une certitude alors que la
    * recherche s'est arrêtée avant d'avoir tout regardé.
    */
-  tronque: z.boolean(),
+  truncated: z.boolean(),
 })
 
-export type Correspondance = z.infer<typeof CorrespondanceSchema>
-export type Doublons = z.infer<typeof DoublonsSchema>
+export type Match = z.infer<typeof MatchSchema>
+export type Duplicates = z.infer<typeof DuplicatesSchema>
 
-export interface DoublonsParams {
+export interface DuplicatesParams {
   last_name?: string
   first_name?: string
   birth_date?: string
   enrollment_number?: string
   academic_year_id?: number
-  ignorer_student_id?: number
+  exclude_student_id?: number
 }
