@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/select"
 import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
 import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
+import { DuplicateWarning } from "@/components/shared/DuplicateWarning"
+import { useFormDuplicates } from "@/lib/hooks/useFormDuplicates"
 
 interface StudentFormProps {
   onSuccess: () => void
@@ -61,9 +63,18 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
     })
   }
 
+  // La typed est surveillée pendant qu'elle se fait : signaler après
+  // l'enregistrement arriverait trop tard, la seconde fiche existerait.
+  const duplicates = useFormDuplicates(form)
+
   return (
     <Form {...form}>
       <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <DuplicateWarning
+          {...duplicates}
+          action="Créer cette fiche"
+        />
+
         <StudentPhotoField value={photo} onChange={setPhoto} disabled={isPending || attachPhoto.isPending} />
 
         <div className="grid grid-cols-2 gap-4">
