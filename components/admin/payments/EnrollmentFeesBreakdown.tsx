@@ -102,7 +102,13 @@ export function EnrollmentFeesBreakdown({
                     <div className={cn("h-full rounded-full transition-all", st.dot)} style={{ width: `${pct}%` }} />
                   </div>
                   <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                    <span className="font-semibold text-foreground">{fmt(fee.paid)}</span> / {fmt(fee.amount)}
+                    {fee.status === "in_kind" ? (
+                      <span className="font-medium text-sky-700 dark:text-sky-400">Hors reste à payer</span>
+                    ) : (
+                      <>
+                        <span className="font-semibold text-foreground">{fmt(fee.paid)}</span> / {fmt(fee.amount)}
+                      </>
+                    )}
                   </span>
                 </div>
                 {fee.remaining > 0 && isCashDue(fee.status) && (

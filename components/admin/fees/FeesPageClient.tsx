@@ -147,9 +147,13 @@ export function FeesPageClient() {
                         </span>
                         <div>
                           <h3 className="text-sm font-semibold">{cat.name}</h3>
-                          {cat.description && (
+                          {cat.accepts_in_kind ? (
+                            <p className="text-[10px] font-medium text-sky-700 dark:text-sky-400">
+                              Dépôt en nature accepté
+                            </p>
+                          ) : cat.description ? (
                             <p className="line-clamp-1 text-[11px] text-muted-foreground">{cat.description}</p>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                       <div className="flex items-center gap-1">

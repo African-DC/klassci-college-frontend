@@ -99,7 +99,9 @@ export function ParentChildFeesClient({ childId }: ParentChildFeesClientProps) {
                           {fee.total_amount.toLocaleString("fr-FR")} FCFA
                         </TableCell>
                         <TableCell className="text-right text-sm text-emerald-600 dark:text-emerald-400">
-                          {fee.paid_amount.toLocaleString("fr-FR")} FCFA
+                          {fee.status === "depose"
+                            ? "—"
+                            : `${fee.paid_amount.toLocaleString("fr-FR")} FCFA`}
                         </TableCell>
                         <TableCell>
                           <Badge variant={config.variant} className="text-[10px]">

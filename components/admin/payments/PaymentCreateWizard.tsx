@@ -15,6 +15,7 @@ import { StudentPicker } from "@/components/shared/StudentPicker"
 import type { Student } from "@/lib/contracts/student"
 import type { Enrollment } from "@/lib/contracts/enrollment"
 import type { StudentEnrollmentFee } from "@/lib/api/students"
+import { isCashDue } from "@/lib/contracts/payment"
 import type { SelectablePaymentMethod } from "@/lib/payment-methods"
 import { PaymentMethodSelect } from "@/components/admin/payments/PaymentMethodSelect"
 
@@ -246,7 +247,7 @@ function StepSelectFee({
   }, [fees])
 
   const unpaidFees = useMemo(
-    () => feeList.filter((f) => f.remaining > 0),
+    () => feeList.filter((f) => f.remaining > 0 && isCashDue(f.status)),
     [feeList],
   )
 
