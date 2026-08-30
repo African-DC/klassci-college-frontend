@@ -6,6 +6,7 @@ import type { FeeVariantOption } from "@/lib/contracts/enrollment"
 import { classCapacity, classCapacityLabel } from "@/lib/enrollment/classCapacity"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
@@ -22,6 +23,8 @@ interface ClassFeesFieldsProps {
   onFeeVariantChange: (id: number | null) => void
   onNotesChange: (val: string | null) => void
   classError?: string
+  inKindDeposits?: Record<number, boolean>
+  onInKindDepositChange?: (feeCategoryId: number, deposited: boolean) => void
 }
 
 function formatXof(amount: number) {
@@ -62,10 +65,15 @@ export function ClassAndFeesFields({
   onFeeVariantChange,
   onNotesChange,
   classError,
+  inKindDeposits = {},
+  onInKindDepositChange,
 }: ClassFeesFieldsProps) {
   const mandatory = feeVariants.filter((variant) => variant.is_mandatory !== false)
   const optional = feeVariants.filter((variant) => variant.is_mandatory === false)
-  const mandatoryTotal = mandatory.reduce((sum, variant) => sum + Number(variant.amount), 0)
+  const cashMandatory = mandatory.filter(
+    (variant) => !variant.accepts_in_kind || !inKindDeposits[variant.fee_category_id],
+  )
+  const mandatoryTotal = cashMandatory.reduce((sum, variant) => sum + Number(variant.amount), 0)
 
   return (
     <div className="space-y-4">
@@ -115,14 +123,27 @@ export function ClassAndFeesFields({
                 <div
                   key={variant.id}
                   className={cn(
-                    "flex items-center justify-between px-4 py-2.5",
+                    "flex items-center justify-between gap-3 px-4 py-2.5",
                     index < mandatory.length - 1 && "border-b border-border/30",
                   )}
                 >
                   <span className="text-sm">{variant.category_name ?? variant.description ?? "Frais"}</span>
-                  <Badge variant="secondary" className="font-mono text-xs">
-                    {formatXof(variant.amount)}
-                  </Badge>
+                  <div className="flex shrink-0 items-center gap-3">
+                    {variant.accepts_in_kind ? (
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Checkbox
+                          checked={!!inKindDeposits[variant.fee_category_id]}
+                          onCheckedChange={(checked) =>
+                            onInKindDepositChange?.(variant.fee_category_id, checked === true)
+                          }
+                        />
+                        Déposé
+                      </label>
+                    ) : null}
+                    <Badge variant="secondary" className="font-mono text-xs">
+                      {formatXof(variant.amount)}
+                    </Badge>
+                  </div>
                 </div>
               ))}
               <div className="flex items-center justify-between border-t border-border bg-primary/5 px-4 py-2.5">

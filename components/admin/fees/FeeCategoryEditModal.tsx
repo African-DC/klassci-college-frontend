@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { FeeEntitlementsField } from "@/components/admin/fees/FeeEntitlementsField"
@@ -26,6 +27,7 @@ export function FeeCategoryEditModal({ category, onClose }: FeeCategoryEditModal
           name: category.name,
           description: category.description,
           entitlements: category.entitlements ?? [],
+          accepts_in_kind: category.accepts_in_kind ?? false,
         }
       : undefined,
   })
@@ -87,6 +89,23 @@ export function FeeCategoryEditModal({ category, onClose }: FeeCategoryEditModal
                     <FeeEntitlementsField value={field.value} onChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="accepts_in_kind"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Accepte un dépôt en nature (ramette, chemise…)</FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Si le parent dépose l&apos;article à l&apos;inscription, ce frais n&apos;est pas dû.
+                    </p>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value ?? false} onCheckedChange={field.onChange} />
+                  </FormControl>
                 </FormItem>
               )}
             />

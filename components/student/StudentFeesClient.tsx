@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCircle, Clock, AlertCircle } from "lucide-react"
+import { CheckCircle, Clock, AlertCircle, Package } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
@@ -20,6 +20,8 @@ const STATUS_CONFIG: Record<StudentFeeItem["status"], { label: string; variant: 
   paye: { label: "Payé", variant: "default", icon: CheckCircle },
   partiel: { label: "Partiel", variant: "secondary", icon: Clock },
   impaye: { label: "Impayé", variant: "destructive", icon: AlertCircle },
+  depose: { label: "Déposé en nature", variant: "secondary", icon: Package },
+  exonere: { label: "Exonéré", variant: "secondary", icon: CheckCircle },
 }
 
 export function StudentFeesClient() {

@@ -61,6 +61,7 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
   const [showParentAccount, setShowParentAccount] = useState(false)
   const [maxReachedStep, setMaxReachedStep] = useState(0)
   const [photo, setPhoto] = useState<File | null>(null)
+  const [inKindDeposits, setInKindDeposits] = useState<Record<number, boolean>>({})
 
   // Mutations
   const createWithStudent = useCreateWithStudent()
@@ -204,6 +205,13 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
     if (step > 0) setStep(step - 1)
   }
 
+  function payloadDeposits() {
+    return Object.entries(inKindDeposits).map(([id, deposited]) => ({
+      fee_category_id: Number(id),
+      deposited,
+    }))
+  }
+
   function handleSubmit() {
     if (enrollmentType === "new") {
       newForm.handleSubmit((data) => {
@@ -211,6 +219,7 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
         if (!showParentFields) {
           data.parent = null
         }
+        data.in_kind_deposits = payloadDeposits()
         createWithStudent.mutate(data, {
           onSuccess: async (enrollment) => {
             await attachPhoto.mutateAsync({ studentId: enrollment.student_id, photo })
@@ -222,6 +231,7 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
       })()
     } else {
       reForm.handleSubmit((data) => {
+        data.in_kind_deposits = payloadDeposits()
         reEnroll.mutate(data, {
           onSuccess: () => {
             reForm.reset()
@@ -372,10 +382,17 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
               classId={newForm.watch("class_id")}
               feeVariantId={newForm.watch("fee_variant_id")}
               notes={newForm.watch("notes")}
-              onClassChange={(id) => newForm.setValue("class_id", id, { shouldValidate: true })}
+              onClassChange={(id) => {
+                newForm.setValue("class_id", id, { shouldValidate: true })
+                setInKindDeposits({})
+              }}
               onFeeVariantChange={(id) => newForm.setValue("fee_variant_id", id)}
               onNotesChange={(val) => newForm.setValue("notes", val)}
               classError={newForm.formState.errors.class_id?.message}
+              inKindDeposits={inKindDeposits}
+              onInKindDepositChange={(catId, deposited) =>
+                setInKindDeposits((prev) => ({ ...prev, [catId]: deposited }))
+              }
             />
           ) : (
             <ClassAndFeesFields
@@ -386,10 +403,17 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
               classId={reForm.watch("class_id")}
               feeVariantId={reForm.watch("fee_variant_id")}
               notes={reForm.watch("notes")}
-              onClassChange={(id) => reForm.setValue("class_id", id, { shouldValidate: true })}
+              onClassChange={(id) => {
+                reForm.setValue("class_id", id, { shouldValidate: true })
+                setInKindDeposits({})
+              }}
               onFeeVariantChange={(id) => reForm.setValue("fee_variant_id", id)}
               onNotesChange={(val) => reForm.setValue("notes", val)}
               classError={reForm.formState.errors.class_id?.message}
+              inKindDeposits={inKindDeposits}
+              onInKindDepositChange={(catId, deposited) =>
+                setInKindDeposits((prev) => ({ ...prev, [catId]: deposited }))
+              }
             />
           )}
 
@@ -433,6 +457,7 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
           showParentFields={showParentFields}
           createError={createWithStudent.error?.message}
           reEnrollError={reEnroll.error?.message}
+          inKindDeposits={inKindDeposits}
         />
       )}
 

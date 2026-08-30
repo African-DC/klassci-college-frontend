@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, CheckCircle, Clock, AlertCircle } from "lucide-react"
+import { ArrowLeft, CheckCircle, Clock, AlertCircle, Package } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -21,6 +21,8 @@ const STATUS_CONFIG: Record<ParentChildFeeItem["status"], { label: string; varia
   paye: { label: "Payé", variant: "default", icon: CheckCircle },
   partiel: { label: "Partiel", variant: "secondary", icon: Clock },
   impaye: { label: "Impayé", variant: "destructive", icon: AlertCircle },
+  depose: { label: "Déposé en nature", variant: "secondary", icon: Package },
+  exonere: { label: "Exonéré", variant: "secondary", icon: CheckCircle },
 }
 
 interface ParentChildFeesClientProps {

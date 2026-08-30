@@ -25,7 +25,24 @@ export const PaymentStatusSchema = z.enum([
   "cancelled",
 ])
 
-export const EnrollmentFeeStatusSchema = z.enum(["pending", "partial", "paid", "waived"])
+export const EnrollmentFeeStatusSchema = z.enum(["pending", "partial", "paid", "waived", "in_kind"])
+
+export function isCashDue(status: string): boolean {
+  return status !== "waived" && status !== "in_kind"
+}
+
+export function cashRemaining(status: string, amount: number, paid: number): number {
+  if (!isCashDue(status)) return 0
+  return Math.max(0, amount - paid)
+}
+
+export const FEE_STATUS_LABEL: Record<string, string> = {
+  paid: "Payé",
+  partial: "Partiel",
+  pending: "En attente",
+  waived: "Exonéré",
+  in_kind: "Déposé",
+}
 
 // Split comptable d'un paiement vers un frais spécifique.
 export const PaymentAllocationSchema = z.object({
