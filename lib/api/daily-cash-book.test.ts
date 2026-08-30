@@ -49,4 +49,16 @@ describe("bordereau journalier", () => {
     const params = [...calledUrl(fetchMock).searchParams.keys()]
     expect(params).toEqual(["date"])
   })
+
+  it("Ma caisse appelle l'endpoint borné à l'appelant, pas le consolidé", async () => {
+    const fetchMock = respondWithPdf()
+
+    const blob = await cashSessionsApi.myDailyCashBook("2026-08-30")
+
+    const url = calledUrl(fetchMock)
+    expect(url.pathname).toBe("/cash-sessions/me/daily-cash-book")
+    expect(url.searchParams.get("date")).toBe("2026-08-30")
+    expect([...url.searchParams.keys()]).toEqual(["date"])
+    expect(blob.type).toBe("application/pdf")
+  })
 })

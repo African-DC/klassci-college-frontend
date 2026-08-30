@@ -68,4 +68,10 @@ export const cashSessionsApi = {
    */
   dailyCashBook: (businessDate: string): Promise<Blob> =>
     apiFetchBlob(`/payments/daily-cash-book?date=${encodeURIComponent(businessDate)}`),
+
+  /** Bordereau de Ma caisse : toujours la caisse de l'appelant. */
+  myDailyCashBook: (businessDate: string): Promise<Blob> =>
+    apiFetchBlob(
+      `/cash-sessions/me/daily-cash-book?date=${encodeURIComponent(businessDate)}`,
+    ),
 }
