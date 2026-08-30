@@ -68,11 +68,12 @@ export function MyCashSessionClient() {
   const locked = isLocked(session)
   const counted = hasBeenCounted(session)
   const autoClosed = isAutoClosed(session)
+  const businessDate = session.business_date
 
   async function handlePrint() {
     setPrinting(true)
     try {
-      await openPdfPreview(() => cashSessionsApi.myDailyCashBook(session.business_date))
+      await openPdfPreview(() => cashSessionsApi.myDailyCashBook(businessDate))
     } finally {
       setPrinting(false)
     }
