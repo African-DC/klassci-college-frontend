@@ -52,6 +52,9 @@ export const EnrollmentCreateSchema = z.object({
   academic_year_id: z.number({ required_error: "L'année académique est requise" }).positive("L'année académique est requise"),
   fee_variant_id: z.number().positive().optional().nullable(),
   notes: z.string().optional().nullable(),
+  in_kind_deposits: z
+    .array(z.object({ fee_category_id: z.number(), deposited: z.boolean() }))
+    .optional(),
 })
 
 export const EnrollmentUpdateSchema = z.object({
@@ -109,6 +112,9 @@ export const NewEnrollmentSchema = z.object({
   assignment_decision_number: z.string().nullable().optional(),
   fee_variant_id: z.number().positive().nullable().optional(),
   notes: z.string().nullable().optional(),
+  in_kind_deposits: z
+    .array(z.object({ fee_category_id: z.number(), deposited: z.boolean() }))
+    .optional(),
 })
 
 export const ReEnrollmentSchema = z.object({
@@ -120,6 +126,9 @@ export const ReEnrollmentSchema = z.object({
   assignment_decision_number: z.string().nullable().optional(),
   fee_variant_id: z.number().positive().nullable().optional(),
   notes: z.string().nullable().optional(),
+  in_kind_deposits: z
+    .array(z.object({ fee_category_id: z.number(), deposited: z.boolean() }))
+    .optional(),
 })
 
 export const FeeVariantOptionSchema = z.object({
@@ -127,6 +136,7 @@ export const FeeVariantOptionSchema = z.object({
   fee_category_id: z.number(),
   category_name: z.string().optional(),
   is_mandatory: z.boolean().optional().default(true),
+  accepts_in_kind: z.boolean().optional(),
   amount: z.coerce.number(),
   description: z.string().nullable(),
 })

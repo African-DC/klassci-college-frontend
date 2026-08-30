@@ -14,6 +14,7 @@ import { DataError } from "@/components/shared/DataError"
 import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
 import { useEnrollments, enrollmentKeys } from "@/lib/hooks/useEnrollments"
 import { studentKeys, useStudentFees } from "@/lib/hooks/useStudents"
+import { isCashDue } from "@/lib/contracts/payment"
 import { StudentPaymentModal } from "./StudentPaymentModal"
 
 interface PaymentsTabProps {
@@ -38,8 +39,9 @@ export function PaymentsTab({ studentId }: PaymentsTabProps) {
   const enrollments = enrollmentsData?.items ?? []
 
   // Compute totals from actual enrollment fees (not stale fullData)
-  const totalExpected = (fees ?? []).reduce((sum, f) => sum + f.amount, 0)
-  const totalPaid = (fees ?? []).reduce((sum, f) => sum + f.paid, 0)
+  const dueFees = (fees ?? []).filter((f) => isCashDue(f.status))
+  const totalExpected = dueFees.reduce((sum, f) => sum + f.amount, 0)
+  const totalPaid = dueFees.reduce((sum, f) => sum + f.paid, 0)
   const feesRemaining = Math.max(0, totalExpected - totalPaid)
 
   async function handleRegenerateFees() {

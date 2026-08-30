@@ -46,6 +46,7 @@ export const FeeCategorySchema = z.object({
   // le backend qui renvoie ce champ.
   entitlements: z.array(FeeEntitlementSchema).optional(),
   is_mandatory: z.boolean(),
+  accepts_in_kind: z.boolean().optional(),
   priority: z.number().int().optional(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -75,6 +76,7 @@ export const FeeCategoryCreateSchema = z.object({
   description: z.string().nullable().optional(),
   entitlements: z.array(FeeEntitlementSchema).max(MAX_ENTITLEMENTS).optional(),
   is_mandatory: z.boolean().default(true),
+  accepts_in_kind: z.boolean().optional(),
   /** Ordre d'imputation des versements : plus petit = servi en premier. */
   priority: z.number().int().min(0).max(999).optional(),
 })

@@ -67,7 +67,7 @@ export const StudentFeeItemSchema = z.object({
   total_amount: z.coerce.number(),
   paid_amount: z.coerce.number(),
   remaining: z.coerce.number(),
-  status: z.enum(["paye", "partiel", "impaye"]),
+  status: z.enum(["paye", "partiel", "impaye", "depose", "exonere"]),
   last_payment_date: z.string().nullish(),
 })
 

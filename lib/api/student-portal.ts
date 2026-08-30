@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { cashRemaining } from "@/lib/contracts/payment"
 import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
   StudentDashboardSchema,
@@ -62,7 +63,11 @@ const StudentFeesRawSchema = z.object({
   fees: z.array(StudentFeeRawSchema).default([]),
 })
 
-export function mapFeeStatus(status: string): "paye" | "partiel" | "impaye" {
+export function mapFeeStatus(
+  status: string,
+): "paye" | "partiel" | "impaye" | "depose" | "exonere" {
+  if (status === "in_kind" || status === "depose") return "depose"
+  if (status === "waived" || status === "exonere") return "exonere"
   if (status === "paid" || status === "paye") return "paye"
   if (status === "partial" || status === "partiel") return "partiel"
   return "impaye"
@@ -137,23 +142,24 @@ export const studentPortalApi = {
   getFees: async (): Promise<StudentFeesResponse> => {
     const res = await apiFetch<unknown>("/student/fees")
     const raw = safeValidate(StudentFeesRawSchema, unwrapResponse(res), "GET /student/fees")
+    const fees = (raw.fees ?? []).map((f) => {
+      const paid = (f.payments ?? []).reduce((sum, p) => sum + p.amount, 0)
+      return {
+        id: f.id,
+        category_name: f.fee_category_name,
+        total_amount: f.amount,
+        paid_amount: paid,
+        remaining: cashRemaining(f.status, f.amount, paid),
+        status: mapFeeStatus(f.status),
+        last_payment_date: null,
+      }
+    })
     return {
       academic_year: "",
       total_expected: raw.total_due,
       total_paid: raw.total_paid,
-      total_remaining: raw.balance,
-      fees: (raw.fees ?? []).map((f) => {
-        const paid = (f.payments ?? []).reduce((sum, p) => sum + p.amount, 0)
-        return {
-          id: f.id,
-          category_name: f.fee_category_name,
-          total_amount: f.amount,
-          paid_amount: paid,
-          remaining: Math.max(0, f.amount - paid),
-          status: mapFeeStatus(f.status),
-          last_payment_date: null,
-        }
-      }),
+      total_remaining: fees.reduce((sum, f) => sum + f.remaining, 0),
+      fees,
     }
   },
 

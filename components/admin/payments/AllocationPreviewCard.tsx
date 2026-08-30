@@ -3,7 +3,7 @@
 import { AlertTriangle, CheckCircle2, Circle, CircleDot, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { AllocationPreview, AllocationPreviewLine } from "@/lib/contracts/payment"
+import { FEE_STATUS_LABEL, type AllocationPreview, type AllocationPreviewLine } from "@/lib/contracts/payment"
 
 interface AllocationPreviewCardProps {
   preview: AllocationPreview | undefined
@@ -19,14 +19,12 @@ function statusIcon(status: AllocationPreviewLine["status_after"]) {
   if (status === "paid") return <CheckCircle2 className="h-4 w-4 text-emerald-600" />
   if (status === "partial") return <CircleDot className="h-4 w-4 text-amber-600" />
   if (status === "waived") return <Circle className="h-4 w-4 text-muted-foreground" />
+  if (status === "in_kind") return <CheckCircle2 className="h-4 w-4 text-sky-600" />
   return <Circle className="h-4 w-4 text-muted-foreground" />
 }
 
 function statusLabel(status: AllocationPreviewLine["status_after"]): string {
-  if (status === "paid") return "Payé"
-  if (status === "partial") return "Partiel"
-  if (status === "waived") return "Exonéré"
-  return "En attente"
+  return FEE_STATUS_LABEL[status] ?? "En attente"
 }
 
 export function AllocationPreviewCard({

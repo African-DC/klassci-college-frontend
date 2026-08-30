@@ -23,6 +23,7 @@ const StudentEnrollmentFeeSchema = z.object({
   paid: z.number(),
   remaining: z.number(),
   status: z.string(),
+  accepts_in_kind: z.boolean().optional(),
 })
 const StudentEnrollmentFeeListSchema = z.array(StudentEnrollmentFeeSchema)
 
