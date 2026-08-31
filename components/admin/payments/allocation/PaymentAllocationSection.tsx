@@ -17,6 +17,13 @@ interface PaymentAllocationSectionProps {
   isLoading: boolean
   error: Error | null
   controller: AllocationDraftController
+  /**
+   * Vrai pendant que le versement part au serveur. Le temps d'un aller-retour
+   * en 3G, la répartition affichée n'est plus modifiable : ce qui a été envoyé
+   * est ce que l'encaisseur voit, et un champ qui bouge encore ferait douter
+   * de ce qui a réellement été enregistré.
+   */
+  disabled?: boolean
 }
 
 function ManualSkeleton() {
@@ -46,6 +53,7 @@ export function PaymentAllocationSection({
   isLoading,
   error,
   controller,
+  disabled,
 }: PaymentAllocationSectionProps) {
   const { mode, setMode, draft, setFeeAmount, fillFee, clear, directedTotal } = controller
   const lignes = preview?.lines ?? []
@@ -71,7 +79,7 @@ export function PaymentAllocationSection({
         </p>
       </div>
 
-      <AllocationModeChoice value={mode} onChange={setMode} />
+      <AllocationModeChoice value={mode} onChange={setMode} disabled={disabled} />
 
       {mode === "auto" ? (
         <AllocationPreviewCard preview={preview} isLoading={isLoading} error={error} />
@@ -113,6 +121,7 @@ export function PaymentAllocationSection({
                 type="button"
                 variant="ghost"
                 className="h-11 shrink-0 gap-1.5 px-2 text-xs sm:h-9"
+                disabled={disabled}
                 onClick={clear}
               >
                 <Eraser className="h-3.5 w-3.5" aria-hidden />
@@ -128,6 +137,7 @@ export function PaymentAllocationSection({
                 line={line}
                 value={draft[line.enrollment_fee_id] ?? ""}
                 problem={motifs.get(line.enrollment_fee_id)}
+                disabled={disabled}
                 onChange={(raw) => setFeeAmount(line.enrollment_fee_id, raw)}
                 onFill={() =>
                   fillFee(line.enrollment_fee_id, line.cash_remaining_before, amount)
