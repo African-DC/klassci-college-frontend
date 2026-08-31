@@ -14,8 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { FeesAcademicYearNotice } from "./FeesAcademicYearBar"
 import { useCreateFeeVariant } from "@/lib/hooks/useFees"
 import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
+import type { AcademicYear } from "@/lib/contracts/academic-year"
 
 /**
  * Un niveau peut porter plusieurs montants pour la même catégorie, un par
@@ -34,6 +36,8 @@ interface FeeVariantCopyModalProps {
   variants: FeeVariant[]
   levelNameMap: Map<number, string>
   academicYearId: number
+  /** Année affichée par l'écran, rappelée ici avant de copier. */
+  academicYear?: AcademicYear
 }
 
 /**
@@ -50,6 +54,7 @@ export function FeeVariantCopyModal({
   variants,
   levelNameMap,
   academicYearId,
+  academicYear,
 }: FeeVariantCopyModalProps) {
   const [sourceId, setSourceId] = useState<number | null>(null)
   const [targetId, setTargetId] = useState<number | null>(null)
@@ -148,6 +153,7 @@ export function FeeVariantCopyModal({
         </DialogHeader>
 
         <div className="space-y-4">
+          <FeesAcademicYearNotice year={academicYear} action="La copie reste sur" />
           {/* Source */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Copier depuis</label>

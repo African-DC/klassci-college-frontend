@@ -55,7 +55,7 @@ export function OptionalCategoryPanel({
   const [showForm, setShowForm] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<OptionalFeeOption | null>(null)
 
-  const { data: options, isLoading } = useFeeOptions(category.id)
+  const { data: options, isLoading } = useFeeOptions(category.id, academicYearId)
   const { mutate: createOption, isPending: creating } = useCreateFeeOption()
   const { mutate: updateOption, isPending: updating } = useUpdateFeeOption()
   const { mutate: deleteOption, isPending: deleting } = useDeleteFeeOption()
