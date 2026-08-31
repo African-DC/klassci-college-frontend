@@ -135,12 +135,18 @@ export async function captureVideoFrame(video: HTMLVideoElement): Promise<File> 
 const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"])
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024
 
-export function validatePhotoFile(file: File): string | null {
+/**
+ * Bornes d'un envoi d'image côté navigateur : mêmes formats et même plafond que
+ * ceux appliqués par le backend, refusés avant d'occuper le réseau (3G, coupures).
+ * Partagé par la photo élève, la photo de profil et le logo de l'établissement.
+ * `subject` n'ajuste que le mot affiché à l'utilisateur.
+ */
+export function validatePhotoFile(file: File, subject = "photo"): string | null {
   if (!ALLOWED_PHOTO_TYPES.has(file.type)) {
-    return "Format invalide. Utilisez une photo JPEG, PNG ou WebP."
+    return `Format invalide. Utilisez une ${subject} JPEG, PNG ou WebP.`
   }
   if (file.size > MAX_PHOTO_BYTES) {
-    return "Cette photo dépasse 5 Mo. Choisissez une image plus légère."
+    return `Cette ${subject} dépasse 5 Mo. Choisissez une image plus légère.`
   }
   return null
 }
