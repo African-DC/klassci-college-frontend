@@ -19,9 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { FeesAcademicYearNotice } from "./FeesAcademicYearBar"
 import { useCreateFeeVariant, useFeeCategories } from "@/lib/hooks/useFees"
 import { useLevels } from "@/lib/hooks/useLevels"
 import { useQueryClient } from "@tanstack/react-query"
+import type { AcademicYear } from "@/lib/contracts/academic-year"
 
 const FormSchema = z.object({
   fee_category_id: z.number({ required_error: "La catégorie est requise" }).positive(),
@@ -35,9 +37,11 @@ interface FeeVariantCreateModalProps {
   open: boolean
   onClose: () => void
   academicYearId: number
+  /** Année affichée par l'écran, rappelée ici avant d'enregistrer. */
+  academicYear?: AcademicYear
 }
 
-export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVariantCreateModalProps) {
+export function FeeVariantCreateModal({ open, onClose, academicYearId, academicYear }: FeeVariantCreateModalProps) {
   const [selectedLevelIds, setSelectedLevelIds] = useState<Set<number>>(new Set())
   const [isCreating, setIsCreating] = useState(false)
 
@@ -117,6 +121,7 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId }: FeeVari
         <DialogHeader>
           <DialogTitle>Nouvelle variante de frais</DialogTitle>
         </DialogHeader>
+        <FeesAcademicYearNotice year={academicYear} action="Ces montants seront enregistrés sur" />
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField

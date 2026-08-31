@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- L'écran des frais s'ouvre sur l'année en cours et laisse en changer, avec un repère visible quand l'année choisie n'est pas la courante *(admin, comptable)*
 - Une ligne de frais réglée en nature n'apparaît plus comme impayée à 0 F, sur la fiche de l'élève comme dans les portails famille *(admin, comptable, parent, élève)*
 - Les montées de dépendances passent la validation de nom de branche, au lieu de forcer une fusion qui contourne tous les contrôles *(technique)*
 - Les boutons Valider, Annuler, Restaurer et Supprimer s'annoncent à nouveau avec une espace : un lecteur d'écran disait « Annulerle versement » *(admin)*
@@ -21,7 +22,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Annulation d'un versement déjà encaissé, depuis le tableau comme depuis le téléphone : c'est le cas courant, un montant saisi qui n'est pas dans la caisse *(admin)*
 
 ### Added
-- Le formulaire d'encaissement laisse choisir la répartition du versement frais par frais, au lieu de subir la seule cascade automatique : un parent qui verse 50 000 F pour l'inscription et la tenue est enregistré tel qu'il a payé. Le reliquat non nommé continue de cascader, et l'écran montre où il tombe avant l'enregistrement *(caissier, admin, secrétariat)*
+- Le formulaire d'encaissement laisse choisir quel frais reçoit quoi : un versement pour l'inscription et la tenue s'enregistre tel qu'il a été payé *(caissier, admin)*
+- Onglet « Identité visuelle » : le logo de l'établissement s'envoie, se remplace et se retire, avec aperçu immédiat sur les documents officiels *(admin)*
 - Bouton « Bordereau du jour » sur « Ma caisse » : la caissière édite sa propre pièce de caisse, sans dépendre du comptable ni du point journalier auquel elle n'a pas accès *(caissier)*
 - Un frais réglé en nature se marque à l'inscription et sur la fiche de frais : la ligne cesse alors d'être due en argent et n'entre plus dans le reste à payer *(admin, secrétariat, comptable)*
 - Un élève déjà enregistré est signalé pendant la saisie : matricule identique, ressemblance du nom, ou inscription déjà ouverte sur l'année même non validée *(admin, secrétariat)*
