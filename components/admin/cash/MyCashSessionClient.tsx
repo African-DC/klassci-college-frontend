@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Banknote, CheckCircle2, Lock, Receipt, Wallet } from "lucide-react"
+import { Banknote, CheckCircle2, FileText, Lock, Receipt, Wallet } from "lucide-react"
 import { PageHero, type HeroKpi } from "@/components/shared/PageHero"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useMyCashSession } from "@/lib/hooks/useCashSessions"
+import { cashSessionsApi } from "@/lib/api/cash-sessions"
+import { openPdfPreview } from "@/lib/pdf/preview"
 import { hasBeenCounted, isAutoClosed, isLocked } from "@/lib/contracts/cash-session"
 import {
   CashStatusBadge,
@@ -27,6 +29,7 @@ import { RegularizeCashBanner } from "./RegularizeCashBanner"
  */
 export function MyCashSessionClient() {
   const [closeOpen, setCloseOpen] = useState(false)
+  const [printing, setPrinting] = useState(false)
   const { data: session, isLoading, isError, error, refetch } = useMyCashSession()
 
   if (isLoading) {
@@ -65,6 +68,16 @@ export function MyCashSessionClient() {
   const locked = isLocked(session)
   const counted = hasBeenCounted(session)
   const autoClosed = isAutoClosed(session)
+  const businessDate = session.business_date
+
+  async function handlePrint() {
+    setPrinting(true)
+    try {
+      await openPdfPreview(() => cashSessionsApi.myDailyCashBook(businessDate))
+    } finally {
+      setPrinting(false)
+    }
+  }
 
   const kpis: HeroKpi[] = [
     { label: "Encaissé aujourd'hui", value: formatFcfa(session.total_collected), icon: Wallet },
@@ -87,16 +100,27 @@ export function MyCashSessionClient() {
         subtitle={`${session.cashier_name} · journée du ${formatBusinessDate(session.business_date)}`}
         kpis={kpis}
         actions={
-          !locked ? (
+          <>
             <button
               type="button"
-              onClick={() => setCloseOpen(true)}
-              className="inline-flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-sm font-semibold text-accent-foreground ring-1 ring-white/40 transition-colors hover:bg-accent/90"
+              onClick={handlePrint}
+              disabled={printing}
+              className="inline-flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-sm font-semibold text-accent-foreground ring-1 ring-white/40 transition-colors hover:bg-accent/90 disabled:opacity-60"
             >
-              <Lock aria-hidden="true" className="h-4 w-4" />
-              Clôturer ma journée
+              <FileText aria-hidden="true" className="h-4 w-4" />
+              {printing ? "Génération…" : "Bordereau du jour"}
             </button>
-          ) : null
+            {!locked ? (
+              <button
+                type="button"
+                onClick={() => setCloseOpen(true)}
+                className="inline-flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-sm font-semibold text-accent-foreground ring-1 ring-white/40 transition-colors hover:bg-accent/90"
+              >
+                <Lock aria-hidden="true" className="h-4 w-4" />
+                Clôturer ma journée
+              </button>
+            ) : null}
+          </>
         }
       />
 

@@ -34,6 +34,12 @@ export const enrollmentsApi = {
     return apiFetch<Enrollment>(`/enrollments/${id}/validate`, { method: "POST" })
   },
 
+  depositInKind: async (enrollmentId: number, feeId: number) => {
+    return apiFetch(`/enrollments/${enrollmentId}/fees/${feeId}/in-kind-deposit`, {
+      method: "PATCH",
+    })
+  },
+
   /** Valide une liste d'inscriptions ; un refus n'arrete pas les autres. */
   bulkValidate: async (ids: number[]): Promise<BulkValidateResult> => {
     const res = await apiFetch<unknown>("/enrollments/bulk-validate", {

@@ -1,11 +1,13 @@
 "use client"
 
-import { CheckCircle2, CircleDot, Circle, MinusCircle, ListChecks } from "lucide-react"
+import { CheckCircle2, CircleDot, Circle, MinusCircle, ListChecks, Package } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { SectionTitle } from "@/components/shared/PageHero"
 import { EntitlementsPopover } from "@/components/shared/fees/FeeEntitlements"
 import { cn } from "@/lib/utils"
 import type { FeeEntitlement } from "@/lib/contracts/fee"
+import { FEE_STATUS_LABEL, isCashDue } from "@/lib/contracts/payment"
 
 export interface EnrollmentFeeItem {
   id: number
@@ -16,6 +18,7 @@ export interface EnrollmentFeeItem {
   paid: number
   remaining: number
   status: string
+  accepts_in_kind?: boolean
   is_optional?: boolean
   option_name?: string | null
 }
@@ -26,10 +29,11 @@ const STATUS: Record<
   string,
   { label: string; icon: typeof CheckCircle2; dot: string; text: string }
 > = {
-  paid: { label: "Payé", icon: CheckCircle2, dot: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
-  partial: { label: "Partiel", icon: CircleDot, dot: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
-  pending: { label: "En attente", icon: Circle, dot: "bg-muted-foreground/40", text: "text-muted-foreground" },
-  waived: { label: "Exonéré", icon: MinusCircle, dot: "bg-muted-foreground/40", text: "text-muted-foreground" },
+  paid: { label: FEE_STATUS_LABEL.paid, icon: CheckCircle2, dot: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
+  partial: { label: FEE_STATUS_LABEL.partial, icon: CircleDot, dot: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
+  pending: { label: FEE_STATUS_LABEL.pending, icon: Circle, dot: "bg-muted-foreground/40", text: "text-muted-foreground" },
+  waived: { label: FEE_STATUS_LABEL.waived, icon: MinusCircle, dot: "bg-muted-foreground/40", text: "text-muted-foreground" },
+  in_kind: { label: FEE_STATUS_LABEL.in_kind, icon: Package, dot: "bg-sky-500", text: "text-sky-600 dark:text-sky-400" },
 }
 
 /**
@@ -37,7 +41,15 @@ const STATUS: Record<
  * (payé / dû), le reste et le statut. Reprend la logique de lecture de
  * l'allocation d'un versement, appliquée à l'état courant des frais.
  */
-export function EnrollmentFeesBreakdown({ fees }: { fees: EnrollmentFeeItem[] }) {
+export function EnrollmentFeesBreakdown({
+  fees,
+  onMarkDeposited,
+  markingFeeId,
+}: {
+  fees: EnrollmentFeeItem[]
+  onMarkDeposited?: (feeId: number) => void
+  markingFeeId?: number | null
+}) {
   if (fees.length === 0) {
     return (
       <Card className="border-0 shadow-sm ring-1 ring-border">
@@ -57,7 +69,11 @@ export function EnrollmentFeesBreakdown({ fees }: { fees: EnrollmentFeeItem[] })
           {fees.map((fee) => {
             const st = STATUS[fee.status] ?? STATUS.pending
             const StIcon = st.icon
-            const pct = fee.amount > 0 ? Math.min(100, Math.round((fee.paid / fee.amount) * 100)) : 0
+            const pct = !isCashDue(fee.status)
+              ? 100
+              : fee.amount > 0
+                ? Math.min(100, Math.round((fee.paid / fee.amount) * 100))
+                : 0
             const name = fee.option_name ?? fee.category_name
             return (
               <div key={fee.id} className="py-3 first:pt-1 last:pb-1">
@@ -86,14 +102,37 @@ export function EnrollmentFeesBreakdown({ fees }: { fees: EnrollmentFeeItem[] })
                     <div className={cn("h-full rounded-full transition-all", st.dot)} style={{ width: `${pct}%` }} />
                   </div>
                   <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                    <span className="font-semibold text-foreground">{fmt(fee.paid)}</span> / {fmt(fee.amount)}
+                    {fee.status === "in_kind" ? (
+                      <span className="font-medium text-sky-700 dark:text-sky-400">Hors reste à payer</span>
+                    ) : (
+                      <>
+                        <span className="font-semibold text-foreground">{fmt(fee.paid)}</span> / {fmt(fee.amount)}
+                      </>
+                    )}
                   </span>
                 </div>
-                {fee.remaining > 0 && fee.status !== "waived" && (
+                {fee.remaining > 0 && isCashDue(fee.status) && (
                   <p className="mt-1 text-right text-[11px] text-muted-foreground">
                     Reste : <span className="font-medium text-foreground">{fmt(fee.remaining)}</span>
                   </p>
                 )}
+                {onMarkDeposited &&
+                  fee.status === "pending" &&
+                  fee.accepts_in_kind &&
+                  fee.paid === 0 && (
+                    <div className="mt-2 flex justify-end">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        disabled={markingFeeId === fee.id}
+                        onClick={() => onMarkDeposited(fee.id)}
+                      >
+                        {markingFeeId === fee.id ? "Enregistrement…" : "Marquer déposé"}
+                      </Button>
+                    </div>
+                  )}
               </div>
             )
           })}

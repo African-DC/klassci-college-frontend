@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, CheckCircle, Clock, AlertCircle } from "lucide-react"
+import { ArrowLeft, CheckCircle, Clock, AlertCircle, Package } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -21,6 +21,8 @@ const STATUS_CONFIG: Record<ParentChildFeeItem["status"], { label: string; varia
   paye: { label: "Payé", variant: "default", icon: CheckCircle },
   partiel: { label: "Partiel", variant: "secondary", icon: Clock },
   impaye: { label: "Impayé", variant: "destructive", icon: AlertCircle },
+  depose: { label: "Déposé en nature", variant: "secondary", icon: Package },
+  exonere: { label: "Exonéré", variant: "secondary", icon: CheckCircle },
 }
 
 interface ParentChildFeesClientProps {
@@ -97,7 +99,9 @@ export function ParentChildFeesClient({ childId }: ParentChildFeesClientProps) {
                           {fee.total_amount.toLocaleString("fr-FR")} FCFA
                         </TableCell>
                         <TableCell className="text-right text-sm text-emerald-600 dark:text-emerald-400">
-                          {fee.paid_amount.toLocaleString("fr-FR")} FCFA
+                          {fee.status === "depose"
+                            ? "—"
+                            : `${fee.paid_amount.toLocaleString("fr-FR")} FCFA`}
                         </TableCell>
                         <TableCell>
                           <Badge variant={config.variant} className="text-[10px]">

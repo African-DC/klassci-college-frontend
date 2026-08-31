@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { FEE_STATUS_LABEL } from "@/lib/contracts/payment"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SectionTitle } from "@/components/shared/PageHero"
 import { useEnrollmentPayments } from "@/lib/hooks/usePayments"
@@ -129,11 +130,8 @@ export function PaymentHistoryList({ enrollmentId }: { enrollmentId: number }) {
                           <span className="min-w-0 flex-1 truncate">{a.fee_category_name ?? "Frais"}</span>
                           {a.enrollment_fee_status_after && (
                             <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
-                              {a.enrollment_fee_status_after === "paid"
-                                ? "Payé"
-                                : a.enrollment_fee_status_after === "partial"
-                                  ? "Partiel"
-                                  : a.enrollment_fee_status_after}
+                              {FEE_STATUS_LABEL[a.enrollment_fee_status_after]
+                                ?? a.enrollment_fee_status_after}
                             </Badge>
                           )}
                           <span className="shrink-0 font-semibold tabular-nums text-primary">+ {fmt(a.amount)}</span>

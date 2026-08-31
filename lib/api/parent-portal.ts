@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { apiFetch, apiFetchBlob, safeValidate } from "./client"
+import { cashRemaining } from "@/lib/contracts/payment"
 import { mapFeeStatus } from "./student-portal"
 import {
   ParentDashboardSchema,
@@ -71,25 +72,26 @@ export const parentPortalApi = {
   getChildFees: async (childId: number): Promise<ParentChildFeesResponse> => {
     const res = await apiFetch<unknown>(`/parent/children/${childId}/fees`)
     const raw = safeValidate(ParentChildFeesRawSchema, unwrapResponse(res), `GET /parent/children/${childId}/fees`)
+    const fees = (raw.fees ?? []).map((f) => {
+      const paid = (f.payments ?? []).reduce((sum, p) => sum + p.amount, 0)
+      return {
+        id: f.id,
+        category_name: f.category_name,
+        total_amount: f.amount,
+        paid_amount: paid,
+        remaining: cashRemaining(f.status, f.amount, paid),
+        status: mapFeeStatus(f.status),
+        last_payment_date: null,
+      }
+    })
     return {
       child_name: null,
       class_name: null,
       academic_year: null,
       total_expected: raw.total_due,
       total_paid: raw.total_paid,
-      total_remaining: Math.max(0, raw.total_due - raw.total_paid),
-      fees: (raw.fees ?? []).map((f) => {
-        const paid = (f.payments ?? []).reduce((sum, p) => sum + p.amount, 0)
-        return {
-          id: f.id,
-          category_name: f.category_name,
-          total_amount: f.amount,
-          paid_amount: paid,
-          remaining: Math.max(0, f.amount - paid),
-          status: mapFeeStatus(f.status),
-          last_payment_date: null,
-        }
-      }),
+      total_remaining: fees.reduce((sum, f) => sum + f.remaining, 0),
+      fees,
     }
   },
 

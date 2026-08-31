@@ -20,7 +20,7 @@ interface FeeCategoryCreateModalProps {
 export function FeeCategoryCreateModal({ open, onClose }: FeeCategoryCreateModalProps) {
   const form = useForm<FeeCategoryCreate>({
     resolver: zodResolver(FeeCategoryCreateSchema),
-    defaultValues: { name: "", description: null, entitlements: [], is_mandatory: true },
+        defaultValues: { name: "", description: null, entitlements: [], is_mandatory: true, accepts_in_kind: false },
   })
 
   const { mutate, isPending } = useCreateFeeCategory()
@@ -98,6 +98,23 @@ export function FeeCategoryCreateModal({ open, onClose }: FeeCategoryCreateModal
                   </div>
                   <FormControl>
                     <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="accepts_in_kind"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Accepte un dépôt en nature (ramette, chemise…)</FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Si le parent dépose l&apos;article à l&apos;inscription, ce frais n&apos;est pas dû.
+                    </p>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value ?? false} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}

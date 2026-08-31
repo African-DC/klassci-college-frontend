@@ -3,8 +3,11 @@
 import { useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { getSession } from "next-auth/react"
+import { toast } from "sonner"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { enrollmentsApi } from "@/lib/api/enrollments"
+import { isCashDue } from "@/lib/contracts/payment"
 import { Skeleton } from "@/components/ui/skeleton"
 import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
 import { EnrollmentFeesBreakdown, type EnrollmentFeeItem } from "@/components/admin/payments/EnrollmentFeesBreakdown"
@@ -19,6 +22,7 @@ interface EnrollmentPaymentsTabProps {
 
 export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPaymentsTabProps) {
   const [paymentOpen, setPaymentOpen] = useState(false)
+  const [markingFeeId, setMarkingFeeId] = useState<number | null>(null)
   const queryClient = useQueryClient()
   const studentId = (enrollment as Record<string, unknown>)?.student_id as number | undefined
 
@@ -44,9 +48,22 @@ export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPa
   })
 
   const feeList = fees ?? []
-  const totalExpected = feeList.reduce((s, f) => s + f.amount, 0)
-  const totalPaid = feeList.reduce((s, f) => s + f.paid, 0)
+  const totalExpected = feeList.filter((f) => isCashDue(f.status)).reduce((s, f) => s + f.amount, 0)
+  const totalPaid = feeList.filter((f) => isCashDue(f.status)).reduce((s, f) => s + f.paid, 0)
   const totalRemaining = Math.max(0, totalExpected - totalPaid)
+
+  async function handleMarkDeposited(feeId: number) {
+    setMarkingFeeId(feeId)
+    try {
+      await enrollmentsApi.depositInKind(enrollmentId, feeId)
+      toast.success("Article marqué déposé")
+      queryClient.invalidateQueries({ queryKey: ["enrollment-fees", enrollmentId] })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Impossible de marquer ce frais déposé")
+    } finally {
+      setMarkingFeeId(null)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -75,7 +92,11 @@ export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPa
         </div>
       )}
 
-      <EnrollmentFeesBreakdown fees={feeList} />
+      <EnrollmentFeesBreakdown
+        fees={feeList}
+        onMarkDeposited={handleMarkDeposited}
+        markingFeeId={markingFeeId}
+      />
 
       <PaymentHistoryList enrollmentId={enrollmentId} />
 

@@ -30,6 +30,7 @@ interface EnrollmentSummaryStepProps {
   showParentFields: boolean
   createError?: string
   reEnrollError?: string
+  inKindDeposits?: Record<number, boolean>
 }
 
 export function EnrollmentSummaryStep({
@@ -45,11 +46,15 @@ export function EnrollmentSummaryStep({
   showParentFields,
   createError,
   reEnrollError,
+  inKindDeposits = {},
 }: EnrollmentSummaryStepProps) {
   const mandatory = feeVariants.filter((variant) => variant.is_mandatory !== false)
   const optionalAmount =
     selectedFeeVariant && selectedFeeVariant.is_mandatory === false ? Number(selectedFeeVariant.amount) : 0
-  const total = mandatory.reduce((sum, variant) => sum + Number(variant.amount), 0) + optionalAmount
+  const total =
+    mandatory
+      .filter((variant) => !variant.accepts_in_kind || !inKindDeposits[variant.fee_category_id])
+      .reduce((sum, variant) => sum + Number(variant.amount), 0) + optionalAmount
   const notes = enrollmentType === "new" ? newValues.notes : reValues.notes
 
   return (
@@ -161,12 +166,15 @@ export function EnrollmentSummaryStep({
                   <CreditCard className="h-4 w-4" />
                   Frais
                 </h4>
-                {mandatory.map((variant) => (
-                  <div key={variant.id} className="flex justify-between py-0.5 text-sm">
-                    <span className="text-muted-foreground">{variant.category_name ?? "Frais"}</span>
-                    <span className="font-mono">{formatXof(Number(variant.amount))}</span>
-                  </div>
-                ))}
+                {mandatory.map((variant) => {
+                  const deposited = !!variant.accepts_in_kind && !!inKindDeposits[variant.fee_category_id]
+                  return (
+                    <div key={variant.id} className="flex justify-between py-0.5 text-sm">
+                      <span className="text-muted-foreground">{variant.category_name ?? "Frais"}</span>
+                      <span className="font-mono">{deposited ? "Déposé" : formatXof(Number(variant.amount))}</span>
+                    </div>
+                  )
+                })}
                 {selectedFeeVariant && selectedFeeVariant.is_mandatory === false ? (
                   <div className="flex justify-between py-0.5 text-sm">
                     <span className="text-muted-foreground">{selectedFeeVariant.category_name ?? "Option"}</span>
