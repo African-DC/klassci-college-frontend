@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2 } from "lucide-react"
-import { ASSIGNMENT_SCOPES } from "@/lib/contracts/fee"
+import { ASSIGNMENT_SCOPES, ENROLLMENT_PROFILES } from "@/lib/contracts/fee"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { FeeAudienceSelect } from "./FeeAudienceSelect"
 import { FeesAcademicYearNotice } from "./FeesAcademicYearBar"
 import { useCreateFeeVariant, useFeeCategories } from "@/lib/hooks/useFees"
 import { useLevels } from "@/lib/hooks/useLevels"
@@ -30,6 +31,10 @@ const FormSchema = z.object({
   // `null` = ce montant vaut pour tout le monde. Un montant réservé aux
   // affectés et un autre aux non affectés coexistent sur le même niveau.
   assignment_scope: z.enum(["affecte", "non_affecte"]).nullable().default(null),
+  // `null` = facturé aux nouveaux comme aux anciens. Réservé à un profil, le
+  // montant n'est pas seulement différent pour l'autre : il ne lui est plus
+  // facturé du tout.
+  enrollment_profile: z.enum(["nouveau", "ancien"]).nullable().default(null),
   amount: z.number({ required_error: "Le montant est requis" }).positive("Le montant doit être positif"),
 })
 
@@ -89,6 +94,7 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId, academicY
           fee_category_id: data.fee_category_id,
           level_id: levelId,
           assignment_scope: data.assignment_scope,
+          enrollment_profile: data.enrollment_profile,
           academic_year_id: academicYearId,
           amount: data.amount,
         })
@@ -184,30 +190,25 @@ export function FeeVariantCreateModal({ open, onClose, academicYearId, academicY
               control={form.control}
               name="assignment_scope"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>À qui s&apos;applique ce montant</FormLabel>
-                  <Select
-                    value={field.value ?? "tous"}
-                    onValueChange={(v) => field.onChange(v === "tous" ? null : v)}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-11 sm:h-10">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {ASSIGNMENT_SCOPES.map((scope) => (
-                        <SelectItem key={scope.value ?? "tous"} value={scope.value ?? "tous"}>
-                          {scope.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    {ASSIGNMENT_SCOPES.find((s) => s.value === (field.value ?? null))?.hint}
-                  </p>
-                  <FormMessage />
-                </FormItem>
+                <FeeAudienceSelect
+                  label="À qui s'applique ce montant"
+                  options={ASSIGNMENT_SCOPES}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="enrollment_profile"
+              render={({ field }) => (
+                <FeeAudienceSelect
+                  label="Nouveaux ou anciens élèves"
+                  options={ENROLLMENT_PROFILES}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               )}
             />
 
