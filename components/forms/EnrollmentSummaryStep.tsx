@@ -1,6 +1,7 @@
 "use client"
 
 import { CreditCard, GraduationCap, UserPlus } from "lucide-react"
+import { assignmentStatusLabel, newStudentLabel } from "@/lib/contracts/enrollment"
 import type { NewEnrollment, ReEnrollment, FeeVariantOption } from "@/lib/contracts/enrollment"
 import type { Student } from "@/lib/contracts/student"
 import { Card, CardContent } from "@/components/ui/card"
@@ -56,6 +57,7 @@ export function EnrollmentSummaryStep({
       .filter((variant) => !variant.accepts_in_kind || !inKindDeposits[variant.fee_category_id])
       .reduce((sum, variant) => sum + Number(variant.amount), 0) + optionalAmount
   const notes = enrollmentType === "new" ? newValues.notes : reValues.notes
+  const values = enrollmentType === "new" ? newValues : reValues
 
   return (
     <div className="space-y-4">
@@ -155,7 +157,19 @@ export function EnrollmentSummaryStep({
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <dt className="text-muted-foreground">Classe</dt>
               <dd className="font-medium">{selectedClassName || `#${watchedClassId}`}</dd>
+              <dt className="text-muted-foreground">Affectation</dt>
+              <dd>{assignmentStatusLabel(values.assignment_status)}</dd>
+              <dt className="text-muted-foreground">Profil</dt>
+              <dd className={values.is_new_student == null ? "text-amber-700 dark:text-amber-400" : undefined}>
+                {newStudentLabel(values.is_new_student)}
+              </dd>
             </dl>
+            {values.is_new_student == null ? (
+              <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                Sans profil tranché, les frais réservés aux nouveaux ou aux anciens élèves ne
+                seront pas facturés. Revenez à l&apos;étape Classe pour trancher.
+              </p>
+            ) : null}
           </div>
 
           {feeVariants.length > 0 ? (
