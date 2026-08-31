@@ -4,6 +4,8 @@ import { createCrudApi } from "./createCrudApi"
 import { apiFetch, apiFetchMultipart, safeValidate } from "./client"
 import { z } from "zod"
 import { FeeEntitlementSchema } from "@/lib/contracts/fee"
+import { NewStudentSuggestionSchema } from "@/lib/contracts/enrollment"
+import type { NewStudentSuggestion } from "@/lib/contracts/enrollment"
 
 const PhotoUploadResponseSchema = z.object({ photo_url: z.string() })
 
@@ -17,6 +19,10 @@ const StudentEnrollmentFeeSchema = z.object({
   remaining: z.number(),
   status: z.string(),
   accepts_in_kind: z.boolean().optional(),
+  // Le nom de l'option prime sur celui de la catégorie à l'affichage : une
+  // famille reconnaît « Cantine midi », pas « Frais optionnels ».
+  is_optional: z.boolean().optional(),
+  option_name: z.string().nullish(),
 })
 const StudentEnrollmentFeeListSchema = z.array(StudentEnrollmentFeeSchema)
 
@@ -58,6 +64,25 @@ export const studentsApi = {
   getEnrollmentFees: async (studentId: number): Promise<StudentEnrollmentFee[]> => {
     const data = await apiFetch<unknown>(`/admin/students/${studentId}/fees`)
     return safeValidate(StudentEnrollmentFeeListSchema, unwrapItems(data), `GET /admin/students/${studentId}/fees`)
+  },
+
+  /**
+   * Ce que le serveur croit du profil de l'élève pour l'année visée.
+   *
+   * Rend `suggested: null` quand l'établissement n'a aucune année antérieure en
+   * base : l'écran n'a alors rien à pré-cocher et doit le dire.
+   */
+  getNewStudentSuggestion: async (
+    studentId: number,
+    academicYearId: number,
+  ): Promise<NewStudentSuggestion> => {
+    const path = `/admin/students/${studentId}/new-student-suggestion?academic_year_id=${academicYearId}`
+    const data = await apiFetch<unknown>(path)
+    return safeValidate(
+      NewStudentSuggestionSchema,
+      data,
+      `GET /admin/students/${studentId}/new-student-suggestion`,
+    )
   },
 
   getFull: async (studentId: number): Promise<StudentFull> => {

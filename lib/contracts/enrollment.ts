@@ -22,6 +22,23 @@ export function assignmentStatusLabel(status: string | null | undefined): string
   return ASSIGNMENT_STATUSES.find((s) => s.value === status)?.label ?? status
 }
 
+/**
+ * Le profil d'inscription : l'élève arrive cette année, ou il était déjà là.
+ *
+ * `null` ne veut pas dire « non » : il veut dire « personne n'a tranché ». Une
+ * inscription restée à `null` ne reçoit aucun tarif réservé aux nouveaux ni aux
+ * anciens, exactement comme une affectation non renseignée n'ouvre aucun tarif
+ * d'affecté. Un établissement dont l'année précédente n'est pas reconstituée en
+ * base n'a aucun moyen de savoir : déduire « aucune inscription antérieure donc
+ * nouveau » facturerait la chemise cartonnée à tous ses anciens élèves, qui la
+ * découvriraient sur leur facture.
+ */
+export function newStudentLabel(value: boolean | null | undefined): string {
+  if (value === true) return "Nouvel élève"
+  if (value === false) return "Ancien élève"
+  return "Non tranché"
+}
+
 export const EnrollmentStatusSchema = z.enum(["prospect", "en_validation", "valide", "rejete", "annule"])
 
 export const EnrollmentSchema = z.object({
@@ -34,6 +51,8 @@ export const EnrollmentSchema = z.object({
   /** `null` tant que l'école ne l'a pas renseigné : on ne devine pas. */
   assignment_status: AssignmentStatusSchema.nullish(),
   assignment_decision_number: z.string().nullish(),
+  /** `null` = personne n'a tranché. Voir `newStudentLabel`. */
+  is_new_student: z.boolean().nullish(),
   fee_variant_id: z.number().nullable(),
   notes: z.string().nullable(),
   created_by: z.number().nullable(),
@@ -49,6 +68,8 @@ export const EnrollmentCreateSchema = z.object({
   class_id: z.number({ required_error: "La classe est requise" }).positive("La classe est requise"),
   assignment_status: AssignmentStatusSchema.nullable().optional(),
   assignment_decision_number: z.string().nullable().optional(),
+  /** Absent = le serveur déduit. Envoyé à `null` = l'école laisse en suspens. */
+  is_new_student: z.boolean().nullable().optional(),
   academic_year_id: z.number({ required_error: "L'année académique est requise" }).positive("L'année académique est requise"),
   fee_variant_id: z.number().positive().optional().nullable(),
   notes: z.string().optional().nullable(),
@@ -110,6 +131,8 @@ export const NewEnrollmentSchema = z.object({
   // Decide du tarif applique : saisi a la creation, pas apres coup.
   assignment_status: AssignmentStatusSchema.nullable().optional(),
   assignment_decision_number: z.string().nullable().optional(),
+  /** Idem : certains frais ne sont dus que par les nouveaux, ou que par les anciens. */
+  is_new_student: z.boolean().nullable().optional(),
   fee_variant_id: z.number().positive().nullable().optional(),
   notes: z.string().nullable().optional(),
   in_kind_deposits: z
@@ -124,6 +147,8 @@ export const ReEnrollmentSchema = z.object({
   // Decide du tarif applique : saisi a la creation, pas apres coup.
   assignment_status: AssignmentStatusSchema.nullable().optional(),
   assignment_decision_number: z.string().nullable().optional(),
+  /** Idem : certains frais ne sont dus que par les nouveaux, ou que par les anciens. */
+  is_new_student: z.boolean().nullable().optional(),
   fee_variant_id: z.number().positive().nullable().optional(),
   notes: z.string().nullable().optional(),
   in_kind_deposits: z
@@ -135,7 +160,10 @@ export const FeeVariantOptionSchema = z.object({
   id: z.number(),
   fee_category_id: z.number(),
   category_name: z.string().optional(),
-  is_mandatory: z.boolean().optional().default(true),
+  // Absent vaut obligatoire, et les écrans lisent tous `!== false` : la valeur
+  // par défaut de Zod donnait au type de sortie une garantie que le type
+  // d'entrée n'avait pas, et la validation ne pouvait plus être typée.
+  is_mandatory: z.boolean().optional(),
   accepts_in_kind: z.boolean().optional(),
   amount: z.coerce.number(),
   description: z.string().nullable(),
@@ -155,3 +183,40 @@ export const BulkValidateResultSchema = z.object({
 })
 
 export type BulkValidateResult = z.infer<typeof BulkValidateResultSchema>
+
+// ---------------------------------------------------------------------------
+// Le profil d'inscription : suggestion serveur et régénération des frais
+// ---------------------------------------------------------------------------
+
+/**
+ * Ce que le serveur sait dire du profil d'un élève, et rien de plus.
+ *
+ * `suggested` vaut `null` quand l'établissement n'a aucune année antérieure en
+ * base : le serveur refuse alors d'affirmer, et `reason` explique pourquoi à la
+ * secrétaire, en français, pour qu'elle tranche elle-même. C'est le cas d'une
+ * école dont l'année précédente n'a jamais été saisie.
+ */
+export const NewStudentSuggestionSchema = z.object({
+  suggested: z.boolean().nullable(),
+  reason: z.string(),
+})
+
+export type NewStudentSuggestion = z.infer<typeof NewStudentSuggestionSchema>
+
+/**
+ * Ce que rend une régénération des frais d'une inscription.
+ *
+ * `message` est écrit par le serveur et s'affiche tel quel : lui seul sait
+ * combien de lignes il a réellement remplacées et combien il a laissées en
+ * place parce qu'un versement y était imputé. Les compteurs sont facultatifs
+ * pour que l'écran continue de fonctionner si le serveur ne les renvoie pas
+ * encore, auquel cas la phrase du serveur suffit.
+ */
+export const FeeRegenerationResultSchema = z.object({
+  fees_created: z.number().nullish(),
+  fees_replaced: z.number().nullish(),
+  fees_kept_with_payments: z.number().nullish(),
+  message: z.string().nullish(),
+})
+
+export type FeeRegenerationResult = z.infer<typeof FeeRegenerationResultSchema>

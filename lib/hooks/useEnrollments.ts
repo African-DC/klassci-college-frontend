@@ -115,3 +115,50 @@ export function useBulkValidateEnrollments() {
     },
   })
 }
+
+/**
+ * Régénère les frais d'une ou plusieurs inscriptions.
+ *
+ * La fiche élève régénère toutes ses inscriptions d'un coup, la fiche
+ * inscription une seule : le même geste, le même appel, le même message. Un
+ * échec sur une inscription ne doit pas masquer les autres, d'où le traitement
+ * ligne par ligne plutôt qu'un `Promise.all` qui s'arrête à la première erreur.
+ */
+export function useRegenerateFees() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (enrollmentIds: number[]) => {
+      const settled = await Promise.allSettled(
+        enrollmentIds.map((id) => enrollmentsApi.regenerateFees(id)),
+      )
+      const done = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []))
+      const failed = settled.filter((r) => r.status === "rejected").length
+      if (done.length === 0) {
+        const first = settled.find((r) => r.status === "rejected")
+        throw first?.status === "rejected" && first.reason instanceof Error
+          ? first.reason
+          : new Error("La régénération des frais a échoué")
+      }
+      return { done, failed }
+    },
+    onSuccess: ({ done, failed }) => {
+      queryClient.invalidateQueries({ queryKey: ["students"] })
+      queryClient.invalidateQueries({ queryKey: ["enrollments"] })
+      queryClient.invalidateQueries({ queryKey: ["payments"] })
+      // Le décompte vient du serveur, qui seul sait ce qu'il a remplacé et ce
+      // qu'il a gardé. On affiche sa phrase, sans la réécrire.
+      const message = done.map((r) => r.message).find((m) => !!m)
+      toast.success("Frais régénérés", { description: message ?? undefined })
+      if (failed > 0) {
+        toast.error(
+          failed === 1
+            ? "1 inscription n'a pas pu être régénérée"
+            : `${failed} inscriptions n'ont pas pu être régénérées`,
+        )
+      }
+    },
+    onError: (error: Error) => {
+      toast.error("Régénération impossible", { description: error.message })
+    },
+  })
+}
