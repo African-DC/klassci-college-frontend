@@ -138,6 +138,39 @@ function apiErrorFrom(status: number, detail: unknown, fallback: string): ApiErr
   return new ApiError(fallback, status, detail)
 }
 
+/**
+ * Contrat 401 unique, partagé par tous les fetchs authentifiés de ce module
+ * (voir `.claude/rules/handle-401-globally.md`).
+ *
+ * `hadToken` porte sur l'en-tête réellement envoyé, jamais sur une relecture de
+ * la session : juste après le login, le cookie est posé mais `getSession()`
+ * n'est pas encore amorcé, la première requête part donc sans `Authorization`
+ * et un 401 ne doit surtout pas déconnecter l'utilisateur qui vient d'entrer.
+ * Le middleware redirige à la navigation suivante. Relire la session ici
+ * rejouerait aussi la course avec `handleExpiredSession()` qui vide le cache.
+ */
+function throwIfSessionExpired(res: Response, hadToken: boolean): void {
+  if (res.status !== 401) return
+  if (hadToken) {
+    void handleExpiredSession()
+  }
+  throw new Error("Session expirée")
+}
+
+/**
+ * Message lisible tiré du corps d'erreur FastAPI : `detail` est une chaine, ou
+ * un tableau d'erreurs de validation pour un 422.
+ */
+async function readErrorMessage(res: Response, fallback: string): Promise<string> {
+  const body = (await res.json().catch(() => null)) as { detail?: unknown } | null
+  const detail = body?.detail
+  if (typeof detail === "string") return detail
+  if (Array.isArray(detail) && detail.length > 0) {
+    return detail.map((d: { msg?: string; loc?: string[] }) => d.msg ?? JSON.stringify(d)).join(", ")
+  }
+  return fallback
+}
+
 interface BlobRequestOptions {
   method?: string
   /** Corps JSON déjà sérialisé. Sa présence conserve le Content-Type. */
@@ -162,17 +195,7 @@ export async function apiFetchBlob(
     body: options.body,
     headers,
   })
-  if (res.status === 401) {
-    // We sent a Bearer that the BE rejected → JWT expired or revoked.
-    // Gate on the header we actually sent (not a re-read of the session)
-    // so the post-login race — cookie set but getSession() not yet primed,
-    // so no Authorization header in the first fetch — doesn't trigger an
-    // immediate signOut right after login.
-    if (hadToken) {
-      void handleExpiredSession()
-    }
-    throw new Error("Session expirée")
-  }
+  throwIfSessionExpired(res, hadToken)
   if (!res.ok) {
     // Surface the BE detail when available so the caller can toast a useful
     // message — see app/routers/_pdf_helpers.py for the JSON {detail} contract.
@@ -193,37 +216,62 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   const hadToken = "Authorization" in headers
   const res = await fetch(`${getBaseUrl()}${path}`, { ...fetchOptions, headers })
 
-  // 401: the JWT carried in the Authorization header is missing or expired.
-  // Gate on the header we actually sent (not a re-read of the session)
-  // — the session cache may report `accessToken` truthy even when the BE
-  // is rejecting that very token, and re-reading it before deciding can
-  // race with handleExpiredSession() clearing the cache. The post-login
-  // race (cookie set but no Authorization header yet) is handled by
-  // hadToken=false: throwing is enough, the middleware redirects on the
-  // next navigation.
-  if (res.status === 401) {
-    if (hadToken) {
-      void handleExpiredSession()
-    }
-    throw new Error("Session expirée")
-  }
+  throwIfSessionExpired(res, hadToken)
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ detail: "Erreur serveur" }))
-    // FastAPI 422 returns detail as array of validation errors
-    const detail = error.detail
-    let message: string
-    if (typeof detail === "string") {
-      message = detail
-    } else if (Array.isArray(detail)) {
-      message = detail.map((d: { msg?: string; loc?: string[] }) => d.msg ?? JSON.stringify(d)).join(", ")
-    } else {
-      message = `Erreur ${res.status}`
-    }
-    throw new Error(message)
+    throw new Error(await readErrorMessage(res, `Erreur ${res.status}`))
   }
 
   if (res.status === 204) return undefined as T
   const data = await res.json()
   return schema ? safeValidate<T>(schema, data, path) : data
+}
+
+interface MultipartRequestOptions<T> {
+  /** Verbe HTTP, `POST` par défaut. */
+  method?: string
+  /** Schéma Zod de la réponse JSON, quand la réponse en porte une. */
+  schema?: z.ZodType<T>
+  /** Étiquette de validation, ex. `"POST /admin/settings/logo"`. `path` par défaut. */
+  context?: string
+  /** Message affiché quand le backend ne renvoie pas de `detail` exploitable. */
+  fallback?: string
+}
+
+/**
+ * Fetch authentifié multipart, pour tout envoi de fichier (photo, logo, pièce
+ * jointe).
+ *
+ * `apiFetch` sérialise en JSON et pose `Content-Type: application/json` : il est
+ * inutilisable ici, car sur un `FormData` c'est le navigateur qui doit poser
+ * lui-même le Content-Type avec sa frontière multipart. C'est la SEULE
+ * différence : en-tête `Authorization`, contrat 401 et lecture du `detail`
+ * backend restent ceux de `apiFetch`. Un module d'upload n'a donc plus à
+ * réimplémenter le contrat de `.claude/rules/handle-401-globally.md` de son
+ * côté, ce que trois d'entre eux avaient fini par faire chacun à sa façon.
+ */
+export async function apiFetchMultipart<T>(
+  path: string,
+  formData: FormData,
+  options: MultipartRequestOptions<T> = {},
+): Promise<T> {
+  const { method, schema, context, fallback } = options
+  const headers = await authHeaders()
+  delete headers["Content-Type"]
+  const hadToken = "Authorization" in headers
+  const res = await fetch(`${getBaseUrl()}${path}`, {
+    method: method ?? "POST",
+    headers,
+    body: formData,
+  })
+
+  throwIfSessionExpired(res, hadToken)
+
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res, fallback ?? `Erreur ${res.status}`))
+  }
+
+  if (res.status === 204) return undefined as T
+  const data = await res.json()
+  return schema ? safeValidate<T>(schema, data, context ?? path) : (data as T)
 }

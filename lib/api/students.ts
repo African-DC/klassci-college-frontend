@@ -1,16 +1,9 @@
-import { getSession } from "next-auth/react"
 import { StudentFiltersSchema, StudentFullSchema, StudentSchema } from "@/lib/contracts/student"
 import type { Student, StudentCreate, StudentFilters, StudentFull, StudentUpdate } from "@/lib/contracts/student"
 import { createCrudApi } from "./createCrudApi"
-import { apiFetch, handleExpiredSession, safeValidate } from "./client"
+import { apiFetch, apiFetchMultipart, safeValidate } from "./client"
 import { z } from "zod"
 import { FeeEntitlementSchema } from "@/lib/contracts/fee"
-
-function getBaseUrl(): string {
-  const url = process.env.NEXT_PUBLIC_API_URL
-  if (!url) throw new Error("NEXT_PUBLIC_API_URL is not defined")
-  return url
-}
 
 const PhotoUploadResponseSchema = z.object({ photo_url: z.string() })
 
@@ -44,31 +37,13 @@ export const studentsApi = {
   ),
 
   uploadPhoto: async (studentId: number, file: File): Promise<{ photo_url: string }> => {
-    // FormData multipart upload — can't go through apiFetch (which JSON-encodes).
-    // We replicate the 401 → handleExpiredSession contract manually.
-    const session = await getSession()
-    if (session?.error === "RefreshTokenError") {
-      void handleExpiredSession()
-      throw new Error("Session expirée")
-    }
     const formData = new FormData()
     formData.append("file", file)
-    const headers: Record<string, string> = session?.accessToken
-      ? { Authorization: `Bearer ${session.accessToken}` }
-      : {}
-    const hadToken = "Authorization" in headers
-    const res = await fetch(`${getBaseUrl()}/admin/students/${studentId}/photo`, {
-      method: "POST",
-      headers,
-      body: formData,
+    return apiFetchMultipart(`/admin/students/${studentId}/photo`, formData, {
+      schema: PhotoUploadResponseSchema,
+      context: "POST /admin/students/:id/photo",
+      fallback: "Échec de l'envoi de la photo",
     })
-    if (res.status === 401) {
-      if (hadToken) void handleExpiredSession()
-      throw new Error("Session expirée")
-    }
-    if (!res.ok) throw new Error("Upload failed")
-    const data = await res.json()
-    return safeValidate(PhotoUploadResponseSchema, data, "POST /admin/students/:id/photo")
   },
 
   deletePhoto: async (studentId: number): Promise<void> => {
