@@ -83,13 +83,20 @@ export const paymentsApi = {
   },
 
   // NEW — Versement caissier Wave-style (auto-alloué par priorité)
+  //
+  // `allocations` ne part que s'il porte quelque chose. Une liste vide dirait
+  // au serveur « le caissier a nommé les frais » alors qu'il n'a rien nommé :
+  // on laisse le champ absent pour garder la cascade automatique par défaut.
   recordOnEnrollment: async (
     enrollmentId: number,
     data: EnrollmentPaymentCreate,
   ): Promise<Payment> => {
+    const { allocations, ...reste } = data
+    const body =
+      allocations && allocations.length > 0 ? { ...reste, allocations } : reste
     const json = await apiFetch<unknown>(`/enrollments/${enrollmentId}/payments`, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(body),
     })
     return safeValidate(
       PaymentSchema,

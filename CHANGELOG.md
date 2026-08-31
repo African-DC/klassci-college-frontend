@@ -21,6 +21,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Annulation d'un versement déjà encaissé, depuis le tableau comme depuis le téléphone : c'est le cas courant, un montant saisi qui n'est pas dans la caisse *(admin)*
 
 ### Added
+- Le formulaire d'encaissement laisse choisir la répartition du versement frais par frais, au lieu de subir la seule cascade automatique : un parent qui verse 50 000 F pour l'inscription et la tenue est enregistré tel qu'il a payé. Le reliquat non nommé continue de cascader, et l'écran montre où il tombe avant l'enregistrement *(caissier, admin, secrétariat)*
 - Bouton « Bordereau du jour » sur « Ma caisse » : la caissière édite sa propre pièce de caisse, sans dépendre du comptable ni du point journalier auquel elle n'a pas accès *(caissier)*
 - Un frais réglé en nature se marque à l'inscription et sur la fiche de frais : la ligne cesse alors d'être due en argent et n'entre plus dans le reste à payer *(admin, secrétariat, comptable)*
 - Un élève déjà enregistré est signalé pendant la saisie : matricule identique, ressemblance du nom, ou inscription déjà ouverte sur l'année même non validée *(admin, secrétariat)*

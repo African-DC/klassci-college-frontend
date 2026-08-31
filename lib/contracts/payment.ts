@@ -95,7 +95,20 @@ export const PaymentCreateSchema = z.object({
   notes: z.string().nullable().optional(),
 })
 
+// Un montant que l'encaisseur impute lui-même à un frais nommé.
+export const PaymentAllocationInputSchema = z.object({
+  enrollment_fee_id: z.number().int().positive(),
+  amount: z.coerce.number().positive(),
+})
+
 // Body POST /enrollments/{id}/payments — flow Wave-style (cible).
+//
+// `allocations` est facultatif et le reste : absent ou vide, le serveur
+// répartit le versement en cascade sur les frais dus, par ordre de priorité,
+// comme il l'a toujours fait. Présent, chaque montant est imputé au frais
+// nommé, et le reliquat éventuel repart en cascade. La somme des allocations
+// ne peut pas dépasser le montant du versement : le serveur refuse en 422,
+// l'écran empêche d'en arriver là.
 export const EnrollmentPaymentCreateSchema = z.object({
   amount: z.coerce
     .number({
@@ -106,6 +119,7 @@ export const EnrollmentPaymentCreateSchema = z.object({
   method: PaymentMethodInputSchema,
   reference: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
+  allocations: z.array(PaymentAllocationInputSchema).optional(),
 })
 
 // Preview de l'allocation avant submit (UX caissier).
@@ -168,6 +182,7 @@ export type PaymentMethod = z.infer<typeof PaymentMethodSchema>
 export type PaymentStatus = z.infer<typeof PaymentStatusSchema>
 export type EnrollmentFeeStatus = z.infer<typeof EnrollmentFeeStatusSchema>
 export type PaymentAllocation = z.infer<typeof PaymentAllocationSchema>
+export type PaymentAllocationInput = z.infer<typeof PaymentAllocationInputSchema>
 export type Payment = z.infer<typeof PaymentSchema>
 export type PaymentCreate = z.infer<typeof PaymentCreateSchema>
 export type EnrollmentPaymentCreate = z.infer<typeof EnrollmentPaymentCreateSchema>
