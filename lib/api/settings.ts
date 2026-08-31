@@ -1,4 +1,6 @@
-import { apiFetch } from "./client"
+import { getSession } from "next-auth/react"
+import { z } from "zod"
+import { apiFetch, handleExpiredSession, safeValidate } from "./client"
 import {
   SchoolSettingsSchema,
   type SchoolSettings,
@@ -7,6 +9,28 @@ import {
   type HolidaysUpdate,
   type NotificationUpdate,
 } from "@/lib/contracts/settings"
+
+function getBaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_API_URL
+  if (!url) throw new Error("NEXT_PUBLIC_API_URL is not defined")
+  return url
+}
+
+const LogoUploadResponseSchema = z.object({ logo_url: z.string() })
+
+/** Lit le `detail` FastAPI pour afficher un message compréhensible à l'admin. */
+async function readErrorDetail(res: Response, fallback: string): Promise<string> {
+  const body = (await res.json().catch(() => null)) as { detail?: unknown } | null
+  const detail = body?.detail
+  if (typeof detail === "string") return detail
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((d: { msg?: string }) => (typeof d?.msg === "string" ? d.msg : null))
+      .filter((m): m is string => Boolean(m))
+    if (messages.length > 0) return messages.join(", ")
+  }
+  return fallback
+}
 
 function unwrap(json: unknown): unknown {
   if (json !== null && typeof json === "object" && "data" in json) {
@@ -61,5 +85,38 @@ export const settingsApi = {
       body: JSON.stringify(data),
     })
     return parseSettings(json, "PUT /admin/settings/notifications")
+  },
+
+  // Upload multipart : ne passe pas par apiFetch (JSON), on réplique le contrat 401.
+  uploadLogo: async (file: File): Promise<{ logo_url: string }> => {
+    const session = await getSession()
+    if (session?.error === "RefreshTokenError") {
+      void handleExpiredSession()
+      throw new Error("Session expirée")
+    }
+    const formData = new FormData()
+    formData.append("file", file)
+    const headers: Record<string, string> = session?.accessToken
+      ? { Authorization: `Bearer ${session.accessToken}` }
+      : {}
+    const hadToken = "Authorization" in headers
+    const res = await fetch(`${getBaseUrl()}/admin/settings/logo`, {
+      method: "POST",
+      headers,
+      body: formData,
+    })
+    if (res.status === 401) {
+      if (hadToken) void handleExpiredSession()
+      throw new Error("Session expirée")
+    }
+    if (!res.ok) {
+      throw new Error(await readErrorDetail(res, "Échec de l'envoi du logo"))
+    }
+    const data = await res.json()
+    return safeValidate(LogoUploadResponseSchema, data, "POST /admin/settings/logo")
+  },
+
+  deleteLogo: async (): Promise<void> => {
+    await apiFetch<void>("/admin/settings/logo", { method: "DELETE" })
   },
 }
