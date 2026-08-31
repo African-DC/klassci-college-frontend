@@ -61,7 +61,7 @@ export function PaymentCreateWizard({ open, onClose }: PaymentCreateWizardProps)
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nouveau versement</DialogTitle>
+          <DialogTitle>Nouveau paiement</DialogTitle>
         </DialogHeader>
 
         <StepProgress currentStep={wizard.step} />
