@@ -83,6 +83,14 @@ export const EnrollmentUpdateSchema = z.object({
   assignment_status: AssignmentStatusSchema.nullable().optional(),
   assignment_decision_number: z.string().nullable().optional(),
   status: EnrollmentStatusSchema.optional(),
+  /**
+   * Absent = inchangé, `null` = remis à « non tranché ».
+   *
+   * Le profil se corrige après coup, comme la classe : une inscription saisie
+   * avant que l'école ne connaisse la réponse ne doit pas rester fausse. Le
+   * serveur régénère alors les frais, l'écran le dit avant de valider.
+   */
+  is_new_student: z.boolean().nullable().optional(),
   notes: z.string().optional().nullable(),
 })
 

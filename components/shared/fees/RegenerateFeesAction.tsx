@@ -5,6 +5,7 @@ import { RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { useRegenerateFees } from "@/lib/hooks/useEnrollments"
+import type { FeeLineCounts } from "@/lib/enrollment/fee-lines"
 import { cn } from "@/lib/utils"
 
 interface RegenerateFeesActionProps {
@@ -13,12 +14,12 @@ interface RegenerateFeesActionProps {
   /** Ce sur quoi porte le geste, dit à la personne : « Kouadio Awa, 6e A ». */
   subject: string
   /**
-   * Ce que l'écran sait déjà des lignes en place. Facultatif : quand l'écran ne
-   * les connaît pas, la phrase reste vraie sans les chiffres, et c'est le
-   * serveur qui dira ensuite ce qu'il a fait.
+   * Ce que l'écran sait des lignes en place, ou `undefined` tant qu'il ne le
+   * sait pas encore. Un décompte non chargé vaut zéro en mémoire, et zéro
+   * s'affirme : on préfère dire qu'on ne sait pas encore, et laisser le
+   * serveur annoncer ensuite ce qu'il a réellement fait.
    */
-  feesWithPayments?: number
-  feesWithoutPayments?: number
+  feeLines?: FeeLineCounts
   className?: string
 }
 
@@ -37,8 +38,7 @@ function ligne(n: number) {
 export function RegenerateFeesAction({
   enrollmentIds,
   subject,
-  feesWithPayments,
-  feesWithoutPayments,
+  feeLines,
   className,
 }: RegenerateFeesActionProps) {
   const [open, setOpen] = useState(false)
@@ -72,18 +72,44 @@ export function RegenerateFeesAction({
         description={`Les frais de ${subject} sont refabriqués à partir des tarifs en vigueur aujourd'hui. Les lignes sur lesquelles aucun versement n'a été imputé sont remplacées ; celles qui portent déjà un versement sont conservées telles quelles.`}
         details={
           <>
-            {typeof feesWithoutPayments === "number" ? (
-              <p>
-                <span className="font-semibold">{ligne(feesWithoutPayments)}</span> sans versement,
-                donc remplacée{feesWithoutPayments > 1 ? "s" : ""}.
+            {feeLines ? (
+              <>
+                <p>
+                  {feeLines.withoutPayments === 0 ? (
+                    "Aucune ligne sans versement : rien à remplacer."
+                  ) : (
+                    <>
+                      <span className="font-semibold">{ligne(feeLines.withoutPayments)}</span> sans
+                      versement, donc remplacée{feeLines.withoutPayments > 1 ? "s" : ""}.
+                    </>
+                  )}
+                </p>
+                <p>
+                  {feeLines.withPayments === 0 ? (
+                    "Aucune ligne ne porte de versement."
+                  ) : (
+                    <>
+                      <span className="font-semibold">{ligne(feeLines.withPayments)}</span> avec un
+                      versement, donc conservée{feeLines.withPayments > 1 ? "s" : ""}.
+                    </>
+                  )}
+                </p>
+                {feeLines.settledWithoutCash > 0 ? (
+                  <p className="text-muted-foreground">
+                    {ligne(feeLines.settledWithoutCash)} exonérée
+                    {feeLines.settledWithoutCash > 1 ? "s" : ""} ou déposée
+                    {feeLines.settledWithoutCash > 1 ? "s" : ""} en nature : soldée
+                    {feeLines.settledWithoutCash > 1 ? "s" : ""} sans versement, hors des deux
+                    décomptes ci-dessus.
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p className="text-muted-foreground">
+                Les lignes de frais ne sont pas encore chargées : impossible de dire ici combien
+                seront remplacées. Le serveur l&apos;annoncera une fois le geste fait.
               </p>
-            ) : null}
-            {typeof feesWithPayments === "number" ? (
-              <p>
-                <span className="font-semibold">{ligne(feesWithPayments)}</span> avec un versement,
-                donc conservée{feesWithPayments > 1 ? "s" : ""}.
-              </p>
-            ) : null}
+            )}
             {plusieurs ? (
               <p className="text-muted-foreground">
                 Les {enrollmentIds.length} inscriptions de l&apos;élève sont traitées.

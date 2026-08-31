@@ -29,6 +29,8 @@ export interface ConfirmActionDialogProps {
   pendingLabel: string
   cancelLabel?: string
   pending?: boolean
+  /** Quand la boîte demande un choix et qu'il n'y a encore rien à valider. */
+  confirmDisabled?: boolean
   /**
    * `warning` pour une action qui réécrit ou solde des lignes existantes. Le
    * ton se lit au pictogramme et au libellé du bouton autant qu'à la couleur :
@@ -58,6 +60,7 @@ export function ConfirmActionDialog({
   pendingLabel,
   cancelLabel = "Retour",
   pending = false,
+  confirmDisabled = false,
   tone = "default",
   onConfirm,
 }: ConfirmActionDialogProps) {
@@ -96,7 +99,7 @@ export function ConfirmActionDialog({
               "h-11 w-full sm:h-10 sm:w-auto",
               warning && "bg-amber-600 text-white hover:bg-amber-700 focus-visible:ring-amber-600",
             )}
-            disabled={pending}
+            disabled={pending || confirmDisabled}
             onClick={(event) => {
               // Radix ferme la boîte au clic : on garde la main pour n'annoncer
               // la fermeture qu'une fois l'appel parti, sinon le libellé

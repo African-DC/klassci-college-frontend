@@ -93,7 +93,11 @@ export function EnrollmentClassStep({
           <NewStudentField
             academicYearId={academicYearId}
             value={newForm.watch("is_new_student")}
-            onChange={(val) => newForm.setValue("is_new_student", val)}
+            error={newForm.formState.errors.is_new_student?.message}
+            onChange={(val) => {
+              newForm.setValue("is_new_student", val)
+              newForm.clearErrors("is_new_student")
+            }}
           />
         </>
       ) : (
@@ -126,7 +130,11 @@ export function EnrollmentClassStep({
             studentId={reForm.watch("student_id")}
             academicYearId={academicYearId}
             value={reForm.watch("is_new_student")}
-            onChange={(val) => reForm.setValue("is_new_student", val)}
+            error={reForm.formState.errors.is_new_student?.message}
+            onChange={(val) => {
+              reForm.setValue("is_new_student", val)
+              reForm.clearErrors("is_new_student")
+            }}
           />
         </>
       )}

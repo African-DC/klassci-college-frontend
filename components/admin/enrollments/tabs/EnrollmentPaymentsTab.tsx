@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { enrollmentsApi } from "@/lib/api/enrollments"
 import { useStudentFees } from "@/lib/hooks/useStudents"
 import { isCashDue } from "@/lib/contracts/payment"
+import { countFeeLines } from "@/lib/enrollment/fee-lines"
 import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
 import { RegenerateFeesAction } from "@/components/shared/fees/RegenerateFeesAction"
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
@@ -47,8 +48,10 @@ export function EnrollmentPaymentsTab({
   const totalExpected = cashFees.reduce((s, f) => s + f.amount, 0)
   const totalPaid = cashFees.reduce((s, f) => s + f.paid, 0)
   const totalRemaining = Math.max(0, totalExpected - totalPaid)
-  const withPayments = feeList.filter((f) => f.paid > 0).length
-  const withoutPayments = feeList.length - withPayments
+  // Le décompte n'est pas « payé ou non » : une ligne exonérée ou déposée en
+  // nature est soldée sans versement, et ne se range dans aucune des deux
+  // colonnes que la confirmation annonce.
+  const feeLines = useMemo(() => countFeeLines(feeList), [feeList])
 
   const depositMutation = useMutation({
     mutationFn: (feeId: number) => enrollmentsApi.depositInKind(enrollmentId, feeId),
@@ -87,8 +90,7 @@ export function EnrollmentPaymentsTab({
         <RegenerateFeesAction
           enrollmentIds={[enrollmentId]}
           subject={`${eleve}, pour cette inscription`}
-          feesWithPayments={withPayments}
-          feesWithoutPayments={withoutPayments}
+          feeLines={feeLines}
         />
         {studentId && totalRemaining > 0 ? (
           <Button onClick={() => setPaymentOpen(true)} className="h-11 w-full sm:h-10 sm:w-auto">

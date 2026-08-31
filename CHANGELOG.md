@@ -25,6 +25,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ### Added
 - À la création d'une inscription, une case dit si l'élève est nouveau : pré-remplie par le serveur, corrigeable, et annoncée comme changeant la facture *(admin, secrétariat)* (#419)
 - Quand l'établissement n'a aucune année antérieure en base, cette case reste vide et le secrétariat est invité à trancher lui-même *(admin, secrétariat)* (#419)
+- À l'inscription, le profil nouvel ou ancien élève se choisit explicitement et se corrige ensuite depuis la fiche : plus rien n'est deviné *(admin, secrétariat)* (#419)
 - « Régénérer les frais » existe aussi sur la fiche inscription, avec une confirmation qui dit ce qui sera remplacé et ce qui sera conservé *(admin, comptable)* (#419)
 - Le formulaire d'encaissement laisse choisir quel frais reçoit quoi, du téléphone à l'ordinateur : un versement inscription et tenue s'enregistre tel qu'il a été payé *(caissier, admin)*
 - Onglet « Identité visuelle » : le logo de l'établissement s'envoie, se remplace et se retire, avec aperçu immédiat sur les documents officiels *(admin)*

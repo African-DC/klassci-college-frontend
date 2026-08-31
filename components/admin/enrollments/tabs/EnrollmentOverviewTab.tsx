@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { AssignmentStatusBadge } from "@/components/shared/AssignmentStatusBadge"
 import { newStudentLabel, type Enrollment } from "@/lib/contracts/enrollment"
+import { NewStudentProfileAction } from "@/components/admin/enrollments/NewStudentProfileAction"
 
 interface EnrollmentOverviewTabProps {
   enrollment: Enrollment
@@ -123,17 +124,20 @@ export function EnrollmentOverviewTab({ enrollment }: EnrollmentOverviewTabProps
                 <Sparkles className="h-3.5 w-3.5" />
                 Profil
               </p>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Badge variant={enrollment.is_new_student == null ? "outline" : "secondary"}>
                   {newStudentLabel(enrollment.is_new_student)}
                 </Badge>
                 {/* Non tranché n'est pas « ancien élève » : on dit ce que cela
-                    coûte, sinon l'école croit la question réglée. */}
+                    coûte, sinon l'école croit la question réglée. Et on donne
+                    de quoi le corriger, sinon la fiche annonce un manque à
+                    gagner sans permettre d'y remédier. */}
                 {enrollment.is_new_student == null ? (
                   <p className="text-xs text-muted-foreground">
                     Les frais réservés aux nouveaux ou aux anciens élèves ne sont pas facturés.
                   </p>
                 ) : null}
+                <NewStudentProfileAction enrollment={enrollment} />
               </div>
             </div>
 

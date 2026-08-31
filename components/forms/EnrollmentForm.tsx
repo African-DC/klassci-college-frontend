@@ -11,7 +11,7 @@ import {
 } from "@/lib/contracts/enrollment"
 import type { Student } from "@/lib/contracts/student"
 import type { Class } from "@/lib/contracts/class"
-import { useCreateWithStudent, useReEnroll, useFeeVariants } from "@/lib/hooks/useEnrollments"
+import { useFeeVariants } from "@/lib/hooks/useEnrollments"
 import { useStudents } from "@/lib/hooks/useStudents"
 import { useClasses } from "@/lib/hooks/useClasses"
 import { EnrollmentStudentStep } from "@/components/forms/EnrollmentStudentStep"
@@ -19,16 +19,16 @@ import { EnrollmentSummaryStep } from "@/components/forms/EnrollmentSummaryStep"
 import { EnrollmentTypeStep } from "@/components/forms/EnrollmentTypeStep"
 import { EnrollmentWizardShell } from "@/components/forms/EnrollmentWizardShell"
 import { EnrollmentClassStep } from "@/components/forms/EnrollmentClassStep"
-import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
 import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import {
   ENROLLMENT_STEPS,
   NEW_ENROLLMENT_DEFAULTS,
   RE_ENROLLMENT_DEFAULTS,
-  inKindDepositsPayload,
   validateEnrollmentStep,
   type EnrollmentType,
 } from "@/components/forms/enrollment-wizard"
+import { useEnrollmentSubmit } from "@/components/forms/useEnrollmentSubmit"
+import { useNewStudentGuard } from "@/components/forms/useNewStudentGuard"
 
 interface EnrollmentFormProps {
   onSuccess: () => void
@@ -48,11 +48,6 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
   const [maxReachedStep, setMaxReachedStep] = useState(0)
   const [photo, setPhoto] = useState<File | null>(null)
   const [inKindDeposits, setInKindDeposits] = useState<Record<number, boolean>>({})
-
-  // Mutations
-  const createWithStudent = useCreateWithStudent()
-  const reEnroll = useReEnroll()
-  const attachPhoto = useAttachStudentPhoto()
 
   // Data queries
   const { academicYearId } = useCurrentAcademicYearId()
@@ -88,6 +83,24 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
     [students, selectedStudentId]
   )
 
+  const ensureProfileAnswered = useNewStudentGuard({
+    enrollmentType,
+    newForm,
+    reForm,
+    studentId: selectedStudentId,
+  })
+
+  const { submit, isPending, submitLabel, createError, reEnrollError } = useEnrollmentSubmit({
+    enrollmentType,
+    newForm,
+    reForm,
+    showParentFields,
+    inKindDeposits,
+    photo,
+    onPhotoConsumed: () => setPhoto(null),
+    onSuccess,
+  })
+
   // Selected class name for summary
   const selectedClassName = useMemo(
     () => classes.find((c) => c.id === watchedClassId)?.name ?? "",
@@ -102,8 +115,6 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
     () => feeVariants?.find((v) => v.id === selectedFeeVariantId),
     [feeVariants, selectedFeeVariantId]
   )
-
-  const isPending = createWithStudent.isPending || reEnroll.isPending || attachPhoto.isPending
 
   // Bug #22 : Quand un student_id arrive via query (?student_id=X), on
   // pré-remplit le formulaire re-enrollment et on saute directement à la
@@ -128,6 +139,7 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
   async function handleNext() {
     const valid = await validateEnrollmentStep(step, enrollmentType, newForm, reForm, showParentFields)
     if (!valid || step >= ENROLLMENT_STEPS.length - 1) return
+    if (step === 2 && !ensureProfileAnswered()) return
     goToStep(step + 1)
   }
 
@@ -136,40 +148,14 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
   }
 
   function handleSubmit() {
-    if (enrollmentType === "new") {
-      newForm.handleSubmit((data) => {
-        // Clean up parent if not filled
-        if (!showParentFields) {
-          data.parent = null
-        }
-        data.in_kind_deposits = inKindDepositsPayload(inKindDeposits)
-        createWithStudent.mutate(data, {
-          onSuccess: async (enrollment) => {
-            await attachPhoto.mutateAsync({ studentId: enrollment.student_id, photo })
-            newForm.reset()
-            setPhoto(null)
-            onSuccess()
-          },
-        })
-      })()
-    } else {
-      reForm.handleSubmit((data) => {
-        data.in_kind_deposits = inKindDepositsPayload(inKindDeposits)
-        reEnroll.mutate(data, {
-          onSuccess: () => {
-            reForm.reset()
-            onSuccess()
-          },
-        })
-      })()
+    // Le profil est vérifié ici aussi : le schéma laisse passer `null`, et
+    // l'étape qui pose la question est deux écrans plus haut. On y ramène.
+    if (!ensureProfileAnswered()) {
+      goToStep(2)
+      return
     }
+    submit()
   }
-
-  const submitLabel = attachPhoto.isPending
-    ? "Envoi de la photo..."
-    : isPending
-      ? "Enregistrement..."
-      : "Enregistrer l'inscription"
 
   return (
     <EnrollmentWizardShell
@@ -238,8 +224,8 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
           selectedFeeVariant={selectedFeeVariant}
           photo={photo}
           showParentFields={showParentFields}
-          createError={createWithStudent.error?.message}
-          reEnrollError={reEnroll.error?.message}
+          createError={createError}
+          reEnrollError={reEnrollError}
           inKindDeposits={inKindDeposits}
         />
       )}

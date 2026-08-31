@@ -11,6 +11,17 @@ import { apiFetch, safeValidate } from "./client"
 
 const FeeVariantOptionListSchema = z.array(FeeVariantOptionSchema)
 
+/**
+ * `undefined` ne doit jamais quitter le frontend sur ce champ.
+ *
+ * `JSON.stringify` supprime les clés `undefined` : le champ disparaîtrait du
+ * corps, et le serveur déduirait le profil alors que l'écran promettait de ne
+ * rien affirmer. `null` part explicitement et dit « personne n'a tranché ».
+ */
+function withExplicitProfile<T extends { is_new_student?: boolean | null }>(payload: T) {
+  return { ...payload, is_new_student: payload.is_new_student ?? null }
+}
+
 export const enrollmentsApi = {
   ...createCrudApi<Enrollment, EnrollmentCreate, EnrollmentUpdate>(
     "/enrollments",
@@ -21,7 +32,7 @@ export const enrollmentsApi = {
     const { type, ...payload } = data
     const res = await apiFetch<unknown>("/enrollments/with-student", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(withExplicitProfile(payload)),
     })
     return safeValidate(EnrollmentSchema, res, "POST /enrollments/with-student")
   },
@@ -30,7 +41,7 @@ export const enrollmentsApi = {
     const { type, ...payload } = data
     const res = await apiFetch<unknown>("/enrollments/re-enroll", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(withExplicitProfile(payload)),
     })
     return safeValidate(EnrollmentSchema, res, "POST /enrollments/re-enroll")
   },

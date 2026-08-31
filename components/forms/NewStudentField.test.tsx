@@ -13,27 +13,37 @@ vi.mock("@/lib/api/students", () => ({
 }))
 
 /** `studentId: null` = l'élève est créé par le formulaire, il n'a pas encore d'identifiant. */
-function renderField(value: boolean | null | undefined, studentId: number | null = 7) {
+function renderField(
+  value: boolean | null | undefined,
+  studentId: number | null = 7,
+  error?: string,
+) {
   const onChange = vi.fn()
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const { rerender } = render(
+  const champ = (props: { studentId: number | null; value: boolean | null | undefined }) => (
     <QueryClientProvider client={client}>
       <NewStudentField
-        studentId={studentId ?? undefined}
+        studentId={props.studentId ?? undefined}
         academicYearId={3}
-        value={value}
+        value={props.value}
+        error={error}
         onChange={onChange}
       />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   )
-  return { onChange, rerender }
+  const { rerender } = render(champ({ studentId, value }))
+  return {
+    onChange,
+    rejouer: (props: { studentId: number | null; value: boolean | null | undefined }) =>
+      rerender(champ(props)),
+  }
 }
 
 function choix(nom: RegExp) {
   return screen.getByRole("button", { name: nom })
 }
 
-describe("La case « nouvel élève »", () => {
+describe("Le profil « nouvel élève »", () => {
   beforeEach(() => {
     getNewStudentSuggestion.mockReset()
   })
@@ -43,7 +53,7 @@ describe("La case « nouvel élève »", () => {
       suggested: true,
       reason: "Aucune inscription antérieure pour cet élève.",
     })
-    const { onChange } = renderField(undefined)
+    const { onChange } = renderField(null)
 
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(true))
     expect(screen.getByText(/Aucune inscription antérieure pour cet élève/)).toBeInTheDocument()
@@ -54,7 +64,7 @@ describe("La case « nouvel élève »", () => {
       suggested: false,
       reason: "Cet élève était inscrit en 2024-2025.",
     })
-    const { onChange } = renderField(undefined)
+    const { onChange } = renderField(null)
 
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(false))
   })
@@ -69,15 +79,43 @@ describe("La case « nouvel élève »", () => {
       suggested: null,
       reason: "Aucune année antérieure n'est enregistrée dans l'établissement.",
     })
-    const { onChange } = renderField(undefined)
+    const { onChange } = renderField(null)
 
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith(null))
+    await waitFor(() =>
+      expect(screen.getByText(/Aucune année antérieure n'est enregistrée/)).toBeInTheDocument(),
+    )
     expect(onChange).not.toHaveBeenCalledWith(false)
     expect(onChange).not.toHaveBeenCalledWith(true)
-    expect(
-      await screen.findByText(/Aucune année antérieure n'est enregistrée/),
-    ).toBeInTheDocument()
     expect(screen.getByText(/C'est à vous de trancher/)).toBeInTheDocument()
+  })
+
+  /**
+   * Une réponse « je ne peux pas trancher » a l'air prudente, mais elle se coche
+   * en une seconde et facture de travers en silence. La question doit être posée
+   * jusqu'à ce qu'elle reçoive une réponse.
+   */
+  it("n'offre aucune façon d'esquiver la question", async () => {
+    getNewStudentSuggestion.mockResolvedValue({ suggested: null, reason: "Rien en base." })
+    renderField(null)
+
+    expect(await screen.findByRole("button", { name: /Nouvel élève/ })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Déjà inscrit ici avant/ })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /trancher/i })).not.toBeInTheDocument()
+  })
+
+  it("dit pourquoi la question est posée, et ce qu'elle coûte sans réponse", async () => {
+    getNewStudentSuggestion.mockResolvedValue({ suggested: null, reason: "Rien en base." })
+    renderField(null)
+
+    expect(await screen.findByText(/aucun de ces frais n'est facturé/)).toBeInTheDocument()
+    expect(screen.getByText(/certains frais ne sont dus que par les nouveaux élèves/)).toBeInTheDocument()
+  })
+
+  it("affiche le message de validation quand on a tenté de continuer sans répondre", async () => {
+    getNewStudentSuggestion.mockResolvedValue({ suggested: null, reason: "Rien en base." })
+    renderField(null, 7, "Indiquez si l'élève arrive cette année.")
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Indiquez si l'élève arrive/)
   })
 
   it("laisse la secrétaire contredire la suggestion", async () => {
@@ -85,21 +123,28 @@ describe("La case « nouvel élève »", () => {
     const { onChange } = renderField(true)
 
     await waitFor(() => expect(getNewStudentSuggestion).toHaveBeenCalled())
-    fireEvent.click(choix(/Non, il était déjà là/))
+    fireEvent.click(choix(/Déjà inscrit ici avant/))
     expect(onChange).toHaveBeenCalledWith(false)
   })
 
-  it("prévient que le choix change la facture", async () => {
-    getNewStudentSuggestion.mockResolvedValue({ suggested: null, reason: "Rien en base." })
-    renderField(null)
+  /**
+   * Changer d'élève dans le formulaire ne doit pas garder le profil du
+   * précédent : ce sont les frais d'un autre dossier qui partiraient.
+   */
+  it("remet le profil à zéro quand on change d'élève", async () => {
+    getNewStudentSuggestion.mockResolvedValue({ suggested: true, reason: "Rien en base." })
+    const { onChange, rejouer } = renderField(true)
 
-    expect(
-      await screen.findByText(/aucun de ces frais n'est facturé/),
-    ).toBeInTheDocument()
+    await waitFor(() => expect(getNewStudentSuggestion).toHaveBeenCalled())
+    onChange.mockClear()
+
+    rejouer({ studentId: 8, value: true })
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith(null))
   })
 
   it("ne coche rien pour un élève qui n'existe pas encore en base", async () => {
-    const { onChange } = renderField(undefined, null)
+    const { onChange } = renderField(null, null)
 
     // Créer la fiche d'un élève ne prouve pas qu'il arrive cette année : une
     // école qui rattrape son fichier saisit aussi des élèves présents depuis

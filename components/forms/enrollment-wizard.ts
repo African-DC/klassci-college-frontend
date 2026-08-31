@@ -12,12 +12,13 @@ export const ENROLLMENT_STEPS = [
 ] as const
 
 /**
- * `is_new_student` reste absent des valeurs par défaut, sciemment.
+ * `is_new_student` part à `null`, jamais à `undefined`.
  *
- * `undefined` veut dire « personne n'a encore répondu », et laisse la
- * suggestion du serveur pré-remplir. `null` veut dire « on a répondu qu'on ne
- * peut pas trancher », ce qui est une réponse à part entière : l'inscription ne
- * recevra alors aucun tarif réservé aux nouveaux ni aux anciens.
+ * `JSON.stringify` supprime les clés `undefined` : le champ disparaîtrait du
+ * corps de la requête, et le serveur déduirait le profil alors que l'écran
+ * promettait de ne rien affirmer. `null` traverse le réseau et dit ce qu'il
+ * veut dire : personne n'a tranché, aucun tarif réservé aux nouveaux ni aux
+ * anciens ne sera facturé.
  */
 export const NEW_ENROLLMENT_DEFAULTS: Partial<NewEnrollment> = {
   type: "new",
@@ -33,7 +34,7 @@ export const NEW_ENROLLMENT_DEFAULTS: Partial<NewEnrollment> = {
   class_id: undefined,
   assignment_status: null,
   assignment_decision_number: null,
-  is_new_student: undefined,
+  is_new_student: null,
   fee_variant_id: null,
   notes: null,
 }
@@ -44,9 +45,23 @@ export const RE_ENROLLMENT_DEFAULTS: Partial<ReEnrollment> = {
   class_id: undefined,
   assignment_status: null,
   assignment_decision_number: null,
-  is_new_student: undefined,
+  is_new_student: null,
   fee_variant_id: null,
   notes: null,
+}
+
+/**
+ * Ce que l'écran dit quand on tente de continuer sans avoir répondu.
+ *
+ * Le message nomme la conséquence, sinon la secrétaire lit « champ requis » et
+ * cherche lequel : c'est une question dont la réponse change la facture.
+ */
+export const PROFILE_REQUIRED_MESSAGE =
+  "Indiquez si l'élève arrive cette année ou s'il était déjà inscrit ici : certains frais ne sont dus que par les nouveaux, d'autres que par les anciens."
+
+/** Répondu veut dire « oui » ou « non ». `null` et `undefined` ne répondent pas. */
+export function newStudentAnswered(value: boolean | null | undefined): value is boolean {
+  return value === true || value === false
 }
 
 export function inKindDepositsPayload(deposits: Record<number, boolean>) {
@@ -93,6 +108,9 @@ export async function validateEnrollmentStep(
     ])
   }
 
+  // L'étape Classe porte aussi le profil de l'inscription. Il est obligatoire :
+  // tant que l'école n'a pas déclaré son historique exploitable, le serveur ne
+  // suggère rien, et une valeur par défaut silencieuse facturerait de travers.
   if (step === 2) {
     return enrollmentType === "new" ? newForm.trigger(["class_id"]) : reForm.trigger(["class_id"])
   }

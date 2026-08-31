@@ -1,84 +1,91 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { AlertTriangle, Check, Info, Loader2 } from "lucide-react"
+import { AlertTriangle, Info, Loader2 } from "lucide-react"
 import { useNewStudentSuggestion } from "@/lib/hooks/useStudents"
-import { cn } from "@/lib/utils"
+import { NewStudentChoiceGroup } from "@/components/forms/NewStudentChoiceGroup"
 
 interface NewStudentFieldProps {
   /** Absent quand l'élève est créé dans le même formulaire : rien à interroger. */
   studentId?: number
   academicYearId?: number
-  /** `undefined` = pas encore renseigné, `null` = laissé en suspens sciemment. */
+  /** `null` = personne n'a encore répondu. Le champ part toujours à `null`. */
   value: boolean | null | undefined
   onChange: (value: boolean | null) => void
+  /** Renseigné quand on a tenté de continuer sans répondre. */
+  error?: string
 }
 
-const CHOICES = [
-  { value: true as const, label: "Oui, il arrive cette année" },
-  { value: false as const, label: "Non, il était déjà là" },
-  { value: null, label: "Je ne peux pas trancher" },
-]
-
 /**
- * Le profil de l'inscription : nouvel élève, ancien élève, ou pas tranché.
+ * Le profil de l'inscription : nouvel élève, ou déjà inscrit ici avant.
  *
- * Trois états, et le troisième compte autant que les deux autres. Une case à
- * cocher ordinaire ne sait pas dire « on ne sait pas » : décochée, elle
- * affirmerait « ancien élève », ce qui reviendrait à choisir un montant à la
- * place de l'école. On propose donc les trois réponses en toutes lettres, et
- * l'état retenu se lit au pictogramme autant qu'à la couleur, pour un écran
- * d'entrée de gamme en plein soleil.
+ * La question est posée, jamais devinée. Tant que l'école n'a pas déclaré son
+ * historique exploitable, le serveur ne suggère rien : l'absence d'inscription
+ * antérieure ne distingue pas un nouvel élève d'un ancien pas encore saisi, et
+ * une réponse par défaut facturerait la chemise cartonnée à toute une école.
+ * La secrétaire, elle, sait. On lui pose donc la question, sans rien
+ * présélectionner, et on refuse de continuer sans réponse.
+ *
+ * Quand le serveur suggère quelque chose, la réponse est pré-remplie avec sa
+ * phrase à côté, et reste corrigeable.
  */
-export function NewStudentField({ studentId, academicYearId, value, onChange }: NewStudentFieldProps) {
+export function NewStudentField({
+  studentId,
+  academicYearId,
+  value,
+  onChange,
+  error,
+}: NewStudentFieldProps) {
   const { data: suggestion, isError, isFetching } = useNewStudentSuggestion(studentId, academicYearId)
-  const prefilled = useRef(false)
+  const prefilledFor = useRef<number | undefined>(undefined)
+  const answeredFor = useRef<number | undefined>(studentId)
 
-  // La suggestion pré-remplit une fois. Elle ne réécrit jamais un choix déjà
-  // fait : la secrétaire qui a corrigé la case ne doit pas la voir se remettre
-  // toute seule sur l'avis du serveur au premier rechargement.
   useEffect(() => {
-    if (!suggestion || prefilled.current) return
-    prefilled.current = true
-    if (value === undefined) onChange(suggestion.suggested)
-  }, [suggestion, value, onChange])
+    // Changer d'élève dans le formulaire remet le profil à zéro. Sans cela,
+    // l'inscription du second élève partait avec la réponse donnée pour le
+    // premier, et donc avec ses frais.
+    if (answeredFor.current !== studentId) {
+      answeredFor.current = studentId
+      prefilledFor.current = undefined
+      onChange(null)
+      return
+    }
+    // La suggestion pré-remplit une fois par élève, et ne réécrit jamais une
+    // réponse déjà donnée : la secrétaire qui a corrigé ne doit pas voir le
+    // serveur reprendre la main au premier rechargement.
+    if (!suggestion || prefilledFor.current === studentId) return
+    prefilledFor.current = studentId
+    if (value === null || value === undefined) onChange(suggestion.suggested)
+  }, [studentId, suggestion, value, onChange])
 
-  const undecided = value === null || value === undefined
+  const answered = value === true || value === false
   const cannotTell = !studentId || isError || suggestion?.suggested === null
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium leading-none">Nouvel élève ?</p>
+      <p className="text-sm font-medium leading-none">
+        L&apos;élève est-il nouveau dans l&apos;établissement ?
+        <span className="ml-1 text-destructive" aria-hidden>
+          *
+        </span>
+      </p>
+      <p className="text-xs text-muted-foreground">
+        Ce choix change la facture : certains frais ne sont dus que par les nouveaux élèves,
+        d&apos;autres que par les anciens. C&apos;est pourquoi la question est posée plutôt que
+        devinée.
+      </p>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        {CHOICES.map((choice) => {
-          const selected = value === choice.value
-          return (
-            <button
-              key={String(choice.value)}
-              type="button"
-              aria-pressed={selected}
-              onClick={() => onChange(choice.value)}
-              className={cn(
-                "flex min-h-11 w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
-                selected
-                  ? "border-primary bg-primary/10 font-semibold text-foreground"
-                  : "border-border bg-background text-muted-foreground hover:border-primary/50",
-              )}
-            >
-              <span
-                className={cn(
-                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
-                  selected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40",
-                )}
-              >
-                {selected ? <Check className="h-3.5 w-3.5" /> : null}
-              </span>
-              <span className="min-w-0 break-words">{choice.label}</span>
-            </button>
-          )
-        })}
-      </div>
+      <NewStudentChoiceGroup value={value} onChange={onChange} invalid={!!error && !answered} />
+
+      {error && !answered ? (
+        <p
+          role="alert"
+          className="flex items-start gap-1.5 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs leading-relaxed text-destructive"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span className="min-w-0 break-words">{error}</span>
+        </p>
+      ) : null}
 
       {isFetching ? (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -112,13 +119,11 @@ export function NewStudentField({ studentId, academicYearId, value, onChange }: 
         </div>
       ) : null}
 
-      <p className="text-xs text-muted-foreground">
-        Ce choix change la facture : certains frais ne sont dus que par les nouveaux élèves,
-        d&apos;autres que par les anciens.{" "}
-        {undecided
-          ? "Tant qu'il n'est pas tranché, aucun de ces frais n'est facturé."
-          : "Les frais réservés à l'autre profil ne seront pas facturés."}
-      </p>
+      {!answered ? (
+        <p className="text-xs text-muted-foreground">
+          Tant que la question n&apos;est pas tranchée, aucun de ces frais n&apos;est facturé.
+        </p>
+      ) : null}
     </div>
   )
 }

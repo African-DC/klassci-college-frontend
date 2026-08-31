@@ -13,6 +13,7 @@ import { RegenerateFeesAction } from "@/components/shared/fees/RegenerateFeesAct
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
 import { useStudentFees } from "@/lib/hooks/useStudents"
 import { isCashDue } from "@/lib/contracts/payment"
+import { countFeeLines } from "@/lib/enrollment/fee-lines"
 import { StudentPaymentModal } from "./StudentPaymentModal"
 
 interface PaymentsTabProps {
@@ -33,7 +34,7 @@ const STATUS_LABEL: Record<string, string> = {
 export function PaymentsTab({ studentId, studentName }: PaymentsTabProps) {
   const [paymentOpen, setPaymentOpen] = useState(false)
   const { data: enrollmentsData, isLoading, isError, refetch } = useEnrollments({ student_id: studentId })
-  const { data: fees } = useStudentFees(studentId)
+  const { data: fees, isLoading: feesLoading } = useStudentFees(studentId)
   const enrollments = enrollmentsData?.items ?? []
 
   // Compute totals from actual enrollment fees (not stale fullData)
@@ -42,10 +43,11 @@ export function PaymentsTab({ studentId, studentName }: PaymentsTabProps) {
   const totalPaid = dueFees.reduce((sum, f) => sum + f.paid, 0)
   const feesRemaining = Math.max(0, totalExpected - totalPaid)
 
-  const withPayments = (fees ?? []).filter((f) => f.paid > 0).length
-  const withoutPayments = (fees ?? []).length - withPayments
+  // Tant que les frais ne sont pas là, on ne chiffre rien : un tableau vide
+  // vaut zéro, et zéro s'affiche comme une certitude que l'on n'a pas.
+  const feeLines = fees ? countFeeLines(fees) : undefined
 
-  if (isLoading) {
+  if (isLoading || feesLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-40 rounded-lg" />
@@ -77,8 +79,7 @@ export function PaymentsTab({ studentId, studentName }: PaymentsTabProps) {
         <RegenerateFeesAction
           enrollmentIds={enrollments.map((e) => e.id)}
           subject={studentName?.trim() ? studentName : "cet élève"}
-          feesWithPayments={withPayments}
-          feesWithoutPayments={withoutPayments}
+          feeLines={feeLines}
         />
         <Button
           size="sm"
