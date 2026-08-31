@@ -13,6 +13,7 @@ import {
   type Payment,
   type PaymentCreate,
   type PaymentListParams,
+  type PaymentAllocationInput,
   type PaymentMethodOption,
 } from "@/lib/contracts/payment"
 import { PaginatedResponseSchema, type PaginatedResponse } from "@/lib/contracts"
@@ -106,17 +107,30 @@ export const paymentsApi = {
   },
 
   // NEW — Preview de l'allocation avant submit (read-only)
+  //
+  // POST sur une lecture : la répartition est une liste, elle appartient au
+  // corps. Rien n'est écrit. C'est ce même appel qui calcule la répartition
+  // nommée par le caissier : l'écran affiche la réponse au lieu de refaire le
+  // calcul de son côté.
   previewAllocation: async (
     enrollmentId: number,
     amount: number,
+    allocations?: PaymentAllocationInput[],
   ): Promise<AllocationPreview> => {
     const json = await apiFetch<unknown>(
-      `/enrollments/${enrollmentId}/payments/preview?amount=${amount}`,
+      `/enrollments/${enrollmentId}/payments/preview`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          amount,
+          ...(allocations && allocations.length > 0 ? { allocations } : {}),
+        }),
+      },
     )
     return safeValidate(
       AllocationPreviewSchema,
       unwrap(json),
-      `GET /enrollments/${enrollmentId}/payments/preview`,
+      `POST /enrollments/${enrollmentId}/payments/preview`,
     )
   },
 

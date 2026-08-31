@@ -47,8 +47,15 @@ export function PaymentAllocationSection({
   error,
   controller,
 }: PaymentAllocationSectionProps) {
-  const { mode, setMode, draft, setFeeAmount, fillFee, clear, plan } = controller
+  const { mode, setMode, draft, setFeeAmount, fillFee, clear, directedTotal } = controller
   const lignes = preview?.lines ?? []
+  // Le motif de refus rendu par l'aperçu, rangé par frais : la carte n'a plus
+  // qu'à lire le sien.
+  const motifs = new Map(
+    (preview?.problems ?? [])
+      .filter((probleme) => probleme.enrollment_fee_id !== null)
+      .map((probleme) => [probleme.enrollment_fee_id as number, probleme.message]),
+  )
 
   return (
     <section aria-label="Répartition du versement" className="space-y-3">
@@ -81,7 +88,7 @@ export function PaymentAllocationSection({
         </p>
       ) : (
         <div className="space-y-3">
-          {preview && !preview.can_record && preview.reject_reason ? (
+          {preview && !preview.can_record && preview.reject_reason && motifs.size === 0 ? (
             <div
               role="alert"
               className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-500/10 p-3 text-sm text-amber-900 dark:border-amber-500/40 dark:text-amber-200"
@@ -96,7 +103,7 @@ export function PaymentAllocationSection({
               Posez un montant sur les frais à régler. Laissez vide ce que vous ne
               voulez pas décider.
             </p>
-            {plan.manualTotal > 0 ? (
+            {directedTotal > 0 ? (
               <Button
                 type="button"
                 variant="ghost"
@@ -110,18 +117,25 @@ export function PaymentAllocationSection({
           </div>
 
           <div className="space-y-2">
-            {plan.lines.map((line) => (
+            {lignes.map((line) => (
               <FeeAllocationRow
-                key={line.enrollmentFeeId}
+                key={line.enrollment_fee_id}
                 line={line}
-                value={draft[line.enrollmentFeeId] ?? ""}
-                onChange={(raw) => setFeeAmount(line.enrollmentFeeId, raw)}
-                onFill={() => fillFee(line.enrollmentFeeId)}
+                value={draft[line.enrollment_fee_id] ?? ""}
+                problem={motifs.get(line.enrollment_fee_id)}
+                onChange={(raw) => setFeeAmount(line.enrollment_fee_id, raw)}
+                onFill={() =>
+                  fillFee(line.enrollment_fee_id, line.cash_remaining_before, amount)
+                }
               />
             ))}
           </div>
 
-          <AllocationTotalsBar plan={plan} amount={amount} />
+          <AllocationTotalsBar
+            preview={preview}
+            amount={amount}
+            reparti={directedTotal}
+          />
         </div>
       )}
     </section>

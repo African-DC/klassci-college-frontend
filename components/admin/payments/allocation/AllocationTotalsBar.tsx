@@ -3,19 +3,30 @@
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
-import type { AllocationPlan } from "@/lib/payments/allocation-plan"
+import type { AllocationPreview } from "@/lib/contracts/payment"
 import { formatXof } from "./format"
 
-function etat(plan: AllocationPlan, amount: number) {
-  if (plan.overAllocated) {
+function etat(preview: AllocationPreview | undefined, amount: number, reparti: number) {
+  const global = preview?.problems.find((p) => p.enrollment_fee_id === null)
+  if (global) {
     return {
       icon: AlertTriangle,
       tone: "text-destructive",
       alert: true,
-      message: `Vous avez réparti ${formatXof(plan.manualTotal - amount)} de trop. Retirez ce montant avant d'enregistrer.`,
+      message: global.message,
     }
   }
-  if (plan.toDistribute === 0) {
+  if (reparti > amount) {
+    // L'aperçu n'a pas encore rattrapé la frappe : on le dit sans chiffrer une
+    // répartition que le serveur n'a pas validée.
+    return {
+      icon: AlertTriangle,
+      tone: "text-destructive",
+      alert: true,
+      message: `Vous avez réparti ${formatXof(reparti - amount)} de trop. Retirez ce montant avant d'enregistrer.`,
+    }
+  }
+  if (reparti === amount && amount > 0) {
     return {
       icon: CheckCircle2,
       tone: "text-emerald-600 dark:text-emerald-400",
@@ -23,12 +34,12 @@ function etat(plan: AllocationPlan, amount: number) {
       message: "Tout le versement est réparti sur les frais que vous avez nommés.",
     }
   }
-  if (plan.surplus > 0) {
+  if (preview && preview.surplus > 0) {
     return {
       icon: AlertTriangle,
       tone: "text-amber-600 dark:text-amber-400",
       alert: false,
-      message: `${formatXof(plan.autoTotal)} iront sur les frais dus restants. ${formatXof(plan.surplus)} ne correspondent à aucun frais dû.`,
+      message: `${formatXof(preview.cascaded_total)} iront sur les frais dus restants. ${formatXof(preview.surplus)} ne correspondent à aucun frais dû.`,
     }
   }
   return {
@@ -46,16 +57,24 @@ function etat(plan: AllocationPlan, amount: number) {
  * `sticky bottom-0` le maintient à l'écran pendant la saisie : sur un
  * téléphone dont le clavier mange la moitié de la hauteur, le montant qui
  * reste à répartir doit rester lisible sans refermer le clavier.
+ *
+ * Le montant réparti suit la frappe, la part cascadée et le surplus viennent
+ * de l'aperçu. C'est volontaire : ce que l'encaisseur vient de taper doit
+ * s'afficher tout de suite, ce que le serveur en fait est ce que le serveur
+ * en dit.
  */
 export function AllocationTotalsBar({
-  plan,
+  preview,
   amount,
+  reparti,
 }: {
-  plan: AllocationPlan
+  preview: AllocationPreview | undefined
   amount: number
+  reparti: number
 }) {
-  const pct = amount > 0 ? Math.min(100, Math.round((plan.manualTotal / amount) * 100)) : 0
-  const { icon: Icon, tone, alert, message } = etat(plan, amount)
+  const reste = Math.max(0, amount - reparti)
+  const pct = amount > 0 ? Math.min(100, Math.round((reparti / amount) * 100)) : 0
+  const { icon: Icon, tone, alert, message } = etat(preview, amount, reparti)
 
   return (
     <div
@@ -66,7 +85,7 @@ export function AllocationTotalsBar({
         <p className="text-sm">
           <span className="text-muted-foreground">Réparti </span>
           <span className="font-semibold tabular-nums text-foreground">
-            {formatXof(plan.manualTotal)}
+            {formatXof(reparti)}
           </span>
           <span className="text-muted-foreground"> sur {formatXof(amount)}</span>
         </p>
@@ -75,10 +94,10 @@ export function AllocationTotalsBar({
           <span
             className={cn(
               "font-semibold tabular-nums",
-              plan.toDistribute > 0 ? "text-accent" : "text-foreground",
+              reste > 0 ? "text-accent" : "text-foreground",
             )}
           >
-            {formatXof(plan.toDistribute)}
+            {formatXof(reste)}
           </span>
         </p>
       </div>

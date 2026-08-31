@@ -58,27 +58,46 @@ export function StepRecordPayment({
 
   const saisie = form.watch("amount")
   const montant = typeof saisie === "number" && Number.isFinite(saisie) && saisie > 0 ? saisie : 0
-  const montantStabilise = useDebounce(montant, 350)
+  const controller = useAllocationDraft()
+
+  // Le montant et la répartition partent ensemble, débouncés ensemble. Les
+  // séparer afficherait une ventilation calculée sur un montant que
+  // l'encaisseur a déjà changé. La clé est sérialisée pour que le debounce
+  // compare des valeurs et non des identités de tableau.
+  const requete = useMemo(
+    () => JSON.stringify({ montant, allocations: controller.allocations ?? null }),
+    [montant, controller.allocations],
+  )
+  const requeteStabilisee = useDebounce(requete, 350)
+  const demande = useMemo(
+    () =>
+      JSON.parse(requeteStabilisee) as {
+        montant: number
+        allocations: EnrollmentPaymentCreate["allocations"] | null
+      },
+    [requeteStabilisee],
+  )
 
   const preview = useAllocationPreview(
     enrollment.id,
-    montantStabilise > 0 ? montantStabilise : null,
+    demande.montant > 0 ? demande.montant : null,
+    demande.allocations ?? undefined,
   )
-  const lignes = useMemo(() => preview.data?.lines ?? [], [preview.data])
-  const controller = useAllocationDraft(lignes, montant)
 
   const { mutate, isPending } = useRecordEnrollmentPayment(enrollment.id)
 
-  const apercuAJour = montantStabilise === montant
+  const apercuAJour = requeteStabilisee === requete
   const canSubmit =
     montant > 0 &&
     apercuAJour &&
     (preview.data?.can_record ?? false) &&
-    !controller.blocked &&
     !isPending
 
   function onSubmit(data: EnrollmentPaymentCreate) {
-    if (controller.blocked) return
+    // L'aperçu qui autorise l'envoi est celui de CETTE répartition : le serveur
+    // revérifiera de toute façon, mais on ne lui envoie pas sciemment ce qu'il
+    // vient de refuser.
+    if (!canSubmit) return
     mutate({ ...data, allocations: controller.allocations }, { onSuccess })
   }
 

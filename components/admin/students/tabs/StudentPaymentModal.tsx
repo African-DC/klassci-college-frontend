@@ -76,22 +76,37 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
   })
 
   const watchedAmount = form.watch("amount")
-  const debouncedAmount = useDebounce(watchedAmount, 350)
-
-  const preview = useAllocationPreview(
-    enrollmentId,
-    typeof debouncedAmount === "number" && debouncedAmount > 0 ? debouncedAmount : null,
-  )
-
-  const { mutate, isPending } = useRecordEnrollmentPayment(enrollmentId ?? 0)
-
   const montant =
     typeof watchedAmount === "number" && Number.isFinite(watchedAmount) && watchedAmount > 0
       ? watchedAmount
       : 0
-  const lignesApercu = useMemo(() => preview.data?.lines ?? [], [preview.data])
-  const allocation = useAllocationDraft(lignesApercu, montant)
+  const allocation = useAllocationDraft()
   const { setMode: setAllocationMode, clear: clearAllocations } = allocation
+
+  // Montant et répartition partent ensemble : un aperçu calculé sur l'un sans
+  // l'autre montrerait une ventilation qui n'existe pas.
+  const requete = useMemo(
+    () => JSON.stringify({ montant, allocations: allocation.allocations ?? null }),
+    [montant, allocation.allocations],
+  )
+  const requeteStabilisee = useDebounce(requete, 350)
+  const demande = useMemo(
+    () =>
+      JSON.parse(requeteStabilisee) as {
+        montant: number
+        allocations: EnrollmentPaymentCreate["allocations"] | null
+      },
+    [requeteStabilisee],
+  )
+
+  const preview = useAllocationPreview(
+    enrollmentId,
+    demande.montant > 0 ? demande.montant : null,
+    demande.allocations ?? undefined,
+  )
+  const apercuAJour = requeteStabilisee === requete
+
+  const { mutate, isPending } = useRecordEnrollmentPayment(enrollmentId ?? 0)
 
   // Reset le formulaire quand on rouvre la modal sur un autre élève
   useEffect(() => {
@@ -103,7 +118,6 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
 
   function onSubmit(data: EnrollmentPaymentCreate) {
     if (!enrollmentId) return
-    if (allocation.blocked) return
     if (preview.data && !preview.data.can_record) {
       form.setError("amount", { message: preview.data.reject_reason ?? "Montant invalide" })
       return
@@ -125,8 +139,8 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
     !!enrollmentId &&
     !noFees &&
     !allPaid &&
+    apercuAJour &&
     (preview.data?.can_record ?? false) &&
-    !allocation.blocked &&
     !isPending
 
   return (
