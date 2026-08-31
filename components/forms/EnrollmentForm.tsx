@@ -4,15 +4,6 @@ import { useState, useMemo, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
-  UserPlus,
-  RefreshCw,
-  GraduationCap,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-} from "lucide-react"
-import {
   NewEnrollmentSchema,
   ReEnrollmentSchema,
   type NewEnrollment,
@@ -20,29 +11,24 @@ import {
 } from "@/lib/contracts/enrollment"
 import type { Student } from "@/lib/contracts/student"
 import type { Class } from "@/lib/contracts/class"
-import { useCreateWithStudent, useReEnroll, useFeeVariants } from "@/lib/hooks/useEnrollments"
+import { useFeeVariants } from "@/lib/hooks/useEnrollments"
 import { useStudents } from "@/lib/hooks/useStudents"
 import { useClasses } from "@/lib/hooks/useClasses"
-import { Form } from "@/components/ui/form"
-import { AssignmentStatusField } from "@/components/forms/AssignmentStatusField"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from "@/lib/utils"
-import { EnrollmentNewStudentStep } from "@/components/forms/EnrollmentNewStudentStep"
-import { EnrollmentReenrollStep } from "@/components/forms/EnrollmentReenrollStep"
+import { EnrollmentStudentStep } from "@/components/forms/EnrollmentStudentStep"
 import { EnrollmentSummaryStep } from "@/components/forms/EnrollmentSummaryStep"
-import { ClassAndFeesFields } from "@/components/forms/EnrollmentClassFields"
-import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
-
-type EnrollmentType = "new" | "re-enrollment"
-
-const STEPS = [
-  { id: "type", label: "Type", icon: GraduationCap },
-  { id: "student", label: "Élève", icon: UserPlus },
-  { id: "class", label: "Classe", icon: GraduationCap },
-  { id: "summary", label: "Résumé", icon: Check },
-] as const
+import { EnrollmentTypeStep } from "@/components/forms/EnrollmentTypeStep"
+import { EnrollmentWizardShell } from "@/components/forms/EnrollmentWizardShell"
+import { EnrollmentClassStep } from "@/components/forms/EnrollmentClassStep"
+import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
+import {
+  ENROLLMENT_STEPS,
+  NEW_ENROLLMENT_DEFAULTS,
+  RE_ENROLLMENT_DEFAULTS,
+  validateEnrollmentStep,
+  type EnrollmentType,
+} from "@/components/forms/enrollment-wizard"
+import { useEnrollmentSubmit } from "@/components/forms/useEnrollmentSubmit"
+import { useNewStudentGuard } from "@/components/forms/useNewStudentGuard"
 
 interface EnrollmentFormProps {
   onSuccess: () => void
@@ -63,52 +49,22 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
   const [photo, setPhoto] = useState<File | null>(null)
   const [inKindDeposits, setInKindDeposits] = useState<Record<number, boolean>>({})
 
-  // Mutations
-  const createWithStudent = useCreateWithStudent()
-  const reEnroll = useReEnroll()
-  const attachPhoto = useAttachStudentPhoto()
-
   // Data queries
+  const { academicYearId } = useCurrentAcademicYearId()
   const { data: studentsData, isLoading: studentsLoading } = useStudents({ size: 100 })
   const { data: classesData, isLoading: classesLoading } = useClasses({ size: 100 })
 
   const students: Student[] = studentsData?.items ?? []
   const classes: Class[] = classesData?.items ?? []
 
-  // New enrollment form
   const newForm = useForm<NewEnrollment>({
     resolver: zodResolver(NewEnrollmentSchema),
-    defaultValues: {
-      type: "new",
-      first_name: "",
-      last_name: "",
-      birth_date: null,
-      birth_place: null,
-      genre: null,
-      enrollment_number: null,
-      city: null,
-      commune: null,
-      parent: null,
-      class_id: undefined,
-      assignment_status: null,
-      assignment_decision_number: null,
-      fee_variant_id: null,
-      notes: null,
-    },
+    defaultValues: NEW_ENROLLMENT_DEFAULTS,
   })
 
-  // Re-enrollment form
   const reForm = useForm<ReEnrollment>({
     resolver: zodResolver(ReEnrollmentSchema),
-    defaultValues: {
-      type: "re-enrollment",
-      student_id: undefined,
-      class_id: undefined,
-      assignment_status: null,
-      assignment_decision_number: null,
-      fee_variant_id: null,
-      notes: null,
-    },
+    defaultValues: RE_ENROLLMENT_DEFAULTS,
   })
 
   const watchedClassId = enrollmentType === "new"
@@ -127,6 +83,24 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
     [students, selectedStudentId]
   )
 
+  const ensureProfileAnswered = useNewStudentGuard({
+    enrollmentType,
+    newForm,
+    reForm,
+    studentId: selectedStudentId,
+  })
+
+  const { submit, isPending, submitLabel, createError, reEnrollError } = useEnrollmentSubmit({
+    enrollmentType,
+    newForm,
+    reForm,
+    showParentFields,
+    inKindDeposits,
+    photo,
+    onPhotoConsumed: () => setPhoto(null),
+    onSuccess,
+  })
+
   // Selected class name for summary
   const selectedClassName = useMemo(
     () => classes.find((c) => c.id === watchedClassId)?.name ?? "",
@@ -141,8 +115,6 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
     () => feeVariants?.find((v) => v.id === selectedFeeVariantId),
     [feeVariants, selectedFeeVariantId]
   )
-
-  const isPending = createWithStudent.isPending || reEnroll.isPending || attachPhoto.isPending
 
   // Bug #22 : Quand un student_id arrive via query (?student_id=X), on
   // pré-remplit le formulaire re-enrollment et on saute directement à la
@@ -165,285 +137,82 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
   }
 
   async function handleNext() {
-    if (step === 0) {
-      if (!enrollmentType) return
-      goToStep(1)
-      return
-    }
-
-    if (step === 1) {
-      if (enrollmentType === "new") {
-        const valid = await newForm.trigger(["first_name", "last_name", "birth_date", "birth_place", "genre", "enrollment_number"])
-        if (!valid) return
-        // Validate parent fields if shown
-        if (showParentFields) {
-          const parentValid = await newForm.trigger(["parent.first_name", "parent.last_name", "parent.phone", "parent.email", "parent.relationship_type"])
-          if (!parentValid) return
-        }
-      } else {
-        const valid = await reForm.trigger(["student_id"])
-        if (!valid) return
-      }
-      goToStep(2)
-      return
-    }
-
-    if (step === 2) {
-      if (enrollmentType === "new") {
-        const valid = await newForm.trigger(["class_id"])
-        if (!valid) return
-      } else {
-        const valid = await reForm.trigger(["class_id"])
-        if (!valid) return
-      }
-      goToStep(3)
-      return
-    }
+    const valid = await validateEnrollmentStep(step, enrollmentType, newForm, reForm, showParentFields)
+    if (!valid || step >= ENROLLMENT_STEPS.length - 1) return
+    if (step === 2 && !ensureProfileAnswered()) return
+    goToStep(step + 1)
   }
 
   function handlePrevious() {
     if (step > 0) setStep(step - 1)
   }
 
-  function payloadDeposits() {
-    return Object.entries(inKindDeposits).map(([id, deposited]) => ({
-      fee_category_id: Number(id),
-      deposited,
-    }))
-  }
-
   function handleSubmit() {
-    if (enrollmentType === "new") {
-      newForm.handleSubmit((data) => {
-        // Clean up parent if not filled
-        if (!showParentFields) {
-          data.parent = null
-        }
-        data.in_kind_deposits = payloadDeposits()
-        createWithStudent.mutate(data, {
-          onSuccess: async (enrollment) => {
-            await attachPhoto.mutateAsync({ studentId: enrollment.student_id, photo })
-            newForm.reset()
-            setPhoto(null)
-            onSuccess()
-          },
-        })
-      })()
-    } else {
-      reForm.handleSubmit((data) => {
-        data.in_kind_deposits = payloadDeposits()
-        reEnroll.mutate(data, {
-          onSuccess: () => {
-            reForm.reset()
-            onSuccess()
-          },
-        })
-      })()
+    // Le profil est vérifié ici aussi : le schéma laisse passer `null`, et
+    // l'étape qui pose la question est deux écrans plus haut. On y ramène.
+    if (!ensureProfileAnswered()) {
+      goToStep(2)
+      return
     }
+    submit()
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Step indicator */}
-      <Tabs value={STEPS[step].id} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          {STEPS.map((s, i) => (
-            <TabsTrigger
-              key={s.id}
-              value={s.id}
-              disabled={i > maxReachedStep || (i > 0 && !enrollmentType)}
-              onClick={() => {
-                if (i <= maxReachedStep) setStep(i)
-              }}
-              className="text-xs sm:text-sm"
-            >
-              <s.icon className="mr-1.5 h-3.5 w-3.5 hidden sm:inline-block" />
-              {s.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-
-      {/* Step 0: Type selection */}
+    <EnrollmentWizardShell
+      steps={ENROLLMENT_STEPS}
+      step={step}
+      maxReachedStep={maxReachedStep}
+      canNavigate={!!enrollmentType}
+      onStepChange={setStep}
+      onPrevious={handlePrevious}
+      onNext={handleNext}
+      onSubmit={handleSubmit}
+      nextDisabled={step === 0 && !enrollmentType}
+      pending={isPending}
+      submitLabel={submitLabel}
+    >
       {step === 0 && (
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Choisissez le type d&apos;inscription à effectuer.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card
-              className={cn(
-                "cursor-pointer transition-colors hover:border-primary/50",
-                enrollmentType === "new" && "border-primary ring-2 ring-primary/20"
-              )}
-              onClick={() => setEnrollmentType("new")}
-            >
-              <CardContent className="flex flex-col items-center gap-3 pt-6 pb-4">
-                <div className={cn(
-                  "rounded-full p-3",
-                  enrollmentType === "new" ? "bg-primary text-primary-foreground" : "bg-muted"
-                )}>
-                  <UserPlus className="h-6 w-6" />
-                </div>
-                <div className="text-center">
-                  <p className="font-semibold">Nouvelle inscription</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Inscrire un nouvel élève
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card
-              className={cn(
-                "cursor-pointer transition-colors hover:border-primary/50",
-                enrollmentType === "re-enrollment" && "border-primary ring-2 ring-primary/20"
-              )}
-              onClick={() => setEnrollmentType("re-enrollment")}
-            >
-              <CardContent className="flex flex-col items-center gap-3 pt-6 pb-4">
-                <div className={cn(
-                  "rounded-full p-3",
-                  enrollmentType === "re-enrollment" ? "bg-primary text-primary-foreground" : "bg-muted"
-                )}>
-                  <RefreshCw className="h-6 w-6" />
-                </div>
-                <div className="text-center">
-                  <p className="font-semibold">Réinscription</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Réinscrire un élève existant
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <EnrollmentTypeStep value={enrollmentType} onChange={setEnrollmentType} />
       )}
 
-      {/* Step 1: Student info */}
-      {step === 1 && enrollmentType === "new" && (
-        <EnrollmentNewStudentStep
-          form={newForm}
+      {step === 1 && (
+        <EnrollmentStudentStep
+          enrollmentType={enrollmentType === "re-enrollment" ? "re-enrollment" : "new"}
+          newForm={newForm}
+          reForm={reForm}
+          students={students}
+          studentsLoading={studentsLoading}
+          selectedStudent={selectedStudent}
           photo={photo}
           onPhotoChange={setPhoto}
           disabled={isPending}
           showParentFields={showParentFields}
           showParentAccount={showParentAccount}
-          onToggleParentFields={() => {
-            const next = !showParentFields
-            setShowParentFields(next)
-            if (!next) {
-              newForm.setValue("parent", null)
-              setShowParentAccount(false)
-            } else {
-              newForm.setValue("parent", {
-                first_name: "",
-                last_name: "",
-                phone: null,
-                email: null,
-                password: null,
-                relationship_type: "guardian",
-                city: null,
-                commune: null,
-              })
-            }
-          }}
-          onToggleParentAccount={(checked) => {
-            setShowParentAccount(checked)
-            if (!checked) {
-              newForm.setValue("parent.password", null)
-            }
-          }}
-        />
-      )}
-
-      {step === 1 && enrollmentType === "re-enrollment" && (
-        <EnrollmentReenrollStep
-          form={reForm}
-          students={students}
-          studentsLoading={studentsLoading}
-          selectedStudent={selectedStudent}
+          onShowParentFields={setShowParentFields}
+          onShowParentAccount={setShowParentAccount}
         />
       )}
 
       {/* Step 2: Class and fees */}
       {step === 2 && (
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Choisissez la classe et la formule de frais.
-          </p>
-
-          {enrollmentType === "new" ? (
-            <ClassAndFeesFields
-              classes={classes}
-              classesLoading={classesLoading}
-              feeVariants={feeVariants ?? []}
-              feeVariantsLoading={feeVariantsLoading}
-              classId={newForm.watch("class_id")}
-              feeVariantId={newForm.watch("fee_variant_id")}
-              notes={newForm.watch("notes")}
-              onClassChange={(id) => {
-                newForm.setValue("class_id", id, { shouldValidate: true })
-                setInKindDeposits({})
-              }}
-              onFeeVariantChange={(id) => newForm.setValue("fee_variant_id", id)}
-              onNotesChange={(val) => newForm.setValue("notes", val)}
-              classError={newForm.formState.errors.class_id?.message}
-              inKindDeposits={inKindDeposits}
-              onInKindDepositChange={(catId, deposited) =>
-                setInKindDeposits((prev) => ({ ...prev, [catId]: deposited }))
-              }
-            />
-          ) : (
-            <ClassAndFeesFields
-              classes={classes}
-              classesLoading={classesLoading}
-              feeVariants={feeVariants ?? []}
-              feeVariantsLoading={feeVariantsLoading}
-              classId={reForm.watch("class_id")}
-              feeVariantId={reForm.watch("fee_variant_id")}
-              notes={reForm.watch("notes")}
-              onClassChange={(id) => {
-                reForm.setValue("class_id", id, { shouldValidate: true })
-                setInKindDeposits({})
-              }}
-              onFeeVariantChange={(id) => reForm.setValue("fee_variant_id", id)}
-              onNotesChange={(val) => reForm.setValue("notes", val)}
-              classError={reForm.formState.errors.class_id?.message}
-              inKindDeposits={inKindDeposits}
-              onInKindDepositChange={(catId, deposited) =>
-                setInKindDeposits((prev) => ({ ...prev, [catId]: deposited }))
-              }
-            />
-          )}
-
-          {/* L'affectation decide du tarif : elle se saisit ici, avec la
-              classe, et non apres coup sur une inscription deja creee. */}
-          {enrollmentType === "new" ? (
-            <Form {...newForm}>
-              <AssignmentStatusField
-                control={newForm.control}
-                statusName="assignment_status"
-                decisionName="assignment_decision_number"
-                status={newForm.watch("assignment_status")}
-                onDecisionCleared={() => newForm.setValue("assignment_decision_number", null)}
-              />
-            </Form>
-          ) : (
-            <Form {...reForm}>
-              <AssignmentStatusField
-                control={reForm.control}
-                statusName="assignment_status"
-                decisionName="assignment_decision_number"
-                status={reForm.watch("assignment_status")}
-                onDecisionCleared={() => reForm.setValue("assignment_decision_number", null)}
-              />
-            </Form>
-          )}
-        </div>
+        <EnrollmentClassStep
+          enrollmentType={enrollmentType === "re-enrollment" ? "re-enrollment" : "new"}
+          newForm={newForm}
+          reForm={reForm}
+          classes={classes}
+          classesLoading={classesLoading}
+          feeVariants={feeVariants ?? []}
+          feeVariantsLoading={feeVariantsLoading}
+          inKindDeposits={inKindDeposits}
+          onInKindDepositChange={(catId, deposited) =>
+            setInKindDeposits((prev) => ({ ...prev, [catId]: deposited }))
+          }
+          onClassSelected={() => setInKindDeposits({})}
+          academicYearId={academicYearId}
+        />
       )}
 
-      {step === 3 && (
+      {step === ENROLLMENT_STEPS.length - 1 && (
         <EnrollmentSummaryStep
           enrollmentType={enrollmentType === "re-enrollment" ? "re-enrollment" : "new"}
           newValues={newForm.getValues()}
@@ -455,47 +224,12 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
           selectedFeeVariant={selectedFeeVariant}
           photo={photo}
           showParentFields={showParentFields}
-          createError={createWithStudent.error?.message}
-          reEnrollError={reEnroll.error?.message}
+          createError={createError}
+          reEnrollError={reEnrollError}
           inKindDeposits={inKindDeposits}
         />
       )}
 
-      {/* Navigation */}
-      <div className="flex items-center justify-between gap-3 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          className="h-11"
-          onClick={handlePrevious}
-          disabled={step === 0 || isPending}
-        >
-          <ChevronLeft className="mr-1.5 h-4 w-4" />
-          Précédent
-        </Button>
-
-        {step < 3 ? (
-          <Button
-            type="button"
-            className="h-11"
-            onClick={handleNext}
-            disabled={step === 0 && !enrollmentType}
-          >
-            Suivant
-            <ChevronRight className="ml-1.5 h-4 w-4" />
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            className="h-11"
-            onClick={handleSubmit}
-            disabled={isPending}
-          >
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {attachPhoto.isPending ? "Envoi de la photo..." : isPending ? "Enregistrement..." : "Enregistrer l'inscription"}
-          </Button>
-        )}
-      </div>
-    </div>
+    </EnrollmentWizardShell>
   )
 }

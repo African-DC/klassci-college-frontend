@@ -5,8 +5,6 @@ import { Copy, Loader2, ArrowRight } from "lucide-react"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -14,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { FeeVariantCopyList } from "./FeeVariantCopyList"
 import { FeesAcademicYearNotice } from "./FeesAcademicYearBar"
 import { useCreateFeeVariant } from "@/lib/hooks/useFees"
 import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
@@ -21,12 +20,15 @@ import type { AcademicYear } from "@/lib/contracts/academic-year"
 
 /**
  * Un niveau peut porter plusieurs montants pour la même catégorie, un par
- * portée d'affectation. La clé les distingue, sinon copier une grille
- * « affecté + non affecté » n'en retiendrait qu'une moitié en croyant à un
- * doublon.
+ * public visé. La clé les distingue, sinon copier une grille « affecté + non
+ * affecté » ou « nouveaux + anciens » n'en retiendrait qu'une moitié en
+ * croyant à un doublon.
+ *
+ * Toute dimension ajoutée au tarif se pose ici aussi : la clé doit porter
+ * exactement ce que la contrainte d'unicité porte côté serveur.
  */
-function variantKey(levelId: number, scope: string | null | undefined): string {
-  return `${levelId}:${scope ?? "tous"}`
+function variantKey(v: Pick<FeeVariant, "level_id" | "assignment_scope" | "enrollment_profile">): string {
+  return `${v.level_id}:${v.assignment_scope ?? "tous"}:${v.enrollment_profile ?? "tous"}`
 }
 
 interface FeeVariantCopyModalProps {
@@ -91,7 +93,7 @@ export function FeeVariantCopyModal({
         targetId
           ? variants
               .filter((v) => v.fee_category_id === targetId)
-              .map((v) => variantKey(v.level_id, v.assignment_scope))
+              .map((v) => variantKey(v))
           : [],
       ),
     [targetId, variants],
@@ -107,7 +109,7 @@ export function FeeVariantCopyModal({
   }
 
   const chosen = sourceVariants.filter((v) => selected.has(v.id))
-  const willSkip = chosen.filter((v) => targetKeys.has(variantKey(v.level_id, v.assignment_scope))).length
+  const willSkip = chosen.filter((v) => targetKeys.has(variantKey(v))).length
   const willCopy = chosen.length - willSkip
   const canSubmit = !!sourceId && !!targetId && sourceId !== targetId && willCopy > 0 && !busy
 
@@ -117,7 +119,7 @@ export function FeeVariantCopyModal({
     let ok = 0
     let failed = 0
     for (const v of chosen) {
-      if (targetKeys.has(variantKey(v.level_id, v.assignment_scope))) continue // doublon -> on saute
+      if (targetKeys.has(variantKey(v))) continue // doublon -> on saute
       try {
         await mutateAsync({
           fee_category_id: targetId,
@@ -126,6 +128,9 @@ export function FeeVariantCopyModal({
           // comme applicable à tous : les non affectés paieraient le tarif
           // subventionné et l'école perdrait la différence.
           assignment_scope: v.assignment_scope ?? null,
+          // Même raison : un droit d'inscription réservé aux nouveaux, recopié
+          // sans son profil, serait refacturé à tous les anciens de l'école.
+          enrollment_profile: v.enrollment_profile ?? null,
           amount: v.amount,
           academic_year_id: academicYearId,
         })
@@ -172,47 +177,14 @@ export function FeeVariantCopyModal({
           </div>
 
           {/* Montants source à copier */}
-          {sourceId && (
-            sourceVariants.length > 0 ? (
-              <div className="space-y-1.5">
-                <p className="text-sm font-medium">Niveaux à copier</p>
-                <div className="max-h-44 space-y-1 overflow-y-auto rounded-lg border p-2">
-                  {sourceVariants.map((v) => (
-                    <label
-                      key={v.id}
-                      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted/50"
-                    >
-                      <Checkbox checked={selected.has(v.id)} onCheckedChange={() => toggle(v.id)} />
-                      <span className="min-w-0 flex-1 truncate text-sm">
-                        {levelNameMap.get(v.level_id) ?? `#${v.level_id}`}
-                      </span>
-                      {v.assignment_scope ? (
-                        // Même repère que l'arbre des frais : deux lignes sur
-                        // le même niveau visent des élèves différents.
-                        <Badge
-                          variant="outline"
-                          className={
-                            v.assignment_scope === "affecte"
-                              ? "h-5 shrink-0 border-emerald-300 text-[10px] text-emerald-700 dark:border-emerald-800 dark:text-emerald-300"
-                              : "h-5 shrink-0 border-amber-300 text-[10px] text-amber-700 dark:border-amber-800 dark:text-amber-300"
-                          }
-                        >
-                          {v.assignment_scope === "affecte" ? "affecté" : "non affecté"}
-                        </Badge>
-                      ) : null}
-                      <span className="shrink-0 text-sm font-semibold tabular-nums">
-                        {v.amount.toLocaleString("fr-FR")} FCFA
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground">
-                Cette catégorie n&apos;a encore aucun montant à copier.
-              </p>
-            )
-          )}
+          {sourceId ? (
+            <FeeVariantCopyList
+              variants={sourceVariants}
+              selected={selected}
+              onToggle={toggle}
+              levelNameMap={levelNameMap}
+            />
+          ) : null}
 
           {/* Cible */}
           <div className="space-y-1.5">

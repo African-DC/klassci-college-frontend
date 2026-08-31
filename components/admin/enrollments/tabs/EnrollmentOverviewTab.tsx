@@ -7,12 +7,14 @@ import {
   FileText,
   ClipboardCheck,
   Landmark,
+  Sparkles,
   User,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { AssignmentStatusBadge } from "@/components/shared/AssignmentStatusBadge"
-import type { Enrollment } from "@/lib/contracts/enrollment"
+import { newStudentLabel, type Enrollment } from "@/lib/contracts/enrollment"
+import { NewStudentProfileAction } from "@/components/admin/enrollments/NewStudentProfileAction"
 
 interface EnrollmentOverviewTabProps {
   enrollment: Enrollment
@@ -114,6 +116,28 @@ export function EnrollmentOverviewTab({ enrollment }: EnrollmentOverviewTabProps
                     {enrollment.assignment_decision_number}
                   </span>
                 ) : null}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <Sparkles className="h-3.5 w-3.5" />
+                Profil
+              </p>
+              <div className="space-y-2">
+                <Badge variant={enrollment.is_new_student == null ? "outline" : "secondary"}>
+                  {newStudentLabel(enrollment.is_new_student)}
+                </Badge>
+                {/* Non tranché n'est pas « ancien élève » : on dit ce que cela
+                    coûte, sinon l'école croit la question réglée. Et on donne
+                    de quoi le corriger, sinon la fiche annonce un manque à
+                    gagner sans permettre d'y remédier. */}
+                {enrollment.is_new_student == null ? (
+                  <p className="text-xs text-muted-foreground">
+                    Les frais réservés aux nouveaux ou aux anciens élèves ne sont pas facturés.
+                  </p>
+                ) : null}
+                <NewStudentProfileAction enrollment={enrollment} />
               </div>
             </div>
 

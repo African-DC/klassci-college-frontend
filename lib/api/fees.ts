@@ -2,13 +2,9 @@ import { z } from "zod"
 import { apiFetch, safeValidate } from "./client"
 import {
   FeeCategorySchema,
-  FeePropagationPreviewSchema,
-  FeePropagationResultSchema,
   FeeVariantSchema,
   OptionalFeeOptionSchema,
   type FeeCategory,
-  type FeePropagationPreview,
-  type FeePropagationResult,
   type FeeVariant,
   type OptionalFeeOption,
   type FeeCategoryCreate,
@@ -18,6 +14,12 @@ import {
   type OptionalFeeOptionCreate,
   type OptionalFeeOptionUpdate,
 } from "@/lib/contracts/fee"
+import {
+  FeePropagationPreviewSchema,
+  FeePropagationResultSchema,
+  type FeePropagationPreview,
+  type FeePropagationResult,
+} from "@/lib/contracts/fee-propagation"
 
 const FeeCategoryArraySchema = z.array(FeeCategorySchema)
 const FeeVariantArraySchema = z.array(FeeVariantSchema)
@@ -139,10 +141,22 @@ export const feesApi = {
     )
   },
 
-  /** Applique la repercussion. Rend le decompte des lignes reellement reecrites. */
-  propagate: async (id: number): Promise<FeePropagationResult> => {
+  /**
+   * Applique la repercussion. Rend le decompte des lignes reellement reecrites.
+   *
+   * `create_missing` part TOUJOURS dans le corps, meme a `false` :
+   * `JSON.stringify` supprime les cles `undefined`, et un champ disparu
+   * laisserait le serveur decider a la place de l'ecole. Repercuter des
+   * montants et creer des lignes manquantes sont deux gestes distincts, le
+   * second ne s'obtient qu'en le demandant.
+   */
+  propagate: async (
+    id: number,
+    options?: { createMissing?: boolean },
+  ): Promise<FeePropagationResult> => {
     const json = await apiFetch<unknown>(`/admin/fee-variants/${id}/propagate`, {
       method: "POST",
+      body: JSON.stringify({ create_missing: options?.createMissing ?? false }),
     })
     return safeValidate(
       FeePropagationResultSchema,

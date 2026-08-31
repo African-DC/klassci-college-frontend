@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- Répercuter un tarif ne crée plus de dette chez des familles qui n'en avaient pas : la création se demande à part *(admin, comptable)*
+- La simulation d'échéancier annonce pour quel public elle vaut et n'y mêle plus les tarifs réservés à un autre profil *(admin)*
 - En thème sombre, l'aperçu du logo reste sur fond blanc et le message d'erreur d'envoi redevient lisible *(admin)* (#417)
 - L'écran des frais s'ouvre sur l'année en cours et laisse en changer, avec un repère visible quand l'année choisie n'est pas la courante *(admin, comptable)*
 - Une ligne de frais réglée en nature n'apparaît plus comme impayée à 0 F, sur la fiche de l'élève comme dans les portails famille *(admin, comptable, parent, élève)*
@@ -23,6 +25,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Annulation d'un versement déjà encaissé, depuis le tableau comme depuis le téléphone : c'est le cas courant, un montant saisi qui n'est pas dans la caisse *(admin)*
 
 ### Added
+- Un tarif peut ne concerner que les nouveaux élèves ou que les anciens : l'autre groupe ne le paie pas du tout *(admin, comptable)*
+- À l'inscription, le secrétariat dit si l'élève est nouveau, et le corrige ensuite depuis la fiche : rien n'est deviné à sa place *(admin, secrétariat)* (#419)
+- « Régénérer les frais » existe aussi sur la fiche inscription, avec une confirmation qui dit ce qui sera remplacé et ce qui sera conservé *(admin, comptable)* (#419)
 - Le formulaire d'encaissement laisse choisir quel frais reçoit quoi, du téléphone à l'ordinateur : un versement inscription et tenue s'enregistre tel qu'il a été payé *(caissier, admin)*
 - Onglet « Identité visuelle » : le logo de l'établissement s'envoie, se remplace et se retire, avec aperçu immédiat sur les documents officiels *(admin)*
 - Bouton « Bordereau du jour » sur « Ma caisse » : la caissière édite sa propre pièce de caisse, sans dépendre du comptable ni du point journalier auquel elle n'a pas accès *(caissier)*
@@ -74,6 +79,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
+- Marquer un frais déposé demande maintenant confirmation et nomme l'article : ce geste solde la ligne sans aucun versement *(admin, secrétariat)* (#419)
 - Toutes les listes chargent la suite en approchant du bas, au lieu de boutons de page : élèves, inscriptions, enseignants, parents, personnel, classes, niveaux, séries, salles, rôles, corbeille, appels, bulletins, convocations, billets d'annulation *(admin, élève)*
 - Les pieds de liste distinguent ce qui est affiché de ce que l'établissement compte, et les compteurs des puces d'inscription déclarent quand ils ne portent que sur le chargé *(admin)*
 - Montées de dépendances de `main` reportées sur `develop` : lucide-react 1.14, jsdom 29, postcss 8.5.13 *(technique)*

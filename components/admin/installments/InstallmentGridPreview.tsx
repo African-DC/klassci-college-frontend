@@ -11,16 +11,20 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { simulateGrid, type InstallmentDraft } from "@/lib/contracts/installment"
+import {
+  AUDIENCE_PROFILES,
+  AUDIENCE_SCOPES,
+  audienceLabel,
+  mostSpecificVariantPerCategory,
+  type FeeAudience,
+} from "@/lib/contracts/fee-audience"
+import type { EnrollmentProfile } from "@/lib/contracts/fee"
 import { useFeeCategories, useFeeVariants } from "@/lib/hooks/useFees"
 import { useLevels } from "@/lib/hooks/useLevels"
 import { formatFcfa } from "@/lib/utils/money"
 
-type Scope = "non_affecte" | "affecte"
-
-const SCOPE_LABELS: Record<Scope, string> = {
-  non_affecte: "Non affecté",
-  affecte: "Affecté",
-}
+/** Valeur de liste pour « profil non tranché » : un select ne porte pas `null`. */
+const PROFIL_NON_TRANCHE = "non_tranche"
 
 interface PreviewVariant {
   fee_category_id: number
@@ -28,43 +32,32 @@ interface PreviewVariant {
   series_id?: number | null
   amount: number
   assignment_scope?: string | null
+  enrollment_profile?: string | null
 }
 
 /**
- * Le tarif retenu pour une catégorie, du plus précis au plus général.
+ * Assiette d'un élève d'un niveau donné : la somme de ses frais obligatoires.
  *
- * Un tarif réservé aux affectés ou aux non affectés l'emporte sur un tarif
- * valable pour tout le monde, exactement comme à l'inscription : sinon la
- * simulation annoncerait le plein tarif à un élève subventionné. À portée
- * égale, le tarif sans série passe devant, puisque c'est celui du tronc
- * commun — un niveau de lycée qui n'aurait que des tarifs par série en
- * montre alors un, plutôt que rien.
+ * L'arbitrage vient du contrat partagé, pas d'ici : un tarif réservé aux
+ * nouveaux entré dans l'assiette de tout le monde ferait valider à la
+ * directrice un échéancier que personne ne paiera. Un tarif au plus par
+ * catégorie, le plus précis pour ce public exactement, comme le serveur en
+ * décide au moment d'inscrire.
  */
-function specificity(variant: PreviewVariant): number {
-  return (variant.assignment_scope ? 2 : 0) + (variant.series_id == null ? 1 : 0)
-}
-
-/** Assiette d'un élève d'un niveau donné : la somme de ses frais obligatoires. */
 function mandatoryTotalForLevel(
   variants: PreviewVariant[],
   mandatoryCategoryIds: Set<number>,
   levelId: number,
-  scope: Scope,
+  audience: FeeAudience,
 ): number {
-  const retenu = new Map<number, PreviewVariant>()
+  const duNiveau = variants.filter(
+    (v) => v.level_id === levelId && mandatoryCategoryIds.has(v.fee_category_id),
+  )
 
-  for (const variant of variants) {
-    if (variant.level_id !== levelId) continue
-    if (!mandatoryCategoryIds.has(variant.fee_category_id)) continue
-    if (variant.assignment_scope && variant.assignment_scope !== scope) continue
-
-    const actuel = retenu.get(variant.fee_category_id)
-    if (!actuel || specificity(variant) > specificity(actuel)) {
-      retenu.set(variant.fee_category_id, variant)
-    }
-  }
-
-  return [...retenu.values()].reduce((total, variant) => total + variant.amount, 0)
+  return mostSpecificVariantPerCategory(duNiveau, audience).reduce(
+    (total, variant) => total + variant.amount,
+    0,
+  )
 }
 
 /**
@@ -72,7 +65,9 @@ function mandatoryTotalForLevel(
  *
  * Une directrice ne valide pas des pourcentages, elle valide des francs :
  * elle doit voir ses 37 000 puis ses 30 800 avant d'enregistrer, sur le
- * niveau et la situation d'affectation qu'elle a en tête.
+ * niveau et le public qu'elle a en tête. L'écran nomme ce public sous le
+ * total : une simulation qui ne dit pas de qui elle parle est pire qu'une
+ * simulation absente, parce qu'elle finit recopiée dans un règlement.
  */
 export function InstallmentGridPreview({
   academicYearId,
@@ -90,9 +85,17 @@ export function InstallmentGridPreview({
     [levelsData],
   )
   const [levelId, setLevelId] = useState<number | undefined>(undefined)
-  const [scope, setScope] = useState<Scope>("non_affecte")
+  const [scope, setScope] = useState<FeeAudience["assignment_scope"]>("non_affecte")
+  // « Non tranché » par défaut : tant que l'école n'a pas dit qui est nouveau
+  // et qui ne l'est pas, la simulation ne le suppose pas non plus. Elle montre
+  // alors le socle facturé à tout le monde, et elle le dit.
+  const [profil, setProfil] = useState<EnrollmentProfile>(null)
 
   const niveauChoisi = levelId ?? levels[0]?.id
+  const audience = useMemo<FeeAudience>(
+    () => ({ assignment_scope: scope, enrollment_profile: profil }),
+    [scope, profil],
+  )
   const mandatoryIds = useMemo(
     () => new Set((categories ?? []).filter((c) => c.is_mandatory).map((c) => c.id)),
     [categories],
@@ -100,10 +103,12 @@ export function InstallmentGridPreview({
 
   const total = useMemo(() => {
     if (!niveauChoisi) return 0
-    return mandatoryTotalForLevel(variants ?? [], mandatoryIds, niveauChoisi, scope)
-  }, [variants, mandatoryIds, niveauChoisi, scope])
+    return mandatoryTotalForLevel(variants ?? [], mandatoryIds, niveauChoisi, audience)
+  }, [variants, mandatoryIds, niveauChoisi, audience])
 
   const montants = useMemo(() => simulateGrid(total, drafts), [total, drafts])
+  const publicVise = audienceLabel(audience)
+  const aideProfil = AUDIENCE_PROFILES.find((p) => p.value === profil)?.hint
 
   return (
     <div className="space-y-3 rounded-lg border border-border/60 bg-muted/30 p-4">
@@ -112,8 +117,8 @@ export function InstallmentGridPreview({
         <div className="min-w-0">
           <h3 className="text-sm font-semibold">Ce que donnera cette grille</h3>
           <p className="text-xs text-muted-foreground">
-            Simulation sur un niveau, avant enregistrement. Chaque élève verra le calcul refait
-            sur ses propres frais.
+            Simulation sur un niveau et un public, avant enregistrement. Chaque élève verra le
+            calcul refait sur ses propres frais.
           </p>
         </div>
       </div>
@@ -143,21 +148,53 @@ export function InstallmentGridPreview({
           <Label htmlFor="preview-scope" className="text-xs">
             Situation de l&apos;élève
           </Label>
-          <Select value={scope} onValueChange={(v) => setScope(v as Scope)}>
+          <Select
+            value={scope}
+            onValueChange={(v) => setScope(v as FeeAudience["assignment_scope"])}
+          >
             <SelectTrigger id="preview-scope" className="h-11">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="non_affecte">{SCOPE_LABELS.non_affecte}</SelectItem>
-              <SelectItem value="affecte">{SCOPE_LABELS.affecte}</SelectItem>
+              {AUDIENCE_SCOPES.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="preview-profile" className="text-xs">
+            Profil de l&apos;élève
+          </Label>
+          <Select
+            value={profil ?? PROFIL_NON_TRANCHE}
+            onValueChange={(v) =>
+              setProfil(v === PROFIL_NON_TRANCHE ? null : (v as EnrollmentProfile))
+            }
+          >
+            <SelectTrigger id="preview-profile" className="h-11">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {AUDIENCE_PROFILES.map((p) => (
+                <SelectItem
+                  key={p.value ?? PROFIL_NON_TRANCHE}
+                  value={p.value ?? PROFIL_NON_TRANCHE}
+                >
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {aideProfil && <p className="text-xs text-muted-foreground">{aideProfil}</p>}
         </div>
       </div>
 
       {total === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Aucun frais obligatoire n&apos;est encore défini pour ce niveau et cette situation. La
+          Aucun frais obligatoire n&apos;est défini pour ce niveau et un {publicVise}. La
           simulation apparaîtra dès que les tarifs seront saisis.
         </p>
       ) : (
@@ -183,10 +220,10 @@ export function InstallmentGridPreview({
             ))}
           </dl>
           <div className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="text-muted-foreground">
-              Frais obligatoires de ce niveau ({SCOPE_LABELS[scope].toLowerCase()})
+            <span className="min-w-0 text-muted-foreground">
+              Frais obligatoires de ce niveau, pour un {publicVise}
             </span>
-            <span className="font-semibold tabular-nums">{formatFcfa(total)}</span>
+            <span className="shrink-0 font-semibold tabular-nums">{formatFcfa(total)}</span>
           </div>
         </>
       )}

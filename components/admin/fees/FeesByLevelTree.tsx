@@ -2,15 +2,27 @@
 
 import { useMemo, useState } from "react"
 import { ArrowRightLeft, ChevronRight, Pencil, Trash2, GraduationCap, Coins } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { FeeVariantAudienceBadges } from "./FeeVariantAudienceBadges"
 import { cn } from "@/lib/utils"
+import { feeSumLabel } from "@/lib/contracts/fee-audience"
 import type { FeeVariant } from "@/lib/contracts/fee"
 
 interface LevelLite {
   id: number
   name: string
 }
+
+/**
+ * Cible tactile des actions de ligne : 44 px de haut sur téléphone.
+ *
+ * Mme Diallo corrige un tarif sur un Itel de 5,5 pouces. Un bouton de 28 px
+ * s'y rate une fois sur deux, et le raté tombe sur la corbeille aussi souvent
+ * que sur le crayon. La largeur descend à 40 px pour que trois actions, le
+ * montant et le nom tiennent sur la même ligne.
+ */
+const actionBtn = "h-11 w-10 sm:h-8 sm:w-8"
+const actionIcon = "h-4 w-4 sm:h-3.5 sm:w-3.5"
 
 interface FeesByLevelTreeProps {
   levels: LevelLite[]
@@ -93,6 +105,15 @@ export function FeesByLevelTree({
       {rows.map(({ level, items }) => {
         const isOpen = !collapsed.has(level.id)
         const total = items.reduce((sum, v) => sum + v.amount, 0)
+        // Dès qu'un tarif du niveau vise un public précis, la somme cesse
+        // d'être ce qu'un élève paie : elle additionne des montants qui
+        // s'excluent. On dit alors ce qu'elle est vraiment, plutôt que
+        // d'annoncer à l'école un montant que personne ne réglera.
+        // La serie compte comme les deux autres dimensions : deux tarifs de series
+    // differentes s'excluent, les additionner ne donne ce que paie aucun eleve.
+    const cible = items.some(
+      (v) => v.assignment_scope || v.enrollment_profile || v.series_id != null,
+    )
         return (
           <div
             key={level.id}
@@ -121,7 +142,9 @@ export function FeesByLevelTree({
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total / élève</p>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {feeSumLabel(cible)}
+                </p>
                 <p className="text-sm font-bold tabular-nums">
                   {total.toLocaleString("fr-FR")} <span className="text-[11px] font-normal text-muted-foreground">FCFA</span>
                 </p>
@@ -136,62 +159,51 @@ export function FeesByLevelTree({
                   return (
                     <div
                       key={v.id}
-                      className="group flex items-center gap-3 border-b border-border/50 px-3.5 py-2.5 last:border-0 hover:bg-muted/30"
+                      className="group flex items-center gap-2 border-b border-border/50 px-2.5 py-1.5 last:border-0 hover:bg-muted/30 sm:gap-3 sm:px-3.5 sm:py-2.5"
                     >
                       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary/40" />
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{catName}</span>
-                      {v.series_id && (
-                        <Badge variant="outline" className="h-5 text-[10px]">
-                          série
-                        </Badge>
-                      )}
-                      {v.assignment_scope ? (
-                        // Sans ce repere, deux montants sur le meme niveau
-                        // passent pour un doublon alors qu'ils visent des
-                        // eleves differents.
-                        <Badge
-                          variant="outline"
-                          className={
-                            v.assignment_scope === "affecte"
-                              ? "h-5 border-emerald-300 text-[10px] text-emerald-700 dark:border-emerald-800 dark:text-emerald-300"
-                              : "h-5 border-amber-300 text-[10px] text-amber-700 dark:border-amber-800 dark:text-amber-300"
-                          }
-                        >
-                          {v.assignment_scope === "affecte" ? "affecté" : "non affecté"}
-                        </Badge>
-                      ) : null}
-                      <span className="text-sm font-semibold tabular-nums">
+                      {/* Les repères passent sous le nom : à trois dimensions
+                          de ciblage, une seule ligne déborderait de l'écran
+                          d'un téléphone avant d'arriver au montant. */}
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{catName}</span>
+                        <FeeVariantAudienceBadges variant={v} className="mt-1" />
+                      </div>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums">
                         {v.amount.toLocaleString("fr-FR")}{" "}
                         <span className="text-[11px] font-normal text-muted-foreground">FCFA</span>
                       </span>
-                      <div className="flex items-center gap-1 opacity-60 transition-opacity group-hover:opacity-100">
+                      {/* Sur un téléphone il n'y a pas de survol : les actions
+                          restent visibles et font 44 px de haut. Le survol ne
+                          reprend la main qu'à partir de la souris (sm). */}
+                      <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition-opacity sm:gap-1 sm:opacity-60 sm:group-hover:opacity-100">
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7"
+                          className={actionBtn}
                           onClick={() => onEditVariant(v)}
                           aria-label={`Modifier ${catName}`}
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <Pencil className={actionIcon} />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7"
+                          className={actionBtn}
                           onClick={() => onPropagateVariant(v)}
                           aria-label={`Répercuter ${catName} sur les inscriptions`}
                           title="Répercuter sur les inscriptions"
                         >
-                          <ArrowRightLeft className="h-3.5 w-3.5" />
+                          <ArrowRightLeft className={actionIcon} />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7"
+                          className={actionBtn}
                           onClick={() => onDeleteVariant(v)}
                           aria-label={`Supprimer ${catName}`}
                         >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          <Trash2 className={cn(actionIcon, "text-destructive")} />
                         </Button>
                       </div>
                     </div>

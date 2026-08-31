@@ -47,7 +47,8 @@ export function EnrollmentFeesBreakdown({
   markingFeeId,
 }: {
   fees: EnrollmentFeeItem[]
-  onMarkDeposited?: (feeId: number) => void
+  /** Reçoit le frais entier : la confirmation doit pouvoir nommer l'article. */
+  onMarkDeposited?: (fee: EnrollmentFeeItem) => void
   markingFeeId?: number | null
 }) {
   if (fees.length === 0) {
@@ -125,9 +126,9 @@ export function EnrollmentFeesBreakdown({
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="h-8 text-xs"
+                        className="h-11 text-xs sm:h-9"
                         disabled={markingFeeId === fee.id}
-                        onClick={() => onMarkDeposited(fee.id)}
+                        onClick={() => onMarkDeposited(fee)}
                       >
                         {markingFeeId === fee.id ? "Enregistrement…" : "Marquer déposé"}
                       </Button>
