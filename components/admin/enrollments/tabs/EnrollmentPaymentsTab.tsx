@@ -52,7 +52,14 @@ export function EnrollmentPaymentsTab({
   // Le décompte n'est pas « payé ou non » : une ligne exonérée ou déposée en
   // nature est soldée sans versement, et ne se range dans aucune des deux
   // colonnes que la confirmation annonce.
-  const feeLines = useMemo(() => countFeeLines(feeList), [feeList])
+  // `undefined` tant que la requete n'a rien rendu : desactivee, en erreur, ou
+  // encore en vol. `allFees ?? []` ecrase ces trois cas en « liste vide », et
+  // la confirmation affirmait alors « 0 ligne » sur un ecran qui s'apprete a
+  // reecrire des frais. Le composant sait dire qu'il ne sait pas.
+  const feeLines = useMemo(
+    () => (allFees ? countFeeLines(feeList) : undefined),
+    [allFees, feeList],
+  )
 
   const depositMutation = useMutation({
     mutationFn: (feeId: number) => enrollmentsApi.depositInKind(enrollmentId, feeId),
