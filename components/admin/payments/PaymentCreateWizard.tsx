@@ -59,7 +59,13 @@ export function PaymentCreateWizard({ open, onClose }: PaymentCreateWizardProps)
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+      {/*
+        La hauteur reste celle de la boîte de dialogue, exprimée en `dvh`. Un
+        `85vh` se mesure sur l'écran barre d'adresse masquée et ne bouge pas
+        quand le clavier s'ouvre : il poussait le compteur de répartition sous
+        le clavier au moment précis où l'encaisseur le lit.
+      */}
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Nouveau paiement</DialogTitle>
         </DialogHeader>
