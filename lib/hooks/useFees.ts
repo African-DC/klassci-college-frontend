@@ -175,10 +175,18 @@ export function useFeePropagationPreview(variantId: number | null) {
   })
 }
 
+/**
+ * Répercute un tarif, et ne crée des lignes que si on le lui a demandé.
+ *
+ * `createMissing` est porté par l'appel, pas par un défaut du hook : l'écran
+ * qui déclenche la répercussion est le seul à savoir si l'école a coché la
+ * création, et l'oublier reviendrait à ouvrir des dettes en silence.
+ */
 export function usePropagateFeeVariant() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (variantId: number) => feesApi.propagate(variantId),
+    mutationFn: ({ variantId, createMissing }: { variantId: number; createMissing: boolean }) =>
+      feesApi.propagate(variantId, { createMissing }),
     onSuccess: (result) => {
       toast.success("Répercussion effectuée", { description: result.message })
       // Les dettes ont bougé : tout ce qui affiche un solde d'élève ou un

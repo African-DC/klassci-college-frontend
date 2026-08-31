@@ -8,7 +8,13 @@ vi.mock("next-auth/react", () => ({
 }))
 
 import { feesApi } from "./fees"
-import { formatDebtDelta, propagationBuckets } from "@/lib/contracts/fee-propagation"
+import {
+  createMissingWarning,
+  formatDebtDelta,
+  propagationBuckets,
+  propagationHeadline,
+  propagationWriteCount,
+} from "@/lib/contracts/fee-propagation"
 
 /**
  * Le serveur sérialise ses décimales en chaînes, le reste de l'écran les
@@ -107,6 +113,30 @@ describe("feesApi.propagate", () => {
     expect(resultat.fees_updated).toBe(9)
   })
 
+  /**
+   * `JSON.stringify` supprime les clés `undefined` : un drapeau laissé
+   * implicite disparaîtrait du corps, et le serveur trancherait à la place de
+   * l'école. Corriger une faute de frappe sur un prix ne doit ouvrir aucune
+   * dette.
+   */
+  it("n'autorise aucune création tant qu'on ne la demande pas", async () => {
+    const fetchMock = respondWith(RESULTAT)
+
+    await feesApi.propagate(12)
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit | undefined]
+    expect(JSON.parse(String(init?.body))).toEqual({ create_missing: false })
+  })
+
+  it("transmet la création quand l'école l'a explicitement cochée", async () => {
+    const fetchMock = respondWith(RESULTAT)
+
+    await feesApi.propagate(12, { createMissing: true })
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit | undefined]
+    expect(JSON.parse(String(init?.body))).toEqual({ create_missing: true })
+  })
+
   it("annonce exactement les compteurs de l'aperçu quand rien n'a bougé entre les deux", async () => {
     respondWith(APERCU)
     const apercu = await feesApi.propagationPreview(12)
@@ -156,6 +186,75 @@ describe("propagationBuckets", () => {
     // `emphase` = affiché même à zéro : « aucune dette n'apparaîtra » est une
     // réponse, l'absence de ligne n'en est pas une.
     expect(creation?.emphase).toBe(true)
+  })
+})
+
+describe("propagationHeadline", () => {
+  /**
+   * Le défaut d'origine : la tête annonçait « 15 inscriptions portent ce
+   * tarif » au-dessus d'un paquet qui disait « ces familles n'ont pas ce
+   * frais ». Les deux phrases ne pouvaient pas être vraies ensemble.
+   */
+  it("ne prétend pas que toutes les inscriptions portent déjà le frais", async () => {
+    respondWith(APERCU)
+    const apercu = await feesApi.propagationPreview(12)
+
+    const entete = propagationHeadline(apercu)
+
+    expect(entete.total).toBe(15)
+    expect(entete.phrase).not.toMatch(/portent/)
+    expect(entete.detail).toContain("12")
+    expect(entete.detail).toContain("3")
+  })
+
+  it("partage exactement le total entre les deux populations", async () => {
+    respondWith(APERCU)
+    const apercu = await feesApi.propagationPreview(12)
+
+    const entete = propagationHeadline(apercu)
+    const porteurs = entete.total - apercu.fees_to_create
+
+    expect(entete.detail.startsWith(String(porteurs))).toBe(true)
+  })
+
+  it("dit au passé ce qui a été fait, une fois la répercussion passée", async () => {
+    respondWith(RESULTAT)
+    const resultat = await feesApi.propagate(12)
+
+    expect(propagationHeadline(resultat).detail).toMatch(/portaient/)
+  })
+
+  it("le dit simplement quand aucune ligne ne manque", async () => {
+    respondWith({ ...APERCU, enrollments_concerned: 12, fees_to_create: 0 })
+    const apercu = await feesApi.propagationPreview(12)
+
+    expect(propagationHeadline(apercu).detail).toBe("Toutes portent déjà ce frais.")
+  })
+})
+
+describe("propagationWriteCount", () => {
+  it("ne compte les lignes à créer que si la création est demandée", async () => {
+    respondWith(APERCU)
+    const apercu = await feesApi.propagationPreview(12)
+
+    expect(propagationWriteCount(apercu)).toBe(9)
+    expect(propagationWriteCount(apercu, true)).toBe(12)
+  })
+
+  it("laisse le bouton sans objet quand il n'y a rien à corriger et rien de coché", async () => {
+    respondWith({ ...APERCU, fees_to_update: 0 })
+    const apercu = await feesApi.propagationPreview(12)
+
+    expect(propagationWriteCount(apercu)).toBe(0)
+    expect(propagationWriteCount(apercu, true)).toBe(3)
+  })
+})
+
+describe("createMissingWarning", () => {
+  it("dit ce que la création fait, et à combien de familles", () => {
+    expect(createMissingWarning(3)).toContain("3 familles")
+    expect(createMissingWarning(3)).toMatch(/dette/)
+    expect(createMissingWarning(1)).toContain("1 famille qui")
   })
 })
 

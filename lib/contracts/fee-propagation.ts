@@ -118,12 +118,82 @@ export function propagationBuckets(
   ]
 }
 
-/** Nombre de lignes que la répercussion écrirait, ou a écrites. */
+/**
+ * Nombre de lignes que la répercussion écrirait, ou a écrites.
+ *
+ * `createMissing` reprend le drapeau envoyé au serveur : par défaut il ne crée
+ * rien, et les lignes manquantes ne comptent donc pas comme des écritures à
+ * venir. Corriger une faute de frappe sur le prix de la tenue ne doit pas
+ * proposer un bouton qui ouvre en plus une dette chez des familles.
+ */
 export function propagationWriteCount(
   compteurs: FeePropagationPreview | FeePropagationResult,
+  createMissing = false,
 ): number {
   const { misAJour, crees } = lignesEcrites(compteurs)
-  return misAJour + crees
+  return misAJour + (createMissing ? crees : 0)
+}
+
+/** La tête de l'aperçu, qui doit couvrir les deux populations à la fois. */
+export interface PropagationHeadline {
+  /** Total annoncé, somme des paquets. */
+  total: number
+  /** Suit le total, sans prétendre que toutes les inscriptions portent le frais. */
+  phrase: string
+  /** La répartition entre celles qui le portent et celles qui ne l'ont pas. */
+  detail: string
+}
+
+/**
+ * Ce que le total recouvre vraiment.
+ *
+ * `enrollments_concerned` additionne cinq paquets, dont « lignes à créer », qui
+ * compte précisément les inscriptions ne portant PAS ce frais. Annoncer
+ * « N inscriptions portent ce tarif » au-dessus d'un paquet qui dit « ces
+ * familles n'ont pas ce frais » fait mentir l'une des deux phrases, et l'école
+ * ne sait plus laquelle croire. On annonce donc une population concernée, puis
+ * on dit comment elle se partage.
+ */
+export function propagationHeadline(
+  compteurs: FeePropagationPreview | FeePropagationResult,
+): PropagationHeadline {
+  const { crees } = lignesEcrites(compteurs)
+  const fait = "fees_updated" in compteurs
+  const total = compteurs.enrollments_concerned
+  const portent = Math.max(total - crees, 0)
+
+  const phrase =
+    total > 1
+      ? "inscriptions de cette année sont concernées par ce tarif."
+      : "inscription de cette année est concernée par ce tarif."
+
+  let detail: string
+  if (crees === 0) {
+    detail = fait ? "Toutes portaient déjà ce frais." : "Toutes portent déjà ce frais."
+  } else if (fait) {
+    detail =
+      `${portent} le ${portent > 1 ? "portaient" : "portait"} déjà, ` +
+      `${crees} ne l'${crees > 1 ? "avaient" : "avait"} pas.`
+  } else {
+    detail =
+      `${portent} le ${portent > 1 ? "portent" : "porte"} déjà, ` +
+      `${crees} ne l'${crees > 1 ? "ont" : "a"} pas encore.`
+  }
+
+  return { total, phrase, detail }
+}
+
+/**
+ * La phrase qui accompagne la création, avec le nombre de familles visées.
+ *
+ * Créer une ligne n'est pas corriger un montant : la dette apparaît chez une
+ * famille qui n'en avait aucune, et cette famille la découvrirait sur la
+ * facture. Le nombre est donc dans la phrase, pas seulement dans le tableau.
+ */
+export function createMissingWarning(crees: number): string {
+  return crees > 1
+    ? `Une dette apparaîtra chez ${crees} familles qui n'avaient pas ce frais.`
+    : `Une dette apparaîtra chez ${crees} famille qui n'avait pas ce frais.`
 }
 
 /**

@@ -2,10 +2,13 @@
 
 import { AlertCircle, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  createMissingWarning,
   formatDebtDelta,
   propagationBuckets,
+  propagationHeadline,
   type FeePropagationPreview,
   type FeePropagationResult,
 } from "@/lib/contracts/fee-propagation"
@@ -107,16 +110,20 @@ export function Compteurs({
 }: {
   compteurs: FeePropagationPreview | FeePropagationResult
 }) {
-  const concernees = compteurs.enrollments_concerned
+  const entete = propagationHeadline(compteurs)
   const paquets = propagationBuckets(compteurs).filter((p) => p.emphase || p.count > 0)
 
   return (
     <div className="space-y-3">
-      <p className="text-sm">
-        <span className="font-semibold tabular-nums">{concernees}</span> inscription
-        {concernees > 1 ? "s" : ""} port
-        {concernees > 1 ? "ent" : "e"} ce tarif cette année.
-      </p>
+      {/* Le total couvre deux populations : celles qui portent déjà ce frais
+          et celles qui ne l'ont pas. Une seule phrase pour les deux, sinon
+          elle contredit le paquet « lignes à créer » juste en dessous. */}
+      <div className="space-y-0.5">
+        <p className="text-sm">
+          <span className="font-semibold tabular-nums">{entete.total}</span> {entete.phrase}
+        </p>
+        <p className="text-xs text-muted-foreground">{entete.detail}</p>
+      </div>
 
       <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
         {paquets.map((paquet) => (
@@ -172,6 +179,57 @@ function Ligne({
         {valeur}
       </span>
     </li>
+  )
+}
+
+/**
+ * Le second geste, décoché : créer les lignes que des inscriptions n'ont pas.
+ *
+ * Répercuter corrige une dette que la famille connaît déjà. Créer en ouvre une
+ * chez une famille qui n'en avait aucune : c'est un autre geste, il se demande.
+ * Le nombre de familles est dans la phrase, pas seulement dans le tableau, et
+ * la case reste décochée à l'ouverture pour que corriger une faute de frappe
+ * sur le prix d'une tenue ne facture personne.
+ */
+export function OptionCreation({
+  crees,
+  coche,
+  onChange,
+  disabled,
+}: {
+  crees: number
+  coche: boolean
+  onChange: (valeur: boolean) => void
+  disabled: boolean
+}) {
+  if (crees === 0) return null
+
+  return (
+    <label
+      htmlFor="propagation-create-missing"
+      className={cn(
+        "flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors",
+        coche
+          ? "border-amber-300 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30"
+          : "border-border/60 bg-muted/30 hover:bg-muted/50",
+      )}
+    >
+      <Checkbox
+        id="propagation-create-missing"
+        checked={coche}
+        onCheckedChange={(valeur) => onChange(valeur === true)}
+        disabled={disabled}
+        className="mt-0.5 h-5 w-5"
+      />
+      <span className="min-w-0 flex-1 space-y-0.5">
+        <span className="block text-sm font-medium">
+          Créer aussi {crees} ligne{crees > 1 ? "s" : ""} manquante{crees > 1 ? "s" : ""}
+        </span>
+        <span className="block text-xs text-muted-foreground">
+          {createMissingWarning(crees)}
+        </span>
+      </span>
+    </label>
   )
 }
 

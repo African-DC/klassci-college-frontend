@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { ArrowRightLeft, CheckCircle2 } from "lucide-react"
 import {
   Dialog,
@@ -14,6 +15,7 @@ import {
   Compteurs,
   EtatErreur,
   EtatVide,
+  OptionCreation,
   PiedDePage,
   TarifConcerne,
 } from "./FeeVariantPropagationParts"
@@ -41,6 +43,12 @@ interface FeeVariantPropagationDialogProps {
  * que la famille connaît, en créer une la fait apparaître chez une famille qui
  * n'en avait pas. La seconde se découvre sinon sur la facture.
  *
+ * Ce sont donc deux gestes, et le second se demande. Confirmer répercute les
+ * montants et rien d'autre ; les lignes manquantes ne sont créées que si
+ * l'école a coché la case, qui dit combien de familles verront une dette
+ * apparaître. Corriger une faute de frappe sur le prix de la tenue ne facture
+ * ainsi personne.
+ *
  * Ce dialogue n'emprunte pas `DestructiveActionDialog` : celui-ci exige un
  * motif écrit puis un appui maintenu, réservés aux gestes qui ne se rattrapent
  * pas. Répercuter ne détruit rien et se rejoue sans dommage ; imposer la même
@@ -60,11 +68,18 @@ export function FeeVariantPropagationDialog({
     isFetching,
   } = useFeePropagationPreview(variant?.id ?? null)
   const { mutate, isPending, data: resultat, reset } = usePropagateFeeVariant()
+  // Décoché à chaque ouverture : la création ne s'obtient qu'en la demandant,
+  // et une case qui garderait son état d'hier facturerait la fois d'après.
+  const [creerManquantes, setCreerManquantes] = useState(false)
 
   function fermer() {
     reset()
+    setCreerManquantes(false)
     onClose()
   }
+
+  const aCreer = apercu?.fees_to_create ?? 0
+  const aEcrire = apercu ? propagationWriteCount(apercu, creerManquantes) : 0
 
   return (
     <Dialog open={!!variant} onOpenChange={(open) => { if (!open) fermer() }}>
@@ -123,6 +138,12 @@ export function FeeVariantPropagationDialog({
           <>
             <TarifConcerne nom={apercu.category_name} montant={apercu.amount} />
             <Compteurs compteurs={apercu} />
+            <OptionCreation
+              crees={aCreer}
+              coche={creerManquantes}
+              onChange={setCreerManquantes}
+              disabled={isPending}
+            />
             <PiedDePage>
               <Button
                 type="button"
@@ -136,12 +157,18 @@ export function FeeVariantPropagationDialog({
               <Button
                 type="button"
                 className="h-11 sm:h-10"
-                // Rien à écrire, ni correction ni création : le bouton ne
-                // promet pas un geste qui ne changerait rien.
-                disabled={isPending || propagationWriteCount(apercu) === 0}
-                onClick={() => variant && mutate(variant.id)}
+                // Rien à écrire, ni correction ni création demandée : le bouton
+                // ne promet pas un geste qui ne changerait rien.
+                disabled={isPending || aEcrire === 0}
+                onClick={() =>
+                  variant && mutate({ variantId: variant.id, createMissing: creerManquantes })
+                }
               >
-                {isPending ? "Répercussion..." : "Oui, répercuter"}
+                {isPending
+                  ? "Répercussion..."
+                  : creerManquantes
+                    ? `Répercuter et créer ${aCreer} ligne${aCreer > 1 ? "s" : ""}`
+                    : "Oui, répercuter les montants"}
               </Button>
             </PiedDePage>
           </>
