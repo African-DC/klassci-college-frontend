@@ -169,7 +169,14 @@ export function propagationHeadline(
 
   let detail: string
   if (crees === 0) {
-    detail = fait ? "Toutes portaient déjà ce frais." : "Toutes portent déjà ce frais."
+    // Sur le résultat, « toutes portaient déjà ce frais » serait une
+    // affirmation que ce panneau ne peut pas soutenir : zéro ligne créée veut
+    // aussi bien dire « il n'y en avait aucune à créer » que « l'admin a
+    // décliné la création ». L'aperçu, lui, venait d'en annoncer trois. On dit
+    // donc ce qui a été fait, sans quantifier ce qu'on ignore.
+    detail = fait
+      ? "Les montants ont été mis à jour. Aucune ligne n'a été créée."
+      : "Toutes portent déjà ce frais."
   } else if (fait) {
     detail =
       `${portent} le ${portent > 1 ? "portaient" : "portait"} déjà, ` +

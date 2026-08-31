@@ -194,7 +194,7 @@ export function InstallmentGridPreview({
 
       {total === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Aucun frais obligatoire n&apos;est défini pour ce niveau et un élève {publicVise}. La
+          Aucun frais obligatoire n&apos;est défini pour ce niveau et un {publicVise}. La
           simulation apparaîtra dès que les tarifs seront saisis.
         </p>
       ) : (
@@ -221,7 +221,7 @@ export function InstallmentGridPreview({
           </dl>
           <div className="flex items-baseline justify-between gap-3 text-sm">
             <span className="min-w-0 text-muted-foreground">
-              Frais obligatoires de ce niveau, pour un élève {publicVise}
+              Frais obligatoires de ce niveau, pour un {publicVise}
             </span>
             <span className="shrink-0 font-semibold tabular-nums">{formatFcfa(total)}</span>
           </div>

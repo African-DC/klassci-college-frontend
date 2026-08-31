@@ -109,7 +109,11 @@ export function FeesByLevelTree({
         // d'être ce qu'un élève paie : elle additionne des montants qui
         // s'excluent. On dit alors ce qu'elle est vraiment, plutôt que
         // d'annoncer à l'école un montant que personne ne réglera.
-        const cible = items.some((v) => v.assignment_scope || v.enrollment_profile)
+        // La serie compte comme les deux autres dimensions : deux tarifs de series
+    // differentes s'excluent, les additionner ne donne ce que paie aucun eleve.
+    const cible = items.some(
+      (v) => v.assignment_scope || v.enrollment_profile || v.series_id != null,
+    )
         return (
           <div
             key={level.id}

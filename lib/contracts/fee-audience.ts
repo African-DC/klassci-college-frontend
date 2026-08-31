@@ -16,6 +16,15 @@ export interface FeeAudience {
   assignment_scope: Exclude<AssignmentScope, null>
   /** `null` = le profil n'a pas été tranché, et rien ne permet de le deviner. */
   enrollment_profile: EnrollmentProfile
+  /**
+   * La série de la classe, `null` ou absente quand aucune n'est désignée.
+   *
+   * Le serveur écarte les tarifs d'une série quand la classe n'en a pas :
+   * une classe sans série ne peut recevoir que les tarifs du tronc commun.
+   * L'écran doit écarter les mêmes, sinon il chiffre une facture que la
+   * caisse n'émettra jamais.
+   */
+  series_id?: number | null
 }
 
 /** Les seules dimensions d'un tarif qui décident à qui il est facturé. */
@@ -78,29 +87,40 @@ export const AUDIENCE_PROFILES: {
 export function variantAppliesTo(variant: TargetedVariant, audience: FeeAudience): boolean {
   const scope = variant.assignment_scope ?? null
   const profile = variant.enrollment_profile ?? null
+  const series = variant.series_id ?? null
   if (scope !== null && scope !== audience.assignment_scope) return false
   if (profile !== null && profile !== audience.enrollment_profile) return false
+  // Même règle que `applicable_series_keys` côté serveur : un tarif de série
+  // ne vaut que pour cette série, et une audience qui n'en désigne aucune ne
+  // reçoit que le tronc commun.
+  if (series !== null && series !== (audience.series_id ?? null)) return false
   return true
 }
 
 /**
  * Le poids de chaque dimension dans l'arbitrage, du plus fort au plus faible.
  *
- * L'affectation passe devant le profil parce qu'elle change le montant du
+ * Même ordre que `_specificity` côté serveur, et pour la même raison :
+ * l'affectation passe devant le profil parce qu'elle change le montant du
  * simple au double en Côte d'Ivoire, quand le profil ajoute ou retire une
- * ligne. La série vient en dernier et à l'envers : l'appelant ne désigne pas
- * de série, le tarif du tronc commun est donc celui qu'un élève quelconque du
- * niveau paiera.
+ * ligne. La série vient en dernier, et une série renseignée l'emporte, parce
+ * que `variantAppliesTo` a déjà écarté celles qui ne concernent pas cette
+ * audience : il ne reste que des tarifs applicables, et parmi eux le plus
+ * précis gagne.
+ *
+ * L'ancien barème donnait un point au tronc commun au lieu d'écarter les
+ * séries étrangères : un tarif de série A pouvait alors l'emporter sur le
+ * tarif du niveau dans une simulation qui ne désigne aucune série.
  */
 const POIDS_AFFECTATION = 4
 const POIDS_PROFIL = 2
-const POIDS_TRONC_COMMUN = 1
+const POIDS_SERIE = 1
 
 export function variantSpecificity(variant: TargetedVariant): number {
   return (
     (variant.assignment_scope ? POIDS_AFFECTATION : 0) +
     (variant.enrollment_profile ? POIDS_PROFIL : 0) +
-    (variant.series_id == null ? POIDS_TRONC_COMMUN : 0)
+    (variant.series_id == null ? 0 : POIDS_SERIE)
   )
 }
 

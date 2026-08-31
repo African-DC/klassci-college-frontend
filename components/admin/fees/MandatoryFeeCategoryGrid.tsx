@@ -67,9 +67,9 @@ export function MandatoryFeeCategoryGrid({
         // La somme couvre plusieurs niveaux, ou des publics qui s'excluent :
         // dans les deux cas elle n'est pas ce qu'un élève paie, et elle doit
         // le dire comme le dit la grille par niveau.
+        const niveaux = new Set(catVariants.map((v) => v.level_id)).size
         const cumul =
-          new Set(catVariants.map((v) => v.level_id)).size > 1 ||
-          catVariants.some((v) => v.assignment_scope || v.enrollment_profile)
+          niveaux > 1 || catVariants.some((v) => v.assignment_scope || v.enrollment_profile)
 
         return (
           <Card
@@ -128,8 +128,15 @@ export function MandatoryFeeCategoryGrid({
 
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                 <span className="text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">{catVariants.length}</span>{" "}
-                  niveau(x)
+                  {/*
+                    Le compte porte sur les NIVEAUX, pas sur les tarifs. Le
+                    profil multiplie precisement le nombre de tarifs par
+                    niveau, universel plus nouveaux plus anciens : compter les
+                    variantes ferait annoncer neuf niveaux a une categorie qui
+                    en couvre trois.
+                  */}
+                  <span className="font-medium text-foreground">{niveaux}</span>{" "}
+                  {niveaux > 1 ? "niveaux" : "niveau"}
                 </span>
                 {totalAmount > 0 && (
                   <span className="flex items-baseline gap-1.5 text-xs">

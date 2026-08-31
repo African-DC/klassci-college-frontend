@@ -101,6 +101,33 @@ describe("mostSpecificVariantPerCategory", () => {
     expect(retenus.reduce((t, v) => t + v.amount, 0)).toBe(30000)
   })
 
+  it("écarte un tarif de série même quand il porte le profil de l'élève", () => {
+    // Le barème d'origine donnait un point au tronc commun au lieu d'écarter
+    // les séries étrangères : un tarif de série A « nouveaux » (profil, donc
+    // 2 points) l'emportait sur le tarif du niveau (1 point), dans une
+    // simulation qui ne désigne aucune série. La directrice validait alors un
+    // échéancier bâti sur un montant que cet élève ne paiera jamais.
+    const retenus = mostSpecificVariantPerCategory(
+      [
+        tarif({ amount: 30000 }),
+        tarif({ series_id: 3, enrollment_profile: "nouveau", amount: 45000 }),
+      ],
+      NOUVEAU_NON_AFFECTE,
+    )
+
+    expect(retenus).toHaveLength(1)
+    expect(retenus[0]?.amount).toBe(30000)
+  })
+
+  it("retient le tarif de la série quand l'appelant en désigne une", () => {
+    const retenus = mostSpecificVariantPerCategory(
+      [tarif({ amount: 30000 }), tarif({ series_id: 3, amount: 45000 })],
+      { ...NOUVEAU_NON_AFFECTE, series_id: 3 },
+    )
+
+    expect(retenus[0]?.amount).toBe(45000)
+  })
+
   it("retient le tarif du tronc commun quand l'appelant ne désigne pas de série", () => {
     const retenus = mostSpecificVariantPerCategory(
       [tarif({ series_id: 4, amount: 20000 }), tarif({ amount: 15000 })],
