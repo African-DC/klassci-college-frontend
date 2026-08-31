@@ -2,23 +2,24 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Wallet, Plus, GraduationCap, RefreshCw } from "lucide-react"
-import { useQueryClient } from "@tanstack/react-query"
-import { getSession } from "next-auth/react"
-import { toast } from "sonner"
+import { Wallet, Plus, GraduationCap } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
-import { useEnrollments, enrollmentKeys } from "@/lib/hooks/useEnrollments"
-import { studentKeys, useStudentFees } from "@/lib/hooks/useStudents"
+import { RegenerateFeesAction } from "@/components/shared/fees/RegenerateFeesAction"
+import { useEnrollments } from "@/lib/hooks/useEnrollments"
+import { useStudentFees } from "@/lib/hooks/useStudents"
 import { isCashDue } from "@/lib/contracts/payment"
+import { countFeeLines } from "@/lib/enrollment/fee-lines"
 import { StudentPaymentModal } from "./StudentPaymentModal"
 
 interface PaymentsTabProps {
   studentId: number
+  /** Nommé dans la confirmation de régénération : on refait les frais de quelqu'un. */
+  studentName?: string
   fullData?: Record<string, unknown>
 }
 
@@ -30,12 +31,10 @@ const STATUS_LABEL: Record<string, string> = {
   annule: "Annulé",
 }
 
-export function PaymentsTab({ studentId }: PaymentsTabProps) {
+export function PaymentsTab({ studentId, studentName }: PaymentsTabProps) {
   const [paymentOpen, setPaymentOpen] = useState(false)
-  const [regenerating, setRegenerating] = useState(false)
-  const queryClient = useQueryClient()
   const { data: enrollmentsData, isLoading, isError, refetch } = useEnrollments({ student_id: studentId })
-  const { data: fees } = useStudentFees(studentId)
+  const { data: fees, isLoading: feesLoading } = useStudentFees(studentId)
   const enrollments = enrollmentsData?.items ?? []
 
   // Compute totals from actual enrollment fees (not stale fullData)
@@ -44,39 +43,11 @@ export function PaymentsTab({ studentId }: PaymentsTabProps) {
   const totalPaid = dueFees.reduce((sum, f) => sum + f.paid, 0)
   const feesRemaining = Math.max(0, totalExpected - totalPaid)
 
-  async function handleRegenerateFees() {
-    if (enrollments.length === 0) return
-    setRegenerating(true)
-    try {
-      const session = await getSession()
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL
-      await Promise.all(
-        enrollments.map((enrollment) =>
-          fetch(`${baseUrl}/admin/enrollments/${enrollment.id}/regenerate-fees`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
-            },
-          }).then((res) => {
-            if (!res.ok) throw new Error(`Erreur pour l'inscription #${enrollment.id}`)
-          })
-        )
-      )
-      queryClient.invalidateQueries({ queryKey: studentKeys.all })
-      queryClient.invalidateQueries({ queryKey: studentKeys.detail(studentId) })
-      queryClient.invalidateQueries({ queryKey: ["students", studentId, "fees"] })
-      queryClient.invalidateQueries({ queryKey: enrollmentKeys.all })
-      toast.success("Frais régénérés avec succès")
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Erreur lors de la régénération des frais"
-      toast.error(message)
-    } finally {
-      setRegenerating(false)
-    }
-  }
+  // Tant que les frais ne sont pas là, on ne chiffre rien : un tableau vide
+  // vaut zéro, et zéro s'affiche comme une certitude que l'on n'a pas.
+  const feeLines = fees ? countFeeLines(fees) : undefined
 
-  if (isLoading) {
+  if (isLoading || feesLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-40 rounded-lg" />
@@ -104,19 +75,18 @@ export function PaymentsTab({ studentId }: PaymentsTabProps) {
       <FeeSummaryHero totalExpected={totalExpected} totalPaid={totalPaid} totalRemaining={feesRemaining} />
 
       {/* Actions */}
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+        <RegenerateFeesAction
+          enrollmentIds={enrollments.map((e) => e.id)}
+          subject={studentName?.trim() ? studentName : "cet élève"}
+          feeLines={feeLines}
+        />
         <Button
           size="sm"
-          variant="outline"
-          className="h-11 sm:h-10"
-          onClick={handleRegenerateFees}
-          disabled={regenerating}
+          className="h-11 w-full sm:h-10 sm:w-auto"
+          onClick={() => setPaymentOpen(true)}
         >
-          <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
-          {regenerating ? "Régénération..." : "Régénérer les frais"}
-        </Button>
-        <Button size="sm" className="h-11 sm:h-10" onClick={() => setPaymentOpen(true)}>
-          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          <Plus className="mr-1.5 h-4 w-4" />
           Enregistrer un paiement
         </Button>
       </div>
