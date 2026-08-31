@@ -330,7 +330,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
 
         {amountsHidden ? null : (
           <TabsContent value="paiements">
-            <PaymentsTab studentId={studentId} fullData={full ?? undefined} />
+            <PaymentsTab studentId={studentId} studentName={fullName} fullData={full ?? undefined} />
           </TabsContent>
         )}
 

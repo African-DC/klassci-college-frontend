@@ -160,7 +160,11 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
         </TabsContent>
 
         <TabsContent value="paiements">
-          <EnrollmentPaymentsTab enrollmentId={enrollmentId} enrollment={enrollment as { student_id?: number }} />
+          <EnrollmentPaymentsTab
+            enrollmentId={enrollmentId}
+            enrollment={enrollment}
+            studentName={studentName}
+          />
         </TabsContent>
       </Tabs>
 

@@ -1,15 +1,17 @@
 "use client"
 
-import { useState } from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { getSession } from "next-auth/react"
+import { useMemo, useState } from "react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { enrollmentsApi } from "@/lib/api/enrollments"
-import { isCashDue } from "@/lib/contracts/payment"
 import { Skeleton } from "@/components/ui/skeleton"
+import { enrollmentsApi } from "@/lib/api/enrollments"
+import { useStudentFees } from "@/lib/hooks/useStudents"
+import { isCashDue } from "@/lib/contracts/payment"
 import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
+import { RegenerateFeesAction } from "@/components/shared/fees/RegenerateFeesAction"
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { EnrollmentFeesBreakdown, type EnrollmentFeeItem } from "@/components/admin/payments/EnrollmentFeesBreakdown"
 import { PaymentHistoryList } from "@/components/admin/payments/PaymentHistoryList"
 import { StudentPaymentModal } from "@/components/admin/students/tabs/StudentPaymentModal"
@@ -18,52 +20,47 @@ import { EnrollmentScheduleCard } from "@/components/admin/installments/Enrollme
 interface EnrollmentPaymentsTabProps {
   enrollmentId: number
   enrollment?: { student_id?: number }
+  /** Nommé dans les confirmations : on solde le frais d'un élève, pas d'un numéro. */
+  studentName?: string
 }
 
-export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPaymentsTabProps) {
+export function EnrollmentPaymentsTab({
+  enrollmentId,
+  enrollment,
+  studentName,
+}: EnrollmentPaymentsTabProps) {
   const [paymentOpen, setPaymentOpen] = useState(false)
-  const [markingFeeId, setMarkingFeeId] = useState<number | null>(null)
+  const [feeToDeposit, setFeeToDeposit] = useState<EnrollmentFeeItem | null>(null)
   const queryClient = useQueryClient()
-  const studentId = (enrollment as Record<string, unknown>)?.student_id as number | undefined
+  const studentId = enrollment?.student_id
 
-  const { data: fees, isLoading } = useQuery({
-    queryKey: ["enrollment-fees", enrollmentId],
-    queryFn: async (): Promise<EnrollmentFeeItem[]> => {
-      if (!studentId) return []
-      const session = await getSession()
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL
-      const res = await fetch(`${baseUrl}/admin/students/${studentId}/fees`, {
-        headers: {
-          "Content-Type": "application/json",
-          ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
-        },
-      })
-      if (!res.ok) return []
-      const data = await res.json()
-      const items: (EnrollmentFeeItem & { enrollment_id: number })[] = Array.isArray(data) ? data : data.items ?? []
-      return items.filter((f) => f.enrollment_id === enrollmentId)
-    },
-    enabled: !!studentId,
-    staleTime: 1000 * 60 * 2,
-  })
+  // Le même appel validé que la fiche élève, filtré sur cette inscription :
+  // deux écrans qui lisent les mêmes frais ne doivent pas les chercher de deux
+  // façons différentes, ni afficher deux totaux.
+  const { data: allFees, isLoading } = useStudentFees(studentId ?? 0)
+  const feeList = useMemo(
+    () => (allFees ?? []).filter((fee) => fee.enrollment_id === enrollmentId),
+    [allFees, enrollmentId],
+  )
 
-  const feeList = fees ?? []
-  const totalExpected = feeList.filter((f) => isCashDue(f.status)).reduce((s, f) => s + f.amount, 0)
-  const totalPaid = feeList.filter((f) => isCashDue(f.status)).reduce((s, f) => s + f.paid, 0)
+  const cashFees = feeList.filter((f) => isCashDue(f.status))
+  const totalExpected = cashFees.reduce((s, f) => s + f.amount, 0)
+  const totalPaid = cashFees.reduce((s, f) => s + f.paid, 0)
   const totalRemaining = Math.max(0, totalExpected - totalPaid)
+  const withPayments = feeList.filter((f) => f.paid > 0).length
+  const withoutPayments = feeList.length - withPayments
 
-  async function handleMarkDeposited(feeId: number) {
-    setMarkingFeeId(feeId)
-    try {
-      await enrollmentsApi.depositInKind(enrollmentId, feeId)
+  const depositMutation = useMutation({
+    mutationFn: (feeId: number) => enrollmentsApi.depositInKind(enrollmentId, feeId),
+    onSuccess: () => {
       toast.success("Article marqué déposé")
-      queryClient.invalidateQueries({ queryKey: ["enrollment-fees", enrollmentId] })
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Impossible de marquer ce frais déposé")
-    } finally {
-      setMarkingFeeId(null)
-    }
-  }
+      queryClient.invalidateQueries({ queryKey: ["students"] })
+      queryClient.invalidateQueries({ queryKey: ["enrollments"] })
+    },
+    onError: (err: Error) => {
+      toast.error("Impossible de marquer ce frais déposé", { description: err.message })
+    },
+  })
 
   if (isLoading) {
     return (
@@ -74,6 +71,9 @@ export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPa
     )
   }
 
+  const articleName = feeToDeposit ? feeToDeposit.option_name ?? feeToDeposit.category_name : ""
+  const eleve = studentName?.trim() ? studentName : "cet élève"
+
   return (
     <div className="space-y-4">
       <FeeSummaryHero totalExpected={totalExpected} totalPaid={totalPaid} totalRemaining={totalRemaining} />
@@ -83,22 +83,56 @@ export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPa
           est déjà exigible au versé, jamais le total de l'année. */}
       <EnrollmentScheduleCard enrollmentId={enrollmentId} />
 
-      {studentId && totalRemaining > 0 && (
-        <div className="flex justify-end">
-          <Button onClick={() => setPaymentOpen(true)} className="h-11 sm:h-10">
+      <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <RegenerateFeesAction
+          enrollmentIds={[enrollmentId]}
+          subject={`${eleve}, pour cette inscription`}
+          feesWithPayments={withPayments}
+          feesWithoutPayments={withoutPayments}
+        />
+        {studentId && totalRemaining > 0 ? (
+          <Button onClick={() => setPaymentOpen(true)} className="h-11 w-full sm:h-10 sm:w-auto">
             <Plus className="mr-1.5 h-4 w-4" />
             Enregistrer un paiement
           </Button>
-        </div>
-      )}
+        ) : null}
+      </div>
 
       <EnrollmentFeesBreakdown
         fees={feeList}
-        onMarkDeposited={handleMarkDeposited}
-        markingFeeId={markingFeeId}
+        onMarkDeposited={setFeeToDeposit}
+        markingFeeId={depositMutation.isPending ? feeToDeposit?.id ?? null : null}
       />
 
       <PaymentHistoryList enrollmentId={enrollmentId} />
+
+      <ConfirmActionDialog
+        open={!!feeToDeposit}
+        onOpenChange={(next) => {
+          if (!next && !depositMutation.isPending) setFeeToDeposit(null)
+        }}
+        tone="warning"
+        title="Marquer cet article comme déposé ?"
+        description={`Vous déclarez que ${eleve} a bien remis « ${articleName} ». Cette ligne sera soldée sans aucun versement : c'est ce geste qui remplace le paiement.`}
+        details={
+          <>
+            <p>
+              Article : <span className="font-semibold">{articleName}</span>
+            </p>
+            <p className="text-muted-foreground">
+              La ligne sort du reste à payer et n&apos;apparaît plus comme impayée, ni ici ni
+              dans le portail de la famille. Aucun reçu de caisse n&apos;est émis.
+            </p>
+          </>
+        }
+        confirmLabel="Oui, l'article est déposé"
+        pendingLabel="Enregistrement..."
+        pending={depositMutation.isPending}
+        onConfirm={() => {
+          if (!feeToDeposit) return
+          depositMutation.mutate(feeToDeposit.id, { onSettled: () => setFeeToDeposit(null) })
+        }}
+      />
 
       {studentId && (
         <StudentPaymentModal
@@ -106,7 +140,7 @@ export function EnrollmentPaymentsTab({ enrollmentId, enrollment }: EnrollmentPa
           open={paymentOpen}
           onClose={() => {
             setPaymentOpen(false)
-            queryClient.invalidateQueries({ queryKey: ["enrollment-fees", enrollmentId] })
+            queryClient.invalidateQueries({ queryKey: ["students"] })
             queryClient.invalidateQueries({ queryKey: ["payments", "enrollment", enrollmentId] })
           }}
         />
