@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- Une ligne de frais réglée en nature n'apparaît plus comme impayée à 0 F, sur la fiche de l'élève comme dans les portails famille *(admin, comptable, parent, élève)*
 - Les montées de dépendances passent la validation de nom de branche, au lieu de forcer une fusion qui contourne tous les contrôles *(technique)*
 - Les boutons Valider, Annuler, Restaurer et Supprimer s'annoncent à nouveau avec une espace : un lecteur d'écran disait « Annulerle versement » *(admin)*
 - Valider ou annuler un versement met à jour la ligne immédiatement, y compris au-delà de la première page chargée *(admin)*
@@ -20,6 +21,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Annulation d'un versement déjà encaissé, depuis le tableau comme depuis le téléphone : c'est le cas courant, un montant saisi qui n'est pas dans la caisse *(admin)*
 
 ### Added
+- Bouton « Bordereau du jour » sur « Ma caisse » : la caissière édite sa propre pièce de caisse, sans dépendre du comptable ni du point journalier auquel elle n'a pas accès *(caissier)*
+- Un frais réglé en nature se marque à l'inscription et sur la fiche de frais : la ligne cesse alors d'être due en argent et n'entre plus dans le reste à payer *(admin, secrétariat, comptable)*
 - Un élève déjà enregistré est signalé pendant la saisie : matricule identique, ressemblance du nom, ou inscription déjà ouverte sur l'année même non validée *(admin, secrétariat)*
 - Sélection de plusieurs inscriptions et validation en une fois, chaque refus étant signalé avec son motif *(admin)*
 - Ouvrir la cloche marque comme lues les notifications affichées, et cliquer dessus mène à l'écran où l'on fait l'action attendue *(tous)*
