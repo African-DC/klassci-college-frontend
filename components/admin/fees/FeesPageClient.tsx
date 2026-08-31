@@ -25,8 +25,9 @@ import { FeeVariantPropagationDialog } from "./FeeVariantPropagationDialog"
 import { FeeVariantCopyModal } from "./FeeVariantCopyModal"
 import { FeesByLevelTree } from "./FeesByLevelTree"
 import { OptionalCategoryPanel } from "./OptionalCategoryPanel"
+import { FeesAcademicYearBar, FeesAcademicYearChip } from "./FeesAcademicYearBar"
 import { useFeeCategories, useFeeVariants, useDeleteFeeCategory, useDeleteFeeVariant } from "@/lib/hooks/useFees"
-import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import { useLevels } from "@/lib/hooks/useLevels"
 import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
 
@@ -38,12 +39,15 @@ export function FeesPageClient() {
   const [editVariant, setEditVariant] = useState<FeeVariant | null>(null)
   const [propagateVariant, setPropagateVariant] = useState<FeeVariant | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: "category" | "variant"; id: number; name: string } | null>(null)
+  // `undefined` tant que l'utilisateur n'a rien choisi : l'écran suit alors
+  // l'année marquée courante, et non la première de la liste.
+  const [pickedYearId, setPickedYearId] = useState<number | undefined>(undefined)
 
-  const { data: academicYearsData } = useAcademicYears()
-  const currentYearId = academicYearsData?.items?.[0]?.id
+  const { academicYearId, years, isLoading: loadingYears } = useCurrentAcademicYearId(pickedYearId)
+  const selectedYear = years?.find((y) => y.id === academicYearId)
 
   const { data: categories, isLoading: loadingCategories } = useFeeCategories()
-  const { data: variants, isLoading: loadingVariants } = useFeeVariants(currentYearId)
+  const { data: variants, isLoading: loadingVariants } = useFeeVariants(academicYearId)
   const { data: levelsData } = useLevels()
   const levels = useMemo(() => levelsData?.items ?? [], [levelsData])
   const { mutate: deleteCategory, isPending: deletingCategory } = useDeleteFeeCategory()
@@ -95,14 +99,18 @@ export function FeesPageClient() {
       <PageHero
         icon={Wallet}
         title="Frais scolaires"
-        subtitle="Grille tarifaire par niveau et frais optionnels"
+        subtitle={
+          selectedYear
+            ? `Grille tarifaire par niveau et frais optionnels · Année ${selectedYear.name}`
+            : "Grille tarifaire par niveau et frais optionnels"
+        }
         actions={
           <>
             <button
               type="button"
               className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={() => setVariantModalOpen(true)}
-              disabled={!currentYearId}
+              disabled={!academicYearId}
             >
               <Layers className="h-4 w-4" />
               Nouveau montant
@@ -119,6 +127,14 @@ export function FeesPageClient() {
           { label: "Niveaux configurés", value: configuredLevels, icon: GraduationCap },
           { label: "Montant configuré", value: `${totalConfigured.toLocaleString("fr-FR")} F`, icon: Coins },
         ]}
+      />
+
+      {/* Année de travail : tout l'écran, grille et frais optionnels, en dépend. */}
+      <FeesAcademicYearBar
+        years={years}
+        selectedYearId={academicYearId}
+        onSelect={setPickedYearId}
+        isLoading={loadingYears}
       />
 
       {/* ── Frais obligatoires ─────────────────────────────────────────── */}
@@ -207,19 +223,22 @@ export function FeesPageClient() {
         <Card className="border-0 shadow-sm ring-1 ring-border">
           <CardContent className="space-y-3 p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <SectionTitle icon={Coins}>Grille par niveau</SectionTitle>
+              <div className="flex flex-wrap items-center gap-2">
+                <SectionTitle icon={Coins}>Grille par niveau</SectionTitle>
+                <FeesAcademicYearChip year={selectedYear} />
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-9"
                   onClick={() => setCopyModalOpen(true)}
-                  disabled={!currentYearId || (variants?.length ?? 0) === 0}
+                  disabled={!academicYearId || (variants?.length ?? 0) === 0}
                 >
                   <Copy className="mr-1.5 h-3.5 w-3.5" />
                   Copier des montants
                 </Button>
-                <Button size="sm" className="h-9" onClick={() => setVariantModalOpen(true)} disabled={!currentYearId}>
+                <Button size="sm" className="h-9" onClick={() => setVariantModalOpen(true)} disabled={!academicYearId}>
                   <Plus className="mr-1.5 h-3.5 w-3.5" />
                   Nouveau montant
                 </Button>
@@ -253,8 +272,11 @@ export function FeesPageClient() {
 
       {/* ── Frais optionnels ───────────────────────────────────────────── */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <SectionTitle icon={CircleDot}>Frais optionnels</SectionTitle>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <SectionTitle icon={CircleDot}>Frais optionnels</SectionTitle>
+            <FeesAcademicYearChip year={selectedYear} />
+          </div>
           <p className="text-xs text-muted-foreground">Options proposées à l&apos;inscription (cantine, transport…)</p>
         </div>
         {loadingCategories ? (
@@ -268,7 +290,7 @@ export function FeesPageClient() {
               <OptionalCategoryPanel
                 key={cat.id}
                 category={cat}
-                academicYearId={currentYearId}
+                academicYearId={academicYearId}
                 onEditCategory={(c) => setEditCategory(c)}
                 onDeleteCategory={(c) => setDeleteTarget({ type: "category", id: c.id, name: c.name })}
               />
@@ -286,13 +308,18 @@ export function FeesPageClient() {
       </section>
 
       {/* Modals */}
-      <FeeCategoryCreateModal open={categoryModalOpen} onClose={() => setCategoryModalOpen(false)} />
-      {currentYearId && (
+      <FeeCategoryCreateModal
+        open={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        academicYearName={selectedYear?.name}
+      />
+      {academicYearId && (
         <>
           <FeeVariantCreateModal
             open={variantModalOpen}
             onClose={() => setVariantModalOpen(false)}
-            academicYearId={currentYearId}
+            academicYearId={academicYearId}
+            academicYear={selectedYear}
           />
           <FeeVariantCopyModal
             open={copyModalOpen}
@@ -300,7 +327,8 @@ export function FeesPageClient() {
             mandatoryCategories={mandatoryCategories}
             variants={variants ?? []}
             levelNameMap={levelNameMap}
-            academicYearId={currentYearId}
+            academicYearId={academicYearId}
+            academicYear={selectedYear}
           />
         </>
       )}

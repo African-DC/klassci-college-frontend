@@ -1,45 +1,40 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { ArrowLeft, BookOpen, Receipt, Loader2, Check } from "lucide-react"
+import { useState } from "react"
+import { ArrowLeft, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useStudentFees } from "@/lib/hooks/useStudents"
-import { useEnrollments } from "@/lib/hooks/useEnrollments"
-import { useCreatePayment } from "@/lib/hooks/usePayments"
 import { StudentPicker } from "@/components/shared/StudentPicker"
+import { StepSelectEnrollment } from "@/components/admin/payments/wizard/StepSelectEnrollment"
+import { StepRecordPayment } from "@/components/admin/payments/wizard/StepRecordPayment"
+import { cn } from "@/lib/utils"
 import type { Student } from "@/lib/contracts/student"
 import type { Enrollment } from "@/lib/contracts/enrollment"
-import type { StudentEnrollmentFee } from "@/lib/api/students"
-import { isCashDue } from "@/lib/contracts/payment"
-import type { SelectablePaymentMethod } from "@/lib/payment-methods"
-import { PaymentMethodSelect } from "@/components/admin/payments/PaymentMethodSelect"
 
-// --- Types internes ---
+type StepNumber = 1 | 2 | 3
 
 interface WizardState {
-  step: 1 | 2 | 3 | 4
+  step: StepNumber
   student: Student | null
   enrollment: Enrollment | null
-  fee: StudentEnrollmentFee | null
 }
 
+/**
+ * Trois étapes, plus quatre.
+ *
+ * L'ancienne étape « Choisir le frais » forçait un versement à ne viser qu'un
+ * frais. Le guichet ne fonctionne pas ainsi : une famille pose une somme, et
+ * c'est l'encaisseur qui décide, ou pas, de la découper. Le choix des frais
+ * a donc rejoint l'étape de saisie, où il est facultatif.
+ */
 const STEP_LABELS = [
-  "Rechercher un eleve",
-  "Selectionner l'inscription",
-  "Choisir le frais",
-  "Saisir le paiement",
+  "Rechercher un élève",
+  "Choisir l'inscription",
+  "Saisir le versement",
 ] as const
 
-function formatCurrency(amount: number): string {
-  return `${amount.toLocaleString("fr-FR")} FCFA`
-}
-
-// --- Composant principal ---
+const INITIAL: WizardState = { step: 1, student: null, enrollment: null }
 
 interface PaymentCreateWizardProps {
   open: boolean
@@ -47,382 +42,116 @@ interface PaymentCreateWizardProps {
 }
 
 export function PaymentCreateWizard({ open, onClose }: PaymentCreateWizardProps) {
-  const [wizard, setWizard] = useState<WizardState>({
-    step: 1,
-    student: null,
-    enrollment: null,
-    fee: null,
-  })
-
-  function reset() {
-    setWizard({ step: 1, student: null, enrollment: null, fee: null })
-  }
+  const [wizard, setWizard] = useState<WizardState>(INITIAL)
 
   function handleClose() {
-    reset()
+    setWizard(INITIAL)
     onClose()
   }
 
   function goBack() {
-    if (wizard.step === 1) return
-    setWizard((prev) => ({
-      ...prev,
-      step: (prev.step - 1) as WizardState["step"],
-      ...(prev.step === 2 && { student: null }),
-      ...(prev.step === 3 && { enrollment: null }),
-      ...(prev.step === 4 && { fee: null }),
-    }))
-  }
-
-  function selectStudent(student: Student) {
-    setWizard((prev) => ({ ...prev, step: 2, student }))
-  }
-
-  function selectEnrollment(enrollment: Enrollment) {
-    setWizard((prev) => ({ ...prev, step: 3, enrollment }))
-  }
-
-  function selectFee(fee: StudentEnrollmentFee) {
-    setWizard((prev) => ({ ...prev, step: 4, fee }))
+    setWizard((prev) => {
+      if (prev.step === 2) return { ...prev, step: 1, student: null }
+      if (prev.step === 3) return { ...prev, step: 2, enrollment: null }
+      return prev
+    })
   }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nouveau paiement</DialogTitle>
         </DialogHeader>
 
-        {/* Progress indicator */}
         <StepProgress currentStep={wizard.step} />
 
-        {/* Back button (steps 2-4) */}
         {wizard.step > 1 && (
-          <Button variant="ghost" size="sm" onClick={goBack} className="w-fit gap-2">
-            <ArrowLeft className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            onClick={goBack}
+            className="h-11 w-fit gap-2 px-2 sm:h-9"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
             Retour
           </Button>
         )}
 
-        {/* Steps */}
-        {wizard.step === 1 && <StudentPicker onSelect={selectStudent} autoFocus />}
+        {wizard.step === 1 && (
+          <StudentPicker
+            autoFocus
+            onSelect={(student) => setWizard({ step: 2, student, enrollment: null })}
+          />
+        )}
+
         {wizard.step === 2 && wizard.student && (
-          <StepSelectEnrollment student={wizard.student} onSelect={selectEnrollment} />
+          <StepSelectEnrollment
+            student={wizard.student}
+            onSelect={(enrollment) =>
+              setWizard((prev) => ({ ...prev, step: 3, enrollment }))
+            }
+          />
         )}
-        {wizard.step === 3 && wizard.student && (
-          <StepSelectFee student={wizard.student} onSelect={selectFee} />
-        )}
-        {wizard.step === 4 && wizard.fee && (
-          <StepPaymentForm fee={wizard.fee} onSuccess={handleClose} />
+
+        {wizard.step === 3 && wizard.student && wizard.enrollment && (
+          <StepRecordPayment
+            student={wizard.student}
+            enrollment={wizard.enrollment}
+            onSuccess={handleClose}
+          />
         )}
       </DialogContent>
     </Dialog>
   )
 }
 
-// --- Step Progress ---
-
-function StepProgress({ currentStep }: { currentStep: number }) {
-  const progress = (currentStep / 4) * 100
-
+function StepProgress({ currentStep }: { currentStep: StepNumber }) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">
-          Etape {currentStep} sur 4
+      <div className="flex items-baseline justify-between gap-2 text-sm">
+        <span className="shrink-0 text-muted-foreground">
+          Étape {currentStep} sur {STEP_LABELS.length}
         </span>
-        <span className="font-medium">{STEP_LABELS[currentStep - 1]}</span>
+        <span className="truncate font-medium">{STEP_LABELS[currentStep - 1]}</span>
       </div>
-      <Progress value={progress} className="h-2" />
-      <div className="flex justify-between">
-        {STEP_LABELS.map((label, i) => {
-          const stepNum = i + 1
+      <Progress
+        value={(currentStep / STEP_LABELS.length) * 100}
+        className="h-2"
+        aria-label={`Étape ${currentStep} sur ${STEP_LABELS.length}`}
+      />
+      <ol className="flex justify-between gap-2" role="list">
+        {STEP_LABELS.map((label, index) => {
+          const stepNum = index + 1
           const isDone = currentStep > stepNum
           const isCurrent = currentStep === stepNum
           return (
-            <div
+            <li
               key={label}
-              className={`flex items-center gap-1 text-xs ${
+              aria-current={isCurrent ? "step" : undefined}
+              className={cn(
+                "flex items-center gap-1 text-xs",
                 isCurrent
-                  ? "text-primary font-medium"
+                  ? "font-medium text-primary"
                   : isDone
-                    ? "text-emerald-600"
-                    : "text-muted-foreground"
-              }`}
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-muted-foreground",
+              )}
             >
               {isDone ? (
-                <Check className="h-3 w-3" />
+                <Check className="h-3 w-3 shrink-0" aria-hidden />
               ) : (
-                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border text-[10px]">
+                <span
+                  aria-hidden
+                  className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px]"
+                >
                   {stepNum}
                 </span>
               )}
               <span className="hidden sm:inline">{label}</span>
-            </div>
+            </li>
           )
         })}
-      </div>
-    </div>
-  )
-}
-
-// --- Step 2: Select enrollment ---
-
-function StepSelectEnrollment({
-  student,
-  onSelect,
-}: {
-  student: Student
-  onSelect: (e: Enrollment) => void
-}) {
-  const { data, isLoading } = useEnrollments({ student_id: student.id })
-  const enrollments = useMemo(() => data?.items ?? [], [data])
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-lg border bg-muted/30 p-3">
-        <p className="text-sm text-muted-foreground">Eleve selectionne</p>
-        <p className="font-medium">{student.last_name} {student.first_name}</p>
-      </div>
-
-      {isLoading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {!isLoading && enrollments.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          Aucune inscription trouvee pour cet eleve.
-        </p>
-      )}
-
-      {enrollments.length > 0 && (
-        <div className="space-y-2">
-          {enrollments.map((enrollment) => (
-            <Card
-              key={enrollment.id}
-              className="cursor-pointer transition-colors hover:bg-muted/50"
-              onClick={() => onSelect(enrollment)}
-            >
-              <CardContent className="flex items-center gap-3 p-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-                  <BookOpen className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium">
-                    {enrollment.class_name ?? `Classe #${enrollment.class_id}`}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {enrollment.academic_year_name}
-                  </p>
-                </div>
-                <Badge
-                  variant={enrollment.status === "valide" ? "default" : "secondary"}
-                >
-                  {enrollment.status}
-                </Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// --- Step 3: Select fee ---
-
-function StepSelectFee({
-  student,
-  onSelect,
-}: {
-  student: Student
-  onSelect: (f: StudentEnrollmentFee) => void
-}) {
-  const { data: fees, isLoading } = useStudentFees(student.id)
-  const feeList = useMemo(() => {
-    if (!fees) return []
-    return Array.isArray(fees) ? fees : []
-  }, [fees])
-
-  const unpaidFees = useMemo(
-    () => feeList.filter((f) => f.remaining > 0 && isCashDue(f.status)),
-    [feeList],
-  )
-
-  return (
-    <div className="space-y-4">
-      {isLoading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {!isLoading && unpaidFees.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          Tous les frais sont deja payes pour cet eleve.
-        </p>
-      )}
-
-      {unpaidFees.length > 0 && (
-        <div className="space-y-2">
-          {unpaidFees.map((fee) => {
-            const paidPercent =
-              fee.amount > 0 ? Math.round((fee.paid / fee.amount) * 100) : 0
-
-            return (
-              <Card
-                key={fee.id}
-                className="cursor-pointer transition-colors hover:bg-muted/50"
-                onClick={() => onSelect(fee)}
-              >
-                <CardContent className="p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Receipt className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{fee.category_name}</span>
-                    </div>
-                    <Badge variant={paidPercent >= 50 ? "default" : "secondary"}>
-                      {paidPercent}% paye
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Total</p>
-                      <p className="font-medium">{formatCurrency(fee.amount)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Paye</p>
-                      <p className="font-medium text-emerald-600">
-                        {formatCurrency(fee.paid)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Restant</p>
-                      <p className="font-medium text-orange-600">
-                        {formatCurrency(fee.remaining)}
-                      </p>
-                    </div>
-                  </div>
-                  <Progress value={paidPercent} className="h-1.5" />
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// --- Step 4: Payment form ---
-
-function StepPaymentForm({
-  fee,
-  onSuccess,
-}: {
-  fee: StudentEnrollmentFee
-  onSuccess: () => void
-}) {
-  const [amount, setAmount] = useState(String(fee.remaining))
-  const [method, setMethod] = useState<SelectablePaymentMethod>("cash")
-  const [reference, setReference] = useState("")
-  const { mutate, isPending } = useCreatePayment()
-
-  const numericAmount = Number(amount)
-  const isAmountValid =
-    !Number.isNaN(numericAmount) && numericAmount > 0 && numericAmount <= fee.remaining
-
-  function handleSubmit() {
-    if (!isAmountValid) return
-
-    mutate(
-      {
-        enrollment_fee_id: fee.id,
-        amount: amount,
-        method,
-        reference: reference || null,
-      },
-      { onSuccess },
-    )
-  }
-
-  return (
-    <div className="space-y-4">
-      {/* Fee summary */}
-      <Card className="bg-muted/30">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Frais selectionne
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1">
-          <p className="font-medium">{fee.category_name}</p>
-          <div className="flex items-center gap-4 text-sm">
-            <span>Total : {formatCurrency(fee.amount)}</span>
-            <span className="text-emerald-600">
-              Paye : {formatCurrency(fee.paid)}
-            </span>
-            <span className="text-orange-600 font-medium">
-              Restant : {formatCurrency(fee.remaining)}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Amount */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Montant (FCFA) *</label>
-        <Input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Montant a payer"
-          min={1}
-          max={fee.remaining}
-        />
-        {amount && !isAmountValid && (
-          <p className="text-xs text-destructive">
-            Le montant doit etre entre 1 et {formatCurrency(fee.remaining)}
-          </p>
-        )}
-      </div>
-
-      {/* Method */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Methode de paiement *</label>
-        <PaymentMethodSelect
-          value={method}
-          onChange={(v) => setMethod(v as SelectablePaymentMethod)}
-        />
-      </div>
-
-      {/* Reference */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Reference</label>
-        <Input
-          value={reference}
-          onChange={(e) => setReference(e.target.value)}
-          placeholder="Numero de transaction (optionnel)"
-        />
-      </div>
-
-      {/* Submit */}
-      <Button
-        onClick={handleSubmit}
-        disabled={isPending || !isAmountValid}
-        className="w-full"
-      >
-        {isPending ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Enregistrement...
-          </>
-        ) : (
-          `Enregistrer le paiement de ${isAmountValid ? formatCurrency(numericAmount) : "..."}`
-        )}
-      </Button>
+      </ol>
     </div>
   )
 }

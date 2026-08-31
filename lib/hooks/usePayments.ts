@@ -13,6 +13,7 @@ import { pageSuivante } from "./pagination"
 import type {
   EnrollmentPaymentCreate,
   Payment,
+  PaymentAllocationInput,
   PaymentCreate,
   PaymentListParams,
 } from "@/lib/contracts/payment"
@@ -26,8 +27,11 @@ export const paymentKeys = {
   cashiers: ["payments", "cashiers"] as const,
   byEnrollment: (enrollmentId: number) =>
     ["payments", "enrollment", enrollmentId] as const,
-  preview: (enrollmentId: number, amount: number) =>
-    ["payments", "preview", enrollmentId, amount] as const,
+  preview: (
+    enrollmentId: number,
+    amount: number,
+    allocations: PaymentAllocationInput[] | undefined,
+  ) => ["payments", "preview", enrollmentId, amount, allocations ?? null] as const,
 }
 
 /** Les seules entrées du cache qui contiennent une page de versements. */
@@ -95,15 +99,26 @@ export function useEnrollmentPayments(enrollmentId: number | null) {
   })
 }
 
-/** Preview d'allocation (debounce côté composant pour éviter le spam BE) */
+/** Preview d'allocation (debounce côté composant pour éviter le spam BE)
+ *
+ * `allocations` porte la répartition que le caissier a nommée. Elle entre dans
+ * la clé de cache : deux répartitions différentes du même montant sont deux
+ * réponses différentes, et servir l'une pour l'autre afficherait à l'écran une
+ * ventilation qui n'est pas celle qu'on vient de taper.
+ */
 export function useAllocationPreview(
   enrollmentId: number | null,
   amount: number | null,
+  allocations?: PaymentAllocationInput[],
 ) {
   return useQuery({
-    queryKey: paymentKeys.preview(enrollmentId ?? 0, amount ?? 0),
+    queryKey: paymentKeys.preview(enrollmentId ?? 0, amount ?? 0, allocations),
     queryFn: () =>
-      paymentsApi.previewAllocation(enrollmentId as number, amount as number),
+      paymentsApi.previewAllocation(
+        enrollmentId as number,
+        amount as number,
+        allocations,
+      ),
     enabled:
       Number.isFinite(enrollmentId) &&
       (enrollmentId ?? 0) > 0 &&

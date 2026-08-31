@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -15,9 +15,11 @@ import { FeeCategoryCreateSchema, type FeeCategoryCreate } from "@/lib/contracts
 interface FeeCategoryCreateModalProps {
   open: boolean
   onClose: () => void
+  /** Année affichée par l'écran, celle qui portera les montants de la catégorie. */
+  academicYearName?: string
 }
 
-export function FeeCategoryCreateModal({ open, onClose }: FeeCategoryCreateModalProps) {
+export function FeeCategoryCreateModal({ open, onClose, academicYearName }: FeeCategoryCreateModalProps) {
   const form = useForm<FeeCategoryCreate>({
     resolver: zodResolver(FeeCategoryCreateSchema),
         defaultValues: { name: "", description: null, entitlements: [], is_mandatory: true, accepts_in_kind: false },
@@ -39,6 +41,11 @@ export function FeeCategoryCreateModal({ open, onClose }: FeeCategoryCreateModal
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nouvelle catégorie de frais</DialogTitle>
+          <DialogDescription>
+            Une catégorie vaut pour toutes les années. Ses montants se saisissent ensuite
+            année par année
+            {academicYearName ? `, ici sur ${academicYearName}` : ""}.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
