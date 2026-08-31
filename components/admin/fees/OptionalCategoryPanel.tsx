@@ -45,6 +45,11 @@ type OptionForm = z.infer<typeof OptionalFeeOptionFormSchema>
  * que les montants des frais obligatoires. Fini le cas des frais optionnels
  * relégué derrière un bouton « Options ».
  */
+// Meme cible que dans la grille par niveau : 44 px au doigt, compact au
+// dessus de sm. Trois blocs partagent cet ecran, ils doivent se toucher
+// pareil.
+const actionBtn = "h-11 w-10 sm:h-8 sm:w-8"
+
 export function OptionalCategoryPanel({
   category,
   academicYearId,
@@ -120,10 +125,10 @@ export function OptionalCategoryPanel({
             <Badge variant="outline" className="h-5 border-border bg-muted text-[10px] text-muted-foreground">
               Optionnel
             </Badge>
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onEditCategory(category)} aria-label="Modifier la catégorie">
+            <Button size="icon" variant="ghost" className={actionBtn} onClick={() => onEditCategory(category)} aria-label="Modifier la catégorie">
               <Pencil className="h-3.5 w-3.5" />
             </Button>
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onDeleteCategory(category)} aria-label="Supprimer la catégorie">
+            <Button size="icon" variant="ghost" className={actionBtn} onClick={() => onDeleteCategory(category)} aria-label="Supprimer la catégorie">
               <Trash2 className="h-3.5 w-3.5 text-destructive" />
             </Button>
           </div>
@@ -148,11 +153,11 @@ export function OptionalCategoryPanel({
                   {opt.amount.toLocaleString("fr-FR")}{" "}
                   <span className="text-[11px] font-normal text-muted-foreground">FCFA</span>
                 </span>
-                <div className="flex items-center gap-1 opacity-60 transition-opacity group-hover:opacity-100">
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(opt)} aria-label={`Modifier ${opt.name}`}>
+                <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:gap-1 sm:opacity-60 sm:group-hover:opacity-100">
+                  <Button size="icon" variant="ghost" className={actionBtn} onClick={() => openEdit(opt)} aria-label={`Modifier ${opt.name}`}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDeleteTarget(opt)} aria-label={`Supprimer ${opt.name}`}>
+                  <Button size="icon" variant="ghost" className={actionBtn} onClick={() => setDeleteTarget(opt)} aria-label={`Supprimer ${opt.name}`}>
                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>
                 </div>
