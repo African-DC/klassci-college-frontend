@@ -1,15 +1,8 @@
-import { getSession } from "next-auth/react"
 import { z } from "zod"
 import { TeacherSchema } from "@/lib/contracts/teacher"
 import type { Teacher, TeacherCreate, TeacherUpdate } from "@/lib/contracts/teacher"
 import { createCrudApi } from "./createCrudApi"
-import { apiFetch, handleExpiredSession, safeValidate } from "./client"
-
-function getBaseUrl(): string {
-  const url = process.env.NEXT_PUBLIC_API_URL
-  if (!url) throw new Error("NEXT_PUBLIC_API_URL is not defined")
-  return url
-}
+import { apiFetch, apiFetchMultipart } from "./client"
 
 const PhotoUploadResponseSchema = z.object({ photo_url: z.string() })
 
@@ -24,31 +17,13 @@ export const teachersApi = {
   },
 
   uploadPhoto: async (teacherId: number, file: File): Promise<{ photo_url: string }> => {
-    // FormData multipart upload — can't go through apiFetch (JSON-encoded).
-    // 401 → handleExpiredSession contract replicated manually.
-    const session = await getSession()
-    if (session?.error === "RefreshTokenError") {
-      void handleExpiredSession()
-      throw new Error("Session expirée")
-    }
     const formData = new FormData()
     formData.append("file", file)
-    const headers: Record<string, string> = session?.accessToken
-      ? { Authorization: `Bearer ${session.accessToken}` }
-      : {}
-    const hadToken = "Authorization" in headers
-    const res = await fetch(`${getBaseUrl()}/admin/teachers/${teacherId}/photo`, {
-      method: "POST",
-      headers,
-      body: formData,
+    return apiFetchMultipart(`/admin/teachers/${teacherId}/photo`, formData, {
+      schema: PhotoUploadResponseSchema,
+      context: "POST /admin/teachers/:id/photo",
+      fallback: "Échec de l'envoi de la photo",
     })
-    if (res.status === 401) {
-      if (hadToken) void handleExpiredSession()
-      throw new Error("Session expirée")
-    }
-    if (!res.ok) throw new Error("Upload failed")
-    const data = await res.json()
-    return safeValidate(PhotoUploadResponseSchema, data, "POST /admin/teachers/:id/photo")
   },
 
   deletePhoto: async (teacherId: number): Promise<void> => {

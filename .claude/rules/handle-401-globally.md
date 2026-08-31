@@ -105,6 +105,22 @@ export const uploadPhoto = async (id: number, file: File) => {
 De même pour un téléchargement : `apiFetchBlob`. Un `fetch` authentifié écrit à
 la main dans `lib/api/*` est un défaut de revue, pas un cas particulier.
 
+**Les six modules d'upload y passent** : `settings` (logo), `students` (photo),
+`profile` (photo), `staff` (photo), `teachers` (photo) et `student-attachments`
+(document). Il n'en reste aucun qui refasse le bloc.
+
+Ce que la migration a corrigé au passage, et qui dit pourquoi la règle compte :
+`staff` et `teachers` faisaient `throw new Error("Upload failed")`, jetant le
+`detail` du backend. Or c'est lui qui dit « Fichier trop volumineux (max 5 Mo) »
+ou « Format invalide. Accepté : JPEG, PNG, WebP ». Une secrétaire qui envoyait
+une photo trop lourde lisait « Upload failed », en anglais, dans une interface
+française, sans savoir quoi corriger.
+
+**La seule exception légitime** est `verify.ts` : il poste vers
+`/public/verify-file/...` sans en-tête d'autorisation, pour une vérification de
+document faite par un tiers qui n'a pas de session. Il n'y a pas de 401 à
+traiter, et il rend `null` sur toute erreur à dessein. Ne pas le « corriger ».
+
 ## Le banner `/login?expired=1`
 
 `LoginForm` lit `searchParams.get("expired")` et affiche un banner amber avec `<Clock />` :
