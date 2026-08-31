@@ -91,7 +91,15 @@ export function LogoField({ logoUrl, onLogoChanged }: LogoFieldProps) {
         aria-busy={busy}
         className="mt-3 flex flex-col gap-4 rounded-xl border border-dashed border-border bg-muted/20 p-4 sm:flex-row sm:items-center"
       >
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
+        {/*
+          Fond blanc assumé, dans les deux thèmes, et ce n'est pas un oubli de
+          token : cette vignette montre le logo tel qu'il sortira sur une feuille
+          imprimée, comme le fac-similé de LivePreview. On conseille juste en
+          dessous d'envoyer un PNG à fond transparent ; l'afficher sur la surface
+          sombre du thème ferait disparaître un logo à encre foncée et mentirait
+          sur le rendu papier.
+        */}
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
           {logoSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -140,14 +148,27 @@ export function LogoField({ logoUrl, onLogoChanged }: LogoFieldProps) {
             )}
           </div>
 
-          {/* Le message porte l'information : la couleur ne fait que la souligner. */}
+          {/*
+            Le message porte l'information : la couleur ne fait que la souligner.
+
+            `text-destructive` ne suffit pas ici. En sombre le token vaut
+            `0 62.8% 30.6%`, un rouge foncé qui tombe a environ 1,9:1 sur le fond
+            de page : le message devient illisible. En clair il donne environ
+            3,8:1, sous le seuil AA pour du `text-sm`. La paire claire/sombre,
+            que le design system autorise explicitement pour ce cas, remonte les
+            deux au-dessus du seuil. C'est un message d'erreur lu par Mme Diallo
+            en plein soleil sur un ecran TFT.
+          */}
           {error && (
             <div
               role="alert"
               className="mt-3 flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2"
             >
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
-              <p className="min-w-0 break-words text-sm text-destructive">{error}</p>
+              <AlertCircle
+                className="mt-0.5 h-4 w-4 shrink-0 text-red-700 dark:text-red-400"
+                aria-hidden
+              />
+              <p className="min-w-0 break-words text-sm text-red-700 dark:text-red-400">{error}</p>
             </div>
           )}
         </div>
