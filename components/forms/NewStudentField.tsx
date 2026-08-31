@@ -55,6 +55,12 @@ export function NewStudentField({
     // serveur reprendre la main au premier rechargement.
     if (!suggestion || prefilledFor.current === studentId) return
     prefilledFor.current = studentId
+    // Rien a pre-remplir quand le serveur ne sait pas : la valeur est deja
+    // `null` et la reponse appartient a la secretaire. Appeler `onChange`
+    // pour reecrire `null` par-dessus `null` ne changeait rien a la valeur
+    // mais effacait le message qui venait de lui dire de repondre : elle
+    // etait renvoyee a l'etape sans savoir pourquoi.
+    if (suggestion.suggested === null) return
     if (value === null || value === undefined) onChange(suggestion.suggested)
   }, [studentId, suggestion, value, onChange])
 

@@ -153,16 +153,27 @@ export function useRegenerateFees() {
         enrollmentIds.map((id) => enrollmentsApi.regenerateFees(id)),
       )
       const done = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []))
-      const failed = settled.filter((r) => r.status === "rejected").length
+      const refus = settled.flatMap((r) => (r.status === "rejected" ? [r.reason] : []))
+      const failed = refus.length
+      // Les motifs des inscriptions qui ont echoue, dedoublonnes : c'est ce
+      // que la personne doit lire pour agir. Decrire les reussites sous un
+      // titre qui annonce des echecs lui ferait croire que tout va bien.
+      const motifs = Array.from(
+        new Set(
+          refus
+            .map((e) => (e instanceof Error ? e.message.trim() : ""))
+            .filter((m): m is string => !!m),
+        ),
+      )
       if (done.length === 0) {
         const first = settled.find((r) => r.status === "rejected")
         throw first?.status === "rejected" && first.reason instanceof Error
           ? first.reason
           : new Error("La régénération des frais a échoué")
       }
-      return { done, failed }
+      return { done, failed, motifs }
     },
-    onSuccess: ({ done, failed }, enrollmentIds) => {
+    onSuccess: ({ done, failed, motifs }, enrollmentIds) => {
       invalidateEnrollmentFeeViews(queryClient, enrollmentIds)
       // Le décompte vient du serveur, qui seul sait ce qu'il a remplacé et ce
       // qu'il a gardé. On affiche ses phrases, toutes, sans les réécrire : n'en
@@ -179,7 +190,7 @@ export function useRegenerateFees() {
           `${failed === 1 ? "1 inscription n'a pas pu être régénérée" : `${failed} inscriptions n'ont pas pu être régénérées`}, ${
             done.length === 1 ? "1 l'a été" : `${done.length} l'ont été`
           }`,
-          { description },
+          { description: motifs.length > 0 ? motifs.join(" ") : description },
         )
         return
       }

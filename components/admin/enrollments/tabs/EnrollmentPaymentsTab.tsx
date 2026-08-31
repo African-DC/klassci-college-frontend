@@ -17,6 +17,7 @@ import { EnrollmentFeesBreakdown, type EnrollmentFeeItem } from "@/components/ad
 import { PaymentHistoryList } from "@/components/admin/payments/PaymentHistoryList"
 import { StudentPaymentModal } from "@/components/admin/students/tabs/StudentPaymentModal"
 import { EnrollmentScheduleCard } from "@/components/admin/installments/EnrollmentScheduleCard"
+import { installmentKeys } from "@/lib/hooks/useInstallments"
 
 interface EnrollmentPaymentsTabProps {
   enrollmentId: number
@@ -59,6 +60,11 @@ export function EnrollmentPaymentsTab({
       toast.success("Article marqué déposé")
       queryClient.invalidateQueries({ queryKey: ["students"] })
       queryClient.invalidateQueries({ queryKey: ["enrollments"] })
+      // L'échéancier rendu juste au-dessus dérive des frais : total dû, déjà
+      // versé, et le bandeau « En retard de X F ». Sans cette invalidation il
+      // garde jusqu'à une minute le retard calculé sur la ligne qu'on vient
+      // de solder, et l'écran contredit l'action qu'il vient de confirmer.
+      queryClient.invalidateQueries({ queryKey: installmentKeys.schedule(enrollmentId) })
     },
     onError: (err: Error) => {
       toast.error("Impossible de marquer ce frais déposé", { description: err.message })
