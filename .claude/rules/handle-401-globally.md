@@ -79,28 +79,47 @@ export async function apiFetch<T>(path: string, options = {}): Promise<T> {
 
 ## Fetches qui ne passent pas par `apiFetch` (multipart, etc.)
 
-Pour les `FormData` (upload de photos par exemple), `apiFetch` n'est pas utilisable (JSON-encoded). **Répliquer le contrat manuellement** :
+`apiFetch` sérialise en JSON : il n'est pas utilisable pour un `FormData`, où le
+navigateur doit poser lui-même le `Content-Type` avec sa frontière multipart.
+
+**Ne pas répliquer le contrat à la main.** Cette consigne, appliquée module par
+module, a produit trois copies divergentes du même bloc (photo élève, photo de
+profil, logo) avec chacune son `getBaseUrl()` et sa lecture d'erreur. Le contrat
+vit maintenant dans `client.ts`, où `apiFetchMultipart` partage les en-têtes,
+le gate `hadToken` et la lecture du `detail` backend avec `apiFetch` :
 
 ```ts
-import { handleExpiredSession } from "./client"
+import { apiFetchMultipart } from "./client"
 
 export const uploadPhoto = async (id: number, file: File) => {
-  const session = await getSession()
   const formData = new FormData()
   formData.append("file", file)
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${session?.accessToken}` },
-    body: formData,
+  return apiFetchMultipart(`/admin/students/${id}/photo`, formData, {
+    schema: PhotoUploadResponseSchema,
+    context: "POST /admin/students/:id/photo",
+    fallback: "Échec de l'envoi de la photo",
   })
-  if (res.status === 401) {
-    await handleExpiredSession()
-    throw new Error("Session expirée")
-  }
-  if (!res.ok) throw new Error("Upload failed")
-  return res.json()
 }
 ```
+
+De même pour un téléchargement : `apiFetchBlob`. Un `fetch` authentifié écrit à
+la main dans `lib/api/*` est un défaut de revue, pas un cas particulier.
+
+**Les six modules d'upload y passent** : `settings` (logo), `students` (photo),
+`profile` (photo), `staff` (photo), `teachers` (photo) et `student-attachments`
+(document). Il n'en reste aucun qui refasse le bloc.
+
+Ce que la migration a corrigé au passage, et qui dit pourquoi la règle compte :
+`staff` et `teachers` faisaient `throw new Error("Upload failed")`, jetant le
+`detail` du backend. Or c'est lui qui dit « Fichier trop volumineux (max 5 Mo) »
+ou « Format invalide. Accepté : JPEG, PNG, WebP ». Une secrétaire qui envoyait
+une photo trop lourde lisait « Upload failed », en anglais, dans une interface
+française, sans savoir quoi corriger.
+
+**La seule exception légitime** est `verify.ts` : il poste vers
+`/public/verify-file/...` sans en-tête d'autorisation, pour une vérification de
+document faite par un tiers qui n'a pas de session. Il n'y a pas de 401 à
+traiter, et il rend `null` sur toute erreur à dessein. Ne pas le « corriger ».
 
 ## Le banner `/login?expired=1`
 
@@ -141,7 +160,7 @@ Le banner disparaît dès que `setError` set le state error (priorité à l'erre
 ## Checklist nouveau fichier `lib/api/*.ts`
 
 - [ ] Utilise `apiFetch` quand possible (97% des cas)
-- [ ] Si `FormData` / `Blob` : check `res.status === 401` manuellement + `await handleExpiredSession()`
+- [ ] Si `FormData` : `apiFetchMultipart`. Si `Blob` : `apiFetchBlob`. Jamais un `fetch` à la main
 - [ ] Pas de `fetch` direct sans le contrat 401
 - [ ] Pas de `retry: Infinity` sur les queries qui hitte des endpoints auth-gated
 
