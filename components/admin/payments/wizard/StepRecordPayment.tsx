@@ -159,6 +159,7 @@ export function StepRecordPayment({
             isLoading={preview.isFetching && !preview.data}
             error={preview.error as Error | null}
             controller={controller}
+            disabled={isPending}
           />
         ) : null}
 

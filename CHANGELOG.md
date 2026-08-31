@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- En thème sombre, l'aperçu du logo reste sur fond blanc et le message d'erreur d'envoi redevient lisible *(admin)* (#417)
 - L'écran des frais s'ouvre sur l'année en cours et laisse en changer, avec un repère visible quand l'année choisie n'est pas la courante *(admin, comptable)*
 - Une ligne de frais réglée en nature n'apparaît plus comme impayée à 0 F, sur la fiche de l'élève comme dans les portails famille *(admin, comptable, parent, élève)*
 - Les montées de dépendances passent la validation de nom de branche, au lieu de forcer une fusion qui contourne tous les contrôles *(technique)*
@@ -22,7 +23,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Annulation d'un versement déjà encaissé, depuis le tableau comme depuis le téléphone : c'est le cas courant, un montant saisi qui n'est pas dans la caisse *(admin)*
 
 ### Added
-- Le formulaire d'encaissement laisse choisir quel frais reçoit quoi : un versement pour l'inscription et la tenue s'enregistre tel qu'il a été payé *(caissier, admin)*
+- Le formulaire d'encaissement laisse choisir quel frais reçoit quoi, du téléphone à l'ordinateur : un versement inscription et tenue s'enregistre tel qu'il a été payé *(caissier, admin)*
 - Onglet « Identité visuelle » : le logo de l'établissement s'envoie, se remplace et se retire, avec aperçu immédiat sur les documents officiels *(admin)*
 - Bouton « Bordereau du jour » sur « Ma caisse » : la caissière édite sa propre pièce de caisse, sans dépendre du comptable ni du point journalier auquel elle n'a pas accès *(caissier)*
 - Un frais réglé en nature se marque à l'inscription et sur la fiche de frais : la ligne cesse alors d'être due en argent et n'entre plus dans le reste à payer *(admin, secrétariat, comptable)*

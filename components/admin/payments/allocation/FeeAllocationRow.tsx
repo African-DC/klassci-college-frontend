@@ -92,7 +92,12 @@ export function FeeAllocationRow({
           // text-base : en dessous de 16px, Chrome Android zoome sur le champ
           // au focus et l'écran part de travers. Les flèches natives sont
           // retirées, elles volent la moitié d'une cible tactile.
-          className="h-11 flex-1 text-base font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          //
+          // min-w-0 : un champ de saisie garde sinon sa largeur minimale
+          // native, une vingtaine de caractères, et refuse de se compresser.
+          // Sur un téléphone de 320 pixels, le champ et le bouton « Le
+          // maximum » débordaient la carte vers la droite.
+          className="h-11 min-w-0 flex-1 text-base font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
         <Button
           type="button"

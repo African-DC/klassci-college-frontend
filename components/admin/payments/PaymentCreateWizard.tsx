@@ -59,7 +59,19 @@ export function PaymentCreateWizard({ open, onClose }: PaymentCreateWizardProps)
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+      {/*
+        Pas de `max-h` ici : `DialogContent` en pose déjà un, en `dvh`, avec le
+        défilement interne qui va avec. Le `85vh` qu'on surchargeait se mesure
+        barre d'adresse masquée, donc trop haut sur un téléphone, et gagnait
+        sur celui de la primitive.
+
+        Ni `vh` ni `dvh` ne rétrécit à l'ouverture du clavier : cela demande
+        `interactive-widget=resizes-content` dans le meta viewport, que
+        l'application ne déclare pas. Garder le compteur de répartition visible
+        clavier ouvert reste donc à faire, et cela se joue dans `app/layout.tsx`,
+        pas ici.
+      */}
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Nouveau paiement</DialogTitle>
         </DialogHeader>

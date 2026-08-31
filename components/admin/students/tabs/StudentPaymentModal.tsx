@@ -216,6 +216,7 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
                   isLoading={preview.isFetching && !preview.data}
                   error={preview.error as Error | null}
                   controller={allocation}
+                  disabled={isPending}
                 />
               ) : null}
 
