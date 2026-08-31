@@ -14,6 +14,7 @@ import { apiFetchBlob } from "@/lib/api/client"
 import type { SchoolSettings } from "@/lib/contracts/settings"
 import { ColorField } from "./pdf-identity/ColorField"
 import { LivePreview } from "./pdf-identity/LivePreview"
+import { LogoField } from "./pdf-identity/LogoField"
 
 interface PdfIdentitySectionProps {
   settings: SchoolSettings | undefined
@@ -37,6 +38,12 @@ function isValidHex(v: string): boolean {
 export function PdfIdentitySection({ settings, isLoading }: PdfIdentitySectionProps) {
   const queryClient = useQueryClient()
   const [previewing, setPreviewing] = useState(false)
+  const [logoVersion, setLogoVersion] = useState(0)
+
+  // Le fichier peut être réécrit sous le même nom côté serveur : sans ce suffixe,
+  // le navigateur réafficherait l'ancienne image après un remplacement.
+  const rawLogoUrl = settings?.logo_url ?? null
+  const logoUrl = rawLogoUrl && logoVersion > 0 ? `${rawLogoUrl}?v=${logoVersion}` : rawLogoUrl
 
   // Authenticated PDF preview: fetch the sample PDF as a blob (with the Bearer
   // token, via apiFetchBlob) then open the object URL. A direct window.open of
@@ -164,6 +171,9 @@ export function PdfIdentitySection({ settings, isLoading }: PdfIdentitySectionPr
       <div className="grid gap-8 px-6 py-6 lg:grid-cols-[1fr_360px]">
         {/* Form column */}
         <div className="space-y-6">
+          {/* Logo */}
+          <LogoField logoUrl={logoUrl} onLogoChanged={() => setLogoVersion((v) => v + 1)} />
+
           {/* Couleurs */}
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -297,7 +307,7 @@ export function PdfIdentitySection({ settings, isLoading }: PdfIdentitySectionPr
           website={values.website}
           primary={primaryValid ? debouncedPrimary : DEFAULT_PRIMARY}
           accent={accentValid ? debouncedAccent : DEFAULT_ACCENT}
-          logoUrl={settings?.logo_url ?? null}
+          logoUrl={logoUrl}
         />
       </div>
     </section>
