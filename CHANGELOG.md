@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- Répercuter un tarif ne crée plus de dette chez des familles qui n'en avaient pas : la création se demande à part *(admin, comptable)*
+- La simulation d'échéancier annonce pour quel public elle vaut et n'y mêle plus les tarifs réservés à un autre profil *(admin)*
 - En thème sombre, l'aperçu du logo reste sur fond blanc et le message d'erreur d'envoi redevient lisible *(admin)* (#417)
 - L'écran des frais s'ouvre sur l'année en cours et laisse en changer, avec un repère visible quand l'année choisie n'est pas la courante *(admin, comptable)*
 - Une ligne de frais réglée en nature n'apparaît plus comme impayée à 0 F, sur la fiche de l'élève comme dans les portails famille *(admin, comptable, parent, élève)*

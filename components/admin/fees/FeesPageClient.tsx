@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Plus, Pencil, Trash2, Wallet, Shield, CircleDot, Layers, Coins, Copy, GraduationCap } from "lucide-react"
+import { Plus, Wallet, Shield, CircleDot, Layers, Coins, Copy, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { PageHero, SectionTitle, heroGlassBtn, heroAccentBtn, premiumCardHover } from "@/components/shared/PageHero"
+import { PageHero, SectionTitle, heroGlassBtn, heroAccentBtn } from "@/components/shared/PageHero"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
@@ -16,7 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { EntitlementsPopover } from "@/components/shared/fees/FeeEntitlements"
 import { FeeCategoryCreateModal } from "./FeeCategoryCreateModal"
 import { FeeCategoryEditModal } from "./FeeCategoryEditModal"
 import { FeeVariantCreateModal } from "./FeeVariantCreateModal"
@@ -24,11 +23,14 @@ import { FeeVariantEditModal } from "./FeeVariantEditModal"
 import { FeeVariantPropagationDialog } from "./FeeVariantPropagationDialog"
 import { FeeVariantCopyModal } from "./FeeVariantCopyModal"
 import { FeesByLevelTree } from "./FeesByLevelTree"
+import { MandatoryFeeCategoryGrid } from "./MandatoryFeeCategoryGrid"
 import { OptionalCategoryPanel } from "./OptionalCategoryPanel"
 import { FeesAcademicYearBar, FeesAcademicYearChip } from "./FeesAcademicYearBar"
 import { useFeeCategories, useFeeVariants, useDeleteFeeCategory, useDeleteFeeVariant } from "@/lib/hooks/useFees"
 import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import { useLevels } from "@/lib/hooks/useLevels"
+import { useSeriesList } from "@/lib/hooks/useSeries"
+import { feeSumLabel, feeVariantFullName } from "@/lib/contracts/fee-audience"
 import type { FeeCategory, FeeVariant } from "@/lib/contracts/fee"
 
 export function FeesPageClient() {
@@ -50,6 +52,10 @@ export function FeesPageClient() {
   const { data: variants, isLoading: loadingVariants } = useFeeVariants(academicYearId)
   const { data: levelsData } = useLevels()
   const levels = useMemo(() => levelsData?.items ?? [], [levelsData])
+  // Les séries servent à NOMMER un tarif avant de le supprimer : deux tarifs
+  // de la même catégorie sur le même niveau ne se distinguent parfois que par
+  // elles.
+  const { data: seriesData } = useSeriesList({ size: 100 })
   const { mutate: deleteCategory, isPending: deletingCategory } = useDeleteFeeCategory()
   const { mutate: deleteVariant, isPending: deletingVariant } = useDeleteFeeVariant()
 
@@ -63,6 +69,11 @@ export function FeesPageClient() {
     levels.forEach((l) => map.set(l.id, l.name))
     return map
   }, [levels])
+  const seriesNameMap = useMemo(() => {
+    const map = new Map<number, string>()
+    seriesData?.items?.forEach((s) => map.set(s.id, s.name))
+    return map
+  }, [seriesData])
 
   const variantsByCategory = useMemo(() => {
     const map = new Map<number, FeeVariant[]>()
@@ -125,7 +136,11 @@ export function FeesPageClient() {
           { label: "Frais obligatoires", value: totalMandatory, icon: Shield },
           { label: "Frais optionnels", value: totalOptional, icon: CircleDot },
           { label: "Niveaux configurés", value: configuredLevels, icon: GraduationCap },
-          { label: "Montant configuré", value: `${totalConfigured.toLocaleString("fr-FR")} F`, icon: Coins },
+          // Somme de tous les tarifs, niveaux et publics confondus : personne
+          // ne paie ce total. Le libellé vient du même endroit que celui de la
+          // grille et des cartes, pour qu'aucun des trois ne promette « par
+          // élève » une somme qui ne l'est pas.
+          { label: feeSumLabel(true), value: `${totalConfigured.toLocaleString("fr-FR")} F`, icon: Coins },
         ]}
       />
 
@@ -142,82 +157,14 @@ export function FeesPageClient() {
         <SectionTitle icon={Shield}>Frais obligatoires</SectionTitle>
 
         {/* Catégories obligatoires (définitions) */}
-        {loadingCategories ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 rounded-xl" />
-            ))}
-          </div>
-        ) : mandatoryCategories.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {mandatoryCategories.map((cat) => {
-              const catVariants = variantsByCategory.get(cat.id) ?? []
-              const totalAmount = catVariants.reduce((sum, v) => sum + v.amount, 0)
-              return (
-                <Card key={cat.id} className={`border border-primary/20 bg-primary/[0.06] shadow-sm ${premiumCardHover}`}>
-                  <CardContent className="p-4">
-                    <div className="mb-3 flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <Wallet className="h-4 w-4" />
-                        </span>
-                        <div>
-                          <h3 className="text-sm font-semibold">{cat.name}</h3>
-                          {cat.accepts_in_kind ? (
-                            <p className="text-[10px] font-medium text-sky-700 dark:text-sky-400">
-                              Dépôt en nature accepté
-                            </p>
-                          ) : cat.description ? (
-                            <p className="line-clamp-1 text-[11px] text-muted-foreground">{cat.description}</p>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditCategory(cat)} aria-label="Modifier la catégorie">
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => setDeleteTarget({ type: "category", id: cat.id, name: cat.name })}
-                          aria-label="Supprimer la catégorie"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                    <EntitlementsPopover
-                      categoryName={cat.name}
-                      entitlements={cat.entitlements}
-                      fallbackNote={cat.description}
-                      className="-ml-2 mb-1"
-                    />
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground">{catVariants.length}</span> niveau(x)
-                      </span>
-                      {totalAmount > 0 && (
-                        <span className="text-xs font-semibold tabular-nums">{totalAmount.toLocaleString("fr-FR")} FCFA</span>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        ) : (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <Shield className="mb-2 h-8 w-8 opacity-40" />
-              <p className="text-sm">Aucun frais obligatoire</p>
-              <Button size="sm" variant="outline" className="mt-3" onClick={() => setCategoryModalOpen(true)}>
-                <Plus className="mr-2 h-3.5 w-3.5" />
-                Créer une catégorie
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <MandatoryFeeCategoryGrid
+          categories={mandatoryCategories}
+          variantsByCategory={variantsByCategory}
+          isLoading={loadingCategories}
+          onEdit={(c) => setEditCategory(c)}
+          onDelete={(c) => setDeleteTarget({ type: "category", id: c.id, name: c.name })}
+          onCreate={() => setCategoryModalOpen(true)}
+        />
 
         {/* Grille par niveau (arbre) */}
         <Card className="border-0 shadow-sm ring-1 ring-border">
@@ -257,11 +204,20 @@ export function FeesPageClient() {
                 categoryNameMap={categoryNameMap}
                 onEditVariant={(v) => setEditVariant(v)}
                 onPropagateVariant={(v) => setPropagateVariant(v)}
+                // Le nom porte TOUTES les dimensions du tarif : c'est le
+                // dernier écran où deux tarifs de la même catégorie et du même
+                // niveau coexistent légitimement, l'un pour les affectés,
+                // l'autre pour les nouveaux. « Scolarité T1 · 6eme » les
+                // désignerait tous les deux.
                 onDeleteVariant={(v) =>
                   setDeleteTarget({
                     type: "variant",
                     id: v.id,
-                    name: `${categoryNameMap.get(v.fee_category_id) ?? "Frais"} · ${levelNameMap.get(v.level_id) ?? ""}`,
+                    name: feeVariantFullName(v, {
+                      category: categoryNameMap.get(v.fee_category_id) ?? "Frais",
+                      level: levelNameMap.get(v.level_id),
+                      series: v.series_id ? seriesNameMap.get(v.series_id) : null,
+                    }),
                   })
                 }
               />
