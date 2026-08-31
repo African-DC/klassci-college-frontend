@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
@@ -23,7 +23,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Textarea } from "@/components/ui/textarea"
 import { useStudentFees } from "@/lib/hooks/useStudents"
 import {
   paymentKeys,
@@ -35,8 +34,9 @@ import {
   type EnrollmentPaymentCreate,
 } from "@/lib/contracts/payment"
 import { useDebounce } from "@/lib/hooks/useDebounce"
-import { AllocationPreviewCard } from "@/components/admin/payments/AllocationPreviewCard"
-import { PaymentMethodSelect } from "@/components/admin/payments/PaymentMethodSelect"
+import { PaymentAllocationSection } from "@/components/admin/payments/allocation/PaymentAllocationSection"
+import { useAllocationDraft } from "@/components/admin/payments/allocation/useAllocationDraft"
+import { PaymentDetailsFields } from "@/components/admin/payments/PaymentDetailsFields"
 
 interface StudentPaymentModalProps {
   studentId: number
@@ -76,12 +76,35 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
   })
 
   const watchedAmount = form.watch("amount")
-  const debouncedAmount = useDebounce(watchedAmount, 350)
+  const montant =
+    typeof watchedAmount === "number" && Number.isFinite(watchedAmount) && watchedAmount > 0
+      ? watchedAmount
+      : 0
+  const allocation = useAllocationDraft()
+  const { setMode: setAllocationMode, clear: clearAllocations } = allocation
+
+  // Montant et répartition partent ensemble : un aperçu calculé sur l'un sans
+  // l'autre montrerait une ventilation qui n'existe pas.
+  const requete = useMemo(
+    () => JSON.stringify({ montant, allocations: allocation.allocations ?? null }),
+    [montant, allocation.allocations],
+  )
+  const requeteStabilisee = useDebounce(requete, 350)
+  const demande = useMemo(
+    () =>
+      JSON.parse(requeteStabilisee) as {
+        montant: number
+        allocations: EnrollmentPaymentCreate["allocations"] | null
+      },
+    [requeteStabilisee],
+  )
 
   const preview = useAllocationPreview(
     enrollmentId,
-    typeof debouncedAmount === "number" && debouncedAmount > 0 ? debouncedAmount : null,
+    demande.montant > 0 ? demande.montant : null,
+    demande.allocations ?? undefined,
   )
+  const apercuAJour = requeteStabilisee === requete
 
   const { mutate, isPending } = useRecordEnrollmentPayment(enrollmentId ?? 0)
 
@@ -89,7 +112,9 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
   useEffect(() => {
     if (!open) return
     form.reset({ amount: undefined as unknown as number, method: "cash", reference: null, notes: null })
-  }, [open, studentId, form])
+    clearAllocations()
+    setAllocationMode("auto")
+  }, [open, studentId, form, clearAllocations, setAllocationMode])
 
   function onSubmit(data: EnrollmentPaymentCreate) {
     if (!enrollmentId) return
@@ -97,7 +122,7 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
       form.setError("amount", { message: preview.data.reject_reason ?? "Montant invalide" })
       return
     }
-    mutate(data, {
+    mutate({ ...data, allocations: allocation.allocations }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: paymentKeys.all })
         queryClient.invalidateQueries({ queryKey: ["students", studentId] })
@@ -114,6 +139,7 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
     !!enrollmentId &&
     !noFees &&
     !allPaid &&
+    apercuAJour &&
     (preview.data?.can_record ?? false) &&
     !isPending
 
@@ -126,8 +152,9 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
             Nouveau versement
           </DialogTitle>
           <DialogDescription>
-            Saisissez le montant : le système alloue automatiquement aux frais impayés par
-            priorité (Inscription → Trimestres → COGES → Tenue).
+            Saisissez le montant. Par défaut il va aux frais impayés par priorité
+            (Inscription, Trimestres, COGES, Tenue). Vous pouvez aussi le répartir
+            vous-même, frais par frais.
           </DialogDescription>
         </DialogHeader>
 
@@ -162,7 +189,9 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
                         placeholder="Ex : 50 000"
                         min={1}
                         max={totalRemaining}
-                        className="h-11 text-lg font-semibold tabular-nums"
+                        // Les flèches natives volent la moitié de la cible
+                        // tactile sur un champ de montant.
+                        className="h-12 text-lg font-semibold tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                         autoFocus
                         {...field}
                         value={field.value ?? ""}
@@ -179,69 +208,18 @@ export function StudentPaymentModal({ studentId, open, onClose }: StudentPayment
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="method"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mode de paiement *</FormLabel>
-                    <FormControl>
-                      <PaymentMethodSelect
-                        value={field.value}
-                        onChange={(v) =>
-                          field.onChange(v as EnrollmentPaymentCreate["method"])
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="reference"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Référence</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Numéro de reçu, transaction (optionnel)"
-                        className="h-11"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        rows={2}
-                        placeholder="Note interne (optionnel)"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {/* Live preview : montre comment le montant sera alloué */}
-              {watchedAmount && watchedAmount > 0 ? (
-                <AllocationPreviewCard
+              {/* Répartition : automatique par défaut, manuelle sur demande */}
+              {montant > 0 ? (
+                <PaymentAllocationSection
+                  amount={montant}
                   preview={preview.data}
                   isLoading={preview.isFetching && !preview.data}
                   error={preview.error as Error | null}
+                  controller={allocation}
                 />
               ) : null}
+
+              <PaymentDetailsFields control={form.control} />
 
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                 <Button
