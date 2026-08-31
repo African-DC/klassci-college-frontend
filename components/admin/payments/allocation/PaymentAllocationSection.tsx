@@ -56,6 +56,11 @@ export function PaymentAllocationSection({
       .filter((probleme) => probleme.enrollment_fee_id !== null)
       .map((probleme) => [probleme.enrollment_fee_id as number, probleme.message]),
   )
+  // Ce qui n'a pas de ligne où s'afficher monte dans le bandeau : un refus qui
+  // porte sur la répartition entière, ou un montant supérieur à la dette.
+  const motifGlobal =
+    preview?.problems.find((probleme) => probleme.enrollment_fee_id === null)?.message ??
+    (motifs.size === 0 && !preview?.can_record ? preview?.reject_reason : null)
 
   return (
     <section aria-label="Répartition du versement" className="space-y-3">
@@ -88,13 +93,13 @@ export function PaymentAllocationSection({
         </p>
       ) : (
         <div className="space-y-3">
-          {preview && !preview.can_record && preview.reject_reason && motifs.size === 0 ? (
+          {motifGlobal ? (
             <div
               role="alert"
               className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-500/10 p-3 text-sm text-amber-900 dark:border-amber-500/40 dark:text-amber-200"
             >
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              <p>{preview.reject_reason}</p>
+              <p>{motifGlobal}</p>
             </div>
           ) : null}
 

@@ -16,6 +16,21 @@ function etat(preview: AllocationPreview | undefined, amount: number, reparti: n
       message: global.message,
     }
   }
+  // Un refus qui porte sur des lignes : le motif est déjà sous chacune d'elles,
+  // le compteur dit seulement qu'il y a quelque chose à corriger. Sans ce cas,
+  // on retomberait plus bas sur le message de surplus, qui parlerait d'un
+  // débordement alors que rien n'a été réparti.
+  if (preview && preview.problems.length > 0) {
+    return {
+      icon: AlertTriangle,
+      tone: "text-destructive",
+      alert: true,
+      message:
+        preview.problems.length === 1
+          ? "Corrigez la ligne signalée avant d'enregistrer."
+          : "Corrigez les lignes signalées avant d'enregistrer.",
+    }
+  }
   if (reparti > amount) {
     // L'aperçu n'a pas encore rattrapé la frappe : on le dit sans chiffrer une
     // répartition que le serveur n'a pas validée.
