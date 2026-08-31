@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- L'écran des frais s'ouvre sur l'année en cours et laisse en changer, avec un repère visible quand l'année choisie n'est pas la courante *(admin, comptable)*
 - Une ligne de frais réglée en nature n'apparaît plus comme impayée à 0 F, sur la fiche de l'élève comme dans les portails famille *(admin, comptable, parent, élève)*
 - Les montées de dépendances passent la validation de nom de branche, au lieu de forcer une fusion qui contourne tous les contrôles *(technique)*
 - Les boutons Valider, Annuler, Restaurer et Supprimer s'annoncent à nouveau avec une espace : un lecteur d'écran disait « Annulerle versement » *(admin)*

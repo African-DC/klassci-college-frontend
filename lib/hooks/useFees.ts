@@ -9,7 +9,13 @@ export const feeKeys = {
   all: ["fees"] as const,
   categories: ["fees", "categories"] as const,
   variants: (academicYearId?: number) => ["fees", "variants", academicYearId] as const,
-  options: (categoryId: number) => ["fees", "options", categoryId] as const,
+  // L'année fait partie de la clé : les options d'une même catégorie diffèrent
+  // d'une année à l'autre, les servir depuis un cache commun ferait apparaître
+  // les options d'une année sous une autre.
+  options: (categoryId: number, academicYearId?: number) =>
+    ["fees", "options", categoryId, academicYearId ?? null] as const,
+  /** Préfixe couvrant toutes les années d'une catégorie, pour l'invalidation. */
+  optionsOfCategory: (categoryId: number) => ["fees", "options", categoryId] as const,
   propagation: (variantId: number) => ["fees", "propagation", variantId] as const,
 }
 
@@ -187,10 +193,10 @@ export function usePropagateFeeVariant() {
 
 // --- Options de frais optionnels ---
 
-export function useFeeOptions(categoryId: number) {
+export function useFeeOptions(categoryId: number, academicYearId?: number) {
   return useQuery({
-    queryKey: feeKeys.options(categoryId),
-    queryFn: () => feesApi.listOptions(categoryId),
+    queryKey: feeKeys.options(categoryId, academicYearId),
+    queryFn: () => feesApi.listOptions(categoryId, academicYearId),
     staleTime: 1000 * 60 * 5,
     enabled: categoryId > 0,
   })
@@ -202,7 +208,7 @@ export function useCreateFeeOption() {
     mutationFn: (data: OptionalFeeOptionCreate) => feesApi.createOption(data),
     onSuccess: (_created, variables) => {
       toast.success("Option créée")
-      queryClient.invalidateQueries({ queryKey: feeKeys.options(variables.fee_category_id) })
+      queryClient.invalidateQueries({ queryKey: feeKeys.optionsOfCategory(variables.fee_category_id) })
     },
     onError: (err) => toast.error("Erreur", { description: err.message }),
   })
@@ -214,7 +220,7 @@ export function useUpdateFeeOption() {
     mutationFn: ({ id, data, categoryId }: { id: number; data: OptionalFeeOptionUpdate; categoryId: number }) => feesApi.updateOption(id, data),
     onSuccess: (_data, variables) => {
       toast.success("Option modifiée")
-      queryClient.invalidateQueries({ queryKey: feeKeys.options(variables.categoryId) })
+      queryClient.invalidateQueries({ queryKey: feeKeys.optionsOfCategory(variables.categoryId) })
     },
     onError: (err) => toast.error("Erreur", { description: err.message }),
   })
@@ -226,7 +232,7 @@ export function useDeleteFeeOption() {
     mutationFn: ({ id, categoryId }: { id: number; categoryId: number }) => feesApi.deleteOption(id),
     onSuccess: (_data, variables) => {
       toast.success("Option supprimée")
-      queryClient.invalidateQueries({ queryKey: feeKeys.options(variables.categoryId) })
+      queryClient.invalidateQueries({ queryKey: feeKeys.optionsOfCategory(variables.categoryId) })
     },
     onError: (err) => toast.error("Erreur", { description: err.message }),
   })
