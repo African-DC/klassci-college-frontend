@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { useForm } from "react-hook-form"
-import { ASSIGNMENT_SCOPES } from "@/lib/contracts/fee"
+import { ASSIGNMENT_SCOPES, ENROLLMENT_PROFILES } from "@/lib/contracts/fee"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { FeeAudienceSelect } from "./FeeAudienceSelect"
 import { useUpdateFeeVariant, useFeeCategories } from "@/lib/hooks/useFees"
 import { FeeVariantUpdateSchema, type FeeVariant, type FeeVariantUpdate } from "@/lib/contracts/fee"
 import { useLevels } from "@/lib/hooks/useLevels"
@@ -44,6 +45,9 @@ export function FeeVariantEditModal({
       level_id: variant.level_id,
       series_id: variant.series_id,
       assignment_scope: variant.assignment_scope ?? null,
+      // Toujours posé, même à `null` : c'est ce qui permet de rendre au tarif
+      // sa portée universelle. Le champ omis, le serveur garderait l'ancienne.
+      enrollment_profile: variant.enrollment_profile ?? null,
       amount: variant.amount,
       academic_year_id: variant.academic_year_id,
     } : undefined,
@@ -147,27 +151,25 @@ export function FeeVariantEditModal({
               control={form.control}
               name="assignment_scope"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>À qui s&apos;applique ce montant</FormLabel>
-                  <Select
-                    value={field.value ?? "tous"}
-                    onValueChange={(v) => field.onChange(v === "tous" ? null : v)}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-11 sm:h-10">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {ASSIGNMENT_SCOPES.map((scope) => (
-                        <SelectItem key={scope.value ?? "tous"} value={scope.value ?? "tous"}>
-                          {scope.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
+                <FeeAudienceSelect
+                  label="À qui s'applique ce montant"
+                  options={ASSIGNMENT_SCOPES}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="enrollment_profile"
+              render={({ field }) => (
+                <FeeAudienceSelect
+                  label="Nouveaux ou anciens élèves"
+                  options={ENROLLMENT_PROFILES}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               )}
             />
 

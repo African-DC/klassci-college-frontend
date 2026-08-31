@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react"
 import { ArrowRightLeft, ChevronRight, Pencil, Trash2, GraduationCap, Coins } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { FeeVariantAudienceBadges } from "./FeeVariantAudienceBadges"
 import { cn } from "@/lib/utils"
 import type { FeeVariant } from "@/lib/contracts/fee"
 
@@ -93,6 +93,11 @@ export function FeesByLevelTree({
       {rows.map(({ level, items }) => {
         const isOpen = !collapsed.has(level.id)
         const total = items.reduce((sum, v) => sum + v.amount, 0)
+        // Dès qu'un tarif du niveau vise un public précis, la somme cesse
+        // d'être ce qu'un élève paie : elle additionne des montants qui
+        // s'excluent. On dit alors ce qu'elle est vraiment, plutôt que
+        // d'annoncer à l'école un montant que personne ne réglera.
+        const cible = items.some((v) => v.assignment_scope || v.enrollment_profile)
         return (
           <div
             key={level.id}
@@ -121,7 +126,9 @@ export function FeesByLevelTree({
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total / élève</p>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {cible ? "Total des tarifs" : "Total / élève"}
+                </p>
                 <p className="text-sm font-bold tabular-nums">
                   {total.toLocaleString("fr-FR")} <span className="text-[11px] font-normal text-muted-foreground">FCFA</span>
                 </p>
@@ -139,28 +146,14 @@ export function FeesByLevelTree({
                       className="group flex items-center gap-3 border-b border-border/50 px-3.5 py-2.5 last:border-0 hover:bg-muted/30"
                     >
                       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary/40" />
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{catName}</span>
-                      {v.series_id && (
-                        <Badge variant="outline" className="h-5 text-[10px]">
-                          série
-                        </Badge>
-                      )}
-                      {v.assignment_scope ? (
-                        // Sans ce repere, deux montants sur le meme niveau
-                        // passent pour un doublon alors qu'ils visent des
-                        // eleves differents.
-                        <Badge
-                          variant="outline"
-                          className={
-                            v.assignment_scope === "affecte"
-                              ? "h-5 border-emerald-300 text-[10px] text-emerald-700 dark:border-emerald-800 dark:text-emerald-300"
-                              : "h-5 border-amber-300 text-[10px] text-amber-700 dark:border-amber-800 dark:text-amber-300"
-                          }
-                        >
-                          {v.assignment_scope === "affecte" ? "affecté" : "non affecté"}
-                        </Badge>
-                      ) : null}
-                      <span className="text-sm font-semibold tabular-nums">
+                      {/* Les repères passent sous le nom : à trois dimensions
+                          de ciblage, une seule ligne déborderait de l'écran
+                          d'un téléphone avant d'arriver au montant. */}
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{catName}</span>
+                        <FeeVariantAudienceBadges variant={v} className="mt-1" />
+                      </div>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums">
                         {v.amount.toLocaleString("fr-FR")}{" "}
                         <span className="text-[11px] font-normal text-muted-foreground">FCFA</span>
                       </span>

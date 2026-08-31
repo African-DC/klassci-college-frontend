@@ -8,7 +8,7 @@ vi.mock("next-auth/react", () => ({
 }))
 
 import { feesApi } from "./fees"
-import { formatDebtDelta } from "@/lib/contracts/fee"
+import { formatDebtDelta, propagationBuckets } from "@/lib/contracts/fee-propagation"
 
 /**
  * Le serveur sérialise ses décimales en chaînes, le reste de l'écran les
@@ -22,8 +22,9 @@ const APERCU = {
   category_name: "Scolarité T1",
   academic_year_id: 2,
   amount: "45000.00",
-  enrollments_concerned: 12,
+  enrollments_concerned: 15,
   fees_to_update: 9,
+  fees_to_create: 3,
   fees_already_up_to_date: 1,
   fees_kept_with_payments: 2,
   fees_waived: 0,
@@ -31,7 +32,7 @@ const APERCU = {
   message: "9 lignes à mettre à jour, 2 lignes conservées car des versements y sont imputés.",
 }
 
-const RESULTAT = { ...APERCU, fees_updated: 9 }
+const RESULTAT = { ...APERCU, fees_updated: 9, fees_created: 3 }
 
 function respondWith(payload: unknown) {
   const fetchMock = vi.fn().mockResolvedValue(
@@ -71,7 +72,18 @@ describe("feesApi.propagationPreview", () => {
     expect(apercu.amount).toBe(45000)
     expect(apercu.debt_delta).toBe(-81000)
     expect(apercu.fees_to_update).toBe(9)
+    expect(apercu.fees_to_create).toBe(3)
     expect(apercu.fees_kept_with_payments).toBe(2)
+  })
+
+  it("rejette une réponse sans le compteur des lignes à créer", async () => {
+    // Une dette qui apparaît chez une famille qui n'en avait pas ne peut pas
+    // se deviner : mieux vaut refuser l'aperçu que l'afficher amputé.
+    const tronquee: Record<string, unknown> = { ...APERCU }
+    delete tronquee.fees_to_create
+    respondWith(tronquee)
+
+    await expect(feesApi.propagationPreview(12)).rejects.toThrow(/Réponse inattendue/)
   })
 
   it("rejette une réponse à laquelle il manque un compteur", async () => {
@@ -102,9 +114,48 @@ describe("feesApi.propagate", () => {
     const resultat = await feesApi.propagate(12)
 
     expect(resultat.fees_updated).toBe(apercu.fees_to_update)
+    expect(resultat.fees_created).toBe(apercu.fees_to_create)
     expect(resultat.fees_kept_with_payments).toBe(apercu.fees_kept_with_payments)
     expect(resultat.enrollments_concerned).toBe(apercu.enrollments_concerned)
     expect(resultat.debt_delta).toBe(apercu.debt_delta)
+  })
+})
+
+describe("propagationBuckets", () => {
+  /**
+   * La répartition est lue comme un compte : si les paquets ne reconstituent
+   * pas le total affiché juste au-dessus, l'école cherche les inscriptions
+   * manquantes au lieu de décider. C'est arrivé le jour où un paquet a été
+   * ajouté au serveur sans l'être à l'écran.
+   */
+  it("reconstitue exactement le nombre d'inscriptions concernées", async () => {
+    respondWith(APERCU)
+    const apercu = await feesApi.propagationPreview(12)
+
+    const somme = propagationBuckets(apercu).reduce((total, p) => total + p.count, 0)
+
+    expect(somme).toBe(apercu.enrollments_concerned)
+  })
+
+  it("tombe juste aussi sur le résultat, avec les mêmes paquets", async () => {
+    respondWith(RESULTAT)
+    const resultat = await feesApi.propagate(12)
+
+    const somme = propagationBuckets(resultat).reduce((total, p) => total + p.count, 0)
+
+    expect(somme).toBe(resultat.enrollments_concerned)
+  })
+
+  it("dit les lignes à créer à part, et le dit même quand il n'y en a aucune", async () => {
+    respondWith({ ...APERCU, enrollments_concerned: 12, fees_to_create: 0 })
+    const apercu = await feesApi.propagationPreview(12)
+
+    const creation = propagationBuckets(apercu).find((p) => p.key === "create")
+
+    expect(creation?.count).toBe(0)
+    // `emphase` = affiché même à zéro : « aucune dette n'apparaîtra » est une
+    // réponse, l'absence de ligne n'en est pas une.
+    expect(creation?.emphase).toBe(true)
   })
 })
 

@@ -2,13 +2,9 @@ import { z } from "zod"
 import { apiFetch, safeValidate } from "./client"
 import {
   FeeCategorySchema,
-  FeePropagationPreviewSchema,
-  FeePropagationResultSchema,
   FeeVariantSchema,
   OptionalFeeOptionSchema,
   type FeeCategory,
-  type FeePropagationPreview,
-  type FeePropagationResult,
   type FeeVariant,
   type OptionalFeeOption,
   type FeeCategoryCreate,
@@ -18,6 +14,12 @@ import {
   type OptionalFeeOptionCreate,
   type OptionalFeeOptionUpdate,
 } from "@/lib/contracts/fee"
+import {
+  FeePropagationPreviewSchema,
+  FeePropagationResultSchema,
+  type FeePropagationPreview,
+  type FeePropagationResult,
+} from "@/lib/contracts/fee-propagation"
 
 const FeeCategoryArraySchema = z.array(FeeCategorySchema)
 const FeeVariantArraySchema = z.array(FeeVariantSchema)

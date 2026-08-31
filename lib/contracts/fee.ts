@@ -64,6 +64,13 @@ export const FeeVariantSchema = z.object({
    * un affecté est subventionné par l'État : il paie sensiblement moins.
    */
   assignment_scope: z.enum(["affecte", "non_affecte"]).nullish(),
+  /**
+   * `null` = ce montant s'applique à tout le monde. Sinon il ne vaut que pour
+   * une première inscription, ou que pour un élève déjà passé par l'école.
+   * Un tarif porté par un profil n'est pas un montant différent pour l'autre
+   * profil : il ne lui est pas facturé du tout.
+   */
+  enrollment_profile: z.enum(["nouveau", "ancien"]).nullish(),
   academic_year_id: z.number(),
   amount: z.coerce.number(),
   description: z.string().nullable(),
@@ -86,6 +93,10 @@ export const FeeVariantCreateSchema = z.object({
   level_id: z.number({ required_error: "Le niveau est requis" }).positive(),
   series_id: z.number().positive().nullable().optional(),
   assignment_scope: z.enum(["affecte", "non_affecte"]).nullable().optional(),
+  // Envoyé à `null` remet le tarif à « tous les élèves ». Le serveur
+  // distingue le champ absent du champ envoyé vide : l'écran l'envoie donc
+  // toujours, même à `null`, sinon on ne pourrait jamais revenir en arrière.
+  enrollment_profile: z.enum(["nouveau", "ancien"]).nullable().optional(),
   amount: z.number({ required_error: "Le montant est requis" }).positive("Le montant doit être positif"),
   academic_year_id: z.number({ required_error: "L'année académique est requise" }).positive(),
   description: z.string().nullable().optional(),
@@ -166,56 +177,49 @@ export function assignmentScopeLabel(scope: string | null | undefined): string {
   return ASSIGNMENT_SCOPES.find((s) => s.value === (scope ?? null))?.label ?? "Tous les élèves"
 }
 
-// ---------------------------------------------------------------------------
-// Répercussion d'un tarif modifié sur les inscriptions existantes
-// ---------------------------------------------------------------------------
+export type EnrollmentProfile = "nouveau" | "ancien" | null
 
 /**
- * Les compteurs communs à l'aperçu et au résultat.
+ * Profils d'inscription visés par un montant, dans l'ordre d'affichage.
  *
- * Mêmes noms des deux côtés : c'est ce qui permet à l'école de comparer ce
- * qu'on lui avait annoncé et ce qui a été fait. `amount` et `debt_delta`
- * passent par `coerce` parce que le serveur sérialise ses décimales en
- * chaînes, et qu'un `z.number()` nu ferait échouer la validation.
+ * La phrase d'aide dit ce que le choix fait à la facture, pas seulement qui
+ * il désigne : réserver un tarif aux nouveaux ne donne pas un autre montant
+ * aux anciens, il ne leur est plus facturé du tout. C'est la chemise
+ * cartonnée qu'on achète une fois, pas une remise de fidélité.
  */
-const feePropagationShape = {
-  variant_id: z.number(),
-  fee_category_id: z.number(),
-  category_name: z.string(),
-  academic_year_id: z.number(),
-  amount: z.coerce.number(),
-  /** Somme des quatre paquets : une catégorie ne produit qu'une ligne par inscription. */
-  enrollments_concerned: z.number(),
-  fees_already_up_to_date: z.number(),
-  fees_kept_with_payments: z.number(),
-  fees_waived: z.number(),
-  /** Écart total de dette en francs, négatif quand le tarif baisse. */
-  debt_delta: z.coerce.number(),
-  message: z.string(),
+export const ENROLLMENT_PROFILES: {
+  value: EnrollmentProfile
+  label: string
+  /** Étiquette courte, pour la grille où la place manque. */
+  badge: string | null
+  hint: string
+}[] = [
+  {
+    value: null,
+    label: "Tous les élèves",
+    badge: null,
+    hint: "Facturé aussi bien à une première inscription qu'à une réinscription",
+  },
+  {
+    value: "nouveau",
+    label: "Nouveaux élèves",
+    badge: "nouveaux",
+    hint: "Facturé à une première inscription seulement. Les anciens ne le paient pas du tout.",
+  },
+  {
+    value: "ancien",
+    label: "Anciens élèves",
+    badge: "anciens",
+    hint: "Facturé aux élèves déjà passés par l'école. Les nouveaux ne le paient pas du tout.",
+  },
+]
+
+export function enrollmentProfileLabel(profile: string | null | undefined): string {
+  return ENROLLMENT_PROFILES.find((p) => p.value === (profile ?? null))?.label ?? "Tous les élèves"
 }
 
-export const FeePropagationPreviewSchema = z.object({
-  ...feePropagationShape,
-  fees_to_update: z.number(),
-})
-
-export const FeePropagationResultSchema = z.object({
-  ...feePropagationShape,
-  fees_updated: z.number(),
-})
-
-export type FeePropagationPreview = z.infer<typeof FeePropagationPreviewSchema>
-export type FeePropagationResult = z.infer<typeof FeePropagationResultSchema>
-
-/**
- * L'écart de dette, signé et en francs.
- *
- * Le signe est explicite des deux côtés : « 81 000 F » seul ne dit pas si
- * l'école va réclamer davantage ou rendre de l'argent, et c'est la seule
- * chose que la comptable veut savoir en lisant cette ligne.
- */
-export function formatDebtDelta(delta: number): string {
-  if (delta === 0) return "0 F"
-  const signe = delta > 0 ? "+" : "\u2212"
-  return `${signe}${Math.abs(delta).toLocaleString("fr-FR")} F`
+/** `null` quand le tarif vaut pour tout le monde : rien à signaler dans la grille. */
+export function enrollmentProfileBadge(profile: string | null | undefined): string | null {
+  return ENROLLMENT_PROFILES.find((p) => p.value === (profile ?? null))?.badge ?? null
 }
+
