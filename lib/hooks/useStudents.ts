@@ -57,23 +57,3 @@ export function useStudentFilters() {
     staleTime: 1000 * 60,
   })
 }
-
-/**
- * La suggestion « nouvel élève » du serveur, pour pré-remplir la case.
- *
- * Ce n'est qu'une suggestion : l'écran doit rester capable de la contredire, et
- * ne rien pré-cocher quand elle rend `null`. Pas de `retry` inutile, l'écran sait
- * fonctionner sans elle.
- */
-export function useNewStudentSuggestion(
-  studentId: number | undefined,
-  academicYearId: number | undefined,
-) {
-  return useQuery({
-    queryKey: ["students", studentId, "new-student-suggestion", academicYearId],
-    queryFn: () => studentsApi.getNewStudentSuggestion(studentId!, academicYearId!),
-    enabled: !!studentId && !!academicYearId,
-    staleTime: 1000 * 60 * 5,
-    retry: false,
-  })
-}

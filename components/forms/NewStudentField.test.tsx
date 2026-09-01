@@ -5,9 +5,11 @@ import { NewStudentField } from "@/components/forms/NewStudentField"
 
 const getNewStudentSuggestion = vi.fn()
 
-vi.mock("@/lib/api/students", () => ({
-  studentsApi: {
-    getNewStudentSuggestion: (studentId: number, yearId: number) =>
+// La suggestion se lit sur le client des inscriptions, pas sur celui des
+// eleves : l'endpoint a suivi son domaine cote serveur, le client aussi.
+vi.mock("@/lib/api/enrollments", () => ({
+  enrollmentsApi: {
+    newStudentSuggestion: (studentId: number, yearId: number) =>
       getNewStudentSuggestion(studentId, yearId),
   },
 }))

@@ -4,8 +4,9 @@ import {
   EnrollmentSchema,
   FeeRegenerationResultSchema,
   FeeVariantOptionSchema,
+  NewStudentSuggestionSchema,
 } from "@/lib/contracts/enrollment"
-import type { BulkValidateResult, Enrollment, EnrollmentCreate, EnrollmentUpdate, FeeRegenerationResult, FeeVariantOption, NewEnrollment, ReEnrollment } from "@/lib/contracts/enrollment"
+import type { BulkValidateResult, Enrollment, EnrollmentCreate, EnrollmentUpdate, FeeRegenerationResult, FeeVariantOption, NewEnrollment, NewStudentSuggestion, ReEnrollment } from "@/lib/contracts/enrollment"
 import { createCrudApi } from "./createCrudApi"
 import { apiFetch, safeValidate } from "./client"
 
@@ -27,6 +28,27 @@ export const enrollmentsApi = {
     "/enrollments",
     EnrollmentSchema,
   ),
+
+  /**
+   * Ce que la case « nouvel élève » doit afficher avant que le guichet ne tranche.
+   *
+   * Rend `suggested: null` tant que l'établissement n'a pas déclaré son
+   * historique exploitable : l'écran n'a alors rien à pré-cocher et doit le
+   * dire. L'endpoint vit avec les inscriptions et non sous `/admin` : son
+   * sujet est l'inscription, et sa permission est `enrollments:create`.
+   */
+  newStudentSuggestion: async (
+    studentId: number,
+    academicYearId: number,
+  ): Promise<NewStudentSuggestion> => {
+    const path = `/enrollments/new-student-suggestion?student_id=${studentId}&academic_year_id=${academicYearId}`
+    const data = await apiFetch<unknown>(path)
+    return safeValidate(
+      NewStudentSuggestionSchema,
+      data,
+      "GET /enrollments/new-student-suggestion",
+    )
+  },
 
   createWithStudent: async (data: NewEnrollment) => {
     const { type, ...payload } = data
