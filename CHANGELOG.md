@@ -25,6 +25,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Annulation d'un versement déjà encaissé, depuis le tableau comme depuis le téléphone : c'est le cas courant, un montant saisi qui n'est pas dans la caisse *(admin)*
 
 ### Added
+- Saisie par classe : dire qui est nouveau et qui a déposé son article, sans ouvrir chaque fiche *(admin, secrétariat)* (#428)
 - Les réglages disent combien d'élèves sont rattachés aux années passées avant de laisser cocher « historique complet » *(admin)* (#426)
 - Un tarif peut ne concerner que les nouveaux élèves ou que les anciens : l'autre groupe ne le paie pas du tout *(admin, comptable)*
 - À l'inscription, le secrétariat dit si l'élève est nouveau, et le corrige ensuite depuis la fiche : rien n'est deviné à sa place *(admin, secrétariat)* (#419)

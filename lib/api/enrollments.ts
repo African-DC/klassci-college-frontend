@@ -7,6 +7,7 @@ import {
   NewStudentSuggestionSchema,
 } from "@/lib/contracts/enrollment"
 import type { BulkValidateResult, Enrollment, EnrollmentCreate, EnrollmentUpdate, FeeRegenerationResult, FeeVariantOption, NewEnrollment, NewStudentSuggestion, ReEnrollment } from "@/lib/contracts/enrollment"
+import { InKindRosterSchema, type InKindRoster } from "@/lib/contracts/in-kind-roster"
 import { createCrudApi } from "./createCrudApi"
 import { apiFetch, safeValidate } from "./client"
 
@@ -102,6 +103,26 @@ export const enrollmentsApi = {
     return apiFetch(`/enrollments/${enrollmentId}/fees/${feeId}/in-kind-deposit`, {
       method: "PATCH",
     })
+  },
+
+  /**
+   * Le depot etait une erreur : la ligne redevient due.
+   *
+   * Ce geste manquait, et un depot pose par erreur devait etre corrige a la
+   * main dans la base. C'est lui qui rend la saisie en lot acceptable : on
+   * peut se tromper sur une case parmi quarante.
+   */
+  cancelInKindDeposit: async (enrollmentId: number, feeId: number) => {
+    return apiFetch(`/enrollments/${enrollmentId}/fees/${feeId}/in-kind-deposit`, {
+      method: "DELETE",
+    })
+  },
+
+  /** La classe entiere, avec ce qu'il reste a renseigner sur chaque eleve. */
+  inKindRoster: async (classId: number, academicYearId: number): Promise<InKindRoster> => {
+    const path = `/enrollments/in-kind-roster?class_id=${classId}&academic_year_id=${academicYearId}`
+    const json = await apiFetch<unknown>(path)
+    return safeValidate(InKindRosterSchema, json, "GET /enrollments/in-kind-roster")
   },
 
   /** Valide une liste d'inscriptions ; un refus n'arrete pas les autres. */
