@@ -12,6 +12,21 @@ import type {
 
 export const settingsKeys = {
   all: ["settings"] as const,
+  historyCoverage: ["settings", "enrollment-history-coverage"] as const,
+}
+
+/**
+ * Ce que cocher « historique complet » impliquerait, en chiffres.
+ *
+ * Relu court : l'ecole reconstitue son annee passee dossier par dossier, et le
+ * chiffre affiche a cote de la case doit suivre sa progression.
+ */
+export function useEnrollmentHistoryCoverage() {
+  return useQuery({
+    queryKey: settingsKeys.historyCoverage,
+    queryFn: settingsApi.enrollmentHistoryCoverage,
+    staleTime: 1000 * 30,
+  })
 }
 
 export function useSettings() {

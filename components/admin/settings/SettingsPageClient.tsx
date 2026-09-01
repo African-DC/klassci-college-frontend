@@ -9,6 +9,7 @@ import { DataError } from "@/components/shared/DataError"
 import { useSettings } from "@/lib/hooks/useSettings"
 import { SchoolInfoSection } from "./SchoolInfoSection"
 import { TrimesterSection } from "./TrimesterSection"
+import { EnrollmentHistorySection } from "@/components/admin/settings/EnrollmentHistorySection"
 import { HolidaySection } from "./HolidaySection"
 import { NotificationSection } from "./NotificationSection"
 import { PdfIdentitySection } from "./PdfIdentitySection"
@@ -54,6 +55,7 @@ export function SettingsPageClient() {
           <TabsContent value="trimesters" className="space-y-6">
             <TrimesterSection settings={settings} />
             <HolidaySection settings={settings} />
+            <EnrollmentHistorySection settings={settings} />
           </TabsContent>
 
           <TabsContent value="payment-methods">
