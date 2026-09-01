@@ -32,6 +32,13 @@ export const SchoolSettingsSchema = z.object({
   enrollment_number_pattern: z.string().nullable().optional(),
   enrollment_number_counter: z.number().optional().default(0),
   // Personnalisation PDF par école (migration BE 0029)
+  /**
+   * L'école déclare que ses années passées sont complètes dans le logiciel.
+   *
+   * Faux par défaut, et c'est le seul défaut qui ne facture rien par surprise :
+   * tant qu'il l'est, le serveur ne devine jamais si un élève est nouveau.
+   */
+  enrollment_history_is_reliable: z.boolean().default(false),
   primary_color: z.string().nullable().optional(),
   accent_color: z.string().nullable().optional(),
   website: z.string().nullable().optional(),
@@ -62,6 +69,7 @@ export const SchoolInfoUpdateSchema = z.object({
   accent_color: z.string().nullable().optional(),
   website: z.string().nullable().optional(),
   motto: z.string().nullable().optional(),
+  enrollment_history_is_reliable: z.boolean().optional(),
 })
 
 export const TrimesterUpdateSchema = z.object({
@@ -100,3 +108,22 @@ export type SchoolInfoUpdate = z.infer<typeof SchoolInfoUpdateSchema>
 export type TrimesterUpdate = z.infer<typeof TrimesterUpdateSchema>
 export type HolidaysUpdate = z.infer<typeof HolidaysUpdateSchema>
 export type NotificationUpdate = z.infer<typeof NotificationUpdateSchema>
+
+/**
+ * Ce que déclarer son historique exploitable impliquerait, en chiffres.
+ *
+ * À lire AVANT de cocher. Le calcul de la facture était déjà juste : une
+ * inscription non tranchée ne reçoit aucun tarif réservé à un profil. Ce qui
+ * manquait, c'est qu'au moment de cocher, rien ne disait à l'école combien de
+ * ses élèves seraient traités comme des arrivants.
+ */
+export const EnrollmentHistoryCoverageSchema = z.object({
+  enrolled_this_year: z.number(),
+  with_anterior: z.number(),
+  ratio: z.number(),
+  threshold: z.number(),
+  is_sufficient: z.boolean(),
+  warning: z.string().nullable(),
+})
+
+export type EnrollmentHistoryCoverage = z.infer<typeof EnrollmentHistoryCoverageSchema>
