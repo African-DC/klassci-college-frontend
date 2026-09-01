@@ -15,50 +15,16 @@ import {
   AUDIENCE_PROFILES,
   AUDIENCE_SCOPES,
   audienceLabel,
-  mostSpecificVariantPerCategory,
+  basketTotal,
   type FeeAudience,
 } from "@/lib/contracts/fee-audience"
 import type { EnrollmentProfile } from "@/lib/contracts/fee"
-import { useFeeCategories, useFeeVariants } from "@/lib/hooks/useFees"
+import { useMandatoryBasket } from "@/lib/hooks/useFees"
 import { useLevels } from "@/lib/hooks/useLevels"
 import { formatFcfa } from "@/lib/utils/money"
 
 /** Valeur de liste pour « profil non tranché » : un select ne porte pas `null`. */
 const PROFIL_NON_TRANCHE = "non_tranche"
-
-interface PreviewVariant {
-  fee_category_id: number
-  level_id: number
-  series_id?: number | null
-  amount: number
-  assignment_scope?: string | null
-  enrollment_profile?: string | null
-}
-
-/**
- * Assiette d'un élève d'un niveau donné : la somme de ses frais obligatoires.
- *
- * L'arbitrage vient du contrat partagé, pas d'ici : un tarif réservé aux
- * nouveaux entré dans l'assiette de tout le monde ferait valider à la
- * directrice un échéancier que personne ne paiera. Un tarif au plus par
- * catégorie, le plus précis pour ce public exactement, comme le serveur en
- * décide au moment d'inscrire.
- */
-function mandatoryTotalForLevel(
-  variants: PreviewVariant[],
-  mandatoryCategoryIds: Set<number>,
-  levelId: number,
-  audience: FeeAudience,
-): number {
-  const duNiveau = variants.filter(
-    (v) => v.level_id === levelId && mandatoryCategoryIds.has(v.fee_category_id),
-  )
-
-  return mostSpecificVariantPerCategory(duNiveau, audience).reduce(
-    (total, variant) => total + variant.amount,
-    0,
-  )
-}
 
 /**
  * Simulation de la grille sur un niveau représentatif.
@@ -77,8 +43,7 @@ export function InstallmentGridPreview({
   drafts: InstallmentDraft[]
 }) {
   const { data: levelsData } = useLevels({ size: 100 })
-  const { data: categories } = useFeeCategories()
-  const { data: variants } = useFeeVariants(academicYearId)
+  const { data: basket } = useMandatoryBasket(academicYearId)
 
   const levels = useMemo(
     () => [...(levelsData?.items ?? [])].sort((a, b) => a.order - b.order),
@@ -96,15 +61,9 @@ export function InstallmentGridPreview({
     () => ({ assignment_scope: scope, enrollment_profile: profil }),
     [scope, profil],
   )
-  const mandatoryIds = useMemo(
-    () => new Set((categories ?? []).filter((c) => c.is_mandatory).map((c) => c.id)),
-    [categories],
-  )
-
-  const total = useMemo(() => {
-    if (!niveauChoisi) return 0
-    return mandatoryTotalForLevel(variants ?? [], mandatoryIds, niveauChoisi, audience)
-  }, [variants, mandatoryIds, niveauChoisi, audience])
+  // Une lecture, pas un calcul : le serveur a deja arbitre quel tarif
+  // l'emporte pour ce public, avec les memes fonctions qu'au guichet.
+  const total = basketTotal(basket, niveauChoisi, audience) ?? 0
 
   const montants = useMemo(() => simulateGrid(total, drafts), [total, drafts])
   const publicVise = audienceLabel(audience)

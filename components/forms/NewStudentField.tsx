@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { AlertTriangle, Info, Loader2 } from "lucide-react"
-import { useNewStudentSuggestion } from "@/lib/hooks/useStudents"
+import { useNewStudentSuggestion } from "@/lib/hooks/useEnrollments"
 import { NewStudentChoiceGroup } from "@/components/forms/NewStudentChoiceGroup"
 
 interface NewStudentFieldProps {

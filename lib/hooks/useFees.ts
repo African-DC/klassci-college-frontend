@@ -91,6 +91,24 @@ export function useDeleteFeeCategory() {
 
 // --- Variantes ---
 
+/**
+ * Le socle obligatoire de chaque niveau, pour chacun des six publics.
+ *
+ * L'ecran de simulation lisait les tarifs bruts et refaisait l'arbitrage du
+ * tarif le plus specifique lui-meme. C'est le serveur qui le porte, pour le
+ * guichet comme pour cet ecran : une regle, un endroit.
+ */
+export function useMandatoryBasket(academicYearId?: number) {
+  return useQuery({
+    queryKey: academicYearId
+      ? ["fees", "mandatory-basket", academicYearId]
+      : ["fees", "mandatory-basket", "none"],
+    queryFn: () => feesApi.mandatoryBasket(academicYearId as number),
+    enabled: !!academicYearId,
+    staleTime: 1000 * 60 * 10,
+  })
+}
+
 export function useFeeVariants(academicYearId?: number) {
   return useQuery({
     queryKey: academicYearId ? feeKeys.variants(academicYearId) : ["fees", "variants", "none"],
