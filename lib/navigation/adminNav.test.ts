@@ -11,8 +11,15 @@ const accountant = [
 // Le bureau de la vie scolaire : c'est lui qui délivre convocations et billets
 // d'annulation de zéro. Le directeur des études, lui, signe la demande de
 // dossier scolaire — pas ces deux actes.
+// Les droits reels du role, tels que `tenants/permissions.py` les seme et que
+// la migration 0042 les a poses sur les bases existantes. Cette liste avait
+// derive : elle omettait `enrollments:create`, `update` et `validate`, et
+// laissait croire que l'educateur ne pouvait rien ecrire.
 const educator = [
   "enrollments:read",
+  "enrollments:create",
+  "enrollments:update",
+  "enrollments:validate",
   "admin:students:read",
   "admin:classes:read",
   "attendance:read",
@@ -83,6 +90,15 @@ describe("filterAdminNavigation", () => {
     const seen = labels(educator)
     expect(seen).toContain("Convocations")
     expect(seen).toContain("Autorisations de reprise")
+  })
+
+  it("gives the educator the batch entry screen he is the user of", () => {
+    // L'ecran de saisie par classe existe pour lui : soixante-dix-huit
+    // inscriptions a renseigner, fiche par fiche, ne se terminent pas. Une
+    // entree de menu qu'il ne verrait pas rendrait la fonctionnalite
+    // introuvable pour son seul utilisateur.
+    expect(labels(educator)).toContain("Saisie par classe")
+    expect(labels(accountant)).not.toContain("Saisie par classe")
   })
 
   it("hides the school-life acts from the directeur des etudes", () => {
