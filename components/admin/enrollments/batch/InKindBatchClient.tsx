@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { ClipboardList } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -23,6 +24,9 @@ import {
   useSetEnrollmentProfile,
   useToggleInKindDeposit,
 } from "@/lib/hooks/useInKindRoster"
+
+/** La derniere classe ouverte, pour reprendre ou on s'est arrete. */
+const DERNIERE_CLASSE = "klassci.saisie-classe.derniere"
 
 /** Le dépôt en attente de confirmation, le temps de la boîte. */
 interface DepotEnAttente {
@@ -58,8 +62,32 @@ export function InKindBatchClient() {
     [classesData],
   )
 
-  const [classId, setClassId] = useState<number | undefined>(undefined)
+  // La classe vient d'abord du lien, sinon de la derniere ouverte, sinon de
+  // la premiere. L'educateur enchaine les classes : le renvoyer a la premiere
+  // a chaque retour lui coute un geste a chaque fois, et il en fait trente.
+  const params = useSearchParams()
+  const [classId, setClassId] = useState<number | undefined>(() => {
+    const depuisLien = Number(params.get("class"))
+    if (Number.isFinite(depuisLien) && depuisLien > 0) return depuisLien
+    if (typeof window === "undefined") return undefined
+    try {
+      const retenue = Number(window.localStorage.getItem(DERNIERE_CLASSE))
+      return Number.isFinite(retenue) && retenue > 0 ? retenue : undefined
+    } catch {
+      // Navigation privee, stockage bloque : on repart de la premiere classe.
+      return undefined
+    }
+  })
   const classeChoisie = classId ?? classes[0]?.id
+
+  useEffect(() => {
+    if (!classeChoisie) return
+    try {
+      window.localStorage.setItem(DERNIERE_CLASSE, String(classeChoisie))
+    } catch {
+      // Rien a faire : se souvenir est un confort, pas une garantie.
+    }
+  }, [classeChoisie])
 
   const { data, isLoading, isError, refetch } = useInKindRoster(classeChoisie, academicYearId)
   const lignes = data?.items ?? []

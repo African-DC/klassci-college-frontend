@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { GraduationCap, Plus, ListChecks, CheckCircle2, Clock, XCircle } from "lucide-react"
-import { PageHero, heroAccentBtn, type HeroKpi } from "@/components/shared/PageHero"
+import { ClipboardList, GraduationCap, Plus, ListChecks, CheckCircle2, Clock, XCircle } from "lucide-react"
+import Link from "next/link"
+import type { Route } from "next"
+import { PageHero, heroAccentBtn, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
 import { EnrollmentsTable } from "./EnrollmentsTable"
 import { EnrollmentCreateModal } from "./EnrollmentCreateModal"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
@@ -65,10 +67,21 @@ export function EnrollmentsPageClient() {
         title="Inscriptions"
         subtitle={<EnrollmentsSubtitle />}
         actions={
-          <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Nouvelle inscription
-          </button>
+          <>
+            {/*
+              La porte de la saisie en lot. Elle est ici parce que c'est d'ici
+              qu'on constate qu'il reste des dossiers a renseigner, et parce
+              qu'une fonctionnalite qu'on ne trouve pas n'existe pas.
+            */}
+            <Link href={"/admin/enrollments/saisie-classe" as Route} className={heroGlassBtn}>
+              <ClipboardList className="h-4 w-4" />
+              Saisie par classe
+            </Link>
+            <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Nouvelle inscription
+            </button>
+          </>
         }
         kpis={kpis}
       />

@@ -11,6 +11,7 @@ import {
   School,
   Trash2,
   Users,
+  ClipboardList,
 } from "lucide-react"
 import { useClass, useDeleteClass } from "@/lib/hooks/useClasses"
 import { useTimetable } from "@/lib/hooks/useTimetable"
@@ -26,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { DataError } from "@/components/shared/DataError"
+import type { Route } from "next"
 import { PageHero, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
 import { ClassEditModal } from "./ClassEditModal"
 import { OverviewTab } from "./detail/OverviewTab"
@@ -107,6 +109,20 @@ export function ClassDetailClient({ classId }: ClassDetailClientProps) {
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Retour
+            </button>
+            {/*
+              L'educateur est deja sur la classe : la saisie s'ouvre dessus,
+              pas sur une liste ou il devrait la rechercher.
+            */}
+            <button
+              type="button"
+              onClick={() =>
+                router.push(`/admin/enrollments/saisie-classe?class=${classId}` as Route)
+              }
+              className={heroGlassBtn}
+            >
+              <ClipboardList className="h-4 w-4" aria-hidden="true" />
+              Saisie par classe
             </button>
             <button
               type="button"
