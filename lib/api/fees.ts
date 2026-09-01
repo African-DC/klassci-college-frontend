@@ -20,6 +20,10 @@ import {
   type FeePropagationPreview,
   type FeePropagationResult,
 } from "@/lib/contracts/fee-propagation"
+import {
+  MandatoryBasketSchema,
+  type MandatoryBasket,
+} from "@/lib/contracts/fee-audience"
 
 const FeeCategoryArraySchema = z.array(FeeCategorySchema)
 const FeeVariantArraySchema = z.array(FeeVariantSchema)
@@ -132,6 +136,20 @@ export const feesApi = {
    * Se lit avant de decider : l'ecole doit voir combien d'inscriptions sont
    * touchees et de combien la dette bougerait AVANT de confirmer.
    */
+  /**
+   * Le socle obligatoire de chaque niveau, pour chacun des six publics.
+   *
+   * Toutes les combinaisons d'un coup : l'ecran bascule entre publics pendant
+   * que la personne reflechit, et un aller-retour par bascule la ferait
+   * attendre sur une connexion instable. C'est le serveur qui arbitre quel
+   * tarif l'emporte, la ou l'ecran le refaisait en divergeant.
+   */
+  mandatoryBasket: async (academicYearId: number): Promise<MandatoryBasket> => {
+    const path = `/admin/fee-variants/mandatory-basket?academic_year_id=${academicYearId}`
+    const json = await apiFetch<unknown>(path)
+    return safeValidate(MandatoryBasketSchema, json, "GET /admin/fee-variants/mandatory-basket")
+  },
+
   propagationPreview: async (id: number): Promise<FeePropagationPreview> => {
     const json = await apiFetch<unknown>(`/admin/fee-variants/${id}/propagation-preview`)
     return safeValidate(

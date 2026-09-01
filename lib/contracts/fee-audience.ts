@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import type { AssignmentScope, EnrollmentProfile } from "./fee"
 import { enrollmentProfileBadge } from "./fee"
 
@@ -77,79 +79,6 @@ export const AUDIENCE_PROFILES: {
 ]
 
 /**
- * Ce public paie-t-il ce tarif ?
- *
- * Un tarif sans restriction s'applique à tout le monde. Un tarif restreint ne
- * donne pas un autre montant aux autres : il ne leur est pas facturé du tout.
- * Le profil non tranché ne correspond donc à aucun tarif ciblé, et c'est
- * voulu : facturer sur une supposition, c'est facturer au hasard.
- */
-export function variantAppliesTo(variant: TargetedVariant, audience: FeeAudience): boolean {
-  const scope = variant.assignment_scope ?? null
-  const profile = variant.enrollment_profile ?? null
-  const series = variant.series_id ?? null
-  if (scope !== null && scope !== audience.assignment_scope) return false
-  if (profile !== null && profile !== audience.enrollment_profile) return false
-  // Même règle que `applicable_series_keys` côté serveur : un tarif de série
-  // ne vaut que pour cette série, et une audience qui n'en désigne aucune ne
-  // reçoit que le tronc commun.
-  if (series !== null && series !== (audience.series_id ?? null)) return false
-  return true
-}
-
-/**
- * Le poids de chaque dimension dans l'arbitrage, du plus fort au plus faible.
- *
- * Même ordre que `_specificity` côté serveur, et pour la même raison :
- * l'affectation passe devant le profil parce qu'elle change le montant du
- * simple au double en Côte d'Ivoire, quand le profil ajoute ou retire une
- * ligne. La série vient en dernier, et une série renseignée l'emporte, parce
- * que `variantAppliesTo` a déjà écarté celles qui ne concernent pas cette
- * audience : il ne reste que des tarifs applicables, et parmi eux le plus
- * précis gagne.
- *
- * L'ancien barème donnait un point au tronc commun au lieu d'écarter les
- * séries étrangères : un tarif de série A pouvait alors l'emporter sur le
- * tarif du niveau dans une simulation qui ne désigne aucune série.
- */
-const POIDS_AFFECTATION = 4
-const POIDS_PROFIL = 2
-const POIDS_SERIE = 1
-
-export function variantSpecificity(variant: TargetedVariant): number {
-  return (
-    (variant.assignment_scope ? POIDS_AFFECTATION : 0) +
-    (variant.enrollment_profile ? POIDS_PROFIL : 0) +
-    (variant.series_id == null ? 0 : POIDS_SERIE)
-  )
-}
-
-/**
- * Un tarif au plus par catégorie, le plus précis qui s'adresse à ce public.
- *
- * Une catégorie ne produit qu'une ligne de frais par inscription. En retenir
- * deux, c'est facturer deux fois la même scolarité ; en retenir le plus
- * général alors qu'un tarif précis existe, c'est annoncer le plein tarif à un
- * élève subventionné.
- */
-export function mostSpecificVariantPerCategory<T extends TargetedVariant>(
-  variants: T[],
-  audience: FeeAudience,
-): T[] {
-  const retenus = new Map<number, T>()
-
-  for (const variant of variants) {
-    if (!variantAppliesTo(variant, audience)) continue
-    const actuel = retenus.get(variant.fee_category_id)
-    if (!actuel || variantSpecificity(variant) > variantSpecificity(actuel)) {
-      retenus.set(variant.fee_category_id, variant)
-    }
-  }
-
-  return [...retenus.values()]
-}
-
-/**
  * Pour quel public un montant simulé vaut, dit en toutes lettres.
  *
  * Se glisse dans une phrase : « pour un élève non affecté, première
@@ -202,4 +131,43 @@ export function feeVariantFullName(
   if (profil) morceaux.push(profil)
 
   return morceaux.join(" · ")
+}
+
+
+/**
+ * Le socle obligatoire d'un niveau pour un public, calculé par le serveur.
+ *
+ * L'écran calculait ce total lui-même, en réimplémentant l'arbitrage du tarif
+ * le plus spécifique. La règle vivait donc dans deux langages et elle a
+ * divergé : la version de l'écran oubliait d'écarter les tarifs d'une série
+ * étrangère, et la simulation annonçait des francs que l'élève ne paierait
+ * jamais. Elle est rendue au serveur, qui la porte déjà pour le guichet.
+ */
+export const MandatoryBasketLineSchema = z.object({
+  level_id: z.number(),
+  assignment_scope: z.string(),
+  enrollment_profile: z.string().nullable(),
+  total: z.coerce.number(),
+})
+
+export const MandatoryBasketSchema = z.object({
+  items: z.array(MandatoryBasketLineSchema),
+})
+
+export type MandatoryBasketLine = z.infer<typeof MandatoryBasketLineSchema>
+export type MandatoryBasket = z.infer<typeof MandatoryBasketSchema>
+
+/** Le total d'un public dans le tableau rendu, `undefined` s'il n'y figure pas. */
+export function basketTotal(
+  basket: MandatoryBasket | undefined,
+  levelId: number | undefined,
+  audience: FeeAudience,
+): number | undefined {
+  if (!basket || !levelId) return undefined
+  return basket.items.find(
+    (l) =>
+      l.level_id === levelId &&
+      l.assignment_scope === audience.assignment_scope &&
+      (l.enrollment_profile ?? null) === audience.enrollment_profile,
+  )?.total
 }
