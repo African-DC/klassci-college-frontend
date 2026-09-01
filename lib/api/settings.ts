@@ -1,7 +1,9 @@
 import { z } from "zod"
-import { apiFetch, apiFetchMultipart } from "./client"
+import { apiFetch, apiFetchMultipart, safeValidate } from "./client"
 import {
+  EnrollmentHistoryCoverageSchema,
   SchoolSettingsSchema,
+  type EnrollmentHistoryCoverage,
   type SchoolSettings,
   type SchoolInfoUpdate,
   type TrimesterUpdate,
@@ -32,6 +34,21 @@ export const settingsApi = {
   get: async (): Promise<SchoolSettings> => {
     const json = await apiFetch<unknown>("/admin/settings")
     return parseSettings(json, "GET /admin/settings")
+  },
+
+  /**
+   * Combien d'eleves de l'annee en cours sont rattaches au passe enregistre.
+   *
+   * Se lit a cote de la case « historique complet » : c'est la consequence
+   * de la coche, en chiffres, au moment ou on la coche.
+   */
+  enrollmentHistoryCoverage: async (): Promise<EnrollmentHistoryCoverage> => {
+    const json = await apiFetch<unknown>("/admin/settings/enrollment-history-coverage")
+    return safeValidate(
+      EnrollmentHistoryCoverageSchema,
+      json,
+      "GET /admin/settings/enrollment-history-coverage",
+    )
   },
 
   updateSchoolInfo: async (data: SchoolInfoUpdate): Promise<SchoolSettings> => {
