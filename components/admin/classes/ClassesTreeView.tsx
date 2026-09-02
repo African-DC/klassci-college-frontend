@@ -31,6 +31,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { ClassEditModal } from "./ClassEditModal"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
+import { matchesSearch } from "@/lib/utils/list-search"
 
 interface TreeNode {
   type: "level" | "series" | "class"
@@ -50,6 +52,7 @@ export function ClassesTreeView() {
   const { data: classesData, isLoading: classesLoading } = useClasses({ size: 100 })
   const deleteMutation = useDeleteClass()
 
+  const [search, setSearch] = useState("")
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["all"]))
   const [editId, setEditId] = useState<number | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null)
@@ -81,7 +84,9 @@ export function ClassesTreeView() {
 
     const levels = levelsData.items
     const series = seriesData?.items ?? []
-    const classes = classesData.items
+    const classes = classesData.items.filter((c) =>
+      matchesSearch([c.name, c.level_name, c.series_name], search),
+    )
 
     const classesByLevel = new Map<number, Class[]>()
     const classesByLevelSeries = new Map<string, Class[]>()
@@ -137,7 +142,7 @@ export function ClassesTreeView() {
           children,
         }
       })
-  }, [levelsData, seriesData, classesData])
+  }, [levelsData, seriesData, classesData, search])
 
   // Auto-expand all on first load
   useMemo(() => {
@@ -187,6 +192,11 @@ export function ClassesTreeView() {
 
   return (
     <div className="space-y-4">
+      <DirectoryFiltersBar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Rechercher une classe..."
+      />
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <span>{totalClasses} classes</span>
         <span className="text-border">|</span>

@@ -87,6 +87,34 @@ describe("le nom de l'encaisseur", () => {
   })
 })
 
+describe("le bandeau financier", () => {
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_API_URL = "http://api.test"
+    vi.spyOn(console, "error").mockImplementation(() => undefined)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it("envoie l'année scolaire, sans quoi le collecté additionnerait les exercices", async () => {
+    const fetchMock = respondWith({
+      total_expected: 1000,
+      total_paid: 500,
+      total_pending: 0,
+      total_cancelled: 0,
+      payment_count: 2,
+      completion_rate: 50,
+    })
+    await paymentsApi.getSummary(1, { status: "completed" })
+    const called = url(fetchMock)
+    expect(called.pathname).toBe("/payments/summary")
+    expect(called.searchParams.get("academic_year_id")).toBe("1")
+    expect(called.searchParams.get("status")).toBe("completed")
+  })
+})
+
 describe("l'export du journal des versements", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_API_URL = "http://api.test"
@@ -125,6 +153,14 @@ describe("l'export du journal des versements", () => {
     expect(called.searchParams.get("date_from")).toBe("2026-09-01T00:00:00")
     expect(called.searchParams.get("date_to")).toBe("2026-09-30T23:59:59")
     expect(called.searchParams.get("format")).toBe("xlsx")
+  })
+
+  it("emporte l'année scolaire, sans quoi l'export additionnerait les exercices", async () => {
+    const fetchMock = respondWithBlob()
+    await paymentsApi.downloadJournal({ academic_year_id: 1, status: "completed" }, "pdf")
+    const called = url(fetchMock)
+    expect(called.searchParams.get("academic_year_id")).toBe("1")
+    expect(called.searchParams.get("status")).toBe("completed")
   })
 
   it("n'emporte pas la pagination : un journal se lit en entier", async () => {

@@ -58,6 +58,7 @@ export function useFinancialSummary(academicYearId?: number, filtres?: PaymentLi
   return useQuery({
     queryKey: paymentKeys.summary(academicYearId, filtres),
     queryFn: () => paymentsApi.getSummary(academicYearId, filtres),
+    enabled: academicYearId != null,
     staleTime: 1000 * 60 * 5,
   })
 }
@@ -272,6 +273,9 @@ export function useInfinitePayments(params: PaymentListParams = {}) {
     // La condition d arret vit dans `./pagination`, ou elle est testee.
     getNextPageParam: (derniere: PaginatedResponse<Payment>, pages: unknown[]) =>
       pageSuivante(derniere, pages.length),
+    // Sans année, le premier aller-retour additionnerait tous les exercices
+    // et le bandeau clignoterait un collecté gonflé le temps que l'année arrive.
+    enabled: params.academic_year_id != null,
     staleTime: 1000 * 60 * 5,
   })
 }
