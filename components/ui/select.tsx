@@ -87,8 +87,11 @@ const SelectContent = React.forwardRef<
       <SelectPrimitive.Viewport
         className={cn(
           "p-1",
-          position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
+          // Pas de `h-[var(--radix-select-trigger-height)]` ici : cette hauteur
+          // enferme la liste ouverte dans celle de son propre bouton, et il
+          // faut alors defiler dans une fente d'une ligne pour trouver une
+          // option. La largeur minimale, elle, reste calee sur le declencheur.
+          position === "popper" && "w-full min-w-[var(--radix-select-trigger-width)]"
         )}
       >
         {children}
