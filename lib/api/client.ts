@@ -242,7 +242,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   if (res.status === 204) return undefined as T
   const data = await res.json()
-  return schema ? safeValidate<T>(schema, data, path) : data
+  return schema ? safeValidate(schema, data, path) : data
 }
 
 interface MultipartRequestOptions<T> {
@@ -291,5 +291,5 @@ export async function apiFetchMultipart<T>(
 
   if (res.status === 204) return undefined as T
   const data = await res.json()
-  return schema ? safeValidate<T>(schema, data, context ?? path) : (data as T)
+  return schema ? safeValidate(schema, data, context ?? path) : (data as T)
 }

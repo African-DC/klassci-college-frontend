@@ -1,5 +1,31 @@
 import { describe, expect, it } from "vitest"
-import { analyser, construire, lireEntree } from "./release-feed.mjs"
+// @ts-expect-error — module JavaScript sans types : c'est lui qu'on teste.
+import { analyser as analyserBrut, construire as construireBrut, lireEntree as lireBrut } from "./release-feed.mjs"
+
+/**
+ * Le script est du JavaScript pur, sans déclarations. On nomme ici la forme
+ * qu'il rend, qui est celle du contrat : le test vérifie alors une promesse
+ * écrite, et pas seulement ce que le code fait aujourd'hui.
+ */
+interface EntreeLue {
+  text: string
+  audience: string[]
+  pull_request: number | null
+}
+
+interface VersionLue {
+  version: string
+  date: string | null
+  released: boolean
+  sections: Record<string, EntreeLue[]>
+}
+
+const analyser = analyserBrut as (markdown: string) => VersionLue[]
+const lireEntree = lireBrut as (ligne: string) => EntreeLue
+const construire = construireBrut as (
+  produit: string,
+  markdown: string,
+) => { current_version: string | null }
 
 /**
  * Ce fichier existe parce que le même analyseur est écrit deux fois : ici en
