@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { Toaster } from "sonner"
+import { WhatsNewModal } from "@/components/shared/WhatsNewModal"
 
 interface PortalShellProps {
   label: string
@@ -42,6 +43,7 @@ export function PortalShell({ label, nav, sidebar, children }: PortalShellProps)
 
         <main className="flex-1 px-4 py-4 pb-24 md:px-8 md:py-6 md:pb-8">
           {children}
+      <WhatsNewModal />
         </main>
 
         {nav}

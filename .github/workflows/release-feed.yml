@@ -1,0 +1,26 @@
+name: Release feed
+
+# Le flux est une projection du changelog, et le modal « Nouveautes » en lit une
+# tranche. Sans ce garde-fou, les deux derivent au premier changelog modifie
+# sans regeneration : la vitrine annonce une version de retard, et le portail
+# montre des nouveautes qui n'en sont plus.
+on:
+  pull_request:
+    paths:
+      - "CHANGELOG.md"
+      - "RELEASES.json"
+      - "public/whats-new.json"
+      - "scripts/release-feed.mjs"
+  push:
+    branches: [main]
+
+jobs:
+  verifier:
+    name: Le flux suit le changelog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node scripts/release-feed.mjs --check
