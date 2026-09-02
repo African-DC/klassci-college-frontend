@@ -78,6 +78,7 @@ export function InKindBatchClient() {
     classId: classeChoisie,
     setClassId,
     isLoading: classesLoading,
+    isError: classesEnErreur,
   } = useClassChoice(reprendreOu(params.get("class")))
 
   useEffect(() => {
@@ -153,6 +154,7 @@ export function InKindBatchClient() {
         value={classeChoisie}
         onChange={setClassId}
         isLoading={classesLoading}
+        isError={classesEnErreur}
       />
 
       {isLoading ? (

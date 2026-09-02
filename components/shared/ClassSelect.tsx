@@ -13,6 +13,19 @@ import { Skeleton } from "@/components/ui/skeleton"
 import type { Class } from "@/lib/contracts/class"
 
 /**
+ * Ce que dit le champ quand il ne propose rien.
+ *
+ * « Aucune classe » sur une liste qu'on n'a pas pu lire est un mensonge, et
+ * c'est exactement celui qui a cache pendant des semaines un ecran inutilisable :
+ * le selecteur affichait son invite, et l'ecran concluait « aucune inscription ».
+ */
+function placeholder(nombre: number, isError?: boolean): string {
+  if (isError) return "Liste des classes indisponible"
+  if (nombre === 0) return "Aucune classe enregistrée"
+  return "Choisir une classe"
+}
+
+/**
  * Le choix de la classe, tel qu'il se présente sur les écrans qui en dépendent.
  *
  * La saisie en lot et les soldes le dessinaient chacun de leur côté, à deux
@@ -27,12 +40,15 @@ export function ClassSelect({
   value,
   onChange,
   isLoading,
+  isError,
   id,
 }: {
   classes: Class[]
   value: number | undefined
   onChange: (classId: number) => void
   isLoading?: boolean
+  /** La liste n'a pas pu etre lue : le dire, plutot que « aucune classe ». */
+  isError?: boolean
   /** Distinct par écran : deux `id` identiques sur une page casseraient le label. */
   id: string
 }) {
@@ -48,12 +64,10 @@ export function ClassSelect({
           <Select
             value={value ? String(value) : undefined}
             onValueChange={(v) => onChange(Number(v))}
-            disabled={classes.length === 0}
+            disabled={classes.length === 0 || Boolean(isError)}
           >
             <SelectTrigger id={id} className="mt-1 h-11 sm:h-10">
-              <SelectValue
-                placeholder={classes.length === 0 ? "Aucune classe" : "Choisir une classe"}
-              />
+              <SelectValue placeholder={placeholder(classes.length, isError)} />
             </SelectTrigger>
             <SelectContent>
               {classes.map((classe) => (

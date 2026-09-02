@@ -19,7 +19,12 @@ import { useClasses } from "@/lib/hooks/useClasses"
  * fois. Ce souvenir reste chez lui : il n'a rien à faire ici.
  */
 export function useClassChoice(initial?: number) {
-  const { data, isLoading } = useClasses({ size: 200 })
+  // 100 est le maximum que le serveur accepte — `size` y est borne a `le=100`.
+  // Demander 200 rendait 422, la liste retombait vide, et le selecteur ne
+  // montrait que son texte d'invite : l'ecran de saisie par classe etait ainsi
+  // inutilisable depuis sa livraison, pour l'educateur a qui il est destine.
+  // C'est aussi la valeur qu'emploient tous les autres ecrans du portail.
+  const { data, isLoading, isError } = useClasses({ size: 100 })
 
   const classes = useMemo(
     () => [...(data?.items ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
@@ -36,5 +41,7 @@ export function useClassChoice(initial?: number) {
     classId: choisie ?? classes[0]?.id,
     setClassId,
     isLoading,
+    // Une liste vide et une liste illisible ne se disent pas du meme mot.
+    isError,
   }
 }

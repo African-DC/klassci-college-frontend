@@ -50,6 +50,7 @@ export function FeeSettlementClient() {
     classId: classeChoisie,
     setClassId,
     isLoading: classesLoading,
+    isError: classesEnErreur,
   } = useClassChoice()
 
   const { data, isLoading, isError, error, refetch } = useFeeSettlement(classeChoisie, academicYearId)
@@ -152,6 +153,7 @@ export function FeeSettlementClient() {
         value={classeChoisie}
         onChange={setClassId}
         isLoading={classesLoading}
+        isError={classesEnErreur}
       />
 
       {isError ? (
