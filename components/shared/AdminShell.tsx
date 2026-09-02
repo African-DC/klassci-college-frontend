@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Toaster } from "sonner"
 import { Sidebar } from "@/components/shared/Sidebar"
 import { Navbar } from "@/components/shared/Navbar"
-import { WhatsNewModal } from "@/components/shared/WhatsNewModal"
 import { AcademicYearProvider } from "@/components/shared/AcademicYearProvider"
 import { NoCurrentYearBanner } from "@/components/shared/NoCurrentYearBanner"
 
@@ -22,7 +21,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <main className="flex-1 overflow-y-auto bg-muted/30 p-4 lg:p-6">
             <NoCurrentYearBanner />
             {children}
-            <WhatsNewModal />
           </main>
         </div>
 

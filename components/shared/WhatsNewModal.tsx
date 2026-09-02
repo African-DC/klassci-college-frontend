@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Sparkles } from "lucide-react"
 import {
   Dialog,
@@ -27,9 +27,17 @@ const SECTION_LABEL: Record<string, string> = {
  * « Nouveautés » : ce qui a changé pour la personne qui regarde.
  *
  * Un Show-résumé, donc une fenêtre et non une page, comme la règle des écrans
- * le demande. Elle s'ouvre d'elle-même quand il y a du neuf depuis la dernière
- * visite, et une seule fois : la refermer vaut « j'ai lu », et le marqueur ne
- * rebouge qu'au prochain changelog.
+ * le demande.
+ *
+ * **Elle ne s'ouvre pas d'elle-même.** Elle l'a fait, et les tests de bout en
+ * bout l'ont dit tout de suite : une fenêtre posée sur l'application intercepte
+ * le premier clic. Ce qui casse un test casse aussi le geste d'une secrétaire
+ * qui ouvre le portail pour encaisser, et lui faire refermer une fenêtre avant
+ * de travailler est un péage, pas une nouvelle.
+ *
+ * Une pastille sur le déclencheur dit qu'il y a du neuf ; on lit quand on veut.
+ * La refermer vaut « j'ai lu », et le marqueur ne rebouge qu'au prochain
+ * changelog.
  *
  * **Chaque ligne est filtrée sur le rôle.** Un parent n'a rien à faire d'une
  * note sur la sauvegarde nocturne, et lui montrer du vocabulaire d'exploitation
@@ -39,10 +47,6 @@ const SECTION_LABEL: Record<string, string> = {
 export function WhatsNewModal() {
   const { lignes, tronquees, duNeuf, marquerVu } = useWhatsNew()
   const [ouvert, setOuvert] = useState(false)
-
-  useEffect(() => {
-    if (duNeuf) setOuvert(true)
-  }, [duNeuf])
 
   function fermer() {
     setOuvert(false)
@@ -63,6 +67,23 @@ export function WhatsNewModal() {
 
   return (
     <Dialog open={ouvert} onOpenChange={(v) => (v ? setOuvert(true) : fermer())}>
+      <button
+        type="button"
+        onClick={() => setOuvert(true)}
+        aria-label={duNeuf ? "Nouveautés, du neuf à lire" : "Nouveautés"}
+        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <Sparkles aria-hidden className="h-5 w-5" />
+        {duNeuf && (
+          // Une pastille, pas un compteur : le nombre exact de nouveautés
+          // n'aide à rien, et l'annoncer donnerait envie de le faire tomber
+          // à zéro plutôt que de lire.
+          <span
+            aria-hidden
+            className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-background"
+          />
+        )}
+      </button>
       <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
