@@ -1,77 +1,14 @@
 ﻿"use client"
 
 import Image from "next/image"
-import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  Archive,
-  ArrowUpFromLine,
-  LayoutDashboard,
-  UserPlus,
-  GraduationCap,
-  Users,
-  UserCog,
-  School,
-  BookOpen,
-  Layers,
-  DoorOpen,
-  Wallet,
-  CreditCard,
-  CalendarDays,
-  CalendarClock,
-  CalendarRange,
-  ClipboardList,
-  HeartHandshake,
-  UserCheck,
-  FileText,
-  Gauge,
-  Bell,
-  ScrollText,
-  ShieldCheck,
-  Settings,
-  X,
-  Banknote,
-  ClipboardCheck,
-  Megaphone,
-  RotateCcw,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
+import { X } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { usePermissions } from "@/lib/hooks/usePermissions"
 import { filterAdminNavigation } from "@/lib/navigation/adminNav"
+import { SidebarNavItem } from "@/components/shared/SidebarNavItem"
 
-const ICONS = {
-  Archive,
-  Banknote,
-  ClipboardCheck,
-  ArrowUpFromLine,
-  LayoutDashboard,
-  UserPlus,
-  GraduationCap,
-  Users,
-  UserCog,
-  School,
-  BookOpen,
-  Layers,
-  DoorOpen,
-  Wallet,
-  CreditCard,
-  CalendarDays,
-  CalendarClock,
-  CalendarRange,
-  ClipboardList,
-  HeartHandshake,
-  UserCheck,
-  FileText,
-  Gauge,
-  Bell,
-  ScrollText,
-  ShieldCheck,
-  Settings,
-  Megaphone,
-  RotateCcw,
-} as const
 
 interface SidebarProps {
   open?: boolean
@@ -118,26 +55,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {section.title}
             </p>
-            {section.items.map((item) => {
-              const Icon = ICONS[item.iconName as keyof typeof ICONS]
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={cn(
-                    "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                    isActive
-                      ? "bg-primary/10 text-primary font-medium before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-accent before:content-['']"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  {Icon ? <Icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary")} /> : null}
-                  {item.label}
-                </Link>
-              )
-            })}
+            {section.items.map((item) => (
+              <SidebarNavItem
+                key={"href" in item ? item.href : item.label}
+                item={item}
+                pathname={pathname}
+                onNavigate={onClose}
+              />
+            ))}
           </div>
         ))}
       </nav>

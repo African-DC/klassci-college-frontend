@@ -1,5 +1,5 @@
 ﻿import { describe, expect, it } from "vitest"
-import { filterAdminNavigation } from "./adminNav"
+import { estUnGroupe, filterAdminNavigation } from "./adminNav"
 
 // Les droits reels du role, tels que `tenants/permissions.py` les seme. Cette
 // liste avait derive comme celle de l'educateur avant elle : elle omettait
@@ -67,8 +67,19 @@ const staff = [
   "leave:request",
 ]
 
+/**
+ * Tous les libellés visibles, groupes traversés.
+ *
+ * Un groupe cache ses enfants derrière un bouton ; s'arrêter à son libellé
+ * ferait passer ces tests alors qu'une entrée réservée serait offerte à qui
+ * n'y a pas droit, ce qu'ils existent précisément pour attraper.
+ */
 function labels(permissions: string[]): string[] {
-  return filterAdminNavigation(permissions).flatMap((section) => section.items.map((item) => item.label))
+  return filterAdminNavigation(permissions).flatMap((section) =>
+    section.items.flatMap((item) =>
+      estUnGroupe(item) ? [item.label, ...item.children.map((c) => c.label)] : [item.label],
+    ),
+  )
 }
 
 describe("filterAdminNavigation", () => {
@@ -85,7 +96,8 @@ describe("filterAdminNavigation", () => {
     expect(labels(accountant)).toEqual([
       "Dashboard",
       "Inscriptions",
-      "Paiements",
+      "Caisse",
+      "Journal des versements",
       "Soldes par catégorie",
       "Bulletins",
       "Notifications",
@@ -115,7 +127,9 @@ describe("filterAdminNavigation", () => {
   it("still leaves the payments journal to a till-scoped cashier", () => {
     // Le cloisonnement se fait dans le journal lui-meme, pas en lui fermant
     // la porte : une caissiere doit relire sa propre caisse.
-    expect(labels(cashier)).toContain("Paiements")
+    expect(labels(cashier)).toContain("Journal des versements")
+    // Le groupe reste visible pour elle, sinon son journal serait injoignable.
+    expect(labels(cashier)).toContain("Caisse")
   })
 
   it("gives the educator the batch entry screen he is the user of", () => {
@@ -141,7 +155,7 @@ describe("filterAdminNavigation", () => {
     const seen = labels(staff)
     expect(seen).toContain("Inscriptions")
     expect(seen).toContain("Élèves")
-    expect(seen).toContain("Paiements")
+    expect(seen).toContain("Journal des versements")
     expect(seen).toContain("Classes")
     expect(seen).not.toContain("Personnel")
     expect(seen).not.toContain("Enseignants")

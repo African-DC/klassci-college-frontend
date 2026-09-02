@@ -89,6 +89,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
+- Le journal des versements et les soldes par catégorie se replient sous une entrée « Caisse » : deux lectures de la même caisse, au même endroit du menu *(admin, comptable, caissier)*
 - Marquer un frais déposé demande maintenant confirmation et nomme l'article : ce geste solde la ligne sans aucun versement *(admin, secrétariat)* (#419)
 - Toutes les listes chargent la suite en approchant du bas, au lieu de boutons de page : élèves, inscriptions, enseignants, parents, personnel, classes, niveaux, séries, salles, rôles, corbeille, appels, bulletins, convocations, billets d'annulation *(admin, élève)*
 - Les pieds de liste distinguent ce qui est affiché de ce que l'établissement compte, et les compteurs des puces d'inscription déclarent quand ils ne portent que sur le chargé *(admin)*
