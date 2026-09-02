@@ -8,7 +8,12 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { PaymentsFilters } from "@/components/admin/payments/PaymentsFilters"
+import {
+  AcademicYearChip,
+  AcademicYearScopeBar,
+} from "@/components/shared/AcademicYearScopeBar"
 import { usePaymentFilters } from "@/lib/hooks/usePaymentFilters"
+import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import { useScrollSentinel } from "@/lib/hooks/useScrollSentinel"
 import { PaymentConfirmDialog, type PaymentConfirmAction } from "@/components/admin/payments/PaymentConfirmDialog"
 import { PaymentReceiptDialog } from "@/components/admin/payments/PaymentReceiptDialog"
@@ -40,6 +45,21 @@ export function PaymentsPageClient() {
   const [exporting, setExporting] = useState<"pdf" | "xlsx" | "preview" | null>(null)
 
   const { filters, set, reset, params, activeCount } = usePaymentFilters()
+  // `undefined` tant que l'utilisateur n'a rien choisi : l'écran suit alors
+  // l'année marquée courante. Sans ça, le journal additionnait 2025-2026
+  // et 2026-2027, et « Collecté » gonflait de l'exercice d'à côté.
+  const [pickedYearId, setPickedYearId] = useState<number | undefined>(undefined)
+  const { academicYearId, years, isLoading: loadingYears } = useCurrentAcademicYearId(pickedYearId)
+  const selectedYear = years?.find((y) => y.id === academicYearId)
+  const currentYear = years?.find((y) => y.is_current)
+
+  const scopedParams = useMemo(
+    () => ({
+      ...params,
+      ...(academicYearId != null ? { academic_year_id: academicYearId } : {}),
+    }),
+    [params, academicYearId],
+  )
 
   const {
     data,
@@ -47,10 +67,10 @@ export function PaymentsPageClient() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfinitePayments(params)
+  } = useInfinitePayments(scopedParams)
   // Le bandeau recoit les memes criteres que la liste : sinon il annonce
   // l'annee entiere au-dessus de trois lignes filtrees.
-  const { data: summary } = useFinancialSummary(undefined, params)
+  const { data: summary } = useFinancialSummary(academicYearId, params)
   const { mutate: validatePayment, isPending: validating } = useValidatePayment()
   const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
   const { data: feeCategories } = useFeeCategories()
@@ -79,7 +99,7 @@ export function PaymentsPageClient() {
   async function handleExport(format: "pdf" | "xlsx") {
     setExporting(format)
     try {
-      const blob = await paymentsApi.downloadJournal(params, format)
+      const blob = await paymentsApi.downloadJournal(scopedParams, format)
       const jour = new Date().toISOString().slice(0, 10)
       downloadBlob(blob, `journal-versements-${jour}.${format}`)
       toast.success(format === "pdf" ? "Journal PDF téléchargé" : "Journal Excel téléchargé")
@@ -95,7 +115,7 @@ export function PaymentsPageClient() {
   async function handleExportPreview() {
     setExporting("preview")
     try {
-      await openPdfPreview(() => paymentsApi.downloadJournal(params, "pdf"))
+      await openPdfPreview(() => paymentsApi.downloadJournal(scopedParams, "pdf"))
     } finally {
       setExporting(null)
     }
@@ -208,7 +228,11 @@ export function PaymentsPageClient() {
       <PageHero
         icon={CreditCard}
         title="Paiements"
-        subtitle="Suivi des paiements et tableau de bord financier"
+        subtitle={
+          selectedYear
+            ? `Suivi des paiements et tableau de bord financier · Année ${selectedYear.name}`
+            : "Suivi des paiements et tableau de bord financier"
+        }
         actions={
           <>
             <button
@@ -262,6 +286,19 @@ export function PaymentsPageClient() {
         kpis={heroKpis}
       />
 
+      <AcademicYearScopeBar
+        years={years}
+        selectedYearId={academicYearId}
+        onSelect={setPickedYearId}
+        isLoading={loadingYears}
+        selectId="payments-academic-year"
+        currentHelper="Liste, bandeau et exports portent sur cette année. Un encaissement d'une autre année n'y figure pas."
+        offYearWarning={
+          `Ce n'est pas l'année en cours${currentYear ? ` (${currentYear.name})` : ""}. ` +
+          "Les totaux et le journal ci-dessous ne parlent plus de l'exercice actuel."
+        }
+      />
+
       <PaymentsFilters
         filters={filters}
         set={set}
@@ -293,6 +330,9 @@ export function PaymentsPageClient() {
             </div>
           ) : (
             <>
+            <div className="flex items-center px-4 pt-4 md:hidden">
+              <AcademicYearChip year={selectedYear} />
+            </div>
             <PaymentsTable
               payments={payments}
               downloadingId={downloadingId}

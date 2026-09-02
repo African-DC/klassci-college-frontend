@@ -8,8 +8,16 @@ import { School } from "lucide-react"
 import { useInfiniteClasses, useDeleteClass } from "@/lib/hooks/useClasses"
 import { useLevels } from "@/lib/hooks/useLevels"
 import type { Class } from "@/lib/contracts/class"
-import { CrudTable, type FilterConfig } from "@/components/shared/CrudTable"
+import { CrudTable } from "@/components/shared/CrudTable"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { ClassEditModal } from "./ClassEditModal"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 
@@ -75,14 +83,6 @@ export function ClassesTable() {
     [levelsData],
   )
 
-  const filterConfigs: FilterConfig[] = useMemo(() => [
-    { key: "level_id", label: "Niveau", type: "select", options: levelOptions },
-  ], [levelOptions])
-
-  const handleFilterChange = useCallback((key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
-  }, [])
-
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
   }, [])
@@ -135,6 +135,30 @@ export function ClassesTable() {
 
   return (
     <div className="space-y-4">
+      <DirectoryFiltersBar
+        search={search}
+        onSearchChange={handleSearchChange}
+        placeholder="Rechercher une classe..."
+        activeCount={filters.level_id ? 1 : 0}
+        onReset={() => setFilters({})}
+      >
+        <Select
+          value={filters.level_id || "all"}
+          onValueChange={(v) => setFilters(v === "all" ? {} : { level_id: v })}
+        >
+          <SelectTrigger className="h-10 w-[160px]" aria-label="Filtrer par niveau">
+            <SelectValue placeholder="Niveau" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les niveaux</SelectItem>
+            {levelOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </DirectoryFiltersBar>
       {/* Desktop : table dense via CrudTable. Mobile : liste minimale via
           MobileEntityListItem avec capacité-pill colorée à droite (signal
           rouge si pleine, amber si proche). */}
@@ -156,12 +180,6 @@ export function ClassesTable() {
           errorMessage="Impossible de charger les classes"
           deleteDescription="Cette action est irréversible. La classe sera définitivement supprimée."
           scrollInfini={scrollInfini}
-          searchPlaceholder="Rechercher une classe..."
-          searchValue={search}
-          onSearchChange={handleSearchChange}
-          filterConfigs={filterConfigs}
-          filterValues={filters}
-          onFilterChange={handleFilterChange}
         />
       </div>
 

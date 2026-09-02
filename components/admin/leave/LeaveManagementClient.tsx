@@ -27,6 +27,8 @@ import { leaveTypeLabel } from "@/lib/contracts/leave"
 import { staffRoleLabel } from "@/lib/contracts/staff"
 import { LeaveStatusBadge, formatDateRange, dayCount } from "@/components/shared/leave/leave-ui"
 import { cn } from "@/lib/utils"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
+import { matchesSearch } from "@/lib/utils/list-search"
 
 // Rôles qui ne sont pas assignables depuis la fiche Personnel. Tous les autres
 // (secrétariat, caissier, éducateur, comptable, directeur des études, directeur)
@@ -50,6 +52,7 @@ const FILTERS = [
 ]
 
 export function LeaveManagementClient() {
+  const [search, setSearch] = useState("")
   const [filter, setFilter] = useState("pending")
   const { data, isLoading } = useLeaveRequests()
   const { mutate: review, isPending: reviewing } = useReviewLeaveRequest()
@@ -61,7 +64,9 @@ export function LeaveManagementClient() {
 
   const requests = data ?? []
   const count = (s: string) => requests.filter((r) => r.status === s).length
-  const filtered = filter ? requests.filter((r) => r.status === filter) : requests
+  const filtered = (filter ? requests.filter((r) => r.status === filter) : requests).filter((r) =>
+    matchesSearch([r.requester_name, r.reason, leaveTypeLabel(r.leave_type)], search),
+  )
 
   const kpis: HeroKpi[] = [
     { label: "En attente", value: count("pending"), icon: Clock },
@@ -76,6 +81,12 @@ export function LeaveManagementClient() {
         title="Congés"
         subtitle="Demandes de congé des enseignants et du personnel"
         kpis={kpis}
+      />
+
+      <DirectoryFiltersBar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Rechercher un demandeur..."
       />
 
       <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">

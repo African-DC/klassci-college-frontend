@@ -9,6 +9,7 @@ import { useInfiniteParents, useDeleteParent } from "@/lib/hooks/useParents"
 import type { Parent } from "@/lib/contracts/parent"
 import type { PaginatedResponse } from "@/lib/contracts"
 import { CrudTable } from "@/components/shared/CrudTable"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
 import { FilterChips } from "@/components/shared/list/FilterChips"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
 import { useDebounce } from "@/lib/hooks/useDebounce"
@@ -158,6 +159,11 @@ export function ParentsTable() {
 
   return (
     <div className="space-y-4">
+      <DirectoryFiltersBar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Rechercher un parent..."
+      />
       <FilterChips
         aria-label="Filtrer par compte"
         value={accountFilter}
@@ -185,9 +191,6 @@ export function ParentsTable() {
           emptyMessage="Aucun parent trouvé"
           errorMessage="Impossible de charger les parents"
           deleteDescription="Cette action est irréversible. Le parent sera définitivement supprimé et les liens avec les enfants retirés."
-          searchPlaceholder="Rechercher un parent (nom, prénom, téléphone)..."
-          searchValue={search}
-          onSearchChange={(v) => { setSearch(v) }}
           scrollInfini={scrollInfini}
         />
       </div>

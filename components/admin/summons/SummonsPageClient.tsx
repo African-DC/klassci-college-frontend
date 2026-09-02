@@ -15,6 +15,8 @@ import { SummonsCreateModal } from "./SummonsCreateModal"
 import { SummonsOutcomeModal } from "./SummonsOutcomeModal"
 import { SummonsRegisterList } from "./SummonsRegisterList"
 import type { ParentSummons } from "@/lib/contracts/school-life"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
+import { matchesSearch } from "@/lib/utils/list-search"
 
 const OUTCOME_FILTERS = [
   { key: "", label: "Toutes" },
@@ -33,6 +35,7 @@ const TRIMESTER_FILTERS = [
 const PAGE_SIZE = 20
 
 export function SummonsPageClient() {
+  const [search, setSearch] = useState("")
   const [outcome, setOutcome] = useState("")
   const [trimester, setTrimester] = useState(0)
   const [createOpen, setCreateOpen] = useState(false)
@@ -61,7 +64,9 @@ export function SummonsPageClient() {
   )
   const { mutate: download } = useDownloadSummons()
 
-  const items = data?.items ?? []
+  const items = (data?.items ?? []).filter((item) =>
+    matchesSearch([item.student_name], search),
+  )
   const summary = data?.summary
 
   function changeOutcome(next: string) {
@@ -117,6 +122,12 @@ export function SummonsPageClient() {
             Convoquer un tuteur
           </button>
         }
+      />
+
+      <DirectoryFiltersBar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Rechercher un élève..."
       />
 
       <div className="space-y-3">

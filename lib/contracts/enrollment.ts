@@ -100,6 +100,7 @@ export const EnrollmentListParamsSchema = z.object({
   class_id: z.number().optional(),
   status: z.string().optional(),
   academic_year_id: z.number().optional(),
+  search: z.string().optional(),
 })
 
 export type EnrollmentStatus = z.infer<typeof EnrollmentStatusSchema>
