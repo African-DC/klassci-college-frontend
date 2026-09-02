@@ -78,6 +78,7 @@ describe("filterAdminNavigation", () => {
       "Dashboard",
       "Inscriptions",
       "Paiements",
+      "Soldes par classe",
       "Bulletins",
       "Notifications",
     ])
