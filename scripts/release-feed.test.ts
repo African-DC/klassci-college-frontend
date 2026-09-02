@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest"
-// @ts-expect-error — module JavaScript sans types : c'est lui qu'on teste.
 import { analyser as analyserBrut, construire as construireBrut, lireEntree as lireBrut } from "./release-feed.mjs"
 
 /**
