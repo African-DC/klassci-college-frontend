@@ -86,7 +86,7 @@ describe("filterAdminNavigation", () => {
       "Dashboard",
       "Inscriptions",
       "Paiements",
-      "Soldes par classe",
+      "Soldes par catégorie",
       "Bulletins",
       "Notifications",
     ])
@@ -107,9 +107,9 @@ describe("filterAdminNavigation", () => {
     // famille qui a paye au guichet d'a cote, et on irait la relancer. Le
     // serveur le refuse donc a une caissiere ; le menu ne doit pas le lui
     // proposer, sous peine d'un lien qui mene a un 403.
-    expect(labels(accountant)).toContain("Soldes par classe")
-    expect(labels(cashier)).not.toContain("Soldes par classe")
-    expect(labels(educator)).not.toContain("Soldes par classe")
+    expect(labels(accountant)).toContain("Soldes par catégorie")
+    expect(labels(cashier)).not.toContain("Soldes par catégorie")
+    expect(labels(educator)).not.toContain("Soldes par catégorie")
   })
 
   it("still leaves the payments journal to a till-scoped cashier", () => {
