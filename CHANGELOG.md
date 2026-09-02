@@ -8,6 +8,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Added
+- Un tableau par classe montre qui a soldé quelle catégorie de frais, en distinguant l'argent du dépôt en nature, avec le décompte des élèves en règle et un export *(admin, comptable, secrétariat)*
+
 ### Fixed
 - Le journal des versements s'ouvre sur l'année en cours et laisse en changer : les encaissements d'un autre exercice ne gonflent plus le collecté *(admin, comptable, caissier)*
 - La recherche des listes (élèves, inscriptions, personnel, enseignants, parents, classes) est visible sur téléphone, plus seulement dans le tableau d'ordinateur *(admin, secrétariat)*

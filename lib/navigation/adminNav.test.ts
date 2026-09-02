@@ -92,6 +92,14 @@ describe("filterAdminNavigation", () => {
     expect(seen).toContain("Autorisations de reprise")
   })
 
+  it("puts the settlement table where the money is read, not where it is entered", () => {
+    // Le tableau des soldes ne montre pas un franc de plus que le journal :
+    // il le range autrement. Il suit donc le meme droit, ce qui le donne au
+    // comptable et le refuse a l'educateur, qui n'a pas a lire la caisse.
+    expect(labels(accountant)).toContain("Soldes par classe")
+    expect(labels(educator)).not.toContain("Soldes par classe")
+  })
+
   it("gives the educator the batch entry screen he is the user of", () => {
     // L'ecran de saisie par classe existe pour lui : soixante-dix-huit
     // inscriptions a renseigner, fiche par fiche, ne se terminent pas. Une
