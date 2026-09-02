@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { NotificationBell } from "@/components/shared/NotificationBell"
+import { WhatsNewModal } from "@/components/shared/WhatsNewModal"
 import { AcademicYearBadge } from "@/components/shared/AcademicYearBadge"
 import { logout } from "@/lib/utils/logout"
 import { displayName, roleLabel } from "@/lib/utils/session-identity"
@@ -75,6 +76,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
         </Button>
 
         {/* Notifications */}
+        <WhatsNewModal />
         <NotificationBell />
 
         <Separator orientation="vertical" className="h-8 mx-1" />

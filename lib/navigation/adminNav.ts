@@ -1,10 +1,31 @@
 ﻿import type { Route } from "next"
 
-export interface AdminNavItem {
+/** Une entrée qui mène quelque part. */
+export interface AdminNavLink {
   label: string
   href: Route
   iconName: string
   anyOf: string[]
+}
+
+/**
+ * Une entrée qui en contient d'autres, et ne mène nulle part elle-même.
+ *
+ * Union discriminée plutôt qu'un `href` rendu facultatif : un lien sans
+ * destination n'existe pas, et le rendre possible dans le type obligerait
+ * chaque lecture du menu à se demander si celui-là en a une.
+ */
+export interface AdminNavGroup {
+  label: string
+  iconName: string
+  anyOf: string[]
+  children: AdminNavLink[]
+}
+
+export type AdminNavItem = AdminNavLink | AdminNavGroup
+
+export function estUnGroupe(item: AdminNavItem): item is AdminNavGroup {
+  return "children" in item
 }
 
 export interface AdminNavSection {
@@ -45,13 +66,23 @@ export const ADMIN_NAVIGATION: AdminNavSection[] = [
     title: "Finances",
     items: [
       { label: "Frais", href: "/admin/fees", iconName: "Wallet", anyOf: ["admin:fee-categories:read", "admin:fee-variants:read"] },
-      { label: "Paiements", href: "/admin/payments", iconName: "CreditCard", anyOf: ["payments:read"] },
+      // Deux lectures de la même caisse : ce qui est entré, et ce qui reste dû.
+      // Elles se répondent, et les séparer obligeait à chercher la seconde
+      // ailleurs que là où la première pose la question.
+      {
+        label: "Caisse",
+        iconName: "CreditCard",
+        anyOf: ["payments:read"],
+        children: [
+          { label: "Journal des versements", href: "/admin/payments", iconName: "CreditCard", anyOf: ["payments:read"] },
+          { label: "Soldes par catégorie", href: "/admin/payments/soldes" as Route, iconName: "ClipboardCheck", anyOf: ["payments:read:all"] },
+        ],
+      },
       // Gardé sur `payments:read:all`, pas sur `payments:read`. Ce tableau dit
       // ce qu'une famille doit encore, ce qui se calcule sur tout l'argent
       // reçu : cloisonné à une caisse, il afficherait « Dû » sur une famille
       // qui a payé au guichet d'à côté. Le serveur le refuse, le menu ne doit
       // donc pas le proposer — un lien qui mène à un 403 n'aide personne.
-      { label: "Soldes par classe", href: "/admin/payments/soldes" as Route, iconName: "ClipboardCheck", anyOf: ["payments:read:all"] },
       { label: "Tranches", href: "/admin/installments" as Route, iconName: "CalendarClock", anyOf: ["admin:fee-installments:read"] },
       // Ma caisse : réservée à qui tient un guichet. Le comptable ne l'a pas,
       // il supervise depuis le point journalier.
@@ -91,7 +122,7 @@ export const ADMIN_NAVIGATION: AdminNavSection[] = [
   },
 ]
 
-export function canSeeAdminNavItem(item: AdminNavItem, permissions: Iterable<string>): boolean {
+export function canSeeAdminNavItem(item: AdminNavLink, permissions: Iterable<string>): boolean {
   if (item.anyOf.length === 0) return true
   const set = permissions instanceof Set ? permissions : new Set(permissions)
   return item.anyOf.some((slug) => set.has(slug))
@@ -105,7 +136,18 @@ export function filterAdminNavigation(
   return navigation
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => canSeeAdminNavItem(item, permissions)),
+      // Un groupe se juge sur ses enfants : le montrer vide ferait un bouton
+      // qui s'ouvre sur rien, et le cacher alors qu'un enfant est permis
+      // rendrait cet enfant introuvable.
+      items: section.items
+        .map((item) =>
+          estUnGroupe(item)
+            ? { ...item, children: item.children.filter((c) => canSeeAdminNavItem(c, permissions)) }
+            : item,
+        )
+        .filter((item) =>
+          estUnGroupe(item) ? item.children.length > 0 : canSeeAdminNavItem(item, permissions),
+        ),
     }))
     .filter((section) => section.items.length > 0)
 }

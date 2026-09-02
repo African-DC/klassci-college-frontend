@@ -1,25 +1,18 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import { Download, Lock, Wallet } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { PageHero, heroAccentBtn } from "@/components/shared/PageHero"
 import { AcademicYearScopeBar } from "@/components/shared/AcademicYearScopeBar"
+import { ClassSelect } from "@/components/shared/ClassSelect"
 import { SettlementStudentCard } from "@/components/admin/payments/settlement/SettlementStudentCard"
 import { SettlementTable } from "@/components/admin/payments/settlement/SettlementTable"
 import { feeSettlementApi } from "@/lib/api/fee-settlement"
-import { useClasses } from "@/lib/hooks/useClasses"
+import { useClassChoice } from "@/lib/hooks/useClassChoice"
 import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import { useFeeSettlement } from "@/lib/hooks/useFeeSettlement"
 import { usePermissions } from "@/lib/hooks/usePermissions"
@@ -52,13 +45,13 @@ export function FeeSettlementClient() {
   const { academicYearId, years, isLoading: loadingYears } = useCurrentAcademicYearId(pickedYearId)
   const currentYear = years?.find((y) => y.is_current)
 
-  const { data: classesData, isLoading: classesLoading } = useClasses({ size: 200 })
-  const classes = useMemo(
-    () => [...(classesData?.items ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
-    [classesData],
-  )
-  const [classId, setClassId] = useState<number | undefined>(undefined)
-  const classeChoisie = classId ?? classes[0]?.id
+  const {
+    classes,
+    classId: classeChoisie,
+    setClassId,
+    isLoading: classesLoading,
+    isError: classesEnErreur,
+  } = useClassChoice()
 
   const { data, isLoading, isError, error, refetch } = useFeeSettlement(classeChoisie, academicYearId)
   const [exporting, setExporting] = useState(false)
@@ -119,7 +112,7 @@ export function FeeSettlementClient() {
       <PageHero
         icon={Wallet}
         title="Soldes par catégorie"
-        subtitle="Qui a réglé quoi, et par quel moyen, sur une classe entière"
+        subtitle="Où en est chaque famille, catégorie de frais par catégorie de frais"
         actions={
           <button
             type="button"
@@ -154,29 +147,14 @@ export function FeeSettlementClient() {
         }
       />
 
-      <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="p-4">
-          <Label htmlFor="settlement-class" className="text-xs text-muted-foreground">
-            Classe
-          </Label>
-          <Select
-            value={classeChoisie ? String(classeChoisie) : undefined}
-            onValueChange={(v) => setClassId(Number(v))}
-            disabled={classesLoading || classes.length === 0}
-          >
-            <SelectTrigger id="settlement-class" className="mt-1 h-11 sm:h-10">
-              <SelectValue placeholder="Choisir une classe" />
-            </SelectTrigger>
-            <SelectContent>
-              {classes.map((classe) => (
-                <SelectItem key={classe.id} value={String(classe.id)}>
-                  {classe.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      <ClassSelect
+        id="settlement-class"
+        classes={classes}
+        value={classeChoisie}
+        onChange={setClassId}
+        isLoading={classesLoading}
+        isError={classesEnErreur}
+      />
 
       {isError ? (
         <DataError error={error ?? undefined} onRetry={() => refetch()} />

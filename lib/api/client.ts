@@ -61,7 +61,25 @@ interface RequestOptions extends Omit<RequestInit, "headers"> {
   schema?: z.ZodType
 }
 
-export function safeValidate<T>(schema: z.ZodType<T>, data: unknown, context: string): T {
+/**
+ * Valide une reponse, et rend ce que le schema produit — pas ce qu'il accepte.
+ *
+ * La signature disait `z.ZodType<T>`, dont le parametre d'entree vaut `T` par
+ * defaut : TypeScript inferait donc `T` sur le cote **entree** du schema. Des
+ * qu'un champ portait un `.default()`, il devenait facultatif a l'entree, et le
+ * type rendu ici n'etait plus celui que le schema garantit — l'appelant qui
+ * annoncait le bon type se faisait refuser sa propre valeur.
+ *
+ * `z.infer` designe la sortie, c'est-a-dire ce qui existe reellement apres
+ * validation, defauts appliques. C'est ce que `api-client-zod-validation.md`
+ * demande depuis toujours en recommandant `.array().default([])` : la regle
+ * etait juste, l'outil ne la suivait pas.
+ */
+export function safeValidate<S extends z.ZodTypeAny>(
+  schema: S,
+  data: unknown,
+  context: string,
+): z.infer<S> {
   const result = schema.safeParse(data)
   if (!result.success) {
     console.error(`[API] Validation failed for ${context}:`, result.error.issues)
@@ -224,7 +242,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   if (res.status === 204) return undefined as T
   const data = await res.json()
-  return schema ? safeValidate<T>(schema, data, path) : data
+  return schema ? safeValidate(schema, data, path) : data
 }
 
 interface MultipartRequestOptions<T> {
@@ -273,5 +291,5 @@ export async function apiFetchMultipart<T>(
 
   if (res.status === 204) return undefined as T
   const data = await res.json()
-  return schema ? safeValidate<T>(schema, data, context ?? path) : (data as T)
+  return schema ? safeValidate(schema, data, context ?? path) : (data as T)
 }

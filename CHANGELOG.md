@@ -9,9 +9,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
-- Un tableau par classe montre qui a soldé quelle catégorie de frais, en distinguant l'argent du dépôt en nature, avec le décompte des élèves en règle et un export. Réservé à qui consolide toutes les caisses *(comptable)*
+- Une fenêtre « Nouveautés » dit ce qui a changé pour votre rôle, signalée par une pastille quand il y a du neuf *(tous)*
+- Un tableau montre où en est chaque famille, catégorie de frais par catégorie de frais, en distinguant l'argent du dépôt en nature, avec le décompte des élèves en règle et un export. Réservé à qui consolide toutes les caisses *(comptable)*
 
 ### Fixed
+- L'écran de saisie par classe et le tableau des soldes proposent enfin leurs classes : la liste revenait vide et l'écran concluait « aucune inscription » *(éducateur, comptable)*
 - Les listes déroulantes s'ouvrent sur toute leur hauteur au lieu de se replier sur une seule ligne : moyen de paiement, classe, année *(tous)*
 - L'onglet Paiements d'une inscription n'affirme plus « aucun frais » à qui n'a pas le droit de lire la caisse : il dit ce qui se passe et où déclarer un dépôt *(éducateur, secrétariat)*
 - Le journal des versements s'ouvre sur l'année en cours et laisse en changer : les encaissements d'un autre exercice ne gonflent plus le collecté *(admin, comptable, caissier)*
@@ -88,6 +90,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Écran « Point journalier » pour le comptable : chaque caisse de la journée avec son total, son écart et son état de clôture, sur n'importe quelle date. Une caisse restée ouverte est signalée *(comptable)*.
 
 ### Changed
+- Le journal des versements et les soldes par catégorie se replient sous une entrée « Caisse » : deux lectures de la même caisse, au même endroit du menu *(admin, comptable, caissier)*
 - Marquer un frais déposé demande maintenant confirmation et nomme l'article : ce geste solde la ligne sans aucun versement *(admin, secrétariat)* (#419)
 - Toutes les listes chargent la suite en approchant du bas, au lieu de boutons de page : élèves, inscriptions, enseignants, parents, personnel, classes, niveaux, séries, salles, rôles, corbeille, appels, bulletins, convocations, billets d'annulation *(admin, élève)*
 - Les pieds de liste distinguent ce qui est affiché de ce que l'établissement compte, et les compteurs des puces d'inscription déclarent quand ils ne portent que sur le chargé *(admin)*
