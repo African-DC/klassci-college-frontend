@@ -37,7 +37,7 @@ const SECTION_LABEL: Record<string, string> = {
  * personne est transverse, et va donc à tout le monde.
  */
 export function WhatsNewModal() {
-  const { lignes, total, duNeuf, marquerVu } = useWhatsNew()
+  const { lignes, tronquees, duNeuf, marquerVu } = useWhatsNew()
   const [ouvert, setOuvert] = useState(false)
 
   useEffect(() => {
@@ -51,12 +51,15 @@ export function WhatsNewModal() {
 
   if (lignes.length === 0) return null
 
+  // On empile dans le tableau existant : le recopier a chaque ligne coutait un
+  // temps carre sur une liste qui peut compter des dizaines d'entrees.
   const parSection = new Map<string, Nouveaute[]>()
   for (const ligne of lignes) {
-    parSection.set(ligne.section, [...(parSection.get(ligne.section) ?? []), ligne])
+    const dejaLa = parSection.get(ligne.section)
+    if (dejaLa) dejaLa.push(ligne)
+    else parSection.set(ligne.section, [ligne])
   }
 
-  const reste = total - lignes.length
 
   return (
     <Dialog open={ouvert} onOpenChange={(v) => (v ? setOuvert(true) : fermer())}>
@@ -89,11 +92,11 @@ export function WhatsNewModal() {
           ))}
         </div>
 
-        {reste > 0 && (
+        {tronquees > 0 && (
           // Dire ce qu'on ne montre pas : une liste tronquée en silence laisse
           // croire qu'on a tout lu.
           <p className="text-xs text-muted-foreground">
-            Les changements les plus récents. {reste} autres ne sont pas repris ici.
+            Les changements les plus récents. {tronquees} autres ne sont pas repris ici.
           </p>
         )}
 

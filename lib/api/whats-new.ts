@@ -7,6 +7,11 @@ import { apiFetch, safeValidate } from "./client"
  * Le portail embarque les siennes — les écrans — dans un fichier statique. Le
  * serveur sert les siennes : les calculs, les documents, les droits. Ne montrer
  * que la première tairait l'essentiel de ce qu'une école remarque.
+ *
+ * **Les deux rendent la même forme, déjà bornée.** Le serveur découpe chez lui,
+ * comme le générateur du portail découpe chez lui : la règle — combien
+ * d'entrées, dans quel ordre — n'existe alors qu'à un endroit par côté du fil,
+ * et le téléphone ne reçoit pas cent trente kilo-octets pour en afficher six.
  */
 
 const EntreeSchema = z.object({
@@ -24,26 +29,8 @@ const TrancheSchema = z.object({
   sections: z.record(z.string(), z.array(EntreeSchema)).default({}),
 })
 
-/** Le serveur rend son historique entier ; on n'en garde que le sommet. */
-const FluxServeurSchema = z.object({
-  product: z.string(),
-  generated_at: z.string().default(""),
-  versions: z
-    .array(
-      z.object({
-        version: z.string(),
-        released: z.boolean().default(false),
-        sections: z.record(z.string(), z.array(EntreeSchema)).default({}),
-      }),
-    )
-    .default([]),
-})
-
 export type Entree = z.infer<typeof EntreeSchema>
 export type Tranche = z.infer<typeof TrancheSchema>
-
-/** Combien d'entrées par section, comme la tranche du portail. */
-const PAR_SECTION = 6
 
 const VIDE: Tranche = {
   product: "",
@@ -62,22 +49,9 @@ export const whatsNewApi = {
     return safeValidate(TrancheSchema, await res.json(), "GET /whats-new.json")
   },
 
-  /** Les nouveautés du serveur, ramenées à la même forme. */
+  /** Les nouveautés du serveur, déjà bornées par lui. */
   serveur: async (): Promise<Tranche> => {
     const json = await apiFetch<unknown>("/whats-new")
-    const flux = safeValidate(FluxServeurSchema, json, "GET /whats-new")
-    const [recente] = flux.versions
-    const sections: Record<string, Entree[]> = {}
-    for (const [nom, lignes] of Object.entries(recente?.sections ?? {})) {
-      if (lignes.length > 0) sections[nom] = lignes.slice(0, PAR_SECTION)
-    }
-    return {
-      product: flux.product,
-      generated_at: flux.generated_at,
-      version: recente?.version ?? null,
-      released: recente?.released ?? false,
-      total: Object.values(recente?.sections ?? {}).reduce((n, l) => n + l.length, 0),
-      sections,
-    }
+    return safeValidate(TrancheSchema, json, "GET /whats-new")
   },
 }

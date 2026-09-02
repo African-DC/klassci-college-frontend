@@ -65,9 +65,19 @@ export function useWhatsNew() {
     }
   }, [marqueur])
 
+  // Ce que la troncature laisse de cote, et rien d'autre. Comparer au nombre
+  // de lignes filtrees par role melangerait deux raisons tres differentes de
+  // ne pas voir une entree : « il y en a d'autres » et « celle-la n'est pas
+  // pour vous ». Annoncer la seconde comme la premiere serait un mensonge
+  // poli.
+  const tranchees = [data?.portail, data?.serveur].reduce(
+    (n, t) => n + Object.values(t?.sections ?? {}).reduce((m, s) => m + s.length, 0),
+    0,
+  )
+
   return {
     lignes,
-    total: (data?.portail?.total ?? 0) + (data?.serveur?.total ?? 0),
+    tronquees: Math.max(0, (data?.portail?.total ?? 0) + (data?.serveur?.total ?? 0) - tranchees),
     isLoading,
     // `vu === null` au premier rendu vaut « pas encore lu le stockage » autant
     // que « jamais vu » : on attend d'avoir des lignes pour trancher, sinon la
