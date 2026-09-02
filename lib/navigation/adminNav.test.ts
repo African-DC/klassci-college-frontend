@@ -1,12 +1,20 @@
 ﻿import { describe, expect, it } from "vitest"
 import { filterAdminNavigation } from "./adminNav"
 
+// Les droits reels du role, tels que `tenants/permissions.py` les seme. Cette
+// liste avait derive comme celle de l'educateur avant elle : elle omettait
+// `payments:read:all`, que le comptable tient par `_CAISSE_SUPERVISION` et qui
+// est precisement ce qui le distingue d'une caissiere cloisonnee.
 const accountant = [
   "payments:read",
+  "payments:read:all",
   "payments:create",
   "enrollments:read",
   "reports:read",
 ]
+
+// La caissiere : elle encaisse et relit sa propre caisse, rien de plus.
+const cashier = ["payments:read", "payments:create", "enrollments:read"]
 
 // Le bureau de la vie scolaire : c'est lui qui délivre convocations et billets
 // d'annulation de zéro. Le directeur des études, lui, signe la demande de
@@ -78,6 +86,7 @@ describe("filterAdminNavigation", () => {
       "Dashboard",
       "Inscriptions",
       "Paiements",
+      "Soldes par classe",
       "Bulletins",
       "Notifications",
     ])
@@ -90,6 +99,23 @@ describe("filterAdminNavigation", () => {
     const seen = labels(educator)
     expect(seen).toContain("Convocations")
     expect(seen).toContain("Autorisations de reprise")
+  })
+
+  it("keeps the settlement table for whoever already consolidates every till", () => {
+    // Ce tableau dit ce qu'une famille doit encore, ce qui se calcule sur tout
+    // l'argent recu. Cloisonne a une caisse, il afficherait « Du » sur une
+    // famille qui a paye au guichet d'a cote, et on irait la relancer. Le
+    // serveur le refuse donc a une caissiere ; le menu ne doit pas le lui
+    // proposer, sous peine d'un lien qui mene a un 403.
+    expect(labels(accountant)).toContain("Soldes par classe")
+    expect(labels(cashier)).not.toContain("Soldes par classe")
+    expect(labels(educator)).not.toContain("Soldes par classe")
+  })
+
+  it("still leaves the payments journal to a till-scoped cashier", () => {
+    // Le cloisonnement se fait dans le journal lui-meme, pas en lui fermant
+    // la porte : une caissiere doit relire sa propre caisse.
+    expect(labels(cashier)).toContain("Paiements")
   })
 
   it("gives the educator the batch entry screen he is the user of", () => {

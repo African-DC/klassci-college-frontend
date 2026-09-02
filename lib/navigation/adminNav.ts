@@ -46,6 +46,12 @@ export const ADMIN_NAVIGATION: AdminNavSection[] = [
     items: [
       { label: "Frais", href: "/admin/fees", iconName: "Wallet", anyOf: ["admin:fee-categories:read", "admin:fee-variants:read"] },
       { label: "Paiements", href: "/admin/payments", iconName: "CreditCard", anyOf: ["payments:read"] },
+      // Gardé sur `payments:read:all`, pas sur `payments:read`. Ce tableau dit
+      // ce qu'une famille doit encore, ce qui se calcule sur tout l'argent
+      // reçu : cloisonné à une caisse, il afficherait « Dû » sur une famille
+      // qui a payé au guichet d'à côté. Le serveur le refuse, le menu ne doit
+      // donc pas le proposer — un lien qui mène à un 403 n'aide personne.
+      { label: "Soldes par classe", href: "/admin/payments/soldes" as Route, iconName: "ClipboardCheck", anyOf: ["payments:read:all"] },
       { label: "Tranches", href: "/admin/installments" as Route, iconName: "CalendarClock", anyOf: ["admin:fee-installments:read"] },
       // Ma caisse : réservée à qui tient un guichet. Le comptable ne l'a pas,
       // il supervise depuis le point journalier.

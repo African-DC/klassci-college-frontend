@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { enrollmentsApi } from "@/lib/api/enrollments"
 import { useStudentFees } from "@/lib/hooks/useStudents"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { isCashDue } from "@/lib/contracts/payment"
 import { countFeeLines } from "@/lib/enrollment/fee-lines"
 import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
@@ -18,6 +19,7 @@ import { PaymentHistoryList } from "@/components/admin/payments/PaymentHistoryLi
 import { StudentPaymentModal } from "@/components/admin/students/tabs/StudentPaymentModal"
 import { EnrollmentScheduleCard } from "@/components/admin/installments/EnrollmentScheduleCard"
 import { installmentKeys } from "@/lib/hooks/useInstallments"
+import { NoPaymentAccessNotice } from "@/components/admin/enrollments/tabs/NoPaymentAccessNotice"
 
 interface EnrollmentPaymentsTabProps {
   enrollmentId: number
@@ -31,6 +33,14 @@ export function EnrollmentPaymentsTab({
   enrollment,
   studentName,
 }: EnrollmentPaymentsTabProps) {
+  // Cet onglet lit les frais via `payments:read`. Sans ce droit, l'appel part
+  // en 403, la liste retombe a vide, et l'ecran affirmait « Aucun frais
+  // associe a cette inscription » — un fait sur le dossier de l'eleve, alors
+  // que c'est une porte fermee sur le lecteur. Un educateur en concluait que
+  // declarer un depot en nature n'existait pas, alors qu'il y a droit.
+  const { has, isLoading: chargementDroits } = usePermissions()
+  const peutLireLesVersements = has("payments:read")
+
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [feeToDeposit, setFeeToDeposit] = useState<EnrollmentFeeItem | null>(null)
   const queryClient = useQueryClient()
@@ -77,6 +87,14 @@ export function EnrollmentPaymentsTab({
       toast.error("Impossible de marquer ce frais déposé", { description: err.message })
     },
   })
+
+  if (chargementDroits) {
+    return <Skeleton className="h-40 rounded-2xl" />
+  }
+
+  if (!peutLireLesVersements) {
+    return <NoPaymentAccessNotice />
+  }
 
   if (isLoading) {
     return (
