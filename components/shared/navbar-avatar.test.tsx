@@ -26,6 +26,10 @@ vi.mock("next-auth/react", () => ({
 vi.mock("next-themes", () => ({ useTheme: () => ({ theme: "light", setTheme: vi.fn() }) }))
 vi.mock("@/lib/hooks/useProfile", () => ({ useMyProfile: () => profil() }))
 vi.mock("@/components/shared/NotificationBell", () => ({ NotificationBell: () => null }))
+// Meme traitement que la cloche : ce test regarde l'avatar, et les deux
+// declencheurs de la barre vont chercher leurs donnees. Les monter ici
+// demanderait un QueryClient pour verifier une photo de profil.
+vi.mock("@/components/shared/WhatsNewModal", () => ({ WhatsNewModal: () => null }))
 vi.mock("@/lib/hooks/useAcademicYears", () => ({ useCurrentAcademicYear: () => ({ data: null }) }))
 
 vi.mock("@/components/ui/avatar", () => ({

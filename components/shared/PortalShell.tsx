@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { Toaster } from "sonner"
+import { WhatsNewModal } from "@/components/shared/WhatsNewModal"
 
 interface PortalShellProps {
   label: string
@@ -38,6 +39,12 @@ export function PortalShell({ label, nav, sidebar, children }: PortalShellProps)
             </span>
           </div>
           <span className="text-[10px] tracking-widest text-muted-foreground uppercase">{label}</span>
+          {/* Les familles et les enseignants ont droit aux memes nouvelles que
+              l'administration : celles qui les concernent. Sans ce declencheur
+              ici, la fenetre n'existerait que pour le portail admin. */}
+          <div className="ml-auto">
+            <WhatsNewModal />
+          </div>
         </header>
 
         <main className="flex-1 px-4 py-4 pb-24 md:px-8 md:py-6 md:pb-8">

@@ -98,6 +98,18 @@ const validated = MyEntitySchema.parse(data)  // jamais atteint
 - [ ] Si Decimal/Date possible → schema Zod fait `.coerce.number()` ou `.preprocess(...)` (voir `feedback_pydantic_decimal_zod_drift.md`)
 - [ ] Defaults Zod (`.default([])`, `.nullish()`) couvrent les cas BE renvoie sans le champ
 
+## Le piège que `.default()` a longtemps tendu
+
+`safeValidate` inférait son type de retour sur le côté **entrée** du schéma. Un
+champ portant `.default()` y est facultatif : le type rendu n'était donc pas
+celui que le schéma garantit, et l'appelant qui annonçait le bon type se voyait
+refuser sa propre valeur par `tsc`.
+
+Deux fois, la sortie de secours a été de retirer les `.default()` — c'est-à-dire
+de renoncer à ce que cette règle recommande, pour contourner un défaut de
+l'outil. La signature a été corrigée (`z.infer<S>`, la sortie) et
+`lib/api/client.test.ts` la tient. **Gardez les `.default()`.**
+
 ## Quand le bypass est légitime
 
 Quasi jamais. Exceptions rares :
