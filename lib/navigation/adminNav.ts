@@ -51,7 +51,7 @@ export const ADMIN_NAVIGATION: AdminNavSection[] = [
       // reçu : cloisonné à une caisse, il afficherait « Dû » sur une famille
       // qui a payé au guichet d'à côté. Le serveur le refuse, le menu ne doit
       // donc pas le proposer — un lien qui mène à un 403 n'aide personne.
-      { label: "Soldes par classe", href: "/admin/payments/soldes" as Route, iconName: "ClipboardCheck", anyOf: ["payments:read:all"] },
+      { label: "Soldes par catégorie", href: "/admin/payments/soldes" as Route, iconName: "ClipboardCheck", anyOf: ["payments:read:all"] },
       { label: "Tranches", href: "/admin/installments" as Route, iconName: "CalendarClock", anyOf: ["admin:fee-installments:read"] },
       // Ma caisse : réservée à qui tient un guichet. Le comptable ne l'a pas,
       // il supervise depuis le point journalier.

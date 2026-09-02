@@ -112,7 +112,7 @@ export function FeeSettlementClient() {
       <PageHero
         icon={Wallet}
         title="Soldes par catégorie"
-        subtitle="Qui a réglé quoi, et par quel moyen, sur une classe entière"
+        subtitle="Où en est chaque famille, catégorie de frais par catégorie de frais"
         actions={
           <button
             type="button"
