@@ -1,0 +1,55 @@
+#!/bin/sh
+# Ce qui ne doit jamais partir dans un commit.
+set -e
+
+refus() {
+  printf '\n\033[31mCommit refuse\033[0m — %s\n\n' "$1" >&2
+  shift
+  for ligne in "$@"; do printf '  %s\n' "$ligne" >&2; done
+  printf '\n  Passer outre (a eviter) : git commit --no-verify\n\n' >&2
+  exit 1
+}
+
+branche=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+indexes=$(git diff --cached --name-only)
+
+# --- 1. Jamais de commit direct sur une branche protegee ----------------------
+case "$branche" in
+  main|staging)
+    refus "on ne commite pas directement sur « $branche »." \
+      "Branchez depuis develop : git checkout -b fix/<numero-issue>-description"
+    ;;
+  develop)
+    printf '\n\033[33mAvertissement\033[0m — commit direct sur develop.\n' >&2
+    printf '  La regle demande une branche et une PR, meme pour trois lignes.\n\n' >&2
+    ;;
+esac
+
+# --- 2. Jamais de secret ------------------------------------------------------
+secrets=$(printf '%s\n' "$indexes" | grep -E '(^|/)\.env($|\.)|\.pem$|\.p12$|id_rsa|id_ed25519$|credentials\.json$' || true)
+if [ -n "$secrets" ]; then
+  refus "des fichiers de secrets sont indexes." "$secrets" \
+    "Les valeurs vivent dans l'environnement, jamais dans le depot."
+fi
+
+# --- 3. Un acces se demande a la matrice, il ne se deduit pas d'un role -------
+if [ -f scripts/check-permissions.mjs ] && command -v node >/dev/null 2>&1; then
+  if ! node scripts/check-permissions.mjs --staged; then
+    refus "un role decide d'un affichage, ou une entree de menu n'exige aucun droit." \
+      "Le detail est ci-dessus. La regle et ses exceptions : scripts/check-permissions.mjs"
+  fi
+fi
+
+# --- 4. Le flux de versions suit le changelog ---------------------------------
+# Regenere et indexe, plutot que refuse : le fichier est une projection, pas un
+# travail. Se plaindre obligerait a relancer une commande qu'on oublie.
+if printf '%s\n' "$indexes" | grep -q '^CHANGELOG.md$'; then
+  if [ -f scripts/release-feed.mjs ] && command -v node >/dev/null 2>&1; then
+    if node scripts/release-feed.mjs >/dev/null 2>&1; then
+      git add RELEASES.json public/whats-new.json
+      echo 'RELEASES.json et public/whats-new.json regeneres, et indexes.'
+    fi
+  fi
+fi
+
+exit 0

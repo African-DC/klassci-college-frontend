@@ -1,7 +1,10 @@
+"use client"
+
 import type { Route } from "next"
 import Link from "next/link"
 import { AlertTriangle, Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 
 type Role = "admin" | "teacher" | "student" | "parent"
 
@@ -28,6 +31,9 @@ export function AcademicYearBanner({
   role,
   className,
 }: AcademicYearBannerProps) {
+  const { has } = usePermissions()
+  const peutConfigurer = has("admin:academic-years:create")
+
   if (currentYear) {
     return (
       <div
@@ -53,7 +59,12 @@ export function AcademicYearBanner({
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
       <div className="flex-1 space-y-1">
         <p className="leading-snug">{MISSING_MESSAGE[role]}</p>
-        {role === "admin" && (
+        {/* Le droit, pas le rôle. Une école qui confie la configuration des
+            années à son secrétariat lui donne la permission ; sans cette
+            lecture, le lien resterait invisible pour la personne qui en a
+            désormais la charge, et visible pour un administrateur à qui on
+            l'aurait retirée. */}
+        {peutConfigurer && (
           <Link
             href={"/admin/academic-years" as Route}
             className="inline-flex font-medium text-amber-900 underline-offset-2 hover:underline dark:text-amber-100"

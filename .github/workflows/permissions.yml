@@ -1,0 +1,20 @@
+name: Permissions
+
+# Les hooks previennent au moment ou l'on se trompe ; ils s'installent
+# volontairement et `--no-verify` passe outre. Ce workflow est le filet qui
+# compte : il tourne sur chaque PR, sans que personne ait rien a installer.
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  verifier:
+    name: Un affichage suit un droit, pas un role
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node scripts/check-permissions.mjs

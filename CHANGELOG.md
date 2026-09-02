@@ -13,6 +13,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Un tableau montre où en est chaque famille, catégorie de frais par catégorie de frais, en distinguant l'argent du dépôt en nature, avec le décompte des élèves en règle et un export. Réservé à qui consolide toutes les caisses *(comptable)*
 
 ### Fixed
+- Le lien de configuration de l'année scolaire suit le droit et non le rôle : l'école peut confier cette tâche à qui elle veut *(admin, secrétariat)*
 - L'écran de saisie par classe et le tableau des soldes proposent enfin leurs classes : la liste revenait vide et l'écran concluait « aucune inscription » *(éducateur, comptable)*
 - Les listes déroulantes s'ouvrent sur toute leur hauteur au lieu de se replier sur une seule ligne : moyen de paiement, classe, année *(tous)*
 - L'onglet Paiements d'une inscription n'affirme plus « aucun frais » à qui n'a pas le droit de lire la caisse : il dit ce qui se passe et où déclarer un dépôt *(éducateur, secrétariat)*
