@@ -3,6 +3,7 @@ import {
   SETTLEMENT_LABEL,
   SETTLEMENT_MARK,
   type SettlementCell,
+  type SettlementState,
 } from "@/lib/contracts/fee-settlement"
 
 const fmt = (n: number) => `${n.toLocaleString("fr-FR")} F`
@@ -13,7 +14,7 @@ const fmt = (n: number) => `${n.toLocaleString("fr-FR")} F`
  * gamme, et un daltonien ne distingue pas l'ambre du vert. Chaque case garde
  * donc son mot, et sa lettre quand la place manque.
  */
-const TONE: Record<string, string> = {
+const TONE: Record<SettlementState, string> = {
   paid: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   partial: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
   pending: "border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-400",
