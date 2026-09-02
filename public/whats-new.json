@@ -1,9 +1,9 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-02T22:40:15Z",
+  "generated_at": "2026-09-02T23:45:42Z",
   "version": "Unreleased",
   "released": false,
-  "total": 307,
+  "total": 308,
   "sections": {
     "Added": [
       {
@@ -14,9 +14,10 @@
         "pull_request": null
       },
       {
-        "text": "Un tableau montre où en est chaque famille, catégorie de frais par catégorie de frais, en distinguant l'argent du dépôt en nature, avec le décompte des élèves en règle et un export. Réservé à qui consolide toutes les caisses",
+        "text": "Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse",
         "audience": [
-          "comptable"
+          "comptable",
+          "caissier"
         ],
         "pull_request": null
       },
@@ -104,6 +105,15 @@
     ],
     "Changed": [
       {
+        "text": "Le journal des versements et les soldes par catégorie se replient sous une entrée « Caisse » : deux lectures de la même caisse, au même endroit du menu",
+        "audience": [
+          "admin",
+          "comptable",
+          "caissier"
+        ],
+        "pull_request": null
+      },
+      {
         "text": "Marquer un frais déposé demande maintenant confirmation et nomme l'article : ce geste solde la ligne sans aucun versement",
         "audience": [
           "admin",
@@ -135,13 +145,6 @@
       },
       {
         "text": "Le journal des paiements se charge au fil du défilement : la pagination affichait « Page 1/92 » sans permettre d'atteindre la seconde",
-        "audience": [
-          "admin"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Les chiffres du bandeau suivent les filtres, et chaque carte dit si elle les suit ou parle de l'année entière",
         "audience": [
           "admin"
         ],
