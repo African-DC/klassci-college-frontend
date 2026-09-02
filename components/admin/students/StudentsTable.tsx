@@ -14,6 +14,7 @@ import {
 import type { Student } from "@/lib/contracts/student"
 import { Badge } from "@/components/ui/badge"
 import { CrudTable } from "@/components/shared/CrudTable"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
 import { ExportMenu } from "@/components/export/ExportMenu"
 import { getUploadUrl, cn } from "@/lib/utils"
@@ -245,6 +246,12 @@ export function StudentsTable({
 
   return (
     <div className="space-y-4">
+      <DirectoryFiltersBar
+        search={search}
+        onSearchChange={handleSearchChange}
+        placeholder="Rechercher un élève, un matricule..."
+      />
+
       {/* Barre de filtre-chips + export. Horizontal-scroll sur mobile (Itel S661
           320px ne tient pas 14 chips wrap), wrap sur desktop. Le persona est
           mobile, on design pour mobile d'abord. */}
@@ -305,9 +312,6 @@ export function StudentsTable({
           errorMessage="Impossible de charger les élèves"
           deleteDescription="Cette action est irréversible. L'élève sera définitivement supprimé."
           scrollInfini={scrollInfini}
-          searchPlaceholder="Rechercher un élève..."
-          searchValue={search}
-          onSearchChange={handleSearchChange}
         />
       </div>
 

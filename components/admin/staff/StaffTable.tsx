@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useCallback } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Route } from "next"
@@ -9,7 +9,8 @@ import { useInfiniteStaffList, useDeleteStaff } from "@/lib/hooks/useStaff"
 import type { Staff } from "@/lib/contracts/staff"
 import { staffRoleLabel } from "@/lib/contracts/staff"
 import { Badge } from "@/components/ui/badge"
-import { CrudTable, type FilterConfig } from "@/components/shared/CrudTable"
+import { CrudTable } from "@/components/shared/CrudTable"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { StaffEditModal } from "./StaffEditModal"
@@ -85,24 +86,14 @@ function ContactActions({ staff }: { staff: Staff }) {
 export function StaffTable() {
   const router = useRouter()
   const [search, setSearch] = useState("")
-  const [filters, setFilters] = useState<Record<string, string>>({})
   const debouncedSearch = useDebounce(search)
-
-  const handleFilterChange = useCallback((key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
-  }, [])
 
   const params = useMemo(() => ({
     ...(debouncedSearch && { search: debouncedSearch }),
-    ...(filters.position && { position: filters.position }),
-  }), [debouncedSearch, filters])
+  }), [debouncedSearch])
 
   const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteStaffList(params)
   const deleteMutation = useDeleteStaff()
-
-  const filterConfigs: FilterConfig[] = useMemo(() => [
-    { key: "position", label: "Poste", type: "text", placeholder: "Filtrer par poste..." },
-  ], [])
 
   const columns: ColumnDef<Staff>[] = useMemo(() => [
     {
@@ -150,6 +141,11 @@ export function StaffTable() {
 
   return (
     <div className="space-y-4">
+      <DirectoryFiltersBar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Rechercher un membre du personnel..."
+      />
       <div className="hidden md:block">
         <CrudTable<Staff>
           data={data}
@@ -167,13 +163,7 @@ export function StaffTable() {
           emptyMessage="Aucun personnel trouvé"
           errorMessage="Impossible de charger le personnel"
           deleteDescription="Cette action est irréversible. Le membre du personnel sera définitivement supprimé."
-          searchPlaceholder="Rechercher un membre du personnel..."
-          searchValue={search}
-          onSearchChange={(v) => { setSearch(v) }}
           scrollInfini={scrollInfini}
-          filterConfigs={filterConfigs}
-          filterValues={filters}
-          onFilterChange={handleFilterChange}
         />
       </div>
 

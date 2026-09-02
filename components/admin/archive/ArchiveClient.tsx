@@ -14,6 +14,8 @@ import { formatStamp } from "@/components/admin/audit/audit-labels"
 import { ArchiveCards } from "./ArchiveCards"
 import { ArchiveFilterChips } from "./ArchiveFilterChips"
 import { ArchiveTable } from "./ArchiveTable"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
+import { matchesSearch } from "@/lib/utils/list-search"
 
 const PAGE_SIZE = 25
 
@@ -27,6 +29,7 @@ const PAGE_SIZE = 25
  */
 export function ArchiveClient() {
   const [entityType, setEntityType] = useState<string | undefined>(undefined)
+  const [search, setSearch] = useState("")
 
   const { has } = usePermissions()
   const canPurge = has("archive:purge")
@@ -43,7 +46,12 @@ export function ArchiveClient() {
     onApproche: scrollInfini.chargerSuite,
   })
 
-  const items = useMemo(() => data?.items ?? [], [data])
+  const items = useMemo(() => {
+    const loaded = data?.items ?? []
+    return loaded.filter((entry) =>
+      matchesSearch([entry.label, entry.archived_by_name, entry.archive_reason], search),
+    )
+  }, [data, search])
   const total = data?.total ?? 0
 
   const kpis: HeroKpi[] = useMemo(() => {
@@ -86,6 +94,11 @@ export function ArchiveClient() {
 
       <Card className="rounded-xl border shadow-sm">
         <CardContent className="space-y-5 p-5">
+          <DirectoryFiltersBar
+            search={search}
+            onSearchChange={setSearch}
+            placeholder="Rechercher une fiche archivée..."
+          />
           <ArchiveFilterChips value={entityType} onChange={changeFilter} />
 
           {isLoading ? (

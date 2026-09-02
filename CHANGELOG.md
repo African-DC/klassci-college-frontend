@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- Le journal des versements s'ouvre sur l'année en cours et laisse en changer : les encaissements d'un autre exercice ne gonflent plus le collecté *(admin, comptable, caissier)*
+- La recherche des listes (élèves, inscriptions, personnel, enseignants, parents, classes) est visible sur téléphone, plus seulement dans le tableau d'ordinateur *(admin, secrétariat)*
 - Répercuter un tarif ne crée plus de dette chez des familles qui n'en avaient pas : la création se demande à part *(admin, comptable)*
 - La simulation d'échéancier annonce pour quel public elle vaut et n'y mêle plus les tarifs réservés à un autre profil *(admin)*
 - En thème sombre, l'aperçu du logo reste sur fond blanc et le message d'erreur d'envoi redevient lisible *(admin)* (#417)

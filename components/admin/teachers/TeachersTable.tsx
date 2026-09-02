@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useCallback } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { Route } from "next"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -8,7 +8,8 @@ import { Phone, MessageCircle, Mail } from "lucide-react"
 import { useInfiniteTeachers, useDeleteTeacher } from "@/lib/hooks/useTeachers"
 import { teacherContractLabel, type Teacher } from "@/lib/contracts/teacher"
 import { Badge } from "@/components/ui/badge"
-import { CrudTable, type FilterConfig } from "@/components/shared/CrudTable"
+import { CrudTable } from "@/components/shared/CrudTable"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { TeacherEditModal } from "./TeacherEditModal"
@@ -88,24 +89,14 @@ function ContactActions({ teacher }: { teacher: Teacher }) {
 export function TeachersTable() {
   const router = useRouter()
   const [search, setSearch] = useState("")
-  const [filters, setFilters] = useState<Record<string, string>>({})
   const debouncedSearch = useDebounce(search)
-
-  const handleFilterChange = useCallback((key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
-  }, [])
 
   const params = useMemo(() => ({
     ...(debouncedSearch && { search: debouncedSearch }),
-    ...(filters.speciality && { speciality: filters.speciality }),
-  }), [debouncedSearch, filters])
+  }), [debouncedSearch])
 
   const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteTeachers(params)
   const deleteMutation = useDeleteTeacher()
-
-  const filterConfigs: FilterConfig[] = useMemo(() => [
-    { key: "speciality", label: "Spécialité", type: "text", placeholder: "Filtrer par spécialité..." },
-  ], [])
 
   const columns: ColumnDef<Teacher>[] = useMemo(() => [
     {
@@ -159,6 +150,11 @@ export function TeachersTable() {
 
   return (
     <div className="space-y-4">
+      <DirectoryFiltersBar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Rechercher un enseignant..."
+      />
       {/* Desktop : table dense via CrudTable. Mobile : liste minimale via
           MobileEntityListItem. Tailwind hidden classes = display:none, zero JS,
           un seul layout visible à la fois. */}
@@ -179,13 +175,7 @@ export function TeachersTable() {
           emptyMessage="Aucun enseignant trouvé"
           errorMessage="Impossible de charger les enseignants"
           deleteDescription="Cette action est irréversible. L'enseignant sera définitivement supprimé."
-          searchPlaceholder="Rechercher un enseignant..."
-          searchValue={search}
-          onSearchChange={(v) => { setSearch(v) }}
           scrollInfini={scrollInfini}
-          filterConfigs={filterConfigs}
-          filterValues={filters}
-          onFilterChange={handleFilterChange}
         />
       </div>
 

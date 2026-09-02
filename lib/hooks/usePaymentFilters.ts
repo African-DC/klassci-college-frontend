@@ -28,6 +28,9 @@ const EMPTY: PaymentFilters = { search: "", dateFrom: "", dateTo: "" }
  * La période part au serveur : la filtrer dans le navigateur ne trierait que
  * la page affichée, et l'export qui suit ne dirait pas la même chose que
  * l'écran.
+ *
+ * L'année scolaire n'est pas ici : c'est le périmètre de la page, pas un
+ * filtre qu'on réinitialise. Elle vit à côté, comme sur l'écran des frais.
  */
 export function usePaymentFilters() {
   const [filters, setFilters] = useState<PaymentFilters>(EMPTY)

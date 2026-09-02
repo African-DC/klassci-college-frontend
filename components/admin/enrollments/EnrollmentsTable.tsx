@@ -28,10 +28,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { CrudTable } from "@/components/shared/CrudTable"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
 import { AssignmentStatusBadge } from "@/components/shared/AssignmentStatusBadge"
 import { useDebounce } from "@/lib/hooks/useDebounce"
+import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
+import { useClasses } from "@/lib/hooks/useClasses"
 import { cn } from "@/lib/utils"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 // Cohorte « À valider » = prospect + en_validation. La sémantique queue : c'est
 // ce que l'admin doit traiter activement à la rentrée.
@@ -86,8 +96,6 @@ function FilterChip({
   )
 }
 
-type ChipKey = "a_valider" | "validees"
-
 type AssignmentChipKey = "tous" | "affectes" | "non_affectes" | "non_renseigne"
 
 // Affecté et réaffecté sont tous deux subventionnés par l'État : côté filtre
@@ -108,20 +116,25 @@ function matchesAssignmentChip(enrollment: Enrollment, chip: AssignmentChipKey):
 export function EnrollmentsTable() {
   const router = useRouter()
   const [search, setSearch] = useState("")
-  const [activeChip, setActiveChip] = useState<ChipKey>("a_valider")
+  const [status, setStatus] = useState<string>("a_valider")
+  const [classId, setClassId] = useState<string>("")
+  const [pickedYearId, setPickedYearId] = useState<number | undefined>(undefined)
   const [assignmentChip, setAssignmentChip] = useState<AssignmentChipKey>("tous")
   const [validateTarget, setValidateTarget] = useState<Enrollment | null>(null)
   const debouncedSearch = useDebounce(search)
+  const { academicYearId, years } = useCurrentAcademicYearId(pickedYearId)
+  const { data: classesData } = useClasses({ size: 100 })
+  const classes = classesData?.items ?? []
 
-  // Les pages arrivent par cent au fil du défilement. Les compteurs des
-  // puces se calculent sur ce qui est chargé, faute d'endpoint de comptage :
-  // ils se complètent donc en descendant, et le disent (voir `partiels`).
   const params = useMemo(
     () => ({
-      size: 100,
-        ...(debouncedSearch ? { search: debouncedSearch } : {}),
+      size: PAGE_SIZE,
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
+      ...(status ? { status } : {}),
+      ...(classId ? { class_id: Number(classId) } : {}),
+      ...(academicYearId != null ? { academic_year_id: academicYearId } : {}),
     }),
-    [debouncedSearch],
+    [debouncedSearch, status, classId, academicYearId],
   )
 
   const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteEnrollments(params)
@@ -134,49 +147,26 @@ export function EnrollmentsTable() {
 
   const allItems = data?.items ?? []
 
-  const counts = useMemo(() => {
-    let aValider = 0
-    let validees = 0
-    for (const e of allItems) {
-      if (TO_VALIDATE_STATUSES.has(e.status)) aValider += 1
-      else if (e.status === "valide") validees += 1
-    }
-    return { aValider, validees }
-  }, [allItems])
-
-  // Cohorte de statut d'abord : les compteurs d'affectation doivent refléter
-  // la liste qu'on regarde, pas tout le tenant.
-  const statusFilteredItems = useMemo(() => {
-    if (activeChip === "a_valider") {
-      return allItems.filter((e) => TO_VALIDATE_STATUSES.has(e.status))
-    }
-    return allItems.filter((e) => e.status === "valide")
-  }, [allItems, activeChip])
-
   const assignmentCounts = useMemo(() => {
     let affectes = 0
     let nonAffectes = 0
     let nonRenseigne = 0
-    for (const e of statusFilteredItems) {
+    for (const e of allItems) {
       if (matchesAssignmentChip(e, "affectes")) affectes += 1
       else if (matchesAssignmentChip(e, "non_affectes")) nonAffectes += 1
       else nonRenseigne += 1
     }
-    return { tous: statusFilteredItems.length, affectes, nonAffectes, nonRenseigne }
-  }, [statusFilteredItems])
+    return { tous: allItems.length, affectes, nonAffectes, nonRenseigne }
+  }, [allItems])
 
   const filteredItems = useMemo(
-    () => statusFilteredItems.filter((e) => matchesAssignmentChip(e, assignmentChip)),
-    [statusFilteredItems, assignmentChip],
+    () => allItems.filter((e) => matchesAssignmentChip(e, assignmentChip)),
+    [allItems, assignmentChip],
   )
 
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
-  }, [])
-
-  const handleChipClick = useCallback((key: ChipKey) => {
-    setActiveChip(key)
   }, [])
 
   const handleAssignmentChipClick = useCallback((key: AssignmentChipKey) => {
@@ -237,37 +227,71 @@ export function EnrollmentsTable() {
     [basculer, selection, toutSelectionne, validables],
   )
 
+  const extraFilterCount = [status !== "a_valider", classId, pickedYearId != null].filter(Boolean).length
+
   return (
     <div className="space-y-4">
-      {/* Les compteurs portent sur les lignes déjà chargées, faute d'un
-          endpoint de comptage. Tant que le défilement n'a pas tout tiré,
-          on le dit : un « 12 » qui devient « 47 » en descendant, sans
-          explication, fait douter de tout le reste de l'écran. */}
-      {scrollInfini.resteAcharger && (
-        <p className="text-xs text-muted-foreground">
-          Compteurs établis sur les {allItems.length} inscriptions déjà chargées
-          {typeof data?.total === "number" ? ` sur ${data.total}` : ""}. Ils se
-          complètent en descendant.
-        </p>
-      )}
-
-      {/* Chips bar — pipeline de validation. « À valider » sélectionnée par
-          défaut car c'est la queue d'action de l'admin. */}
-      <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-x-visible">
-        <FilterChip
-          label="À valider"
-          count={counts.aValider}
-          isActive={activeChip === "a_valider"}
-          onClick={() => handleChipClick("a_valider")}
-          tone="warning"
-        />
-        <FilterChip
-          label="Validées"
-          count={counts.validees}
-          isActive={activeChip === "validees"}
-          onClick={() => handleChipClick("validees")}
-        />
-      </div>
+      <DirectoryFiltersBar
+        search={search}
+        onSearchChange={handleSearchChange}
+        placeholder="Rechercher un élève..."
+        activeCount={extraFilterCount}
+        onReset={() => {
+          setStatus("a_valider")
+          setClassId("")
+          setPickedYearId(undefined)
+        }}
+      >
+        <Select
+          value={status || "all"}
+          onValueChange={(v) => setStatus(v === "all" ? "" : v)}
+        >
+          <SelectTrigger className="h-10 w-[170px]" aria-label="Filtrer par statut">
+            <SelectValue placeholder="Statut" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les statuts</SelectItem>
+            <SelectItem value="a_valider">À valider</SelectItem>
+            <SelectItem value="valide">Validées</SelectItem>
+            <SelectItem value="prospect">Dossier ouvert</SelectItem>
+            <SelectItem value="en_validation">En attente de validation</SelectItem>
+            <SelectItem value="rejete">Rejetées</SelectItem>
+            <SelectItem value="annule">Annulées</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={classId || "all"}
+          onValueChange={(v) => setClassId(v === "all" ? "" : v)}
+        >
+          <SelectTrigger className="h-10 w-[160px]" aria-label="Filtrer par classe">
+            <SelectValue placeholder="Classe" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les classes</SelectItem>
+            {classes.map((c) => (
+              <SelectItem key={c.id} value={String(c.id)}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={academicYearId ? String(academicYearId) : undefined}
+          onValueChange={(v) => setPickedYearId(Number(v))}
+        >
+          <SelectTrigger className="h-10 w-[160px]" aria-label="Année scolaire">
+            <SelectValue placeholder="Année scolaire" />
+          </SelectTrigger>
+          <SelectContent>
+            {(years ?? []).map((y) => (
+              <SelectItem key={y.id} value={String(y.id)}>
+                {y.name}
+                {y.is_current ? " (en cours)" : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </DirectoryFiltersBar>
 
       {/* Second axe : l'affectation. Séparé du pipeline de validation parce
           qu'il répond à une autre question — non pas « que dois-je traiter »
@@ -345,9 +369,6 @@ export function EnrollmentsTable() {
           deleteTitle="Supprimer l'inscription"
           deleteDescription="Cette action est irréversible. L'inscription sera définitivement supprimée."
           scrollInfini={scrollInfini}
-          searchPlaceholder="Rechercher une inscription..."
-          searchValue={search}
-          onSearchChange={handleSearchChange}
         />
       </div>
 

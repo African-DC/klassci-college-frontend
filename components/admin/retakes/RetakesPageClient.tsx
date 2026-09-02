@@ -17,6 +17,8 @@ import { RegisterFooter } from "@/components/shared/school-life/RegisterFooter"
 import { RetakeCreateModal } from "./RetakeCreateModal"
 import { RetakesList } from "./RetakesList"
 import type { RetakeAuthorization } from "@/lib/contracts/school-life"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
+import { matchesSearch } from "@/lib/utils/list-search"
 
 const TRIMESTER_FILTERS = [
   { key: 0, label: "Toute l'année" },
@@ -28,6 +30,7 @@ const TRIMESTER_FILTERS = [
 const PAGE_SIZE = 20
 
 export function RetakesPageClient() {
+  const [search, setSearch] = useState("")
   const [trimester, setTrimester] = useState(0)
   const [createOpen, setCreateOpen] = useState(false)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
@@ -52,7 +55,9 @@ export function RetakesPageClient() {
   )
   const { mutate: download } = useDownloadRetakeAuthorization()
 
-  const items = data?.items ?? []
+  const items = (data?.items ?? []).filter((item) =>
+    matchesSearch([item.student_name], search),
+  )
   const total = data?.total ?? 0
 
   function changeTrimester(next: number) {
@@ -102,6 +107,12 @@ export function RetakesPageClient() {
             Délivrer un billet
           </button>
         }
+      />
+
+      <DirectoryFiltersBar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Rechercher un élève..."
       />
 
       <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">

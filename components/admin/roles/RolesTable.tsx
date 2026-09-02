@@ -1,12 +1,14 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { ShieldCheck } from "lucide-react"
 import { useInfiniteRoles, useDeleteRole } from "@/lib/hooks/useRoles"
 import type { Role, Permission } from "@/lib/contracts/role"
 import { Badge } from "@/components/ui/badge"
 import { CrudTable } from "@/components/shared/CrudTable"
+import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBar"
+import { matchesSearch } from "@/lib/utils/list-search"
 import { RoleEditModal } from "./RoleEditModal"
 
 // Labels FR pour les groupes de permissions (préfixe de slug avant ":")
@@ -46,6 +48,7 @@ function groupPermissions(permissions: Permission[] | undefined): { label: strin
 }
 
 export function RolesTable() {
+  const [search, setSearch] = useState("")
   const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteRoles({})
   const deleteMutation = useDeleteRole()
 
@@ -109,9 +112,22 @@ export function RolesTable() {
     },
   ], [])
 
+  const filtered = data
+    ? {
+        ...data,
+        items: data.items.filter((r) => matchesSearch([r.name, r.description], search)),
+      }
+    : data
+
   return (
+    <div className="space-y-4">
+      <DirectoryFiltersBar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Rechercher un rôle..."
+      />
     <CrudTable<Role>
-      data={data}
+      data={filtered}
       columns={columns}
       isLoading={isLoading}
       isError={isError}
@@ -127,5 +143,6 @@ export function RolesTable() {
       deleteDescription="Cette action est irréversible. Le rôle sera définitivement supprimé."
       scrollInfini={scrollInfini}
     />
+    </div>
   )
 }
