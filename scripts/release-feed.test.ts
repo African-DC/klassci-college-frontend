@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest"
-// @ts-expect-error — script Node pur, sans types : c'est ce qu'on teste.
 import { analyser, construire, lireEntree } from "./release-feed.mjs"
 
 /**
