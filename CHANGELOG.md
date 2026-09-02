@@ -8,6 +8,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Added
+- Un tableau par classe montre qui a soldé quelle catégorie de frais, en distinguant l'argent du dépôt en nature, avec le décompte des élèves en règle et un export. Réservé à qui consolide toutes les caisses *(comptable)*
+
 ### Fixed
 - L'onglet Paiements d'une inscription n'affirme plus « aucun frais » à qui n'a pas le droit de lire la caisse : il dit ce qui se passe et où déclarer un dépôt *(éducateur, secrétariat)*
 - Le journal des versements s'ouvre sur l'année en cours et laisse en changer : les encaissements d'un autre exercice ne gonflent plus le collecté *(admin, comptable, caissier)*
