@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Fixed
+- L'onglet Paiements d'une inscription n'affirme plus « aucun frais » à qui n'a pas le droit de lire la caisse : il dit ce qui se passe et où déclarer un dépôt *(éducateur, secrétariat)*
 - Le journal des versements s'ouvre sur l'année en cours et laisse en changer : les encaissements d'un autre exercice ne gonflent plus le collecté *(admin, comptable, caissier)*
 - La recherche des listes (élèves, inscriptions, personnel, enseignants, parents, classes) est visible sur téléphone, plus seulement dans le tableau d'ordinateur *(admin, secrétariat)*
 - Répercuter un tarif ne crée plus de dette chez des familles qui n'en avaient pas : la création se demande à part *(admin, comptable)*
