@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
-import { Download, Wallet } from "lucide-react"
+import { Download, Lock, Wallet } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import {
@@ -22,6 +22,7 @@ import { feeSettlementApi } from "@/lib/api/fee-settlement"
 import { useClasses } from "@/lib/hooks/useClasses"
 import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import { useFeeSettlement } from "@/lib/hooks/useFeeSettlement"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { downloadBlob } from "@/lib/utils"
 
 /**
@@ -37,6 +38,16 @@ import { downloadBlob } from "@/lib/utils"
  * et qu'il ne doit pas se mériter au défilement.
  */
 export function FeeSettlementClient() {
+  // Le serveur réserve ce tableau à qui consolide toutes les caisses : ce
+  // qu'une famille doit se calcule sur tout l'argent reçu, et cloisonné à un
+  // guichet il afficherait « Dû » sur une famille qui a payé à côté. Le menu
+  // ne le propose donc pas à une caissière — mais l'adresse reste tapable, et
+  // sans cette garde l'écran laissait partir un appel voué au 403 pour
+  // afficher « Impossible de contacter le serveur » avec un bouton
+  // « Réessayer » qui ne pouvait pas aboutir.
+  const { has, isLoading: chargementDroits } = usePermissions()
+  const peutConsoliderLesCaisses = has("payments:read:all")
+
   const [pickedYearId, setPickedYearId] = useState<number | undefined>(undefined)
   const { academicYearId, years, isLoading: loadingYears } = useCurrentAcademicYearId(pickedYearId)
   const currentYear = years?.find((y) => y.is_current)
@@ -49,7 +60,7 @@ export function FeeSettlementClient() {
   const [classId, setClassId] = useState<number | undefined>(undefined)
   const classeChoisie = classId ?? classes[0]?.id
 
-  const { data, isLoading, isError, refetch } = useFeeSettlement(classeChoisie, academicYearId)
+  const { data, isLoading, isError, error, refetch } = useFeeSettlement(classeChoisie, academicYearId)
   const [exporting, setExporting] = useState(false)
 
   async function exporter() {
@@ -66,6 +77,38 @@ export function FeeSettlementClient() {
     } finally {
       setExporting(false)
     }
+  }
+
+  if (chargementDroits) {
+    return (
+      <div className="space-y-4 p-4 md:p-6">
+        <Skeleton className="h-32 w-full rounded-2xl" />
+      </div>
+    )
+  }
+
+  if (!peutConsoliderLesCaisses) {
+    return (
+      <div className="p-4 md:p-6">
+        <Card className="border-0 shadow-sm ring-1 ring-border">
+          <CardContent className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+            <Lock aria-hidden className="h-8 w-8 text-muted-foreground/50" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Ce tableau ne vous est pas ouvert</p>
+              <p className="text-sm text-muted-foreground">
+                Il dit ce que chaque famille doit encore, ce qui se calcule sur l&apos;argent reçu
+                à toutes les caisses. Réduit à la vôtre, il annoncerait une dette chez des
+                familles qui ont payé à un autre guichet.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Votre journal des versements, lui, reste accessible sous{" "}
+                <span className="font-medium">Paiements</span>.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   const soldes = data?.settled_count ?? 0
@@ -136,7 +179,7 @@ export function FeeSettlementClient() {
       </Card>
 
       {isError ? (
-        <DataError onRetry={() => refetch()} />
+        <DataError error={error ?? undefined} onRetry={() => refetch()} />
       ) : isLoading ? (
         <div className="space-y-2">
           <Skeleton className="h-12 w-full rounded-xl" />
