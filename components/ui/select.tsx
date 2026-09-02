@@ -87,10 +87,16 @@ const SelectContent = React.forwardRef<
       <SelectPrimitive.Viewport
         className={cn(
           "p-1",
-          // Pas de `h-[var(--radix-select-trigger-height)]` ici : cette hauteur
-          // enferme la liste ouverte dans celle de son propre bouton, et il
-          // faut alors defiler dans une fente d'une ligne pour trouver une
-          // option. La largeur minimale, elle, reste calee sur le declencheur.
+          // Shadcn cale ici la hauteur de la liste sur celle du declencheur.
+          // Retire a dessein : cette hauteur enferme la liste ouverte dans
+          // celle de son propre bouton, et il faut alors defiler dans une
+          // fente d'une ligne pour trouver une option. La largeur minimale,
+          // elle, reste calee sur le declencheur.
+          //
+          // Ne pas ecrire la classe retiree dans ce commentaire : Tailwind
+          // scanne les fichiers en entier, commentaires compris, et la
+          // regenererait dans la feuille de style — une regle morte que la
+          // prochaine verification prendrait pour le defaut lui-meme.
           position === "popper" && "w-full min-w-[var(--radix-select-trigger-width)]"
         )}
       >

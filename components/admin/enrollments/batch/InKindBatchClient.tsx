@@ -1,23 +1,15 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { ClipboardList } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
+import { ClassSelect } from "@/components/shared/ClassSelect"
 import { DataError } from "@/components/shared/DataError"
 import { StudentBatchCard } from "@/components/admin/enrollments/batch/StudentBatchCard"
 import { ligneComplete } from "@/lib/contracts/in-kind-roster"
-import { useClasses } from "@/lib/hooks/useClasses"
+import { useClassChoice } from "@/lib/hooks/useClassChoice"
 import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import {
   useInKindRoster,
@@ -27,6 +19,24 @@ import {
 
 /** La derniere classe ouverte, pour reprendre ou on s'est arrete. */
 const DERNIERE_CLASSE = "klassci.saisie-classe.derniere"
+
+/**
+ * Par ou reprendre : le lien s'il porte une classe, sinon la derniere ouverte.
+ *
+ * Rend `undefined` quand rien n'est exploitable — navigation privee, stockage
+ * bloque, valeur abimee — et l'ecran repart alors sur la premiere classe.
+ */
+export function reprendreOu(depuisLien: string | null): number | undefined {
+  const duLien = Number(depuisLien)
+  if (Number.isFinite(duLien) && duLien > 0) return duLien
+  if (typeof window === "undefined") return undefined
+  try {
+    const retenue = Number(window.localStorage.getItem(DERNIERE_CLASSE))
+    return Number.isFinite(retenue) && retenue > 0 ? retenue : undefined
+  } catch {
+    return undefined
+  }
+}
 
 /** Le dépôt en attente de confirmation, le temps de la boîte. */
 interface DepotEnAttente {
@@ -56,29 +66,19 @@ interface DepotEnAttente {
  */
 export function InKindBatchClient() {
   const { academicYearId } = useCurrentAcademicYearId()
-  const { data: classesData, isLoading: classesLoading } = useClasses({ size: 200 })
-  const classes = useMemo(
-    () => [...(classesData?.items ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
-    [classesData],
-  )
-
-  // La classe vient d'abord du lien, sinon de la derniere ouverte, sinon de
-  // la premiere. L'educateur enchaine les classes : le renvoyer a la premiere
-  // a chaque retour lui coute un geste a chaque fois, et il en fait trente.
+  // D'ou reprendre : le lien d'abord, sinon la derniere classe ouverte.
+  // L'educateur en enchaine trente ; le renvoyer a la premiere a chaque retour
+  // lui coute un geste a chaque fois. Le chargement, le tri et le repli sur la
+  // premiere classe vivent dans `useClassChoice`, partages avec l'ecran des
+  // soldes : deux ecrans qui listeraient la meme ecole dans deux ordres
+  // differents, c'est une 6e B introuvable la ou on la cherche.
   const params = useSearchParams()
-  const [classId, setClassId] = useState<number | undefined>(() => {
-    const depuisLien = Number(params.get("class"))
-    if (Number.isFinite(depuisLien) && depuisLien > 0) return depuisLien
-    if (typeof window === "undefined") return undefined
-    try {
-      const retenue = Number(window.localStorage.getItem(DERNIERE_CLASSE))
-      return Number.isFinite(retenue) && retenue > 0 ? retenue : undefined
-    } catch {
-      // Navigation privee, stockage bloque : on repart de la premiere classe.
-      return undefined
-    }
-  })
-  const classeChoisie = classId ?? classes[0]?.id
+  const {
+    classes,
+    classId: classeChoisie,
+    setClassId,
+    isLoading: classesLoading,
+  } = useClassChoice(reprendreOu(params.get("class")))
 
   useEffect(() => {
     if (!classeChoisie) return
@@ -147,32 +147,13 @@ export function InKindBatchClient() {
         </div>
       </div>
 
-      <Card className="border-0 shadow-sm ring-1 ring-border">
-        <CardContent className="space-y-1.5 p-4">
-          <Label htmlFor="classe-saisie" className="text-xs">
-            Classe
-          </Label>
-          {classesLoading ? (
-            <Skeleton className="h-11 w-full" />
-          ) : (
-            <Select
-              value={classeChoisie ? String(classeChoisie) : undefined}
-              onValueChange={(v) => setClassId(Number(v))}
-            >
-              <SelectTrigger id="classe-saisie" className="h-11">
-                <SelectValue placeholder="Choisir une classe" />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map((classe) => (
-                  <SelectItem key={classe.id} value={String(classe.id)} className="py-2.5">
-                    {classe.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </CardContent>
-      </Card>
+      <ClassSelect
+        id="classe-saisie"
+        classes={classes}
+        value={classeChoisie}
+        onChange={setClassId}
+        isLoading={classesLoading}
+      />
 
       {isLoading ? (
         <div className="space-y-2">
