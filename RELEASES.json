@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-03T00:11:19Z",
+  "generated_at": "2026-09-03T01:11:46Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,14 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "Le point par catégorie s'affiche en aperçu avant d'être édité, et s'exporte au choix en document PDF officiel ou en classeur",
+            "audience": [
+              "comptable",
+              "caissier"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Une fenêtre « Nouveautés » dit ce qui a changé pour votre rôle, signalée par une pastille quand il y a du neuf",
             "audience": [
@@ -1038,6 +1046,13 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Les champs de date tiennent dans leur carte sur téléphone au lieu de déborder hors de l'écran",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Le lien de configuration de l'année scolaire suit le droit et non le rôle : l'école peut confier cette tâche à qui elle veut",
             "audience": [

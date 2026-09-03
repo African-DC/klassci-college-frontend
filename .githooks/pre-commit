@@ -11,7 +11,10 @@ refus() {
 }
 
 branche=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-indexes=$(git diff --cached --name-only)
+# --diff-filter=ACMR : ce qui existe encore sur le disque. Sans ce filtre, une
+# suppression compte comme un fichier indexe — retirer un `.env` oublie se
+# ferait refuser comme si on venait de l'ajouter.
+indexes=$(git diff --cached --name-only --diff-filter=ACMR)
 
 # --- 1. Jamais de commit direct sur une branche protegee ----------------------
 case "$branche" in

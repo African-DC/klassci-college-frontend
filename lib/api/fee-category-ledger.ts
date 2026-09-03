@@ -38,7 +38,20 @@ export const feeCategoryLedgerApi = {
     return safeValidate(CategoryLedgerSchema, json, "GET /payments/settlement/category")
   },
 
-  /** Le même document, en classeur. */
-  export: async (criteres: LedgerCriteres): Promise<Blob> =>
-    apiFetchBlob(`/payments/settlement/category/export${requete(criteres)}`),
+  /**
+   * Le même document, en PDF ou en classeur.
+   *
+   * `inline` sert l'aperçu : le serveur renvoie alors le PDF en affichage au
+   * lieu du téléchargement. Un comptable qui vérifie une période avant de
+   * l'envoyer à un prestataire ne veut pas six fichiers dans son dossier.
+   */
+  export: async (
+    criteres: LedgerCriteres,
+    { format = "pdf", inline = false }: { format?: "pdf" | "xlsx"; inline?: boolean } = {},
+  ): Promise<Blob> => {
+    const params = new URLSearchParams(requete(criteres).slice(1))
+    params.set("format", format)
+    if (inline) params.set("inline", "true")
+    return apiFetchBlob(`/payments/settlement/category/export?${params.toString()}`)
+  },
 }
