@@ -1,9 +1,9 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-03T01:11:46Z",
+  "generated_at": "2026-09-03T12:08:35Z",
   "version": "Unreleased",
   "released": false,
-  "total": 311,
+  "total": 312,
   "sections": {
     "Added": [
       {
@@ -55,6 +55,15 @@
     ],
     "Fixed": [
       {
+        "text": "Un dépôt en nature posé par erreur s'annule désormais depuis la fiche de l'élève, et le montant redevient dû à la caisse",
+        "audience": [
+          "admin",
+          "comptable",
+          "éducateur"
+        ],
+        "pull_request": null
+      },
+      {
         "text": "Les champs de date tiennent dans leur carte sur téléphone au lieu de déborder hors de l'écran",
         "audience": [
           "tous"
@@ -89,15 +98,6 @@
         "audience": [
           "éducateur",
           "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Le journal des versements s'ouvre sur l'année en cours et laisse en changer : les encaissements d'un autre exercice ne gonflent plus le collecté",
-        "audience": [
-          "admin",
-          "comptable",
-          "caissier"
         ],
         "pull_request": null
       }
