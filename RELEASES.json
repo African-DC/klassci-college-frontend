@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-03T00:11:19Z",
+  "generated_at": "2026-09-03T00:54:47Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,14 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "Le point par catégorie s'affiche en aperçu avant d'être édité, et s'exporte au choix en document PDF officiel ou en classeur",
+            "audience": [
+              "comptable",
+              "caissier"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Une fenêtre « Nouveautés » dit ce qui a changé pour votre rôle, signalée par une pastille quand il y a du neuf",
             "audience": [

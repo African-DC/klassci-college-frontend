@@ -1,11 +1,19 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-03T00:11:19Z",
+  "generated_at": "2026-09-03T00:54:47Z",
   "version": "Unreleased",
   "released": false,
-  "total": 309,
+  "total": 310,
   "sections": {
     "Added": [
+      {
+        "text": "Le point par catégorie s'affiche en aperçu avant d'être édité, et s'exporte au choix en document PDF officiel ou en classeur",
+        "audience": [
+          "comptable",
+          "caissier"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Une fenêtre « Nouveautés » dit ce qui a changé pour votre rôle, signalée par une pastille quand il y a du neuf",
         "audience": [
@@ -43,14 +51,6 @@
           "comptable"
         ],
         "pull_request": null
-      },
-      {
-        "text": "À l'inscription, le secrétariat dit si l'élève est nouveau, et le corrige ensuite depuis la fiche : rien n'est deviné à sa place",
-        "audience": [
-          "admin",
-          "secrétariat"
-        ],
-        "pull_request": 419
       }
     ],
     "Fixed": [

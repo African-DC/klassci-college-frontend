@@ -2,11 +2,17 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
-import { Download, Package, Wallet } from "lucide-react"
+import { Download, Eye, FileSpreadsheet, FileText, Package, Wallet } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
-import { PageHero, heroAccentBtn } from "@/components/shared/PageHero"
+import { PageHero, heroAccentBtn, heroGlassBtn } from "@/components/shared/PageHero"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { AcademicYearScopeBar } from "@/components/shared/AcademicYearScopeBar"
 import { LedgerFilters } from "@/components/admin/payments/settlement/LedgerFilters"
 import { LedgerCards, LedgerTable } from "@/components/admin/payments/settlement/LedgerRows"
@@ -15,6 +21,7 @@ import { useClassChoice } from "@/lib/hooks/useClassChoice"
 import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import { useFeeCategories } from "@/lib/hooks/useFees"
 import { useFeeCategoryLedger } from "@/lib/hooks/useFeeCategoryLedger"
+import { openPdfPreview } from "@/lib/pdf/preview"
 import { downloadBlob } from "@/lib/utils"
 
 const fmt = (n: number) => `${n.toLocaleString("fr-FR")} F`
@@ -58,17 +65,33 @@ export function CategoryLedgerClient() {
   const { data, isLoading, isError, error, refetch } = useFeeCategoryLedger(criteres)
   const [exporting, setExporting] = useState(false)
 
-  async function exporter() {
-    if (!categoryId || !academicYearId) return
+  // `null` tant que le frais ou l'annee manquent : les deux actions se lisent
+  // alors comme indisponibles, sans qu'aucune assertion ne promette au type
+  // ce que l'ecran n'a pas encore.
+  const complets =
+    categoryId && academicYearId ? { ...criteres, categoryId, academicYearId } : null
+
+  function nomDuFichier(extension: string) {
+    const nom = data?.category_name?.replace(/[^\w-]+/g, "-").toLowerCase() ?? "categorie"
+    return `point-${nom}.${extension}`
+  }
+
+  /**
+   * L'aperçu passe par le helper partagé : il ouvre l'onglet **dans** le geste
+   * de clic, sans quoi le bloqueur de fenêtres le tue avant que le document
+   * n'arrive.
+   */
+  function apercu() {
+    if (!complets) return
+    void openPdfPreview(() => feeCategoryLedgerApi.export(complets, { format: "pdf", inline: true }))
+  }
+
+  async function exporter(format: "pdf" | "xlsx") {
+    if (!complets) return
     setExporting(true)
     try {
-      const blob = await feeCategoryLedgerApi.export({
-        ...criteres,
-        categoryId,
-        academicYearId,
-      })
-      const nom = data?.category_name?.replace(/[^\w-]+/g, "-").toLowerCase() ?? "categorie"
-      downloadBlob(blob, `point-${nom}.xlsx`)
+      const blob = await feeCategoryLedgerApi.export(complets, { format })
+      downloadBlob(blob, nomDuFichier(format))
     } catch (err) {
       toast.error("Le document n'a pas pu être exporté", {
         description: err instanceof Error ? err.message : undefined,
@@ -77,6 +100,8 @@ export function CategoryLedgerClient() {
       setExporting(false)
     }
   }
+
+  const vide = !complets || !data || data.lignes.length === 0
 
   const kpis = [
     {
@@ -116,15 +141,35 @@ export function CategoryLedgerClient() {
         title="Point par catégorie de frais"
         subtitle="Ce qui est entré, ce qui a été déposé, et qui doit encore"
         actions={
-          <button
-            type="button"
-            className={heroAccentBtn}
-            onClick={exporter}
-            disabled={exporting || !data || data.lignes.length === 0}
-          >
-            <Download aria-hidden className="mr-1.5 h-4 w-4" />
-            {exporting ? "Export…" : "Exporter"}
-          </button>
+          <>
+            <button
+              type="button"
+              className={heroGlassBtn}
+              onClick={apercu}
+              disabled={vide}
+            >
+              <Eye aria-hidden className="mr-1.5 h-4 w-4" />
+              Aperçu
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild disabled={vide || exporting}>
+                <button type="button" className={heroAccentBtn}>
+                  <Download aria-hidden className="mr-1.5 h-4 w-4" />
+                  {exporting ? "Export…" : "Exporter"}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => exporter("pdf")} className="h-11 sm:h-9">
+                  <FileText aria-hidden className="mr-2 h-4 w-4" />
+                  Document PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exporter("xlsx")} className="h-11 sm:h-9">
+                  <FileSpreadsheet aria-hidden className="mr-2 h-4 w-4" />
+                  Classeur Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         }
         kpis={kpis}
       />
