@@ -98,7 +98,7 @@ describe("filterAdminNavigation", () => {
       "Inscriptions",
       "Caisse",
       "Journal des versements",
-      "Soldes par catégorie",
+      "Point par catégorie",
       "Bulletins",
       "Notifications",
     ])
@@ -113,15 +113,16 @@ describe("filterAdminNavigation", () => {
     expect(seen).toContain("Autorisations de reprise")
   })
 
-  it("keeps the settlement table for whoever already consolidates every till", () => {
+  it("opens the category point to whoever may read payments at all", () => {
     // Ce tableau dit ce qu'une famille doit encore, ce qui se calcule sur tout
     // l'argent recu. Cloisonne a une caisse, il afficherait « Du » sur une
     // famille qui a paye au guichet d'a cote, et on irait la relancer. Le
     // serveur le refuse donc a une caissiere ; le menu ne doit pas le lui
     // proposer, sous peine d'un lien qui mene a un 403.
-    expect(labels(accountant)).toContain("Soldes par catégorie")
-    expect(labels(cashier)).not.toContain("Soldes par catégorie")
-    expect(labels(educator)).not.toContain("Soldes par catégorie")
+    expect(labels(accountant)).toContain("Point par catégorie")
+    // La caissière y accède : elle y fait le point de sa propre caisse.
+    expect(labels(cashier)).toContain("Point par catégorie")
+    expect(labels(educator)).not.toContain("Point par catégorie")
   })
 
   it("still leaves the payments journal to a till-scoped cashier", () => {
