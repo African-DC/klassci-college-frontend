@@ -10,7 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 - Une fenêtre « Nouveautés » dit ce qui a changé pour votre rôle, signalée par une pastille quand il y a du neuf *(tous)*
-- Un tableau montre où en est chaque famille, catégorie de frais par catégorie de frais, en distinguant l'argent du dépôt en nature, avec le décompte des élèves en règle et un export. Réservé à qui consolide toutes les caisses *(comptable)*
+- Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse *(comptable, caissier)*
 
 ### Fixed
 - Le lien de configuration de l'année scolaire suit le droit et non le rôle : l'école peut confier cette tâche à qui elle veut *(admin, secrétariat)*

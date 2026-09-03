@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-02T23:34:49Z",
+  "generated_at": "2026-09-03T00:11:19Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -18,9 +18,10 @@
             "pull_request": null
           },
           {
-            "text": "Un tableau montre où en est chaque famille, catégorie de frais par catégorie de frais, en distinguant l'argent du dépôt en nature, avec le décompte des élèves en règle et un export. Réservé à qui consolide toutes les caisses",
+            "text": "Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse",
             "audience": [
-              "comptable"
+              "comptable",
+              "caissier"
             ],
             "pull_request": null
           },
