@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-03T01:11:46Z",
+  "generated_at": "2026-09-03T12:08:35Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -1046,6 +1046,15 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Un dépôt en nature posé par erreur s'annule désormais depuis la fiche de l'élève, et le montant redevient dû à la caisse",
+            "audience": [
+              "admin",
+              "comptable",
+              "éducateur"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Les champs de date tiennent dans leur carte sur téléphone au lieu de déborder hors de l'écran",
             "audience": [
