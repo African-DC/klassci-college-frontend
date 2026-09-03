@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-03T00:11:19Z",
+  "generated_at": "2026-09-03T00:48:29Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -1038,6 +1038,13 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Les champs de date tiennent dans leur carte sur téléphone au lieu de déborder hors de l'écran",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Le lien de configuration de l'année scolaire suit le droit et non le rôle : l'école peut confier cette tâche à qui elle veut",
             "audience": [
