@@ -51,7 +51,7 @@ export function LedgerFilters({
   return (
     <Card className="border-0 shadow-sm ring-1 ring-border">
       <CardContent className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="sm:col-span-2 lg:col-span-1">
+        <div className="min-w-0 sm:col-span-2 lg:col-span-1">
           <Label htmlFor="ledger-categorie" className="text-xs text-muted-foreground">
             Catégorie de frais
           </Label>
@@ -77,7 +77,7 @@ export function LedgerFilters({
           )}
         </div>
 
-        <div>
+        <div className="min-w-0">
           <Label htmlFor="ledger-classe" className="text-xs text-muted-foreground">
             Classe <span className="font-normal">(facultatif)</span>
           </Label>
@@ -101,7 +101,7 @@ export function LedgerFilters({
           </Select>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <Label htmlFor="ledger-du" className="text-xs text-muted-foreground">
             Du
           </Label>
@@ -114,7 +114,7 @@ export function LedgerFilters({
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <Label htmlFor="ledger-au" className="text-xs text-muted-foreground">
             Au <span className="font-normal">(inclus)</span>
           </Label>
