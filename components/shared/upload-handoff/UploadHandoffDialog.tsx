@@ -217,18 +217,26 @@ function PanneauDeSession({
             {qrSvg ? (
               <div className="flex justify-center">
                 {/*
-                  Le SVG vient de notre propre serveur, rendu par `segno` à
-                  partir d'une URL que nous avons fabriquée : il n'y a pas de
-                  saisie utilisateur dans cette chaîne. Le poser tel quel évite
-                  d'embarquer une librairie de code QR dans le navigateur pour
-                  redessiner ce que le serveur sait déjà dessiner.
+                  Le code est servi en image, pas injecté dans le document.
+
+                  Un SVG chargé par `<img>` est inerte : il ne peut ni exécuter
+                  de script, ni lire la page qui l'affiche. Le poser en HTML
+                  brut aurait reposé sur une promesse — « rien de cette chaîne
+                  ne vient de l'utilisateur » — vraie aujourd'hui, et que le
+                  premier ajout de nom d'établissement dans la page du
+                  téléphone rendrait fausse sans que personne y repense.
+
+                  Le serveur reste seul à dessiner : aucune librairie de code
+                  QR n'entre dans le navigateur.
                 */}
-                <div
-                  className="rounded-xl border bg-white p-3 [&_svg]:h-44 [&_svg]:w-44"
-                  role="img"
-                  aria-label="Code à scanner avec l'appareil photo du téléphone"
-                  dangerouslySetInnerHTML={{ __html: qrSvg }}
-                />
+                <div className="rounded-xl border bg-white p-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`data:image/svg+xml;utf8,${encodeURIComponent(qrSvg)}`}
+                    alt="Code à scanner avec l'appareil photo du téléphone"
+                    className="h-44 w-44"
+                  />
+                </div>
               </div>
             ) : null}
 
