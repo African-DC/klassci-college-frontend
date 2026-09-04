@@ -1,9 +1,9 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-03T12:08:35Z",
+  "generated_at": "2026-09-04T06:05:36Z",
   "version": "Unreleased",
   "released": false,
-  "total": 312,
+  "total": 314,
   "sections": {
     "Added": [
       {
@@ -55,6 +55,22 @@
     ],
     "Fixed": [
       {
+        "text": "Une photo choisie dans la galerie du téléphone est allégée avant l'envoi, au lieu d'être refusée au-delà de 5 Mo",
+        "audience": [
+          "admin",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Une photo prise en portrait ne ressort plus couchée une fois enregistrée",
+        "audience": [
+          "admin",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
+      {
         "text": "Un dépôt en nature posé par erreur s'annule désormais depuis la fiche de l'élève, et le montant redevient dû à la caisse",
         "audience": [
           "admin",
@@ -83,21 +99,6 @@
         "audience": [
           "éducateur",
           "comptable"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Les listes déroulantes s'ouvrent sur toute leur hauteur au lieu de se replier sur une seule ligne : moyen de paiement, classe, année",
-        "audience": [
-          "tous"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "L'onglet Paiements d'une inscription n'affirme plus « aucun frais » à qui n'a pas le droit de lire la caisse : il dit ce qui se passe et où déclarer un dépôt",
-        "audience": [
-          "éducateur",
-          "secrétariat"
         ],
         "pull_request": null
       }

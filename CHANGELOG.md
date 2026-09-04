@@ -14,6 +14,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse *(comptable, caissier)*
 
 ### Fixed
+- Une photo choisie dans la galerie du téléphone est allégée avant l'envoi, au lieu d'être refusée au-delà de 5 Mo *(admin, secrétariat)*
+- Une photo prise en portrait ne ressort plus couchée une fois enregistrée *(admin, secrétariat)*
 - Un dépôt en nature posé par erreur s'annule désormais depuis la fiche de l'élève, et le montant redevient dû à la caisse *(admin, comptable, éducateur)*
 - Les champs de date tiennent dans leur carte sur téléphone au lieu de déborder hors de l'écran *(tous)*
 - Le lien de configuration de l'année scolaire suit le droit et non le rôle : l'école peut confier cette tâche à qui elle veut *(admin, secrétariat)*

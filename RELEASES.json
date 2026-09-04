@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-03T12:08:35Z",
+  "generated_at": "2026-09-04T06:05:36Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -1046,6 +1046,22 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Une photo choisie dans la galerie du téléphone est allégée avant l'envoi, au lieu d'être refusée au-delà de 5 Mo",
+            "audience": [
+              "admin",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Une photo prise en portrait ne ressort plus couchée une fois enregistrée",
+            "audience": [
+              "admin",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Un dépôt en nature posé par erreur s'annule désormais depuis la fiche de l'élève, et le montant redevient dû à la caisse",
             "audience": [
