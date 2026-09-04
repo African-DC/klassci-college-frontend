@@ -1,8 +1,9 @@
 "use client"
 
-import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
+import { keepPreviousData, useInfiniteQuery, type QueryClient } from "@tanstack/react-query"
 import { feeCategoryLedgerApi, type LedgerCriteres } from "@/lib/api/fee-category-ledger"
 import type { CategoryLedger } from "@/lib/contracts/fee-category-ledger"
+import { overviewKeys } from "./useFeeCategoryOverview"
 import { pageSuivante } from "./pagination"
 
 /** Ce qu'on demande d'un coup. Le reste vient par « Charger plus ». */
@@ -19,6 +20,23 @@ export const ledgerKeys = {
    * Le hachage de clé de TanStack Query est stable sur les objets.
    */
   point: (c: LedgerCriteres) => [...ledgerKeys.all, "point", c] as const,
+}
+
+/**
+ * Ce que le point montre après qu'on y a encaissé.
+ *
+ * `useRecordEnrollmentPayment` invalide les versements, les inscriptions, les
+ * élèves et les frais — mais il ne connaît pas ces deux lectures-ci. Sans cet
+ * appel, la ligne qu'on vient d'encaisser resterait « Dû » sous les yeux de qui
+ * vient de prendre l'argent, et le taux de la carte ne bougerait pas : un écran
+ * qui contredit le geste qu'on vient d'y faire n'est plus cru sur le reste.
+ *
+ * Les deux ensemble, parce que le versement change le détail ET la vue
+ * d'ensemble, et qu'en rafraîchir un seul les ferait diverger à l'écran.
+ */
+export function invalidateSettlementViews(queryClient: QueryClient): void {
+  void queryClient.invalidateQueries({ queryKey: ledgerKeys.all })
+  void queryClient.invalidateQueries({ queryKey: overviewKeys.all })
 }
 
 /**

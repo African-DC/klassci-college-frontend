@@ -42,10 +42,6 @@ function perimetre({
   })
   if (classId) params.set("class_id", String(classId))
   if (dateFrom) params.set("date_from", dateFrom)
-  // Borne haute exclusive côté serveur : on envoie le lendemain pour que la
-  // journée choisie soit incluse. Sans cela, un document « jusqu'au 30 »
-  // s'arrêterait au 29 au soir, et personne ne verrait la différence avant de
-  // comparer deux totaux.
   if (dateTo) params.set("date_to", lendemain(dateTo))
   return params
 }
@@ -59,7 +55,17 @@ function requete(criteres: LedgerCriteres): URLSearchParams {
   return params
 }
 
-function lendemain(jour: string): string {
+/**
+ * Borne haute exclusive côté serveur : on envoie le lendemain pour que la
+ * journée choisie soit incluse. Sans cela, un document « jusqu'au 30 »
+ * s'arrêterait au 29 au soir, et personne ne verrait la différence avant de
+ * comparer deux totaux.
+ *
+ * Exportée parce que la vue d'ensemble borne la même période sur le même
+ * serveur : deux conversions écrites séparément finiraient par différer d'un
+ * jour, et la carte n'annoncerait plus le total du détail qu'elle ouvre.
+ */
+export function lendemain(jour: string): string {
   const d = new Date(`${jour}T00:00:00Z`)
   d.setUTCDate(d.getUTCDate() + 1)
   return d.toISOString().slice(0, 10)

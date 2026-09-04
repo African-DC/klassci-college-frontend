@@ -1,11 +1,27 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-04T03:16:10Z",
+  "generated_at": "2026-09-04T03:50:08Z",
   "version": "Unreleased",
   "released": false,
-  "total": 315,
+  "total": 317,
   "sections": {
     "Added": [
+      {
+        "text": "Le point par catégorie s'ouvre sur une carte par frais, avec son taux, ses compteurs et « entré / attendu » : on voit quel frais rentre mal avant d'en choisir un",
+        "audience": [
+          "comptable",
+          "caissier"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Chaque ligne d'impayé mène à la fiche de l'élève, et à l'encaissement pré-rempli pour qui a le droit d'enregistrer un versement",
+        "audience": [
+          "comptable",
+          "caissier"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Le point par catégorie garde ses filtres dans l'adresse : le lien « Tenue, 6e A, ce mois-ci » s'envoie à un collègue, et le bouton retour défait le dernier filtre",
         "audience": [
@@ -30,21 +46,6 @@
       },
       {
         "text": "Le point par catégorie s'affiche en aperçu avant d'être édité, et s'exporte au choix en document PDF officiel ou en classeur",
-        "audience": [
-          "comptable",
-          "caissier"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Une fenêtre « Nouveautés » dit ce qui a changé pour votre rôle, signalée par une pastille quand il y a du neuf",
-        "audience": [
-          "tous"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse",
         "audience": [
           "comptable",
           "caissier"

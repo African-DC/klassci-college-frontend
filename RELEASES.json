@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-04T03:16:10Z",
+  "generated_at": "2026-09-04T03:50:08Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,22 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "Le point par catégorie s'ouvre sur une carte par frais, avec son taux, ses compteurs et « entré / attendu » : on voit quel frais rentre mal avant d'en choisir un",
+            "audience": [
+              "comptable",
+              "caissier"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Chaque ligne d'impayé mène à la fiche de l'élève, et à l'encaissement pré-rempli pour qui a le droit d'enregistrer un versement",
+            "audience": [
+              "comptable",
+              "caissier"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Le point par catégorie garde ses filtres dans l'adresse : le lien « Tenue, 6e A, ce mois-ci » s'envoie à un collègue, et le bouton retour défait le dernier filtre",
             "audience": [

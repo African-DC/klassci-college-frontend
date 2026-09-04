@@ -16,18 +16,25 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AcademicYearScopeBar } from "@/components/shared/AcademicYearScopeBar"
 import { LedgerBuckets, SEAU_TOUS } from "@/components/admin/payments/settlement/LedgerBuckets"
+import { LedgerEncaisserDialog } from "@/components/admin/payments/settlement/LedgerEncaisserDialog"
 import { LedgerFilters } from "@/components/admin/payments/settlement/LedgerFilters"
+import { LedgerOverview } from "@/components/admin/payments/settlement/LedgerOverview"
 import { LedgerCards, LedgerTable } from "@/components/admin/payments/settlement/LedgerRows"
 import { feeCategoryLedgerApi } from "@/lib/api/fee-category-ledger"
 import { useClassChoice } from "@/lib/hooks/useClassChoice"
 import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
 import { useFeeCategories } from "@/lib/hooks/useFees"
 import { useFeeCategoryLedger } from "@/lib/hooks/useFeeCategoryLedger"
+import { useFeeCategoryOverview } from "@/lib/hooks/useFeeCategoryOverview"
 import { useFiltresUrl } from "@/lib/hooks/useFiltresUrl"
 import { usePermissions } from "@/lib/hooks/usePermissions"
 import { openPdfPreview } from "@/lib/pdf/preview"
 import { downloadBlob } from "@/lib/utils"
-import { LedgerBucketSchema, type LedgerBucket } from "@/lib/contracts/fee-category-ledger"
+import {
+  LedgerBucketSchema,
+  type LedgerBucket,
+  type LedgerRow,
+} from "@/lib/contracts/fee-category-ledger"
 
 const fmt = (n: number) => `${n.toLocaleString("fr-FR")} F`
 
@@ -66,6 +73,15 @@ const TOUS_DANS_L_URL = "tous"
  * **L'état de l'écran vit dans l'adresse.** « Tenue, 6e A, ce mois-ci » s'envoie
  * à un collègue, se met en favori, et le bouton retour défait le dernier filtre
  * au lieu de quitter l'écran.
+ *
+ * **La vue d'ensemble d'abord, l'action au bout de la ligne.** Tant qu'aucun
+ * frais n'est choisi, l'écran répond à la question qui vient avant — quel frais
+ * rentre mal — par une carte par catégorie ; cliquer présélectionne le frais
+ * dans le filtre, donc dans l'adresse, et ouvre le détail sans quitter l'écran.
+ * Et chaque ligne du détail mène quelque part : la fiche de l'élève, et
+ * l'encaissement pré-rempli pour qui a le droit de l'enregistrer. Sans cela,
+ * l'écran conduisait jusqu'à « voici qui doit encore » et n'offrait plus qu'un
+ * fichier — c'est-à-dire une sortie du produit.
  */
 export function CategoryLedgerClient() {
   const { valeurs, set } = useFiltresUrl(CLES)
@@ -92,6 +108,9 @@ export function CategoryLedgerClient() {
   // lit dans la matrice, jamais dans un rôle.
   const { has, isLoading: loadingDroits } = usePermissions()
   const peutTrier = has("payments:read:all")
+  // Le même slug que celui exigé par la route d'enregistrement : ce qu'on
+  // montre et ce qu'on autorise se disent avec le même mot, écrit une fois.
+  const peutEncaisser = has("payments:create")
 
   // L'adresse se tape à la main et se transmet : elle passe par le contrat,
   // jamais par une assertion. Une valeur inconnue — `tous`, ou un seau retiré
@@ -117,7 +136,24 @@ export function CategoryLedgerClient() {
     // le seau puis repartir avec ferait clignoter la liste et le compteur.
     { enabled: !loadingDroits },
   )
+
+  // La vue d'ensemble ne se charge que tant qu'aucun frais n'est choisi : elle
+  // répond à « lequel regarder », et cette question ne se pose plus une fois la
+  // réponse donnée. Le périmètre est celui du détail — même année, même classe,
+  // même période — sans quoi la carte annoncerait un total que le détail
+  // qu'elle ouvre ne retrouverait pas.
+  const vueEnsemble = useFeeCategoryOverview(
+    {
+      academicYearId,
+      classId,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+    },
+    { enabled: !categoryId && !loadingDroits },
+  )
+
   const [exporting, setExporting] = useState(false)
+  const [aEncaisser, setAEncaisser] = useState<LedgerRow | null>(null)
 
   // `null` tant que le frais ou l'annee manquent : les deux actions se lisent
   // alors comme indisponibles, sans qu'aucune assertion ne promette au type
@@ -325,11 +361,38 @@ export function CategoryLedgerClient() {
       )}
 
       {!categoryId ? (
-        <Card className="border-0 shadow-sm ring-1 ring-border">
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Choisissez une catégorie de frais pour voir où en est chaque famille.
-          </CardContent>
-        </Card>
+        vueEnsemble.isError ? (
+          // Le repli, et pas une alarme rouge : les filtres au-dessus marchent
+          // toujours, et choisir un frais à la main donne le détail complet. La
+          // vue d'ensemble est ce qui évite de deviner, pas ce qui permet de
+          // lire.
+          <Card className="border-0 shadow-sm ring-1 ring-border">
+            <CardContent className="space-y-3 py-10 text-center text-sm text-muted-foreground">
+              <p>
+                La vue d&apos;ensemble des frais n&apos;a pas pu être chargée. Choisissez une
+                catégorie ci-dessus pour voir où en est chaque famille.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 sm:h-9"
+                onClick={() => void vueEnsemble.refetch()}
+              >
+                Réessayer
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <LedgerOverview
+            donnees={vueEnsemble.data}
+            isLoading={vueEnsemble.isLoading}
+            // Choisir une carte ECRIT le filtre visible, donc l'adresse : ce
+            // n'est pas une navigation vers un autre écran, c'est une
+            // présélection. C'est ce qui rend le bouton retour utile — il
+            // ramène à la grille au lieu de quitter le point.
+            onChoisir={(id) => set({ frais: id })}
+          />
+        )
       ) : isError ? (
         <DataError error={error ?? undefined} onRetry={() => refetch()} />
       ) : !data ? (
@@ -384,10 +447,16 @@ export function CategoryLedgerClient() {
           ) : (
             <>
               <div className="hidden md:block">
-                <LedgerTable ledger={data} />
+                <LedgerTable
+                  ledger={data}
+                  onEncaisser={peutEncaisser ? setAEncaisser : undefined}
+                />
               </div>
               <div className="md:hidden">
-                <LedgerCards ledger={data} />
+                <LedgerCards
+                  ledger={data}
+                  onEncaisser={peutEncaisser ? setAEncaisser : undefined}
+                />
               </div>
             </>
           )}
@@ -421,6 +490,19 @@ export function CategoryLedgerClient() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Monté seulement quand une ligne est choisie : la fenêtre part alors de
+          l'inscription EXACTE de cette ligne, et sa saisie meurt avec elle.
+          Gardée montée, elle rouvrirait sur le montant tapé pour la famille
+          précédente. */}
+      {aEncaisser && data && (
+        <LedgerEncaisserDialog
+          open
+          ligne={aEncaisser}
+          categorie={data.category_name}
+          onClose={() => setAEncaisser(null)}
+        />
       )}
     </div>
   )

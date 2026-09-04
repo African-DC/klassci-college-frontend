@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Le point par catégorie s'ouvre sur une carte par frais, avec son taux, ses compteurs et « entré / attendu » : on voit quel frais rentre mal avant d'en choisir un *(comptable, caissier)*
+- Chaque ligne d'impayé mène à la fiche de l'élève, et à l'encaissement pré-rempli pour qui a le droit d'enregistrer un versement *(comptable, caissier)*
 - Le point par catégorie garde ses filtres dans l'adresse : le lien « Tenue, 6e A, ce mois-ci » s'envoie à un collègue, et le bouton retour défait le dernier filtre *(comptable, caissier)*
 - Le point par catégorie se trie par état, avec le nombre d'élèves par seau calculé sur tout le périmètre, et se cherche par nom, prénom ou matricule *(comptable)*
 - Le point par catégorie montre enfin le montant dû par élève, le taux de recouvrement et l'attendu, que seul le document imprimé portait *(comptable)*
