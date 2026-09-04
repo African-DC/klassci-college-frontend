@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useRef, useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Archive,
   Camera,
@@ -20,20 +20,21 @@ import {
   MoreVertical,
   Phone,
   ChevronRight,
+  Smartphone,
   Sparkles,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,112 +44,140 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { DataError } from "@/components/shared/DataError"
-import { DetailHero } from "@/components/shared/DetailHero"
-import { ArchiveActionDialog, ARCHIVE_MENU_LABEL } from "@/components/shared/ArchiveActionDialog"
-import { useArchiveAction } from "@/lib/hooks/useArchiveAction"
-import { AccountSection } from "@/components/shared/account/AccountSection"
-import type { HeroKpi } from "@/components/shared/PageHero"
-import { PaymentStatusBadge } from "@/components/shared/finance/PaymentStatusBadge"
-import { StudentEditModal } from "./StudentEditModal"
-import { StudentJourneyTimeline } from "./StudentJourneyTimeline"
-import { StudentAcademicCharts } from "./StudentAcademicCharts"
-import { StatusPill } from "./tabs/_primitives"
-import { ProfileTab } from "./tabs/ProfileTab"
-import { PaymentsTab } from "./tabs/PaymentsTab"
-import { EnrollmentTab } from "./tabs/EnrollmentTab"
-import { AttendanceTab } from "./tabs/AttendanceTab"
-import { ParentsTab } from "./tabs/ParentsTab"
-import { DocumentsTab } from "./tabs/DocumentsTab"
-import { useStudent, useDeleteStudent, studentKeys, useStudentFees, useStudentFull } from "@/lib/hooks/useStudents"
-import { useEnrollments } from "@/lib/hooks/useEnrollments"
-import { useStudentParents } from "@/lib/hooks/useParents"
-import { studentsApi } from "@/lib/api/students"
-import { getUploadUrl } from "@/lib/utils"
+} from "@/components/ui/alert-dialog";
+import { DataError } from "@/components/shared/DataError";
+import { DetailHero } from "@/components/shared/DetailHero";
+import {
+  ArchiveActionDialog,
+  ARCHIVE_MENU_LABEL,
+} from "@/components/shared/ArchiveActionDialog";
+import { useArchiveAction } from "@/lib/hooks/useArchiveAction";
+import { AccountSection } from "@/components/shared/account/AccountSection";
+import type { HeroKpi } from "@/components/shared/PageHero";
+import { PaymentStatusBadge } from "@/components/shared/finance/PaymentStatusBadge";
+import { StudentEditModal } from "./StudentEditModal";
+import { StudentJourneyTimeline } from "./StudentJourneyTimeline";
+import { StudentAcademicCharts } from "./StudentAcademicCharts";
+import { StatusPill } from "./tabs/_primitives";
+import { ProfileTab } from "./tabs/ProfileTab";
+import { PaymentsTab } from "./tabs/PaymentsTab";
+import { EnrollmentTab } from "./tabs/EnrollmentTab";
+import { AttendanceTab } from "./tabs/AttendanceTab";
+import { ParentsTab } from "./tabs/ParentsTab";
+import { DocumentsTab } from "./tabs/DocumentsTab";
+import {
+  useStudent,
+  useDeleteStudent,
+  studentKeys,
+  useStudentFees,
+  useStudentFull,
+} from "@/lib/hooks/useStudents";
+import { useEnrollments } from "@/lib/hooks/useEnrollments";
+import { useStudentParents } from "@/lib/hooks/useParents";
+import { studentsApi } from "@/lib/api/students";
+import {
+  RecordPhotoSurfaces,
+  useRecordPhoto,
+} from "@/components/shared/upload-handoff/useRecordPhoto";
+import { usePermissions } from "@/lib/hooks/usePermissions";
+import { getUploadUrl } from "@/lib/utils";
 
 function formatFCFA(amount: number): string {
-  return `${amount.toLocaleString("fr-FR")} FCFA`
+  return `${amount.toLocaleString("fr-FR")} FCFA`;
 }
 
 // ---------- Main component ----------
 interface StudentDetailClientProps {
-  studentId: number
+  studentId: number;
 }
 
 export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
-  const router = useRouter()
-  const queryClient = useQueryClient()
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { has } = usePermissions();
 
-  const [editOpen, setEditOpen] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [photoPreview, setPhotoPreview] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [activeTab, setActiveTab] = useState("parcours")
-  const [photoLoaded, setPhotoLoaded] = useState(false)
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(false);
+  const [activeTab, setActiveTab] = useState("parcours");
+  const [photoLoaded, setPhotoLoaded] = useState(false);
 
-  const { data: student, isLoading, isError, refetch } = useStudent(studentId)
-  const { data: full } = useStudentFull(studentId)
-  const { mutate: deleteStudent, isPending: deleting } = useDeleteStudent()
+  const { data: student, isLoading, isError, refetch } = useStudent(studentId);
+  const { data: full } = useStudentFull(studentId);
+  const { mutate: deleteStudent, isPending: deleting } = useDeleteStudent();
   const archiveAction = useArchiveAction({
     entity: "student",
     id: studentId,
     listRoute: "/admin/students",
-  })
+  });
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      await studentsApi.uploadPhoto(studentId, file)
-      queryClient.invalidateQueries({ queryKey: studentKeys.detail(studentId) })
-      toast.success("Photo mise à jour")
-    } catch {
-      toast.error("Erreur lors de l'upload")
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ""
-    }
-  }
+  // Une seule entrée photo sur cet écran : l'import depuis le poste et le dépôt
+  // par téléphone partagent le même envoi, la même réduction, la même
+  // validation et la même invalidation. `studentKeys.all` plutôt que le détail
+  // seul : la vignette de la liste et la vue enrichie lisent la même colonne.
+  const photo = useRecordPhoto({
+    targetKind: "student_photo",
+    subjectId: studentId,
+    upload: (file) => studentsApi.uploadPhoto(studentId, file),
+    onSaved: () => queryClient.invalidateQueries({ queryKey: studentKeys.all }),
+  });
+  const canEditPhoto = has("admin:students:update");
 
   const handleDeletePhoto = async () => {
     try {
-      await studentsApi.deletePhoto(studentId)
-      queryClient.invalidateQueries({ queryKey: studentKeys.detail(studentId) })
-      queryClient.invalidateQueries({ queryKey: studentKeys.all })
-      setPhotoPreview(false)
-      toast.success("Photo supprimée")
+      await studentsApi.deletePhoto(studentId);
+      queryClient.invalidateQueries({
+        queryKey: studentKeys.detail(studentId),
+      });
+      queryClient.invalidateQueries({ queryKey: studentKeys.all });
+      setPhotoPreview(false);
+      toast.success("Photo supprimée");
     } catch {
-      toast.error("Erreur lors de la suppression de la photo")
+      toast.error("Erreur lors de la suppression de la photo");
     }
-  }
+  };
 
   const handleDelete = () => {
     deleteStudent(studentId, {
       onSuccess: () => {
-        router.push("/admin/students")
+        router.push("/admin/students");
       },
-    })
-  }
+    });
+  };
 
-  if (isLoading) return <DetailSkeleton />
-  if (isError) return <DataError message="Impossible de charger la fiche élève." onRetry={() => refetch()} />
-  if (!student) return <DataError message="Élève introuvable." />
+  if (isLoading) return <DetailSkeleton />;
+  if (isError)
+    return (
+      <DataError
+        message="Impossible de charger la fiche élève."
+        onRetry={() => refetch()}
+      />
+    );
+  if (!student) return <DataError message="Élève introuvable." />;
 
-  const initials = `${student.first_name?.[0] ?? ""}${student.last_name?.[0] ?? ""}`.toUpperCase()
-  const fullName = `${student.last_name} ${student.first_name}`
-  const photoSrc = getUploadUrl((student as Record<string, unknown>).photo_url as string | null | undefined)
-  const f = full as Record<string, unknown> | undefined
+  const initials =
+    `${student.first_name?.[0] ?? ""}${student.last_name?.[0] ?? ""}`.toUpperCase();
+  const fullName = `${student.last_name} ${student.first_name}`;
+  const photoSrc = getUploadUrl(
+    (student as Record<string, unknown>).photo_url as string | null | undefined,
+  );
+  const f = full as Record<string, unknown> | undefined;
   const heroKpis: HeroKpi[] = [
-    { label: "Classe", value: (f?.current_class_name as string | undefined) ?? "—", icon: GraduationCap },
-    { label: "Présence", value: `${(f?.attendance_rate as number | undefined) ?? 0}%`, icon: ClipboardCheck },
-  ]
-  const feesRemainingRaw = f?.fees_remaining as number | null | undefined
+    {
+      label: "Classe",
+      value: (f?.current_class_name as string | undefined) ?? "—",
+      icon: GraduationCap,
+    },
+    {
+      label: "Présence",
+      value: `${(f?.attendance_rate as number | undefined) ?? 0}%`,
+      icon: ClipboardCheck,
+    },
+  ];
+  const feesRemainingRaw = f?.fees_remaining as number | null | undefined;
   // `null` signifie « vous n'avez pas le droit de lire ce montant » ; `undefined`
   // signifie « pas encore charge ». Le premier merite le badge, pas le second.
-  const amountsHidden = f !== undefined && feesRemainingRaw === null
+  const amountsHidden = f !== undefined && feesRemainingRaw === null;
   if (amountsHidden) {
     heroKpis.push({
       label: "Paiement",
@@ -160,7 +189,7 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         />
       ),
       icon: Wallet,
-    })
+    });
   } else {
     heroKpis.push({
       label: "Reste à payer",
@@ -169,9 +198,14 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
       hint: (f?.current_academic_year as string | undefined)
         ? `Année ${f?.current_academic_year as string}`
         : undefined,
-    })
+    });
   }
-  const genreLabel = student.genre === "M" ? "Masculin" : student.genre === "F" ? "Féminin" : null
+  const genreLabel =
+    student.genre === "M"
+      ? "Masculin"
+      : student.genre === "F"
+        ? "Féminin"
+        : null;
 
   return (
     <div className="space-y-6">
@@ -182,7 +216,11 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         initials={initials}
         name={fullName}
         subtitle={
-          [student.enrollment_number, genreLabel, f?.current_class_name as string | undefined]
+          [
+            student.enrollment_number,
+            genreLabel,
+            f?.current_class_name as string | undefined,
+          ]
             .filter(Boolean)
             .join(" · ") || "Élève"
         }
@@ -200,11 +238,25 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
                 <Pencil className="mr-2 h-4 w-4" />
                 Modifier les infos
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                <Camera className="mr-2 h-4 w-4" />
-                {photoSrc ? "Changer la photo" : "Ajouter une photo"}
-              </DropdownMenuItem>
-              {photoSrc && photoLoaded && (
+              {canEditPhoto && (
+                <DropdownMenuItem
+                  onClick={photo.pickFile}
+                  disabled={photo.busy}
+                >
+                  <Camera className="mr-2 h-4 w-4" />
+                  {photoSrc ? "Changer la photo" : "Ajouter une photo"}
+                </DropdownMenuItem>
+              )}
+              {canEditPhoto && photo.phoneOffered && (
+                <DropdownMenuItem
+                  onClick={photo.usePhone}
+                  disabled={photo.busy}
+                >
+                  <Smartphone className="mr-2 h-4 w-4" />
+                  Photo depuis mon téléphone
+                </DropdownMenuItem>
+              )}
+              {canEditPhoto && photoSrc && photoLoaded && (
                 <DropdownMenuItem onClick={handleDeletePhoto}>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Supprimer la photo
@@ -231,13 +283,9 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         }
       />
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handlePhotoUpload}
-      />
+      {/* Hors du menu déroulant : Radix démonte son contenu à la fermeture, et
+          l'input comme le dialogue disparaîtraient au clic même qui les ouvre. */}
+      <RecordPhotoSurfaces photo={photo} />
 
       {/* Photo preview dialog */}
       {photoSrc && (
@@ -253,25 +301,29 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
             <div className="flex items-center justify-between px-2 pb-1">
               <p className="text-sm font-medium">{fullName}</p>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setPhotoPreview(false)
-                    fileInputRef.current?.click()
-                  }}
-                >
-                  <Camera className="mr-1.5 h-3.5 w-3.5" />
-                  Changer
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeletePhoto}
-                >
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                  Supprimer
-                </Button>
+                {canEditPhoto && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setPhotoPreview(false);
+                      photo.pickFile();
+                    }}
+                  >
+                    <Camera className="mr-1.5 h-3.5 w-3.5" />
+                    Changer
+                  </Button>
+                )}
+                {canEditPhoto && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeletePhoto}
+                  >
+                    <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                    Supprimer
+                  </Button>
+                )}
               </div>
             </div>
           </DialogContent>
@@ -279,7 +331,11 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
       )}
 
       {/* Tabs — reordered by usage frequency, scroll-x on mobile, controlled for cross-tab links */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-4"
+      >
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
           <TabsList className="w-max max-w-none">
             <TabsTrigger value="parcours">
@@ -320,17 +376,28 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         </div>
 
         <TabsContent value="parcours" className="space-y-4">
-          <StudentJourneyTimeline studentId={studentId} studentName={fullName} />
+          <StudentJourneyTimeline
+            studentId={studentId}
+            studentName={fullName}
+          />
           <StudentAcademicCharts studentId={studentId} />
         </TabsContent>
 
         <TabsContent value="overview">
-          <OverviewTab studentId={studentId} student={student} onTabChange={setActiveTab} />
+          <OverviewTab
+            studentId={studentId}
+            student={student}
+            onTabChange={setActiveTab}
+          />
         </TabsContent>
 
         {amountsHidden ? null : (
           <TabsContent value="paiements">
-            <PaymentsTab studentId={studentId} studentName={fullName} fullData={full ?? undefined} />
+            <PaymentsTab
+              studentId={studentId}
+              studentName={fullName}
+              fullData={full ?? undefined}
+            />
           </TabsContent>
         )}
 
@@ -351,7 +418,10 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         </TabsContent>
 
         <TabsContent value="documents">
-          <DocumentsTab studentId={studentId} studentLastName={student.last_name} />
+          <DocumentsTab
+            studentId={studentId}
+            studentLastName={student.last_name}
+          />
         </TabsContent>
       </Tabs>
 
@@ -359,14 +429,20 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
       <AccountSection entityType="student" entityId={studentId} />
 
       {/* Edit modal */}
-      <StudentEditModal studentId={studentId} open={editOpen} onClose={() => setEditOpen(false)} />
+      <StudentEditModal
+        studentId={studentId}
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+      />
 
       {/* Archivage — hors du menu déroulant, qui se démonte à la fermeture */}
       <ArchiveActionDialog
         action={archiveAction}
         entity="student"
         subject={
-          student.enrollment_number ? `${fullName} · ${student.enrollment_number}` : fullName
+          student.enrollment_number
+            ? `${fullName} · ${student.enrollment_number}`
+            : fullName
         }
       />
 
@@ -376,19 +452,24 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cet élève ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. L&apos;élève {fullName} sera définitivement supprimé.
+              Cette action est irréversible. L&apos;élève {fullName} sera
+              définitivement supprimé.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               {deleting ? "Suppression..." : "Supprimer"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }
 
 // ---------- Overview tab — actionable, persona-first ----------
@@ -397,36 +478,38 @@ function OverviewTab({
   student,
   onTabChange,
 }: {
-  studentId: number
+  studentId: number;
   student: {
-    first_name: string
-    last_name: string
-    genre?: string | null
-    enrollment_number?: string | null
-    birth_date?: string | null
-  }
-  onTabChange?: (tab: string) => void
+    first_name: string;
+    last_name: string;
+    genre?: string | null;
+    enrollment_number?: string | null;
+    birth_date?: string | null;
+  };
+  onTabChange?: (tab: string) => void;
 }) {
-  const { data: enrollmentsData, isLoading: enrollmentsLoading } = useEnrollments({
-    student_id: studentId,
-  })
-  const { data: fees, isLoading: feesLoading } = useStudentFees(studentId)
+  const { data: enrollmentsData, isLoading: enrollmentsLoading } =
+    useEnrollments({
+      student_id: studentId,
+    });
+  const { data: fees, isLoading: feesLoading } = useStudentFees(studentId);
   const {
     data: parents,
     isLoading: parentsLoading,
     isError: parentsError,
     refetch: refetchParents,
-  } = useStudentParents(studentId)
+  } = useStudentParents(studentId);
 
-  const enrollments = enrollmentsData?.items ?? []
-  const current = enrollments[0] as Record<string, unknown> | undefined
+  const enrollments = enrollmentsData?.items ?? [];
+  const current = enrollments[0] as Record<string, unknown> | undefined;
 
-  const totalExpected = (fees ?? []).reduce((sum, f) => sum + f.amount, 0)
-  const totalPaid = (fees ?? []).reduce((sum, f) => sum + f.paid, 0)
-  const feesRemaining = Math.max(0, totalExpected - totalPaid)
-  const feesRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0
+  const totalExpected = (fees ?? []).reduce((sum, f) => sum + f.amount, 0);
+  const totalPaid = (fees ?? []).reduce((sum, f) => sum + f.paid, 0);
+  const feesRemaining = Math.max(0, totalExpected - totalPaid);
+  const feesRate =
+    totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0;
 
-  if (enrollmentsLoading) return <TabSkeleton />
+  if (enrollmentsLoading) return <TabSkeleton />;
 
   const enrolledOn = current?.created_at
     ? new Date(String(current.created_at)).toLocaleDateString("fr-FR", {
@@ -434,7 +517,7 @@ function OverviewTab({
         month: "long",
         year: "numeric",
       })
-    : null
+    : null;
 
   const statusLabel =
     current?.status === "valide"
@@ -445,14 +528,14 @@ function OverviewTab({
           ? "Prospect"
           : current?.status
             ? String(current.status)
-            : "—"
+            : "—";
 
   const statusVariant =
     current?.status === "valide"
       ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
       : current?.status === "en_validation"
         ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-        : "bg-muted text-muted-foreground"
+        : "bg-muted text-muted-foreground";
 
   return (
     <div className="space-y-4">
@@ -461,8 +544,12 @@ function OverviewTab({
         <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-5 text-primary-foreground shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-wide opacity-80">Reste à payer</p>
-              <p className="mt-1 font-serif text-2xl sm:text-3xl">{formatFCFA(feesRemaining)}</p>
+              <p className="text-xs uppercase tracking-wide opacity-80">
+                Reste à payer
+              </p>
+              <p className="mt-1 font-serif text-2xl sm:text-3xl">
+                {formatFCFA(feesRemaining)}
+              </p>
               <p className="mt-1 text-xs opacity-80">
                 {formatFCFA(totalPaid)} payés sur {formatFCFA(totalExpected)}
               </p>
@@ -506,7 +593,9 @@ function OverviewTab({
                       {String(current.class_name ?? "")}
                     </p>
                     {enrolledOn && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">Inscrit le {enrolledOn}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Inscrit le {enrolledOn}
+                      </p>
                     )}
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -523,7 +612,9 @@ function OverviewTab({
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Classe</p>
-                  <p className="text-sm font-semibold text-muted-foreground">Non inscrit</p>
+                  <p className="text-sm font-semibold text-muted-foreground">
+                    Non inscrit
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -560,7 +651,9 @@ function OverviewTab({
                     {String(current.academic_year_name)}
                   </p>
                 ) : (
-                  <p className="mt-1 text-xs text-muted-foreground">Aucune inscription</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Aucune inscription
+                  </p>
                 )}
               </div>
             </div>
@@ -578,14 +671,26 @@ function OverviewTab({
                   <Wallet className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Taux de paiement</p>
+                  <p className="text-xs text-muted-foreground">
+                    Taux de paiement
+                  </p>
                   <p className="text-sm font-semibold">{feesRate}%</p>
                 </div>
               </div>
               <StatusPill
-                tone={feesRate >= 100 ? "success" : feesRate >= 50 ? "warning" : "danger"}
+                tone={
+                  feesRate >= 100
+                    ? "success"
+                    : feesRate >= 50
+                      ? "warning"
+                      : "danger"
+                }
               >
-                {feesRate >= 100 ? "Soldé" : feesRate >= 50 ? "En cours" : "À régler"}
+                {feesRate >= 100
+                  ? "Soldé"
+                  : feesRate >= 50
+                    ? "En cours"
+                    : "À régler"}
               </StatusPill>
             </div>
             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -645,7 +750,8 @@ function OverviewTab({
               <div>
                 <p className="text-sm font-medium">Aucun parent lié</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Ajoutez le père, la mère ou le tuteur pour activer les notifications
+                  Ajoutez le père, la mère ou le tuteur pour activer les
+                  notifications
                 </p>
               </div>
               <button
@@ -659,11 +765,14 @@ function OverviewTab({
           ) : (
             <ul className="space-y-2">
               {parents.slice(0, 2).map((p) => {
-                const parent = p as Record<string, unknown>
-                const fn = String(parent.first_name ?? "")
-                const ln = String(parent.last_name ?? "")
-                const phone = parent.phone as string | null | undefined
-                const rel = parent.relationship_type as string | null | undefined
+                const parent = p as Record<string, unknown>;
+                const fn = String(parent.first_name ?? "");
+                const ln = String(parent.last_name ?? "");
+                const phone = parent.phone as string | null | undefined;
+                const rel = parent.relationship_type as
+                  | string
+                  | null
+                  | undefined;
                 const relLabel =
                   rel === "father"
                     ? "Père"
@@ -671,21 +780,24 @@ function OverviewTab({
                       ? "Mère"
                       : rel === "guardian"
                         ? "Tuteur"
-                        : ""
+                        : "";
                 const relTone =
                   rel === "father"
                     ? "bg-primary/10 text-primary"
                     : rel === "mother"
                       ? "bg-[rgba(245,130,32,0.12)] text-[#F58220]"
-                      : "bg-muted text-muted-foreground"
-                const initials = `${ln[0] ?? ""}${fn[0] ?? ""}`.toUpperCase() || "?"
+                      : "bg-muted text-muted-foreground";
+                const initials =
+                  `${ln[0] ?? ""}${fn[0] ?? ""}`.toUpperCase() || "?";
                 return (
                   <li
                     key={String(parent.id)}
                     className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card p-3"
                   >
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold ${relTone}`}>
+                      <div
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold ${relTone}`}
+                      >
                         {initials}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -693,7 +805,9 @@ function OverviewTab({
                           {ln} {fn}
                         </p>
                         {relLabel && (
-                          <span className={`mt-0.5 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${relTone}`}>
+                          <span
+                            className={`mt-0.5 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${relTone}`}
+                          >
                             {relLabel}
                           </span>
                         )}
@@ -708,17 +822,19 @@ function OverviewTab({
                         Appeler
                       </a>
                     ) : (
-                      <span className="text-xs text-muted-foreground">Pas de téléphone</span>
+                      <span className="text-xs text-muted-foreground">
+                        Pas de téléphone
+                      </span>
                     )}
                   </li>
-                )
+                );
               })}
             </ul>
           )}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 // ---------- Skeletons ----------
@@ -736,7 +852,7 @@ function DetailSkeleton() {
       <Skeleton className="h-10 w-full max-w-xs rounded-lg" />
       <Skeleton className="h-48 rounded-lg" />
     </div>
-  )
+  );
 }
 
 function TabSkeleton() {
@@ -746,5 +862,5 @@ function TabSkeleton() {
       <Skeleton className="h-16 rounded-lg" />
       <Skeleton className="h-16 rounded-lg" />
     </div>
-  )
+  );
 }

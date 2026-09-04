@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-04T06:05:36Z",
+  "generated_at": "2026-09-04T09:40:17Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,30 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "Poser une photo depuis un téléphone : l'écran affiche un code à scanner, et rien n'est enregistré avant votre confirmation",
+            "audience": [
+              "admin",
+              "secrétariat",
+              "tous"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Le dépôt par téléphone est proposé partout où l'on envoie un fichier : fiche élève, inscription, enseignant, personnel, profil, logo et pièce jointe",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "La photo d'un enseignant ou d'un membre du personnel se pose à nouveau depuis sa fiche, pour qui a le droit de la modifier : une personne sans compte n'avait plus aucun moyen d'en avoir une",
+            "audience": [
+              "admin",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Le point par catégorie s'affiche en aperçu avant d'être édité, et s'exporte au choix en document PDF officiel ou en classeur",
             "audience": [
@@ -1046,6 +1070,15 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "La photo choisie depuis la fiche élève, une fiche du personnel ou votre profil est allégée et vérifiée avant l'envoi, comme à l'inscription",
+            "audience": [
+              "admin",
+              "secrétariat",
+              "tous"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Une photo choisie dans la galerie du téléphone est allégée avant l'envoi, au lieu d'être refusée au-delà de 5 Mo",
             "audience": [

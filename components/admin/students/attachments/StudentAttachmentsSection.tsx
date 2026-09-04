@@ -1,6 +1,8 @@
-"use client"
+"use client";
 
-import { useRef, useState } from "react"
+import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   FilePlus,
   FileText,
@@ -10,8 +12,8 @@ import {
   Trash2,
   Loader2,
   Upload,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,43 +23,59 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { ComboboxCreate } from "@/components/shared/ComboboxCreate"
-import { SectionCard, EmptyState } from "../tabs/_primitives"
+} from "@/components/ui/alert-dialog";
+import { ComboboxCreate } from "@/components/shared/ComboboxCreate";
+import { UploadHandoffButton } from "@/components/shared/upload-handoff/UploadHandoffButton";
+import { SectionCard, EmptyState } from "../tabs/_primitives";
 import {
+  attachmentKeys,
   useDocumentTypes,
   useStudentDocuments,
   useUploadStudentDocument,
   useDeleteStudentDocument,
-} from "@/lib/hooks/useStudentAttachments"
-import { getUploadUrl } from "@/lib/utils"
+} from "@/lib/hooks/useStudentAttachments";
+import { getUploadUrl } from "@/lib/utils";
 
-export function StudentAttachmentsSection({ studentId }: { studentId: number }) {
-  const { data: types } = useDocumentTypes()
-  const { data: docs, isLoading } = useStudentDocuments(studentId)
-  const { mutate: upload, isPending: uploading } = useUploadStudentDocument(studentId)
-  const { mutate: remove, isPending: removing } = useDeleteStudentDocument(studentId)
+export function StudentAttachmentsSection({
+  studentId,
+}: {
+  studentId: number;
+}) {
+  const queryClient = useQueryClient();
+  const { data: types } = useDocumentTypes();
+  const { data: docs, isLoading } = useStudentDocuments(studentId);
+  const { mutate: upload, isPending: uploading } =
+    useUploadStudentDocument(studentId);
+  const { mutate: remove, isPending: removing } =
+    useDeleteStudentDocument(studentId);
 
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [docType, setDocType] = useState("")
-  const [file, setFile] = useState<File | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [docType, setDocType] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
-  const canSubmit = Boolean(docType.trim()) && Boolean(file) && !uploading
+  const canSubmit = Boolean(docType.trim()) && Boolean(file) && !uploading;
+
+  // Le type de document est choisi ICI, sur l'ordinateur, jamais sur le
+  // téléphone : l'écran qui sait ce qu'on classe est celui de l'opérateur, et
+  // le téléphone n'a pas à en apprendre davantage. Le serveur l'exige à
+  // l'OUVERTURE de la session : découvrir le manque une fois la photo prise
+  // reviendrait à la refuser, l'élève déjà reparti.
+  const typeChoisi = docType.trim();
 
   const submit = () => {
-    if (!file || !docType.trim()) return
+    if (!file || !docType.trim()) return;
     upload(
       { file, documentType: docType.trim() },
       {
         onSuccess: () => {
-          setFile(null)
-          setDocType("")
-          if (fileRef.current) fileRef.current.value = ""
+          setFile(null);
+          setDocType("");
+          if (fileRef.current) fileRef.current.value = "";
         },
       },
-    )
-  }
+    );
+  };
 
   return (
     <SectionCard
@@ -69,7 +87,9 @@ export function StudentAttachmentsSection({ studentId }: { studentId: number }) 
       <div className="space-y-3 rounded-lg border border-border/60 bg-muted/40 p-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Type de document</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              Type de document
+            </p>
             <ComboboxCreate
               options={(types ?? []).map((t) => t.name)}
               value={docType}
@@ -78,7 +98,9 @@ export function StudentAttachmentsSection({ studentId }: { studentId: number }) 
             />
           </div>
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Fichier (PDF ou image)</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              Fichier (PDF ou image)
+            </p>
             <input
               ref={fileRef}
               type="file"
@@ -93,23 +115,56 @@ export function StudentAttachmentsSection({ studentId }: { studentId: number }) 
               onClick={() => fileRef.current?.click()}
             >
               <Upload className="mr-2 h-4 w-4 shrink-0" />
-              <span className="truncate">{file ? file.name : "Choisir un fichier"}</span>
+              <span className="truncate">
+                {file ? file.name : "Choisir un fichier"}
+              </span>
             </Button>
           </div>
         </div>
-        <Button className="h-11 w-full sm:w-auto" disabled={!canSubmit} onClick={submit}>
-          {uploading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Envoi…
-            </>
-          ) : (
-            <>
-              <FilePlus className="mr-2 h-4 w-4" />
-              Ajouter le document
-            </>
-          )}
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Button
+            className="h-11 w-full sm:w-auto"
+            disabled={!canSubmit}
+            onClick={submit}
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Envoi…
+              </>
+            ) : (
+              <>
+                <FilePlus className="mr-2 h-4 w-4" />
+                Ajouter le document
+              </>
+            )}
+          </Button>
+          {/*
+            La seule cible qui accepte le PDF, et la seule qui exige un
+            complément : sans type de document choisi, le serveur refuserait
+            l'ouverture — le bouton reste donc fermé jusque-là.
+          */}
+          <UploadHandoffButton
+            targetKind="student_document"
+            subjectId={studentId}
+            extras={{ document_type: typeChoisi }}
+            label="Photographier le document"
+            disabled={!typeChoisi || uploading}
+            onResolved={() => {
+              setFile(null);
+              setDocType("");
+              if (fileRef.current) fileRef.current.value = "";
+              void queryClient.invalidateQueries({
+                queryKey: attachmentKeys.list(studentId),
+              });
+              void queryClient.invalidateQueries({
+                queryKey: attachmentKeys.types,
+              });
+              toast.success("Document ajouté");
+            }}
+            className="w-full sm:w-auto"
+          />
+        </div>
       </div>
 
       {/* Documents ajoutés — séparés du formulaire d'ajout */}
@@ -128,9 +183,9 @@ export function StudentAttachmentsSection({ studentId }: { studentId: number }) 
         ) : (
           <div className="space-y-2">
             {docs.map((d) => {
-              const isPdf = d.mime_type === "application/pdf"
-              const Icon = isPdf ? FileText : ImageIcon
-              const url = getUploadUrl(d.file_url) ?? d.file_url
+              const isPdf = d.mime_type === "application/pdf";
+              const Icon = isPdf ? FileText : ImageIcon;
+              const url = getUploadUrl(d.file_url) ?? d.file_url;
               return (
                 <div
                   key={d.id}
@@ -140,7 +195,9 @@ export function StudentAttachmentsSection({ studentId }: { studentId: number }) 
                     <Icon className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{d.document_type}</p>
+                    <p className="truncate text-sm font-medium">
+                      {d.document_type}
+                    </p>
                     <p className="truncate text-xs text-muted-foreground">
                       {d.file_name ? `${d.file_name} · ` : ""}
                       {new Date(d.created_at).toLocaleDateString("fr-FR")}
@@ -175,26 +232,30 @@ export function StudentAttachmentsSection({ studentId }: { studentId: number }) 
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
-              )
+              );
             })}
           </div>
         )}
       </div>
 
-      <AlertDialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer ce document ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Le document sera définitivement supprimé.
+              Cette action est irréversible. Le document sera définitivement
+              supprimé.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (deleteTarget !== null) remove(deleteTarget)
-                setDeleteTarget(null)
+                if (deleteTarget !== null) remove(deleteTarget);
+                setDeleteTarget(null);
               }}
               disabled={removing}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -205,5 +266,5 @@ export function StudentAttachmentsSection({ studentId }: { studentId: number }) 
         </AlertDialogContent>
       </AlertDialog>
     </SectionCard>
-  )
+  );
 }

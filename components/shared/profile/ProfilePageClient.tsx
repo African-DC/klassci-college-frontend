@@ -1,20 +1,24 @@
-"use client"
+"use client";
 
-import { useRef, useState } from "react"
-import { useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { Camera, Trash2, Loader2 } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Skeleton } from "@/components/ui/skeleton"
-import { DataError } from "@/components/shared/DataError"
-import { ProfileInfoCard } from "./ProfileInfoCard"
-import { NotificationPrefsCard } from "./NotificationPrefsCard"
-import { MyLeaveCard } from "@/components/shared/leave/MyLeaveCard"
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Camera, Trash2, Loader2, Smartphone } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DataError } from "@/components/shared/DataError";
+import { ProfileInfoCard } from "./ProfileInfoCard";
+import { NotificationPrefsCard } from "./NotificationPrefsCard";
+import { MyLeaveCard } from "@/components/shared/leave/MyLeaveCard";
+import {
+  RecordPhotoSurfaces,
+  useRecordPhoto,
+} from "@/components/shared/upload-handoff/useRecordPhoto";
 
-const LEAVE_ROLES = ["admin", "director", "teacher", "staff"]
-import { useMyProfile, profileKeys } from "@/lib/hooks/useProfile"
-import { profileApi } from "@/lib/api/profile"
-import { getUploadUrl } from "@/lib/utils"
+const LEAVE_ROLES = ["admin", "director", "teacher", "staff"];
+import { useMyProfile, profileKeys } from "@/lib/hooks/useProfile";
+import { profileApi } from "@/lib/api/profile";
+import { getUploadUrl } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrateur",
@@ -23,50 +27,49 @@ const ROLE_LABELS: Record<string, string> = {
   student: "Élève",
   parent: "Parent",
   super_admin: "Super administrateur",
-}
+};
 
 export function ProfilePageClient() {
-  const { data: profile, isLoading, isError, refetch } = useMyProfile()
-  const queryClient = useQueryClient()
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [uploading, setUploading] = useState(false)
-  const [photoLoaded, setPhotoLoaded] = useState(false)
+  const { data: profile, isLoading, isError, refetch } = useMyProfile();
+  const queryClient = useQueryClient();
+  const [photoLoaded, setPhotoLoaded] = useState(false);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      await profileApi.uploadPhoto(file)
-      queryClient.invalidateQueries({ queryKey: profileKeys.me })
-      toast.success("Photo mise à jour")
-    } catch (err) {
-      toast.error("Erreur", { description: err instanceof Error ? err.message : "Envoi impossible" })
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ""
-    }
-  }
+  // Aucun `subjectId` : la cible `profile_photo` est un self-service, et le
+  // serveur impose l'appelant. Personne n'ouvre une session sur le profil d'un
+  // autre, quel que soit ce qu'envoie l'écran.
+  const photo = useRecordPhoto({
+    targetKind: "profile_photo",
+    upload: (file) => profileApi.uploadPhoto(file),
+    onSaved: () => queryClient.invalidateQueries({ queryKey: profileKeys.me }),
+  });
 
   const handleDelete = async () => {
     try {
-      await profileApi.deletePhoto()
-      queryClient.invalidateQueries({ queryKey: profileKeys.me })
-      toast.success("Photo supprimée")
+      await profileApi.deletePhoto();
+      queryClient.invalidateQueries({ queryKey: profileKeys.me });
+      toast.success("Photo supprimée");
     } catch {
-      toast.error("Erreur lors de la suppression de la photo")
+      toast.error("Erreur lors de la suppression de la photo");
     }
-  }
+  };
 
-  if (isLoading) return <ProfileSkeleton />
+  if (isLoading) return <ProfileSkeleton />;
   if (isError || !profile)
-    return <DataError message="Impossible de charger votre profil." onRetry={() => refetch()} />
+    return (
+      <DataError
+        message="Impossible de charger votre profil."
+        onRetry={() => refetch()}
+      />
+    );
 
-  const fullName = `${profile.last_name} ${profile.first_name}`.trim() || profile.email
-  const initials = `${profile.first_name?.[0] ?? ""}${profile.last_name?.[0] ?? ""}`.toUpperCase() || "?"
-  const photoSrc = getUploadUrl(profile.photo_url)
-  const roleLabel = ROLE_LABELS[profile.role] ?? profile.role
-  const hasPhoto = Boolean(photoSrc && photoLoaded)
+  const fullName =
+    `${profile.last_name} ${profile.first_name}`.trim() || profile.email;
+  const initials =
+    `${profile.first_name?.[0] ?? ""}${profile.last_name?.[0] ?? ""}`.toUpperCase() ||
+    "?";
+  const photoSrc = getUploadUrl(profile.photo_url);
+  const roleLabel = ROLE_LABELS[profile.role] ?? profile.role;
+  const hasPhoto = Boolean(photoSrc && photoLoaded);
 
   return (
     <div className="space-y-6">
@@ -89,39 +92,60 @@ export function ProfilePageClient() {
             {profile.can_edit_photo && (
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
+                onClick={photo.pickFile}
+                disabled={photo.busy}
                 aria-label={hasPhoto ? "Changer la photo" : "Ajouter une photo"}
                 className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-accent text-white shadow-sm transition-transform hover:scale-105 disabled:opacity-60"
               >
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                {photo.busy ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Camera className="h-4 w-4" />
+                )}
               </button>
             )}
           </div>
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-              <h1 className="font-serif text-2xl font-bold tracking-tight">{fullName}</h1>
+              <h1 className="font-serif text-2xl font-bold tracking-tight">
+                {fullName}
+              </h1>
               <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-white">
                 {roleLabel}
               </span>
             </div>
             <p className="mt-1 text-sm text-white/75">{profile.email}</p>
-            {profile.can_edit_photo && hasPhoto && (
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/20"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Retirer la photo
-              </button>
+            {profile.can_edit_photo && (photo.phoneOffered || hasPhoto) && (
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                {photo.phoneOffered && (
+                  <button
+                    type="button"
+                    onClick={photo.usePhone}
+                    disabled={photo.busy}
+                    className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-white/25 bg-white/10 px-3 text-xs font-medium text-white transition-colors hover:bg-white/20 disabled:opacity-60 sm:h-8"
+                  >
+                    <Smartphone className="h-3.5 w-3.5" />
+                    Utiliser mon téléphone
+                  </button>
+                )}
+                {hasPhoto && (
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-white/25 bg-white/10 px-3 text-xs font-medium text-white transition-colors hover:bg-white/20 sm:h-8"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Retirer la photo
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
       </section>
 
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+      <RecordPhotoSurfaces photo={photo} />
 
       <ProfileInfoCard profile={profile} />
 
@@ -129,7 +153,7 @@ export function ProfilePageClient() {
 
       <NotificationPrefsCard />
     </div>
-  )
+  );
 }
 
 function ProfileSkeleton() {
@@ -138,5 +162,5 @@ function ProfileSkeleton() {
       <Skeleton className="h-40 rounded-2xl" />
       <Skeleton className="h-56 rounded-xl" />
     </div>
-  )
+  );
 }

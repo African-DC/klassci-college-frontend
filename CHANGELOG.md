@@ -9,11 +9,15 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Poser une photo depuis un téléphone : l'écran affiche un code à scanner, et rien n'est enregistré avant votre confirmation *(admin, secrétariat, tous)*
+- Le dépôt par téléphone est proposé partout où l'on envoie un fichier : fiche élève, inscription, enseignant, personnel, profil, logo et pièce jointe *(tous)*
+- La photo d'un enseignant ou d'un membre du personnel se pose à nouveau depuis sa fiche, pour qui a le droit de la modifier : une personne sans compte n'avait plus aucun moyen d'en avoir une *(admin, secrétariat)*
 - Le point par catégorie s'affiche en aperçu avant d'être édité, et s'exporte au choix en document PDF officiel ou en classeur *(comptable, caissier)*
 - Une fenêtre « Nouveautés » dit ce qui a changé pour votre rôle, signalée par une pastille quand il y a du neuf *(tous)*
 - Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse *(comptable, caissier)*
 
 ### Fixed
+- La photo choisie depuis la fiche élève, une fiche du personnel ou votre profil est allégée et vérifiée avant l'envoi, comme à l'inscription *(admin, secrétariat, tous)*
 - Une photo choisie dans la galerie du téléphone est allégée avant l'envoi, au lieu d'être refusée au-delà de 5 Mo *(admin, secrétariat)*
 - Une photo prise en portrait ne ressort plus couchée une fois enregistrée *(admin, secrétariat)*
 - Un dépôt en nature posé par erreur s'annule désormais depuis la fiche de l'élève, et le montant redevient dû à la caisse *(admin, comptable, éducateur)*
