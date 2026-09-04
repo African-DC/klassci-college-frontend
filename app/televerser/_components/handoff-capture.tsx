@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Camera,
   FileText,
@@ -10,13 +10,13 @@ import {
   Send,
   SwitchCamera,
   X,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { depositHandoffFile } from "@/lib/api/public-handoff"
-import type { PublicHandoffView } from "@/lib/contracts/upload-handoff"
-import { useLiveCamera } from "@/lib/hooks/useLiveCamera"
-import { downscaleImageFile } from "@/lib/photo/camera"
-import { HandoffNotice } from "./handoff-notice"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { depositHandoffFile } from "@/lib/api/public-handoff";
+import type { PublicHandoffView } from "@/lib/contracts/upload-handoff";
+import { useLiveCamera } from "@/lib/hooks/useLiveCamera";
+import { ALLOWED_PHOTO_TYPES, downscaleImageFile } from "@/lib/photo/camera";
+import { HandoffNotice } from "./handoff-notice";
 
 /**
  * Prendre ou choisir, revoir, envoyer. Trois écrans, et rien d'autre.
@@ -46,12 +46,12 @@ import { HandoffNotice } from "./handoff-notice"
  * quel, et interminable en 3G. Réduit, il en fait quelques dizaines de milliers.
  */
 
-type Phase = "choix" | "camera" | "revue" | "envoi" | "envoye"
+type Phase = "choix" | "camera" | "revue" | "envoi" | "envoye";
 
 interface EchecEnvoi {
-  message: string
+  message: string;
   /** Le même fichier peut repartir : pas besoin de refaire la photo. */
-  retryable: boolean
+  retryable: boolean;
 }
 
 const NOM_DES_FORMATS: Record<string, string> = {
@@ -59,37 +59,41 @@ const NOM_DES_FORMATS: Record<string, string> = {
   "image/png": "PNG",
   "image/webp": "WebP",
   "application/pdf": "PDF",
-}
+};
 
 function formatsLisibles(accepts: string[]): string {
-  const noms = accepts.map((type) => NOM_DES_FORMATS[type] ?? type)
-  return noms.length > 0 ? noms.join(", ") : "JPEG, PNG, WebP"
+  const noms = accepts.map((type) => NOM_DES_FORMATS[type] ?? type);
+  return noms.length > 0 ? noms.join(", ") : "JPEG, PNG, WebP";
 }
 
 function megaoctets(octets: number): string {
-  return `${Math.round(octets / (1024 * 1024))} Mo`
+  return `${Math.round(octets / (1024 * 1024))} Mo`;
 }
 
 /** Les bornes de la CIBLE, pas une table globale : une pièce jointe accepte le PDF, une photo non. */
-function refusPourCe(file: File, accepts: string[], maxBytes: number): string | null {
+function refusPourCe(
+  file: File,
+  accepts: string[],
+  maxBytes: number,
+): string | null {
   if (accepts.length > 0 && !accepts.includes(file.type)) {
-    return `Ce fichier n'est pas d'un format accepté. Utilisez : ${formatsLisibles(accepts)}.`
+    return `Ce fichier n'est pas d'un format accepté. Utilisez : ${formatsLisibles(accepts)}.`;
   }
   if (file.size > maxBytes) {
-    return `Ce fichier dépasse ${megaoctets(maxBytes)}. Reprenez la photo de plus loin.`
+    return `Ce fichier dépasse ${megaoctets(maxBytes)}. Reprenez la photo de plus loin.`;
   }
-  return null
+  return null;
 }
 
 function compteARebours(secondes: number): string {
-  const minutes = Math.floor(secondes / 60)
-  const reste = secondes % 60
-  return `${minutes}:${String(reste).padStart(2, "0")}`
+  const minutes = Math.floor(secondes / 60);
+  const reste = secondes % 60;
+  return `${minutes}:${String(reste).padStart(2, "0")}`;
 }
 
 /** Un dépôt déjà posé : la page rouvre alors sur son écran de fin, pas sur la prise de vue. */
 function phaseInitiale(etat: PublicHandoffView["state"]): Phase {
-  return etat === "proposed" || etat === "done" ? "envoye" : "choix"
+  return etat === "proposed" || etat === "done" ? "envoye" : "choix";
 }
 
 export function HandoffCapture({
@@ -97,125 +101,136 @@ export function HandoffCapture({
   token,
   view,
 }: {
-  tenant: string
-  token: string
-  view: PublicHandoffView
+  tenant: string;
+  token: string;
+  view: PublicHandoffView;
 }) {
-  const galerieRef = useRef<HTMLInputElement>(null)
-  const appareilRef = useRef<HTMLInputElement>(null)
+  const galerieRef = useRef<HTMLInputElement>(null);
+  const appareilRef = useRef<HTMLInputElement>(null);
   // Garde anti-course : un envoi abandonné ne doit pas écraser l'écran d'un
   // envoi plus récent. Même motif que la vérification de fichier publique.
-  const envoiRef = useRef(0)
+  const envoiRef = useRef(0);
 
-  const [phase, setPhase] = useState<Phase>(() => phaseInitiale(view.state))
-  const [fichier, setFichier] = useState<File | null>(null)
-  const [apercu, setApercu] = useState<string | null>(null)
-  const [refus, setRefus] = useState<string | null>(null)
-  const [echec, setEchec] = useState<EchecEnvoi | null>(null)
-  const [preparation, setPreparation] = useState(false)
-  const [monte, setMonte] = useState(false)
-  const [maintenant, setMaintenant] = useState(() => Date.now())
+  const [phase, setPhase] = useState<Phase>(() => phaseInitiale(view.state));
+  const [fichier, setFichier] = useState<File | null>(null);
+  const [apercu, setApercu] = useState<string | null>(null);
+  const [refus, setRefus] = useState<string | null>(null);
+  const [echec, setEchec] = useState<EchecEnvoi | null>(null);
+  const [preparation, setPreparation] = useState(false);
+  const [monte, setMonte] = useState(false);
+  const [maintenant, setMaintenant] = useState(() => Date.now());
 
-  const camera = useLiveCamera({ facing: "environment" })
+  const camera = useLiveCamera({ facing: "environment" });
   // `canUseLiveCamera()` répond faux sur le serveur et vrai dans le navigateur :
   // on n'affiche donc le chemin caméra qu'après le montage, sinon l'hydratation
   // rend un écran et en trouve un autre.
-  useEffect(() => setMonte(true), [])
+  useEffect(() => setMonte(true), []);
 
   useEffect(() => {
     if (!fichier) {
-      setApercu(null)
-      return
+      setApercu(null);
+      return;
     }
-    if (!fichier.type.startsWith("image/")) {
-      setApercu(null)
-      return
+    // La MEME liste que l'envoi, pas « tout image/* ».
+    //
+    // `image/svg+xml` commence par `image/` : le garde large laissait donc
+    // afficher un SVG la ou une photo d'eleve est attendue — que le serveur
+    // aurait de toute facon refuse. Un apercu plus permissif que l'envoi
+    // montre a l'operateur quelque chose qui ne partira jamais.
+    if (!ALLOWED_PHOTO_TYPES.has(fichier.type)) {
+      setApercu(null);
+      return;
     }
-    const url = URL.createObjectURL(fichier)
-    setApercu(url)
-    return () => URL.revokeObjectURL(url)
-  }, [fichier])
+    const url = URL.createObjectURL(fichier);
+    setApercu(url);
+    return () => URL.revokeObjectURL(url);
+  }, [fichier]);
 
   // Le compte à rebours se lit sur l'échéance, jamais sur un compteur qu'on
   // décrémente : un téléphone qui met la page en veille fige le second et le
   // rendrait faux au réveil, précisément au moment où il faut savoir s'il reste
   // du temps. Le battement s'arrête de lui-même à l'échéance.
-  const echeance = useMemo(() => Date.parse(view.expires_at), [view.expires_at])
+  const echeance = useMemo(
+    () => Date.parse(view.expires_at),
+    [view.expires_at],
+  );
   useEffect(() => {
-    if (Number.isNaN(echeance)) return
+    if (Number.isNaN(echeance)) return;
     const battement = window.setInterval(() => {
-      const instant = Date.now()
-      setMaintenant(instant)
-      if (instant >= echeance) window.clearInterval(battement)
-    }, 1_000)
-    return () => window.clearInterval(battement)
-  }, [echeance])
+      const instant = Date.now();
+      setMaintenant(instant);
+      if (instant >= echeance) window.clearInterval(battement);
+    }, 1_000);
+    return () => window.clearInterval(battement);
+  }, [echeance]);
 
   const secondes = Number.isNaN(echeance)
     ? null
-    : Math.max(0, Math.round((echeance - maintenant) / 1000))
-  const expire = secondes !== null && secondes <= 0
-  const envoiBloque = Boolean(echec && !echec.retryable)
+    : Math.max(0, Math.round((echeance - maintenant) / 1000));
+  const expire = secondes !== null && secondes <= 0;
+  const envoiBloque = Boolean(echec && !echec.retryable);
 
   async function retenir(choisi: File | null) {
-    setEchec(null)
+    setEchec(null);
     if (!choisi) {
-      setRefus(null)
-      setFichier(null)
-      setPhase("choix")
-      return
+      setRefus(null);
+      setFichier(null);
+      setPhase("choix");
+      return;
     }
-    setPreparation(true)
+    setPreparation(true);
     try {
       // Un PDF ne passe pas par le canvas : il n'y a rien à redessiner, et le
       // faire le détruirait. Seules les images sont réduites.
-      const prepare = choisi.type.startsWith("image/") ? await downscaleImageFile(choisi) : choisi
-      const probleme = refusPourCe(prepare, view.accepts, view.max_bytes)
+      const prepare = choisi.type.startsWith("image/")
+        ? await downscaleImageFile(choisi)
+        : choisi;
+      const probleme = refusPourCe(prepare, view.accepts, view.max_bytes);
       if (probleme) {
-        setRefus(probleme)
-        setFichier(null)
-        setPhase("choix")
-        return
+        setRefus(probleme);
+        setFichier(null);
+        setPhase("choix");
+        return;
       }
-      setRefus(null)
-      setFichier(prepare)
-      setPhase("revue")
+      setRefus(null);
+      setFichier(prepare);
+      setPhase("revue");
     } finally {
-      setPreparation(false)
+      setPreparation(false);
     }
   }
 
   async function prendreALaCamera() {
-    const pris = await camera.capture()
-    if (!pris) return
-    await retenir(pris)
+    const pris = await camera.capture();
+    if (!pris) return;
+    await retenir(pris);
   }
 
   async function envoyer() {
-    if (!fichier) return
-    const envoi = ++envoiRef.current
-    setPhase("envoi")
-    setEchec(null)
-    const issue = await depositHandoffFile(tenant, token, fichier)
-    if (envoi !== envoiRef.current) return
+    if (!fichier) return;
+    const envoi = ++envoiRef.current;
+    setPhase("envoi");
+    setEchec(null);
+    const issue = await depositHandoffFile(tenant, token, fichier);
+    if (envoi !== envoiRef.current) return;
     if (issue.status === "sent") {
-      setPhase("envoye")
-      return
+      setPhase("envoye");
+      return;
     }
-    setEchec({ message: issue.message, retryable: issue.retryable })
-    setPhase("revue")
+    setEchec({ message: issue.message, retryable: issue.retryable });
+    setPhase("revue");
   }
 
   function ouvrirLaCamera() {
-    setEchec(null)
-    setRefus(null)
-    setPhase("camera")
-    void camera.start("environment")
+    setEchec(null);
+    setRefus(null);
+    setPhase("camera");
+    void camera.start("environment");
   }
 
   function fermerLaCamera() {
-    camera.stop()
-    setPhase(fichier ? "revue" : "choix")
+    camera.stop();
+    setPhase(fichier ? "revue" : "choix");
   }
 
   // ---------------------------------------------------------------------
@@ -234,16 +249,16 @@ export function HandoffCapture({
           variant="outline"
           className="mt-2 h-12 w-full max-w-xs text-base"
           onClick={() => {
-            setFichier(null)
-            setEchec(null)
-            setPhase("choix")
+            setFichier(null);
+            setEchec(null);
+            setPhase("choix");
           }}
         >
           <RotateCcw className="h-5 w-5" aria-hidden="true" />
           Envoyer une autre photo
         </Button>
       </HandoffNotice>
-    )
+    );
   }
 
   if (expire) {
@@ -253,7 +268,7 @@ export function HandoffCapture({
         title="Ce code a expiré"
         message="Un code d'envoi ne vit que quelques minutes. Demandez-en un nouveau sur l'ordinateur, puis scannez-le à nouveau."
       />
-    )
+    );
   }
 
   if (view.state === "receiving" && phase === "choix" && !fichier) {
@@ -263,7 +278,7 @@ export function HandoffCapture({
         title="Un envoi est déjà en cours"
         message="Un autre téléphone a pris ce code en main. Attendez qu'il ait fini, ou demandez un nouveau code sur l'ordinateur."
       />
-    )
+    );
   }
 
   // ---------------------------------------------------------------------
@@ -273,12 +288,16 @@ export function HandoffCapture({
   return (
     <div className="flex flex-1 flex-col gap-5">
       <header className="space-y-1">
-        <p className="text-sm font-medium text-muted-foreground">{view.school_name}</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          {view.school_name}
+        </p>
         <h1 className="text-2xl font-semibold leading-tight">{view.metier}</h1>
-        {view.label ? <p className="text-lg font-medium">Pour {view.label}</p> : null}
+        {view.label ? (
+          <p className="text-lg font-medium">Pour {view.label}</p>
+        ) : null}
         <p className="text-sm leading-relaxed text-foreground/80">
-          Cette photo part vers l&apos;ordinateur qui affiche le code. Elle ne sera enregistrée que
-          si la personne devant cet ordinateur la confirme.
+          Cette photo part vers l&apos;ordinateur qui affiche le code. Elle ne
+          sera enregistrée que si la personne devant cet ordinateur la confirme.
         </p>
         {secondes !== null ? (
           <p className="text-sm text-foreground/80">
@@ -291,7 +310,10 @@ export function HandoffCapture({
       </header>
 
       {phase === "camera" ? (
-        <section className="flex flex-1 flex-col gap-3" aria-label="Prise de vue">
+        <section
+          className="flex flex-1 flex-col gap-3"
+          aria-label="Prise de vue"
+        >
           <div className="overflow-hidden rounded-xl bg-zinc-950">
             <video
               ref={camera.videoRef}
@@ -341,7 +363,10 @@ export function HandoffCapture({
       ) : null}
 
       {phase !== "camera" && fichier ? (
-        <section className="flex flex-1 flex-col gap-3" aria-label="Aperçu de la photo">
+        <section
+          className="flex flex-1 flex-col gap-3"
+          aria-label="Aperçu de la photo"
+        >
           {apercu ? (
             <div className="overflow-hidden rounded-xl border bg-muted">
               {/* Un blob local : `next/image` ne peut pas l'optimiser, et il n'y
@@ -355,7 +380,10 @@ export function HandoffCapture({
             </div>
           ) : (
             <div className="flex items-center gap-3 rounded-xl border bg-muted/40 px-4 py-5">
-              <FileText className="h-8 w-8 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <FileText
+                className="h-8 w-8 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
               <div className="min-w-0">
                 <p className="truncate text-base font-medium">{fichier.name}</p>
                 <p className="text-sm text-muted-foreground">
@@ -371,7 +399,9 @@ export function HandoffCapture({
                 alors à « Reprendre », et l'envoi se ferme. */}
             <Button
               type="button"
-              className={envoiBloque ? "h-12 w-full text-base" : "h-14 w-full text-base"}
+              className={
+                envoiBloque ? "h-12 w-full text-base" : "h-14 w-full text-base"
+              }
               variant={envoiBloque ? "outline" : "default"}
               disabled={phase === "envoi" || envoiBloque}
               onClick={() => void envoyer()}
@@ -381,12 +411,18 @@ export function HandoffCapture({
               ) : (
                 <Send className="h-5 w-5" aria-hidden="true" />
               )}
-              {phase === "envoi" ? "Envoi en cours…" : echec ? "Réessayer l'envoi" : "Envoyer"}
+              {phase === "envoi"
+                ? "Envoi en cours…"
+                : echec
+                  ? "Réessayer l'envoi"
+                  : "Envoyer"}
             </Button>
             <Button
               type="button"
               variant={envoiBloque ? "default" : "outline"}
-              className={envoiBloque ? "h-14 w-full text-base" : "h-12 w-full text-base"}
+              className={
+                envoiBloque ? "h-14 w-full text-base" : "h-12 w-full text-base"
+              }
               disabled={phase === "envoi"}
               onClick={() => void retenir(null)}
             >
@@ -398,7 +434,10 @@ export function HandoffCapture({
       ) : null}
 
       {phase === "choix" && !fichier ? (
-        <section className="flex flex-1 flex-col gap-3" aria-label="Choisir une photo">
+        <section
+          className="flex flex-1 flex-col gap-3"
+          aria-label="Choisir une photo"
+        >
           <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed bg-muted/30 px-4 py-10 text-center">
             <p className="text-base text-foreground/80">
               Prenez la photo, ou choisissez-en une déjà enregistrée.
@@ -448,7 +487,9 @@ export function HandoffCapture({
           <p className="text-sm text-foreground/80">Préparation de la photo…</p>
         ) : null}
         {phase === "envoi" ? (
-          <p className="text-sm text-foreground/80">Envoi en cours, ne fermez pas cette page…</p>
+          <p className="text-sm text-foreground/80">
+            Envoi en cours, ne fermez pas cette page…
+          </p>
         ) : null}
         {refus ? (
           <p className="rounded-lg border border-destructive/25 bg-destructive/5 px-3 py-2 text-sm font-medium text-destructive">
@@ -460,8 +501,13 @@ export function HandoffCapture({
             {echec.message}
           </p>
         ) : null}
-        {monte && !camera.available && camera.unavailableReason && phase === "choix" ? (
-          <p className="text-sm text-foreground/80">{camera.unavailableReason.message}</p>
+        {monte &&
+        !camera.available &&
+        camera.unavailableReason &&
+        phase === "choix" ? (
+          <p className="text-sm text-foreground/80">
+            {camera.unavailableReason.message}
+          </p>
         ) : null}
       </div>
 
@@ -472,8 +518,8 @@ export function HandoffCapture({
         capture="environment"
         className="hidden"
         onChange={(evenement) => {
-          void retenir(evenement.target.files?.[0] ?? null)
-          evenement.target.value = ""
+          void retenir(evenement.target.files?.[0] ?? null);
+          evenement.target.value = "";
         }}
       />
       <input
@@ -482,10 +528,10 @@ export function HandoffCapture({
         accept={view.accepts.join(",")}
         className="hidden"
         onChange={(evenement) => {
-          void retenir(evenement.target.files?.[0] ?? null)
-          evenement.target.value = ""
+          void retenir(evenement.target.files?.[0] ?? null);
+          evenement.target.value = "";
         }}
       />
     </div>
-  )
+  );
 }
