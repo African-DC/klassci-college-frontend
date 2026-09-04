@@ -23,8 +23,15 @@ function getPortalFromPath(pathname: string): Portal | null {
 // scanne le QR code d'un certificat papier arrive sur /verifier/* : il ne doit
 // jamais être redirigé vers /login, même s'il porte un cookie de session
 // expiré (RefreshTokenError) d'une visite précédente sur le même domaine.
+//
+// /televerser/* est le même cas, avec un enjeu de plus : la personne qui scanne
+// le code de dépôt de photo est souvent une secrétaire, sur SON téléphone, où
+// traîne le cookie expiré d'une visite au portail. La rediriger vers /login lui
+// ferait perdre le code, et l'élève est devant elle.
 function isPublicRoute(pathname: string): boolean {
-  return pathname === "/login" || pathname.startsWith("/verifier")
+  return (
+    pathname === "/login" || pathname.startsWith("/verifier") || pathname.startsWith("/televerser")
+  )
 }
 
 function getDefaultRedirect(role: string | undefined): string {
@@ -75,11 +82,7 @@ const authMiddleware = auth((req) => {
 
   // Mot de passe temporaire (compte créé ou réinitialisé par un admin) :
   // forcer l'écran de changement avant tout autre accès.
-  if (
-    isLoggedIn &&
-    session.user.mustChangePassword &&
-    pathname !== "/change-password"
-  ) {
+  if (isLoggedIn && session.user.mustChangePassword && pathname !== "/change-password") {
     return hostRedirect(req, "/change-password")
   }
 
@@ -126,13 +129,12 @@ const authMiddleware = auth((req) => {
 export default function middleware(req: NextRequest) {
   const hostname = extractHostname(req.headers.get("host"))
   if (!isHostAllowed(hostname)) {
-    return NextResponse.json(
-      { detail: "Invalid host", code: "HOST_NOT_ALLOWED" },
-      { status: 400 },
-    )
+    return NextResponse.json({ detail: "Invalid host", code: "HOST_NOT_ALLOWED" }, { status: 400 })
   }
 
-  return (authMiddleware as unknown as (r: NextRequest) => Promise<NextResponse> | NextResponse)(req)
+  return (authMiddleware as unknown as (r: NextRequest) => Promise<NextResponse> | NextResponse)(
+    req,
+  )
 }
 
 export const config = {
@@ -141,7 +143,5 @@ export const config = {
   //   - /_next/static, /_next/image (assets statiques)
   //   - /favicon.ico, /robots.txt, /sitemap.xml
   // Cela permet au host allowlist de tourner sur la racine et toutes les pages.
-  matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
 }

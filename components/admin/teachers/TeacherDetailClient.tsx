@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   Archive,
   BookOpen,
@@ -13,8 +14,10 @@ import {
   FileText,
   CalendarDays,
   CalendarCheck,
+  Camera,
   Clock,
   MoreVertical,
+  Smartphone,
 } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import {
@@ -51,7 +54,13 @@ import { TeacherEvaluationsTab } from "./tabs/TeacherEvaluationsTab"
 import { TeacherTimetableTab } from "./tabs/TeacherTimetableTab"
 import { TeacherAvailabilityTab } from "./tabs/TeacherAvailabilityTab"
 import { TeacherAttendanceTab } from "./tabs/TeacherAttendanceTab"
-import { useTeacher, useTeacherFull, useDeleteTeacher } from "@/lib/hooks/useTeachers"
+import { useTeacher, useTeacherFull, useDeleteTeacher, teacherKeys } from "@/lib/hooks/useTeachers"
+import { teachersApi } from "@/lib/api/teachers"
+import {
+  RecordPhotoSurfaces,
+  useRecordPhoto,
+} from "@/components/shared/upload-handoff/useRecordPhoto"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { getUploadUrl } from "@/lib/utils"
 
 interface TeacherDetailClientProps {
@@ -63,6 +72,8 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
   // Le formulaire de creneau renvoie ici avec ?tab=disponibilites quand
   // l'enseignant choisi bloque : autant arriver sur le bon onglet.
   const searchParams = useSearchParams()
+  const queryClient = useQueryClient()
+  const { has } = usePermissions()
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -79,6 +90,18 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
     listRoute: "/admin/teachers",
   })
 
+  // `teachersApi.uploadPhoto` existait depuis toujours et n'avait aucun
+  // appelant : la fiche enseignant affichait la photo sans jamais offrir de la
+  // poser. C'est ici qu'elle se pose : import depuis le poste, ou dépôt par
+  // téléphone, un seul envoi pour les deux chemins.
+  const photo = useRecordPhoto({
+    targetKind: "teacher_photo",
+    subjectId: teacherId,
+    upload: (file) => teachersApi.uploadPhoto(teacherId, file),
+    onSaved: () => queryClient.invalidateQueries({ queryKey: teacherKeys.all }),
+  })
+  const canEditPhoto = has("admin:teachers:update")
+
   const handleDelete = () => {
     deleteTeacher(teacherId, {
       onSuccess: () => {
@@ -88,17 +111,34 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
   }
 
   if (isLoading) return <DetailSkeleton />
-  if (isError) return <DataError message="Impossible de charger la fiche enseignant." onRetry={() => refetch()} />
+  if (isError)
+    return (
+      <DataError message="Impossible de charger la fiche enseignant." onRetry={() => refetch()} />
+    )
   if (!teacher) return <DataError message="Enseignant introuvable." />
 
   const initials = `${teacher.first_name?.[0] ?? ""}${teacher.last_name?.[0] ?? ""}`.toUpperCase()
   const fullName = `${teacher.last_name} ${teacher.first_name}`
-  const photoSrc = getUploadUrl((teacher as Record<string, unknown>).photo_url as string | null | undefined)
+  const photoSrc = getUploadUrl(
+    (teacher as Record<string, unknown>).photo_url as string | null | undefined,
+  )
   const userEmail = fullData?.user_email as string | null | undefined
   const heroKpis: HeroKpi[] = [
-    { label: "Classes", value: (fullData?.classes_count as number | undefined) ?? 0, icon: GraduationCap },
-    { label: "Élèves", value: (fullData?.students_count as number | undefined) ?? 0, icon: Users },
-    { label: "Heures / sem", value: (fullData?.hours_per_week as number | undefined) ?? 0, icon: Clock },
+    {
+      label: "Classes",
+      value: (fullData?.classes_count as number | undefined) ?? 0,
+      icon: GraduationCap,
+    },
+    {
+      label: "Élèves",
+      value: (fullData?.students_count as number | undefined) ?? 0,
+      icon: Users,
+    },
+    {
+      label: "Heures / sem",
+      value: (fullData?.hours_per_week as number | undefined) ?? 0,
+      icon: Clock,
+    },
   ]
 
   return (
@@ -125,6 +165,18 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
                 <Pencil className="mr-2 h-4 w-4" />
                 Modifier les infos
               </DropdownMenuItem>
+              {canEditPhoto && (
+                <DropdownMenuItem onClick={photo.pickFile} disabled={photo.busy}>
+                  <Camera className="mr-2 h-4 w-4" />
+                  {photoSrc ? "Changer la photo" : "Ajouter une photo"}
+                </DropdownMenuItem>
+              )}
+              {canEditPhoto && photo.phoneOffered && (
+                <DropdownMenuItem onClick={photo.usePhone} disabled={photo.busy}>
+                  <Smartphone className="mr-2 h-4 w-4" />
+                  Photo depuis mon téléphone
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               {/* Archiver d'abord : c'est le geste réversible, donc celui que
                   l'on veut voir avant la suppression définitive. */}
@@ -146,7 +198,11 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
         }
       />
 
-      {/* Photo preview (lecture seule — gérée par l'enseignant sur son profil) */}
+      {/* Hors du menu déroulant : Radix démonte son contenu à la fermeture, et
+          l'input comme le dialogue disparaîtraient au clic même qui les ouvre. */}
+      <RecordPhotoSurfaces photo={photo} />
+
+      {/* Aperçu de la photo. La poser se fait par le menu, comme partout ailleurs. */}
       {photoSrc && (
         <Dialog open={photoPreview} onOpenChange={setPhotoPreview}>
           <DialogContent className="max-w-md p-2 sm:p-2">
@@ -162,36 +218,36 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
       {/* Tabs — controlled + scroll-x mobile (pattern principe 13/14) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-        <TabsList className="w-max max-w-none">
-          <TabsTrigger value="overview">
-            <BookOpen className="mr-1.5 h-3.5 w-3.5" />
-            Vue d&apos;ensemble
-          </TabsTrigger>
-          <TabsTrigger value="profil">
-            <User className="mr-1.5 h-3.5 w-3.5" />
-            Profil
-          </TabsTrigger>
-          <TabsTrigger value="classes">
-            <GraduationCap className="mr-1.5 h-3.5 w-3.5" />
-            Classes
-          </TabsTrigger>
-          <TabsTrigger value="evaluations">
-            <FileText className="mr-1.5 h-3.5 w-3.5" />
-            Évaluations
-          </TabsTrigger>
-          <TabsTrigger value="emploi-du-temps">
-            <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
-            Emploi du temps
-          </TabsTrigger>
-          <TabsTrigger value="disponibilites">
-            <Clock className="mr-1.5 h-3.5 w-3.5" />
-            Disponibilités
-          </TabsTrigger>
-          <TabsTrigger value="presences">
-            <CalendarCheck className="mr-1.5 h-3.5 w-3.5" />
-            Présences
-          </TabsTrigger>
-        </TabsList>
+          <TabsList className="w-max max-w-none">
+            <TabsTrigger value="overview">
+              <BookOpen className="mr-1.5 h-3.5 w-3.5" />
+              Vue d&apos;ensemble
+            </TabsTrigger>
+            <TabsTrigger value="profil">
+              <User className="mr-1.5 h-3.5 w-3.5" />
+              Profil
+            </TabsTrigger>
+            <TabsTrigger value="classes">
+              <GraduationCap className="mr-1.5 h-3.5 w-3.5" />
+              Classes
+            </TabsTrigger>
+            <TabsTrigger value="evaluations">
+              <FileText className="mr-1.5 h-3.5 w-3.5" />
+              Évaluations
+            </TabsTrigger>
+            <TabsTrigger value="emploi-du-temps">
+              <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
+              Emploi du temps
+            </TabsTrigger>
+            <TabsTrigger value="disponibilites">
+              <Clock className="mr-1.5 h-3.5 w-3.5" />
+              Disponibilités
+            </TabsTrigger>
+            <TabsTrigger value="presences">
+              <CalendarCheck className="mr-1.5 h-3.5 w-3.5" />
+              Présences
+            </TabsTrigger>
+          </TabsList>
         </div>
 
         <TabsContent value="overview">
@@ -243,12 +299,17 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cet enseignant ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. L&apos;enseignant {fullName} sera définitivement supprimé.
+              Cette action est irréversible. L&apos;enseignant {fullName} sera définitivement
+              supprimé.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               {deleting ? "Suppression..." : "Supprimer"}
             </AlertDialogAction>
           </AlertDialogFooter>

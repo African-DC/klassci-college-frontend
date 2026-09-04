@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
@@ -20,6 +20,7 @@ import {
   MoreVertical,
   Phone,
   ChevronRight,
+  Smartphone,
   Sparkles,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -61,10 +62,21 @@ import { EnrollmentTab } from "./tabs/EnrollmentTab"
 import { AttendanceTab } from "./tabs/AttendanceTab"
 import { ParentsTab } from "./tabs/ParentsTab"
 import { DocumentsTab } from "./tabs/DocumentsTab"
-import { useStudent, useDeleteStudent, studentKeys, useStudentFees, useStudentFull } from "@/lib/hooks/useStudents"
+import {
+  useStudent,
+  useDeleteStudent,
+  studentKeys,
+  useStudentFees,
+  useStudentFull,
+} from "@/lib/hooks/useStudents"
 import { useEnrollments } from "@/lib/hooks/useEnrollments"
 import { useStudentParents } from "@/lib/hooks/useParents"
 import { studentsApi } from "@/lib/api/students"
+import {
+  RecordPhotoSurfaces,
+  useRecordPhoto,
+} from "@/components/shared/upload-handoff/useRecordPhoto"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { getUploadUrl } from "@/lib/utils"
 
 function formatFCFA(amount: number): string {
@@ -79,12 +91,11 @@ interface StudentDetailClientProps {
 export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { has } = usePermissions()
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [photoPreview, setPhotoPreview] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState("parcours")
   const [photoLoaded, setPhotoLoaded] = useState(false)
 
@@ -97,26 +108,24 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
     listRoute: "/admin/students",
   })
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      await studentsApi.uploadPhoto(studentId, file)
-      queryClient.invalidateQueries({ queryKey: studentKeys.detail(studentId) })
-      toast.success("Photo mise à jour")
-    } catch {
-      toast.error("Erreur lors de l'upload")
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ""
-    }
-  }
+  // Une seule entrée photo sur cet écran : l'import depuis le poste et le dépôt
+  // par téléphone partagent le même envoi, la même réduction, la même
+  // validation et la même invalidation. `studentKeys.all` plutôt que le détail
+  // seul : la vignette de la liste et la vue enrichie lisent la même colonne.
+  const photo = useRecordPhoto({
+    targetKind: "student_photo",
+    subjectId: studentId,
+    upload: (file) => studentsApi.uploadPhoto(studentId, file),
+    onSaved: () => queryClient.invalidateQueries({ queryKey: studentKeys.all }),
+  })
+  const canEditPhoto = has("admin:students:update")
 
   const handleDeletePhoto = async () => {
     try {
       await studentsApi.deletePhoto(studentId)
-      queryClient.invalidateQueries({ queryKey: studentKeys.detail(studentId) })
+      queryClient.invalidateQueries({
+        queryKey: studentKeys.detail(studentId),
+      })
       queryClient.invalidateQueries({ queryKey: studentKeys.all })
       setPhotoPreview(false)
       toast.success("Photo supprimée")
@@ -134,16 +143,27 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
   }
 
   if (isLoading) return <DetailSkeleton />
-  if (isError) return <DataError message="Impossible de charger la fiche élève." onRetry={() => refetch()} />
+  if (isError)
+    return <DataError message="Impossible de charger la fiche élève." onRetry={() => refetch()} />
   if (!student) return <DataError message="Élève introuvable." />
 
   const initials = `${student.first_name?.[0] ?? ""}${student.last_name?.[0] ?? ""}`.toUpperCase()
   const fullName = `${student.last_name} ${student.first_name}`
-  const photoSrc = getUploadUrl((student as Record<string, unknown>).photo_url as string | null | undefined)
+  const photoSrc = getUploadUrl(
+    (student as Record<string, unknown>).photo_url as string | null | undefined,
+  )
   const f = full as Record<string, unknown> | undefined
   const heroKpis: HeroKpi[] = [
-    { label: "Classe", value: (f?.current_class_name as string | undefined) ?? "—", icon: GraduationCap },
-    { label: "Présence", value: `${(f?.attendance_rate as number | undefined) ?? 0}%`, icon: ClipboardCheck },
+    {
+      label: "Classe",
+      value: (f?.current_class_name as string | undefined) ?? "—",
+      icon: GraduationCap,
+    },
+    {
+      label: "Présence",
+      value: `${(f?.attendance_rate as number | undefined) ?? 0}%`,
+      icon: ClipboardCheck,
+    },
   ]
   const feesRemainingRaw = f?.fees_remaining as number | null | undefined
   // `null` signifie « vous n'avez pas le droit de lire ce montant » ; `undefined`
@@ -200,11 +220,19 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
                 <Pencil className="mr-2 h-4 w-4" />
                 Modifier les infos
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                <Camera className="mr-2 h-4 w-4" />
-                {photoSrc ? "Changer la photo" : "Ajouter une photo"}
-              </DropdownMenuItem>
-              {photoSrc && photoLoaded && (
+              {canEditPhoto && (
+                <DropdownMenuItem onClick={photo.pickFile} disabled={photo.busy}>
+                  <Camera className="mr-2 h-4 w-4" />
+                  {photoSrc ? "Changer la photo" : "Ajouter une photo"}
+                </DropdownMenuItem>
+              )}
+              {canEditPhoto && photo.phoneOffered && (
+                <DropdownMenuItem onClick={photo.usePhone} disabled={photo.busy}>
+                  <Smartphone className="mr-2 h-4 w-4" />
+                  Photo depuis mon téléphone
+                </DropdownMenuItem>
+              )}
+              {canEditPhoto && photoSrc && photoLoaded && (
                 <DropdownMenuItem onClick={handleDeletePhoto}>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Supprimer la photo
@@ -231,47 +259,39 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
         }
       />
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handlePhotoUpload}
-      />
+      {/* Hors du menu déroulant : Radix démonte son contenu à la fermeture, et
+          l'input comme le dialogue disparaîtraient au clic même qui les ouvre. */}
+      <RecordPhotoSurfaces photo={photo} />
 
       {/* Photo preview dialog */}
       {photoSrc && (
         <Dialog open={photoPreview} onOpenChange={setPhotoPreview}>
           <DialogContent className="max-w-md p-2 sm:p-2">
             <div className="relative aspect-square w-full overflow-hidden rounded-lg">
-              <img
-                src={photoSrc}
-                alt={fullName}
-                className="h-full w-full object-cover"
-              />
+              <img src={photoSrc} alt={fullName} className="h-full w-full object-cover" />
             </div>
             <div className="flex items-center justify-between px-2 pb-1">
               <p className="text-sm font-medium">{fullName}</p>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setPhotoPreview(false)
-                    fileInputRef.current?.click()
-                  }}
-                >
-                  <Camera className="mr-1.5 h-3.5 w-3.5" />
-                  Changer
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeletePhoto}
-                >
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                  Supprimer
-                </Button>
+                {canEditPhoto && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setPhotoPreview(false)
+                      photo.pickFile()
+                    }}
+                  >
+                    <Camera className="mr-1.5 h-3.5 w-3.5" />
+                    Changer
+                  </Button>
+                )}
+                {canEditPhoto && (
+                  <Button variant="destructive" size="sm" onClick={handleDeletePhoto}>
+                    <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                    Supprimer
+                  </Button>
+                )}
               </div>
             </div>
           </DialogContent>
@@ -330,7 +350,11 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
 
         {amountsHidden ? null : (
           <TabsContent value="paiements">
-            <PaymentsTab studentId={studentId} studentName={fullName} fullData={full ?? undefined} />
+            <PaymentsTab
+              studentId={studentId}
+              studentName={fullName}
+              fullData={full ?? undefined}
+            />
           </TabsContent>
         )}
 
@@ -381,7 +405,11 @@ export function StudentDetailClient({ studentId }: StudentDetailClientProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               {deleting ? "Suppression..." : "Supprimer"}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -506,7 +534,9 @@ function OverviewTab({
                       {String(current.class_name ?? "")}
                     </p>
                     {enrolledOn && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">Inscrit le {enrolledOn}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Inscrit le {enrolledOn}
+                      </p>
                     )}
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -556,9 +586,7 @@ function OverviewTab({
                   </StatusPill>
                 </div>
                 {current?.academic_year_name ? (
-                  <p className="mt-1 text-xs font-medium">
-                    {String(current.academic_year_name)}
-                  </p>
+                  <p className="mt-1 text-xs font-medium">{String(current.academic_year_name)}</p>
                 ) : (
                   <p className="mt-1 text-xs text-muted-foreground">Aucune inscription</p>
                 )}
@@ -626,9 +654,7 @@ function OverviewTab({
             </div>
           ) : parentsError ? (
             <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/30 px-4 py-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Impossible de charger les parents.
-              </p>
+              <p className="text-sm text-muted-foreground">Impossible de charger les parents.</p>
               <button
                 type="button"
                 onClick={() => refetchParents()}
@@ -685,7 +711,9 @@ function OverviewTab({
                     className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card p-3"
                   >
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold ${relTone}`}>
+                      <div
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold ${relTone}`}
+                      >
                         {initials}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -693,7 +721,9 @@ function OverviewTab({
                           {ln} {fn}
                         </p>
                         {relLabel && (
-                          <span className={`mt-0.5 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${relTone}`}>
+                          <span
+                            className={`mt-0.5 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${relTone}`}
+                          >
                             {relLabel}
                           </span>
                         )}

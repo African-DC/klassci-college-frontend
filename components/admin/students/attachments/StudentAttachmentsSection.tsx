@@ -1,6 +1,8 @@
 "use client"
 
 import { useRef, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import {
   FilePlus,
   FileText,
@@ -23,8 +25,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { ComboboxCreate } from "@/components/shared/ComboboxCreate"
+import { UploadHandoffButton } from "@/components/shared/upload-handoff/UploadHandoffButton"
 import { SectionCard, EmptyState } from "../tabs/_primitives"
 import {
+  attachmentKeys,
   useDocumentTypes,
   useStudentDocuments,
   useUploadStudentDocument,
@@ -33,6 +37,7 @@ import {
 import { getUploadUrl } from "@/lib/utils"
 
 export function StudentAttachmentsSection({ studentId }: { studentId: number }) {
+  const queryClient = useQueryClient()
   const { data: types } = useDocumentTypes()
   const { data: docs, isLoading } = useStudentDocuments(studentId)
   const { mutate: upload, isPending: uploading } = useUploadStudentDocument(studentId)
@@ -44,6 +49,13 @@ export function StudentAttachmentsSection({ studentId }: { studentId: number }) 
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
 
   const canSubmit = Boolean(docType.trim()) && Boolean(file) && !uploading
+
+  // Le type de document est choisi ICI, sur l'ordinateur, jamais sur le
+  // téléphone : l'écran qui sait ce qu'on classe est celui de l'opérateur, et
+  // le téléphone n'a pas à en apprendre davantage. Le serveur l'exige à
+  // l'OUVERTURE de la session : découvrir le manque une fois la photo prise
+  // reviendrait à la refuser, l'élève déjà reparti.
+  const typeChoisi = docType.trim()
 
   const submit = () => {
     if (!file || !docType.trim()) return
@@ -97,19 +109,46 @@ export function StudentAttachmentsSection({ studentId }: { studentId: number }) 
             </Button>
           </div>
         </div>
-        <Button className="h-11 w-full sm:w-auto" disabled={!canSubmit} onClick={submit}>
-          {uploading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Envoi…
-            </>
-          ) : (
-            <>
-              <FilePlus className="mr-2 h-4 w-4" />
-              Ajouter le document
-            </>
-          )}
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Button className="h-11 w-full sm:w-auto" disabled={!canSubmit} onClick={submit}>
+            {uploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Envoi…
+              </>
+            ) : (
+              <>
+                <FilePlus className="mr-2 h-4 w-4" />
+                Ajouter le document
+              </>
+            )}
+          </Button>
+          {/*
+            La seule cible qui accepte le PDF, et la seule qui exige un
+            complément : sans type de document choisi, le serveur refuserait
+            l'ouverture — le bouton reste donc fermé jusque-là.
+          */}
+          <UploadHandoffButton
+            targetKind="student_document"
+            subjectId={studentId}
+            extras={{ document_type: typeChoisi }}
+            label="Photographier le document"
+            disabled={!typeChoisi || uploading}
+            onResolved={() => {
+              setFile(null)
+              setDocType("")
+              if (fileRef.current) fileRef.current.value = ""
+              void queryClient.invalidateQueries({
+                queryKey: attachmentKeys.list(studentId),
+              })
+              void queryClient.invalidateQueries({
+                queryKey: attachmentKeys.types,
+              })
+              toast.success("Document ajouté")
+            }}
+            className="w-full sm:w-auto"
+          />
+        </div>
       </div>
 
       {/* Documents ajoutés — séparés du formulaire d'ajout */}

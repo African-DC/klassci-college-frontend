@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { settingsApi } from "@/lib/api/settings"
 import { settingsKeys } from "@/lib/hooks/useSettings"
-import { validatePhotoFile } from "@/lib/photo/camera"
+import { UploadHandoffButton } from "@/components/shared/upload-handoff/UploadHandoffButton"
+import { downscaleImageFile, validatePhotoFile } from "@/lib/photo/camera"
 import { getUploadUrl } from "@/lib/utils"
 
 const LOGO_INPUT_ID = "school-logo-input"
@@ -66,16 +67,20 @@ export function LogoField({ logoUrl, onLogoChanged }: LogoFieldProps) {
 
   const busy = upload.isPending || remove.isPending
 
-  function handleSelect(file: File | null) {
+  async function handleSelect(file: File | null) {
     if (!file) return
+    // La réduction passe AVANT la validation, jamais après : une photo de
+    // panneau prise au téléphone pèse plusieurs mégaoctets et serait refusée
+    // telle quelle, alors qu'un logo n'a aucun besoin de cette résolution.
+    const prepared = await downscaleImageFile(file)
     // Mêmes bornes que les photos élève, appliquées avant d'occuper le réseau.
-    const validationError = validatePhotoFile(file, "image")
+    const validationError = validatePhotoFile(prepared, "image")
     if (validationError) {
       setError(validationError)
       return
     }
     setError(null)
-    upload.mutate(file)
+    upload.mutate(prepared)
   }
 
   return (
@@ -131,8 +136,29 @@ export function LogoField({ logoUrl, onLogoChanged }: LogoFieldProps) {
               ) : (
                 <ImagePlus aria-hidden />
               )}
-              {upload.isPending ? "Envoi en cours…" : logoSrc ? "Remplacer le logo" : "Importer un logo"}
+              {upload.isPending
+                ? "Envoi en cours…"
+                : logoSrc
+                  ? "Remplacer le logo"
+                  : "Importer un logo"}
             </Button>
+
+            {/*
+              Le logo arrive souvent en photo d'un en-tête imprimé ou d'un
+              panneau : c'est le téléphone qui la prend, pas le poste de bureau.
+              La cible `school_logo` écrit la même colonne que l'import ci-contre.
+            */}
+            <UploadHandoffButton
+              targetKind="school_logo"
+              label="Photographier le logo"
+              disabled={busy}
+              onResolved={() => {
+                setError(null)
+                onLogoChanged()
+                void refreshSettings()
+              }}
+              className="w-full sm:h-10 sm:w-auto"
+            />
 
             {logoSrc && (
               <Button
@@ -142,7 +168,11 @@ export function LogoField({ logoUrl, onLogoChanged }: LogoFieldProps) {
                 disabled={busy}
                 onClick={() => remove.mutate()}
               >
-                {remove.isPending ? <Loader2 className="animate-spin" aria-hidden /> : <Trash2 aria-hidden />}
+                {remove.isPending ? (
+                  <Loader2 className="animate-spin" aria-hidden />
+                ) : (
+                  <Trash2 aria-hidden />
+                )}
                 {remove.isPending ? "Suppression…" : "Retirer"}
               </Button>
             )}
@@ -182,7 +212,7 @@ export function LogoField({ logoUrl, onLogoChanged }: LogoFieldProps) {
         className="hidden"
         disabled={busy}
         onChange={(event) => {
-          handleSelect(event.target.files?.[0] ?? null)
+          void handleSelect(event.target.files?.[0] ?? null)
           // Réinitialise l'input pour pouvoir re-choisir le même fichier après un échec.
           event.target.value = ""
         }}

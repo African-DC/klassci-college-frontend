@@ -2,9 +2,12 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   Archive,
+  Camera,
   Pencil,
+  Smartphone,
   Trash2,
   User,
   Activity,
@@ -43,13 +46,21 @@ import type { HeroKpi } from "@/components/shared/PageHero"
 import { StaffEditModal } from "./StaffEditModal"
 import { StaffProfileTab } from "./tabs/StaffProfileTab"
 import { StaffActivityTab } from "./tabs/StaffActivityTab"
-import { useStaffMember, useStaffFull, useDeleteStaff } from "@/lib/hooks/useStaff"
+import { useStaffMember, useStaffFull, useDeleteStaff, staffKeys } from "@/lib/hooks/useStaff"
+import { staffApi } from "@/lib/api/staff"
+import {
+  RecordPhotoSurfaces,
+  useRecordPhoto,
+} from "@/components/shared/upload-handoff/useRecordPhoto"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { staffRoleLabel } from "@/lib/contracts/staff"
 import { getUploadUrl } from "@/lib/utils"
 import { formatXof } from "@/lib/export/format"
 
 export function StaffDetailClient({ staffId }: { staffId: number }) {
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const { has } = usePermissions()
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -65,18 +76,33 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
     listRoute: "/admin/staff",
   })
 
-  const handleDelete = () =>
-    deleteStaff(staffId, { onSuccess: () => router.push("/admin/staff") })
+  // `staffApi.uploadPhoto` n'avait aucun appelant : la fiche montrait la photo
+  // sans jamais offrir de la poser. Même entrée que pour l'élève et
+  // l'enseignant : import depuis le poste, ou dépôt par téléphone.
+  const photo = useRecordPhoto({
+    targetKind: "staff_photo",
+    subjectId: staffId,
+    upload: (file) => staffApi.uploadPhoto(staffId, file),
+    onSaved: () => queryClient.invalidateQueries({ queryKey: staffKeys.all }),
+  })
+  const canEditPhoto = has("admin:staff:update")
+
+  const handleDelete = () => deleteStaff(staffId, { onSuccess: () => router.push("/admin/staff") })
 
   if (isLoading) return <DetailSkeleton />
   if (isError)
-    return <DataError message="Impossible de charger la fiche du personnel." onRetry={() => refetch()} />
+    return (
+      <DataError message="Impossible de charger la fiche du personnel." onRetry={() => refetch()} />
+    )
   if (!staff) return <DataError message="Personnel introuvable." />
 
   const initials = `${staff.first_name?.[0] ?? ""}${staff.last_name?.[0] ?? ""}`.toUpperCase()
   const fullName = `${staff.last_name} ${staff.first_name}`
   const photoSrc = getUploadUrl(
-    (fullData?.photo_url ?? (staff as Record<string, unknown>).photo_url) as string | null | undefined,
+    (fullData?.photo_url ?? (staff as Record<string, unknown>).photo_url) as
+      | string
+      | null
+      | undefined,
   )
   const activity = fullData?.activity
   const lastLoginLabel = fullData?.user_last_login
@@ -92,9 +118,14 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
       label: "Versements encaissés",
       value: activity?.payments_count ?? 0,
       icon: Coins,
-      hint: activity && activity.payments_count > 0 ? formatXof(activity.payments_amount) : undefined,
+      hint:
+        activity && activity.payments_count > 0 ? formatXof(activity.payments_amount) : undefined,
     },
-    { label: "Inscriptions traitées", value: activity?.enrollments_count ?? 0, icon: UserPlus },
+    {
+      label: "Inscriptions traitées",
+      value: activity?.enrollments_count ?? 0,
+      icon: UserPlus,
+    },
     { label: "Dernière connexion", value: lastLoginLabel, icon: Clock },
   ]
 
@@ -127,6 +158,18 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
                 <Pencil className="mr-2 h-4 w-4" />
                 Modifier les infos
               </DropdownMenuItem>
+              {canEditPhoto && (
+                <DropdownMenuItem onClick={photo.pickFile} disabled={photo.busy}>
+                  <Camera className="mr-2 h-4 w-4" />
+                  {photoSrc ? "Changer la photo" : "Ajouter une photo"}
+                </DropdownMenuItem>
+              )}
+              {canEditPhoto && photo.phoneOffered && (
+                <DropdownMenuItem onClick={photo.usePhone} disabled={photo.busy}>
+                  <Smartphone className="mr-2 h-4 w-4" />
+                  Photo depuis mon téléphone
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               {/* Archiver d'abord : c'est le geste réversible, donc celui que
                   l'on veut voir avant la suppression définitive. */}
@@ -148,7 +191,11 @@ export function StaffDetailClient({ staffId }: { staffId: number }) {
         }
       />
 
-      {/* Photo preview (lecture seule — la photo est gérée par le membre lui-même) */}
+      {/* Hors du menu déroulant : Radix démonte son contenu à la fermeture, et
+          l'input comme le dialogue disparaîtraient au clic même qui les ouvre. */}
+      <RecordPhotoSurfaces photo={photo} />
+
+      {/* Aperçu de la photo. La poser se fait par le menu, comme partout ailleurs. */}
       {photoSrc && (
         <Dialog open={photoPreview} onOpenChange={setPhotoPreview}>
           <DialogContent className="max-w-md p-2 sm:p-2">
