@@ -23,8 +23,17 @@ function getPortalFromPath(pathname: string): Portal | null {
 // scanne le QR code d'un certificat papier arrive sur /verifier/* : il ne doit
 // jamais être redirigé vers /login, même s'il porte un cookie de session
 // expiré (RefreshTokenError) d'une visite précédente sur le même domaine.
+//
+// /televerser/* est le même cas, avec un enjeu de plus : la personne qui scanne
+// le code de dépôt de photo est souvent une secrétaire, sur SON téléphone, où
+// traîne le cookie expiré d'une visite au portail. La rediriger vers /login lui
+// ferait perdre le code, et l'élève est devant elle.
 function isPublicRoute(pathname: string): boolean {
-  return pathname === "/login" || pathname.startsWith("/verifier")
+  return (
+    pathname === "/login" ||
+    pathname.startsWith("/verifier") ||
+    pathname.startsWith("/televerser")
+  )
 }
 
 function getDefaultRedirect(role: string | undefined): string {
