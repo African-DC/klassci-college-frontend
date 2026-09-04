@@ -245,19 +245,32 @@ export function HandoffCapture({
         title="Photo envoyée"
         message="Revenez à l'ordinateur : la photo s'y affiche, et c'est là qu'elle sera confirmée ou reprise. Vous pouvez fermer cette page."
       >
+        {/*
+          Ce bouton RECHARGE, il ne revient pas en arrière.
+
+          Une fois la photo envoyée, la session est « proposée » côté serveur,
+          et un nouvel envoi part en 409 tant que l'opérateur n'a pas cliqué
+          « Reprendre » sur l'ordinateur. Renvoyer simplement l'écran de prise
+          de vue offrait donc un geste dont on savait qu'il échouerait.
+
+          Cette page reçoit un instantané et n'interroge pas le serveur : elle
+          ne peut pas apprendre seule que la session a rouvert. Recharger est
+          le seul moyen honnête de le découvrir — et si elle a rouvert,
+          l'écran de prise de vue revient de lui-même.
+        */}
         <Button
           type="button"
           variant="outline"
           className="mt-2 h-12 w-full max-w-xs text-base"
-          onClick={() => {
-            setFichier(null)
-            setEchec(null)
-            setPhase("choix")
-          }}
+          onClick={() => window.location.reload()}
         >
           <RotateCcw className="h-5 w-5" aria-hidden="true" />
-          Envoyer une autre photo
+          Reprendre depuis l&apos;ordinateur
         </Button>
+        <p className="mt-2 max-w-xs text-center text-sm text-muted-foreground">
+          Pour envoyer une autre photo, demandez « Reprendre » sur l&apos;ordinateur, puis touchez
+          ce bouton.
+        </p>
       </HandoffNotice>
     )
   }
