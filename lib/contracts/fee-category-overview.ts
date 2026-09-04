@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod"
 
 /**
  * La vue d'ensemble : une ligne par catégorie de frais, avant d'en choisir une.
@@ -58,7 +58,7 @@ export const OverviewCategorySchema = z.object({
   taux_recouvrement: z.number().nullable().default(null),
   /** Le nombre de lignes par état, sur le périmètre entier. `null` sans ce droit. */
   compteurs: z.record(z.string(), z.number()).nullable().default(null),
-});
+})
 
 export const FeeCategoryOverviewSchema = z.object({
   /** L'année lue, telle que le serveur l'a retenue : la carte et le détail qu'elle
@@ -71,7 +71,7 @@ export const FeeCategoryOverviewSchema = z.object({
   /** Les inscriptions ouvertes du périmètre : le dénominateur commun. */
   effectif_perimetre: z.number().nullable().default(null),
   categories: z.array(OverviewCategorySchema).default([]),
-});
+})
 
-export type OverviewCategory = z.infer<typeof OverviewCategorySchema>;
-export type FeeCategoryOverview = z.infer<typeof FeeCategoryOverviewSchema>;
+export type OverviewCategory = z.infer<typeof OverviewCategorySchema>
+export type FeeCategoryOverview = z.infer<typeof FeeCategoryOverviewSchema>
