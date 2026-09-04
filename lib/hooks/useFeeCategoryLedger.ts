@@ -1,30 +1,110 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useInfiniteQuery, type QueryClient } from "@tanstack/react-query"
 import { feeCategoryLedgerApi, type LedgerCriteres } from "@/lib/api/fee-category-ledger"
+import type { CategoryLedger } from "@/lib/contracts/fee-category-ledger"
+import { overviewKeys } from "./useFeeCategoryOverview"
+import { pageSuivante } from "./pagination"
+
+/** Ce qu'on demande d'un coup. Le reste vient par « Charger plus ». */
+export const TAILLE_PAGE = 50
 
 export const ledgerKeys = {
   all: ["fee-category-ledger"] as const,
-  point: (c: LedgerCriteres) =>
-    ["fee-category-ledger", c.categoryId, c.academicYearId, c.classId, c.dateFrom, c.dateTo] as const,
+  /**
+   * La clé porte l'objet de critères ENTIER, jamais une énumération à la main.
+   *
+   * Énumérés un par un, le jour où un filtre s'ajoute et qu'on oublie de
+   * l'inscrire ici, deux périmètres différents partagent une clé : l'écran
+   * garde en cache la réponse du filtre précédent et ne se rafraîchit plus.
+   * Le hachage de clé de TanStack Query est stable sur les objets.
+   */
+  point: (c: LedgerCriteres) => [...ledgerKeys.all, "point", c] as const,
 }
 
 /**
- * Le point sur une catégorie, pour le périmètre demandé.
+ * Ce que le point montre après qu'on y a encaissé.
+ *
+ * `useRecordEnrollmentPayment` invalide les versements, les inscriptions, les
+ * élèves et les frais — mais il ne connaît pas ces deux lectures-ci. Sans cet
+ * appel, la ligne qu'on vient d'encaisser resterait « Dû » sous les yeux de qui
+ * vient de prendre l'argent, et le taux de la carte ne bougerait pas : un écran
+ * qui contredit le geste qu'on vient d'y faire n'est plus cru sur le reste.
+ *
+ * Les deux ensemble, parce que le versement change le détail ET la vue
+ * d'ensemble, et qu'en rafraîchir un seul les ferait diverger à l'écran.
+ */
+export function invalidateSettlementViews(queryClient: QueryClient): void {
+  void queryClient.invalidateQueries({ queryKey: ledgerKeys.all })
+  void queryClient.invalidateQueries({ queryKey: overviewKeys.all })
+}
+
+/**
+ * Le point sur une catégorie, pour le périmètre demandé, page après page.
  *
  * Fraîcheur courte : une caissière encaisse pendant qu'on lit le document, et
  * une minute de retard sur un total qu'on s'apprête à envoyer à un prestataire
  * est une minute de trop.
+ *
+ * **Les totaux ne sont pas la somme des pages.** Le serveur les calcule sur le
+ * périmètre entier ; le seau, la recherche et la pagination ne bornent que la
+ * liste. On reprend donc l'entête de la dernière page reçue — la plus fraîche —
+ * et on ne concatène que `lignes`. Additionner les pages ferait monter le
+ * « Entré » à chaque clic sur « Charger plus ».
  */
-export function useFeeCategoryLedger(criteres: Partial<LedgerCriteres>) {
-  const pret = Boolean(criteres.categoryId) && Boolean(criteres.academicYearId)
+export function useFeeCategoryLedger(
+  criteres: Partial<LedgerCriteres>,
+  { enabled = true, size = TAILLE_PAGE }: { enabled?: boolean; size?: number } = {},
+) {
+  const pret = Boolean(criteres.categoryId) && Boolean(criteres.academicYearId) && enabled
+  const complets = { ...criteres, size } as LedgerCriteres
 
-  return useQuery({
-    queryKey: pret
-      ? ledgerKeys.point(criteres as LedgerCriteres)
-      : [...ledgerKeys.all, "incomplet"],
-    queryFn: () => feeCategoryLedgerApi.point(criteres as LedgerCriteres),
+  const requete = useInfiniteQuery({
+    queryKey: pret ? ledgerKeys.point(complets) : [...ledgerKeys.all, "incomplet"],
+    queryFn: ({ pageParam }: { pageParam: number }) =>
+      feeCategoryLedgerApi.point({ ...complets, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (derniere: CategoryLedger, pages: unknown[]) =>
+      // Un repêchage approché ne se pagine pas : c'est un classement par
+      // pertinence, calculé en mémoire et déjà tronqué à une page. En proposer
+      // une seconde relançait une recherche EXACTE, qui rend zéro ligne — et
+      // l'en-tête de cette page vide effaçait la mention « voici les plus
+      // proches » pendant que les fiches approchantes restaient à l'écran.
+      // Elles se lisaient alors comme la réponse exacte, et on encaisse sur
+      // l'homonyme.
+      derniere.recherche_approchee
+        ? undefined
+        : pageSuivante({ items: derniere.lignes, size: derniere.size ?? size }, pages.length),
     enabled: pret,
     staleTime: 1000 * 15,
+    // Pendant un changement d'onglet ou de période, on garde les chiffres
+    // précédents et l'écran les grise, au lieu de les remplacer par des
+    // squelettes : c'est l'écart entre l'avant et l'après qu'on lit à ce
+    // moment-là, et un squelette l'efface.
+    placeholderData: keepPreviousData,
   })
+
+  const pages = requete.data?.pages
+  // L'en-tête vient de la PREMIÈRE page, pas de la dernière.
+  //
+  // Les totaux, les compteurs, le périmètre et la mention de repêchage portent
+  // sur la lecture entière ; les reprendre de la dernière page les faisait
+  // dépendre du nombre de fois qu'on a cliqué « charger plus ». Seules les
+  // lignes s'accumulent.
+  const data: CategoryLedger | undefined = pages?.length
+    ? {
+        ...pages[0],
+        lignes: pages.flatMap((page) => page.lignes),
+      }
+    : undefined
+
+  return {
+    ...requete,
+    data,
+    scrollInfini: {
+      chargerSuite: () => void requete.fetchNextPage(),
+      resteAcharger: Boolean(requete.hasNextPage),
+      chargeEnCours: requete.isFetchingNextPage,
+    },
+  }
 }

@@ -9,6 +9,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Le point par catégorie s'ouvre sur une carte par frais, avec son taux, ses compteurs et « entré / attendu » : on voit quel frais rentre mal avant d'en choisir un *(comptable, caissier)*
+- Chaque ligne d'impayé mène à la fiche de l'élève, et à l'encaissement pré-rempli pour qui a le droit d'enregistrer un versement *(comptable, caissier)*
+- Le point par catégorie garde ses filtres dans l'adresse : le lien « Tenue, 6e A, ce mois-ci » s'envoie à un collègue, et le bouton retour défait le dernier filtre *(comptable, caissier)*
+- Le point par catégorie se trie par état, avec le nombre d'élèves par seau calculé sur tout le périmètre, et se cherche par nom, prénom ou matricule *(comptable)*
+- Le point par catégorie montre enfin le montant dû par élève, le taux de recouvrement et l'attendu, que seul le document imprimé portait *(comptable)*
 - Poser une photo depuis un téléphone : l'écran affiche un code à scanner, et rien n'est enregistré avant votre confirmation *(admin, secrétariat, tous)*
 - Le dépôt par téléphone est proposé partout où l'on envoie un fichier : fiche élève, inscription, enseignant, personnel, profil, logo et pièce jointe *(tous)*
 - La photo d'un enseignant ou d'un membre du personnel se pose à nouveau depuis sa fiche, pour qui a le droit de la modifier : une personne sans compte n'avait plus aucun moyen d'en avoir une *(admin, secrétariat)*
