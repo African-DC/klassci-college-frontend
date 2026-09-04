@@ -1,27 +1,17 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import {
-  AlertTriangle,
-  FileText,
-  Loader2,
-  RotateCcw,
-  Check,
-  Smartphone,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react"
+import { AlertTriangle, FileText, Loader2, RotateCcw, Check, Smartphone } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  useUploadHandoff,
-  type HandoffOutcome,
-} from "@/lib/hooks/useUploadHandoff";
-import type { HandoffTargetKind } from "@/lib/contracts/upload-handoff";
+} from "@/components/ui/dialog"
+import { useUploadHandoff, type HandoffOutcome } from "@/lib/hooks/useUploadHandoff"
+import type { HandoffTargetKind } from "@/lib/contracts/upload-handoff"
 
 /**
  * Le code QR, l'attente, l'aperçu, et les deux mots : Confirmer, Reprendre.
@@ -53,27 +43,27 @@ import type { HandoffTargetKind } from "@/lib/contracts/upload-handoff";
  */
 
 export interface UploadHandoffDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
   /** La cible du registre serveur. Elle porte le droit, la destination et l'écriture. */
-  targetKind: HandoffTargetKind;
+  targetKind: HandoffTargetKind
   /**
    * Le destinataire, quand il existe. Absent à l'inscription : la photo est
    * prise avant que la fiche existe, la session bascule alors en `stage-only`
    * et le fichier revient au formulaire au lieu d'être écrit.
    */
-  subjectId?: number | null;
+  subjectId?: number | null
   /** Ce que la cible réclame en plus — le type d'une pièce jointe, par exemple. */
-  extras?: Record<string, string>;
+  extras?: Record<string, string>
   /** Ce que l'écran fait du résultat. La fermeture du dialogue est déjà faite. */
-  onResolved: (outcome: HandoffOutcome) => void;
+  onResolved: (outcome: HandoffOutcome) => void
 }
 
 /** « 4:05 » — l'opérateur lit un temps restant, pas un horodatage. */
 function compteARebours(secondes: number): string {
-  const minutes = Math.floor(secondes / 60);
-  const reste = secondes % 60;
-  return `${minutes}:${String(reste).padStart(2, "0")}`;
+  const minutes = Math.floor(secondes / 60)
+  const reste = secondes % 60
+  return `${minutes}:${String(reste).padStart(2, "0")}`
 }
 
 export function UploadHandoffDialog({
@@ -86,10 +76,10 @@ export function UploadHandoffDialog({
 }: UploadHandoffDialogProps) {
   // Remonter le panneau est la seule façon honnête de rouvrir une session : le
   // nettoyage de l'effet révoque l'ancienne avant que la neuve s'ouvre.
-  const [relance, setRelance] = useState(0);
+  const [relance, setRelance] = useState(0)
   useEffect(() => {
-    if (!open) setRelance(0);
-  }, [open]);
+    if (!open) setRelance(0)
+  }, [open])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -107,7 +97,7 @@ export function UploadHandoffDialog({
         ) : null}
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 function PanneauDeSession({
@@ -118,19 +108,19 @@ function PanneauDeSession({
   onFermer,
   onResolved,
 }: {
-  targetKind: HandoffTargetKind;
-  subjectId: number | null;
-  extras?: Record<string, string>;
-  onRelancer: () => void;
-  onFermer: () => void;
-  onResolved: (outcome: HandoffOutcome) => void;
+  targetKind: HandoffTargetKind
+  subjectId: number | null
+  extras?: Record<string, string>
+  onRelancer: () => void
+  onFermer: () => void
+  onResolved: (outcome: HandoffOutcome) => void
 }) {
   const handoff = useUploadHandoff({
     targetKind,
     subjectId,
     extras,
     enabled: true,
-  });
+  })
 
   const {
     opening,
@@ -154,26 +144,24 @@ function PanneauDeSession({
     retake,
     retaking,
     retakeError,
-  } = handoff;
+  } = handoff
 
-  const session = handoff.session;
-  const apercuEstUneImage = (session?.staged_mime ?? "image/jpeg").startsWith(
-    "image/",
-  );
-  const perime = expired || lost;
-  const depose = state === "proposed";
+  const session = handoff.session
+  const apercuEstUneImage = (session?.staged_mime ?? "image/jpeg").startsWith("image/")
+  const perime = expired || lost
+  const depose = state === "proposed"
 
   async function confirmer() {
-    let resultat: HandoffOutcome;
+    let resultat: HandoffOutcome
     try {
-      resultat = await confirm();
+      resultat = await confirm()
     } catch {
       // `confirmError` porte déjà le message à l'écran ; laisser filer le rejet
       // ne ferait qu'ajouter une erreur non gérée dans la console.
-      return;
+      return
     }
-    onFermer();
-    onResolved(resultat);
+    onFermer()
+    onResolved(resultat)
   }
 
   return (
@@ -185,8 +173,7 @@ function PanneauDeSession({
         </DialogTitle>
         <DialogDescription>
           {label ? `${label} — ` : ""}
-          Rien ne sera enregistré tant que vous n&apos;aurez pas confirmé sur
-          cet écran.
+          Rien ne sera enregistré tant que vous n&apos;aurez pas confirmé sur cet écran.
         </DialogDescription>
       </DialogHeader>
 
@@ -248,9 +235,7 @@ function PanneauDeSession({
                 {secondsLeft !== null
                   ? `Valable encore ${compteARebours(secondsLeft)}.`
                   : "Valable quelques minutes."}{" "}
-                {state === "receiving"
-                  ? "Un téléphone est en train d'envoyer…"
-                  : ""}
+                {state === "receiving" ? "Un téléphone est en train d'envoyer…" : ""}
               </p>
             </div>
 
@@ -259,9 +244,7 @@ function PanneauDeSession({
                 <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
                   Le code ne passe pas ? Afficher l&apos;adresse à saisir
                 </summary>
-                <p className="mt-2 break-all font-mono text-[11px] leading-relaxed">
-                  {url}
-                </p>
+                <p className="mt-2 break-all font-mono text-[11px] leading-relaxed">{url}</p>
               </details>
             ) : null}
 
@@ -283,9 +266,7 @@ function PanneauDeSession({
                 Chargement de l&apos;aperçu…
               </p>
             )}
-            {previewError && (
-              <Alerte message="L'aperçu n'a pas pu être chargé." />
-            )}
+            {previewError && <Alerte message="L'aperçu n'a pas pu être chargé." />}
             {previewUrl && apercuEstUneImage && (
               <div className="relative mx-auto aspect-square w-full max-w-xs overflow-hidden rounded-xl border bg-muted">
                 {/* Une URL d'objet locale : ces octets ne sont servis par aucune
@@ -300,13 +281,9 @@ function PanneauDeSession({
             )}
             {previewUrl && !apercuEstUneImage && (
               <div className="flex items-center gap-3 rounded-xl border bg-muted/30 p-4">
-                <FileText
-                  className="h-6 w-6 shrink-0 text-primary"
-                  aria-hidden
-                />
+                <FileText className="h-6 w-6 shrink-0 text-primary" aria-hidden />
                 <p className="min-w-0 text-sm">
-                  Document reçu du téléphone. Confirmez pour l&apos;attacher à
-                  la fiche.
+                  Document reçu du téléphone. Confirmez pour l&apos;attacher à la fiche.
                 </p>
               </div>
             )}
@@ -345,15 +322,15 @@ function PanneauDeSession({
             </div>
             {retakesLeft !== null && retakesLeft <= 0 && (
               <p className="text-xs text-muted-foreground">
-                Plus de reprise possible sur ce code. Confirmez, ou fermez et
-                affichez-en un nouveau.
+                Plus de reprise possible sur ce code. Confirmez, ou fermez et affichez-en un
+                nouveau.
               </p>
             )}
           </div>
         )}
       </div>
     </>
-  );
+  )
 }
 
 /**
@@ -373,9 +350,7 @@ function Alerte({ message }: { message: string }) {
         className="mt-0.5 h-4 w-4 shrink-0 text-red-700 dark:text-red-400"
         aria-hidden
       />
-      <p className="min-w-0 break-words text-sm text-red-700 dark:text-red-400">
-        {message}
-      </p>
+      <p className="min-w-0 break-words text-sm text-red-700 dark:text-red-400">{message}</p>
     </div>
-  );
+  )
 }

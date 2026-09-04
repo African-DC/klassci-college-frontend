@@ -52,7 +52,9 @@ describe("camera helpers", () => {
   })
 
   it("rejects unsupported photo types and oversized files", () => {
-    expect(validatePhotoFile(new File(["x"], "notes.pdf", { type: "application/pdf" }))).toMatch(/JPEG/)
+    expect(validatePhotoFile(new File(["x"], "notes.pdf", { type: "application/pdf" }))).toMatch(
+      /JPEG/,
+    )
     const huge = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "face.jpg", { type: "image/jpeg" })
     expect(validatePhotoFile(huge)).toMatch(/5 Mo/)
     expect(validatePhotoFile(new File(["ok"], "face.jpg", { type: "image/jpeg" }))).toBeNull()
@@ -214,7 +216,9 @@ describe("uploadStudentAvatar", () => {
   })
 
   it("fails closed when the student id is missing after create", async () => {
-    await expect(uploadStudentAvatar(undefined, new File(["x"], "a.jpg", { type: "image/jpeg" }))).resolves.toBe("failed")
+    await expect(
+      uploadStudentAvatar(undefined, new File(["x"], "a.jpg", { type: "image/jpeg" })),
+    ).resolves.toBe("failed")
     expect(photoOutcomeMessage("failed")).toMatch(/fiche élève/i)
   })
 

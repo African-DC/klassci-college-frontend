@@ -1,18 +1,14 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { Smartphone } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { canUseLiveCamera } from "@/lib/photo/camera";
-import {
-  handoffRank,
-  hasCoarsePointer,
-  type HandoffRank,
-} from "@/lib/photo/handoff-rank";
-import { UploadHandoffDialog } from "./UploadHandoffDialog";
-import type { HandoffOutcome } from "@/lib/hooks/useUploadHandoff";
-import type { HandoffTargetKind } from "@/lib/contracts/upload-handoff";
+import { useEffect, useState } from "react"
+import { Smartphone } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { canUseLiveCamera } from "@/lib/photo/camera"
+import { handoffRank, hasCoarsePointer, type HandoffRank } from "@/lib/photo/handoff-rank"
+import { UploadHandoffDialog } from "./UploadHandoffDialog"
+import type { HandoffOutcome } from "@/lib/hooks/useUploadHandoff"
+import type { HandoffTargetKind } from "@/lib/contracts/upload-handoff"
 
 /**
  * « Utiliser mon téléphone » — le même bouton pour les six points de dépôt.
@@ -29,27 +25,27 @@ import type { HandoffTargetKind } from "@/lib/contracts/upload-handoff";
  */
 
 export function useHandoffRank(): HandoffRank | null {
-  const [rang, setRang] = useState<HandoffRank | null>(null);
+  const [rang, setRang] = useState<HandoffRank | null>(null)
   useEffect(() => {
     setRang(
       handoffRank({
         camera: canUseLiveCamera(),
         coarsePointer: hasCoarsePointer(),
       }),
-    );
-  }, []);
-  return rang;
+    )
+  }, [])
+  return rang
 }
 
 export interface UploadHandoffButtonProps {
-  targetKind: HandoffTargetKind;
-  subjectId?: number | null;
-  extras?: Record<string, string>;
-  onResolved: (outcome: HandoffOutcome) => void;
-  disabled?: boolean;
+  targetKind: HandoffTargetKind
+  subjectId?: number | null
+  extras?: Record<string, string>
+  onResolved: (outcome: HandoffOutcome) => void
+  disabled?: boolean
   /** Par défaut « Utiliser mon téléphone ». */
-  label?: string;
-  className?: string;
+  label?: string
+  className?: string
 }
 
 export function UploadHandoffButton({
@@ -61,12 +57,12 @@ export function UploadHandoffButton({
   label = "Utiliser mon téléphone",
   className,
 }: UploadHandoffButtonProps) {
-  const rang = useHandoffRank();
-  const [ouvert, setOuvert] = useState(false);
+  const rang = useHandoffRank()
+  const [ouvert, setOuvert] = useState(false)
 
   // `null` tant que le montage n'a pas eu lieu, `hidden` sur un téléphone : dans
   // les deux cas il n'y a rien à afficher, et surtout aucune session à ouvrir.
-  if (rang === null || rang === "hidden") return null;
+  if (rang === null || rang === "hidden") return null
 
   return (
     <>
@@ -90,5 +86,5 @@ export function UploadHandoffButton({
         onResolved={onResolved}
       />
     </>
-  );
+  )
 }

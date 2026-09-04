@@ -29,22 +29,19 @@ export type HandoffRank =
   /** Un autre chemin existe et reste le défaut : bouton discret, disponible. */
   | "second"
   /** L'appareil EST le téléphone qu'on appellerait : rien à afficher. */
-  | "hidden";
+  | "hidden"
 
 export interface HandoffRankInput {
   /** `canUseLiveCamera()` : contexte sécurisé ET `getUserMedia` présent. */
-  camera: boolean;
+  camera: boolean
   /** Le pointeur principal est un doigt : `(pointer: coarse)`. */
-  coarsePointer: boolean;
+  coarsePointer: boolean
 }
 
-export function handoffRank({
-  camera,
-  coarsePointer,
-}: HandoffRankInput): HandoffRank {
-  if (!camera) return "prominent";
-  if (coarsePointer) return "hidden";
-  return "second";
+export function handoffRank({ camera, coarsePointer }: HandoffRankInput): HandoffRank {
+  if (!camera) return "prominent"
+  if (coarsePointer) return "hidden"
+  return "second"
 }
 
 /**
@@ -56,7 +53,6 @@ export function handoffRank({
  * chemin d'un poste sans caméra.
  */
 export function hasCoarsePointer(): boolean {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function")
-    return false;
-  return window.matchMedia("(pointer: coarse)").matches;
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false
+  return window.matchMedia("(pointer: coarse)").matches
 }

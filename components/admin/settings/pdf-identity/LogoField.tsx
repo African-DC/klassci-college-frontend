@@ -1,89 +1,86 @@
-"use client";
+"use client"
 
-import { useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { AlertCircle, ImagePlus, Loader2, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { settingsApi } from "@/lib/api/settings";
-import { settingsKeys } from "@/lib/hooks/useSettings";
-import { UploadHandoffButton } from "@/components/shared/upload-handoff/UploadHandoffButton";
-import { downscaleImageFile, validatePhotoFile } from "@/lib/photo/camera";
-import { getUploadUrl } from "@/lib/utils";
+import { useRef, useState } from "react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+import { AlertCircle, ImagePlus, Loader2, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { settingsApi } from "@/lib/api/settings"
+import { settingsKeys } from "@/lib/hooks/useSettings"
+import { UploadHandoffButton } from "@/components/shared/upload-handoff/UploadHandoffButton"
+import { downscaleImageFile, validatePhotoFile } from "@/lib/photo/camera"
+import { getUploadUrl } from "@/lib/utils"
 
-const LOGO_INPUT_ID = "school-logo-input";
+const LOGO_INPUT_ID = "school-logo-input"
 
 interface LogoFieldProps {
-  logoUrl: string | null;
+  logoUrl: string | null
   /** Averti après un envoi ou un retrait réussi, pour rafraîchir l'aperçu. */
-  onLogoChanged: () => void;
+  onLogoChanged: () => void
 }
 
 export function LogoField({ logoUrl, onLogoChanged }: LogoFieldProps) {
-  const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const logoSrc = getUploadUrl(logoUrl);
+  const logoSrc = getUploadUrl(logoUrl)
 
   // Invalidation ciblée : la clé "settings" alimente l'aperçu en direct de cet
   // onglet et tous les écrans qui lisent l'identité de l'établissement.
-  const refreshSettings = () =>
-    queryClient.invalidateQueries({ queryKey: settingsKeys.all });
+  const refreshSettings = () => queryClient.invalidateQueries({ queryKey: settingsKeys.all })
 
   const upload = useMutation({
     mutationFn: (file: File) => settingsApi.uploadLogo(file),
     onSuccess: async () => {
-      setError(null);
-      onLogoChanged();
-      await refreshSettings();
+      setError(null)
+      onLogoChanged()
+      await refreshSettings()
       toast.success("Logo enregistré", {
         description: "Il apparaîtra en tête des prochains documents officiels.",
-      });
+      })
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : "Envoi impossible";
-      setError(message);
-      toast.error("Échec de l'envoi du logo", { description: message });
+      const message = err instanceof Error ? err.message : "Envoi impossible"
+      setError(message)
+      toast.error("Échec de l'envoi du logo", { description: message })
     },
-  });
+  })
 
   const remove = useMutation({
     mutationFn: () => settingsApi.deleteLogo(),
     onSuccess: async () => {
-      setError(null);
-      onLogoChanged();
-      await refreshSettings();
+      setError(null)
+      onLogoChanged()
+      await refreshSettings()
       toast.success("Logo retiré", {
-        description:
-          "Les documents repartiront sans logo tant qu'aucun autre n'est envoyé.",
-      });
+        description: "Les documents repartiront sans logo tant qu'aucun autre n'est envoyé.",
+      })
     },
     onError: (err) => {
-      const message =
-        err instanceof Error ? err.message : "Suppression impossible";
-      setError(message);
-      toast.error("Échec de la suppression du logo", { description: message });
+      const message = err instanceof Error ? err.message : "Suppression impossible"
+      setError(message)
+      toast.error("Échec de la suppression du logo", { description: message })
     },
-  });
+  })
 
-  const busy = upload.isPending || remove.isPending;
+  const busy = upload.isPending || remove.isPending
 
   async function handleSelect(file: File | null) {
-    if (!file) return;
+    if (!file) return
     // La réduction passe AVANT la validation, jamais après : une photo de
     // panneau prise au téléphone pèse plusieurs mégaoctets et serait refusée
     // telle quelle, alors qu'un logo n'a aucun besoin de cette résolution.
-    const prepared = await downscaleImageFile(file);
+    const prepared = await downscaleImageFile(file)
     // Mêmes bornes que les photos élève, appliquées avant d'occuper le réseau.
-    const validationError = validatePhotoFile(prepared, "image");
+    const validationError = validatePhotoFile(prepared, "image")
     if (validationError) {
-      setError(validationError);
-      return;
+      setError(validationError)
+      return
     }
-    setError(null);
-    upload.mutate(prepared);
+    setError(null)
+    upload.mutate(prepared)
   }
 
   return (
@@ -121,9 +118,7 @@ export function LogoField({ logoUrl, onLogoChanged }: LogoFieldProps) {
         </div>
 
         <div className="w-full min-w-0 flex-1">
-          <p className="text-sm font-medium">
-            {logoSrc ? "Logo actuel" : "Aucun logo enregistré"}
-          </p>
+          <p className="text-sm font-medium">{logoSrc ? "Logo actuel" : "Aucun logo enregistré"}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             JPEG, PNG ou WebP, 5 Mo au maximum. Fond transparent recommandé.
           </p>
@@ -158,9 +153,9 @@ export function LogoField({ logoUrl, onLogoChanged }: LogoFieldProps) {
               label="Photographier le logo"
               disabled={busy}
               onResolved={() => {
-                setError(null);
-                onLogoChanged();
-                void refreshSettings();
+                setError(null)
+                onLogoChanged()
+                void refreshSettings()
               }}
               className="w-full sm:h-10 sm:w-auto"
             />
@@ -203,9 +198,7 @@ export function LogoField({ logoUrl, onLogoChanged }: LogoFieldProps) {
                 className="mt-0.5 h-4 w-4 shrink-0 text-red-700 dark:text-red-400"
                 aria-hidden
               />
-              <p className="min-w-0 break-words text-sm text-red-700 dark:text-red-400">
-                {error}
-              </p>
+              <p className="min-w-0 break-words text-sm text-red-700 dark:text-red-400">{error}</p>
             </div>
           )}
         </div>
@@ -219,11 +212,11 @@ export function LogoField({ logoUrl, onLogoChanged }: LogoFieldProps) {
         className="hidden"
         disabled={busy}
         onChange={(event) => {
-          void handleSelect(event.target.files?.[0] ?? null);
+          void handleSelect(event.target.files?.[0] ?? null)
           // Réinitialise l'input pour pouvoir re-choisir le même fichier après un échec.
-          event.target.value = "";
+          event.target.value = ""
         }}
       />
     </div>
-  );
+  )
 }

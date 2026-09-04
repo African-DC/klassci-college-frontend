@@ -30,9 +30,7 @@ function getPortalFromPath(pathname: string): Portal | null {
 // ferait perdre le code, et l'élève est devant elle.
 function isPublicRoute(pathname: string): boolean {
   return (
-    pathname === "/login" ||
-    pathname.startsWith("/verifier") ||
-    pathname.startsWith("/televerser")
+    pathname === "/login" || pathname.startsWith("/verifier") || pathname.startsWith("/televerser")
   )
 }
 
@@ -84,11 +82,7 @@ const authMiddleware = auth((req) => {
 
   // Mot de passe temporaire (compte créé ou réinitialisé par un admin) :
   // forcer l'écran de changement avant tout autre accès.
-  if (
-    isLoggedIn &&
-    session.user.mustChangePassword &&
-    pathname !== "/change-password"
-  ) {
+  if (isLoggedIn && session.user.mustChangePassword && pathname !== "/change-password") {
     return hostRedirect(req, "/change-password")
   }
 
@@ -135,13 +129,12 @@ const authMiddleware = auth((req) => {
 export default function middleware(req: NextRequest) {
   const hostname = extractHostname(req.headers.get("host"))
   if (!isHostAllowed(hostname)) {
-    return NextResponse.json(
-      { detail: "Invalid host", code: "HOST_NOT_ALLOWED" },
-      { status: 400 },
-    )
+    return NextResponse.json({ detail: "Invalid host", code: "HOST_NOT_ALLOWED" }, { status: 400 })
   }
 
-  return (authMiddleware as unknown as (r: NextRequest) => Promise<NextResponse> | NextResponse)(req)
+  return (authMiddleware as unknown as (r: NextRequest) => Promise<NextResponse> | NextResponse)(
+    req,
+  )
 }
 
 export const config = {
@@ -150,7 +143,5 @@ export const config = {
   //   - /_next/static, /_next/image (assets statiques)
   //   - /favicon.ico, /robots.txt, /sitemap.xml
   // Cela permet au host allowlist de tourner sur la racine et toutes les pages.
-  matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
 }

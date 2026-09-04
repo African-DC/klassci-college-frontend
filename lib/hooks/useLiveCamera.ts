@@ -57,46 +57,52 @@ export function useLiveCamera({ facing = "user" }: UseLiveCameraOptions = {}) {
     setStatus("idle")
   }, [releaseStream])
 
-  const fail = useCallback((caught: unknown, session: number) => {
-    if (session !== sessionRef.current) return
-    releaseStream()
-    const mapped = mapCameraError(caught)
-    setError(mapped)
-    setStatus("error")
-  }, [releaseStream])
+  const fail = useCallback(
+    (caught: unknown, session: number) => {
+      if (session !== sessionRef.current) return
+      releaseStream()
+      const mapped = mapCameraError(caught)
+      setError(mapped)
+      setStatus("error")
+    },
+    [releaseStream],
+  )
 
-  const start = useCallback(async (next?: CameraFacing) => {
-    stop()
-    const wanted = next ?? facingRef.current
-    facingRef.current = wanted
-    setActiveFacing(wanted)
-    setError(null)
-    setStatus("requesting")
-    const session = sessionRef.current
-    try {
-      const stream = await openCamera({ facing: wanted })
-      if (session !== sessionRef.current) {
-        stopMediaStream(stream)
-        return
+  const start = useCallback(
+    async (next?: CameraFacing) => {
+      stop()
+      const wanted = next ?? facingRef.current
+      facingRef.current = wanted
+      setActiveFacing(wanted)
+      setError(null)
+      setStatus("requesting")
+      const session = sessionRef.current
+      try {
+        const stream = await openCamera({ facing: wanted })
+        if (session !== sessionRef.current) {
+          stopMediaStream(stream)
+          return
+        }
+        streamRef.current = stream
+        const video = videoRef.current
+        if (video) {
+          video.srcObject = stream
+          video.muted = true
+          video.playsInline = true
+          await video.play()
+        }
+        if (session !== sessionRef.current) {
+          stopMediaStream(stream)
+          streamRef.current = null
+          return
+        }
+        setStatus("live")
+      } catch (caught) {
+        fail(caught, session)
       }
-      streamRef.current = stream
-      const video = videoRef.current
-      if (video) {
-        video.srcObject = stream
-        video.muted = true
-        video.playsInline = true
-        await video.play()
-      }
-      if (session !== sessionRef.current) {
-        stopMediaStream(stream)
-        streamRef.current = null
-        return
-      }
-      setStatus("live")
-    } catch (caught) {
-      fail(caught, session)
-    }
-  }, [fail, stop])
+    },
+    [fail, stop],
+  )
 
   /** Passe de l'objectif arrière à l'avant et retour, sans fermer le dialogue. */
   const flip = useCallback(

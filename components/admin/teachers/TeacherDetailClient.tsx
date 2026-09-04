@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   Archive,
   BookOpen,
@@ -18,17 +18,17 @@ import {
   Clock,
   MoreVertical,
   Smartphone,
-} from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+} from "lucide-react"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@/components/ui/dropdown-menu"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,67 +38,57 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { DataError } from "@/components/shared/DataError";
-import { DetailHero } from "@/components/shared/DetailHero";
-import { AccountSection } from "@/components/shared/account/AccountSection";
-import { ContactActions } from "@/components/shared/ContactActions";
-import {
-  ArchiveActionDialog,
-  ARCHIVE_MENU_LABEL,
-} from "@/components/shared/ArchiveActionDialog";
-import { useArchiveAction } from "@/lib/hooks/useArchiveAction";
-import type { HeroKpi } from "@/components/shared/PageHero";
-import { TeacherEditModal } from "./TeacherEditModal";
-import { TeacherOverviewTab } from "./tabs/TeacherOverviewTab";
-import { TeacherProfileTab } from "./tabs/TeacherProfileTab";
-import { TeacherClassesTab } from "./tabs/TeacherClassesTab";
-import { TeacherEvaluationsTab } from "./tabs/TeacherEvaluationsTab";
-import { TeacherTimetableTab } from "./tabs/TeacherTimetableTab";
-import { TeacherAvailabilityTab } from "./tabs/TeacherAvailabilityTab";
-import { TeacherAttendanceTab } from "./tabs/TeacherAttendanceTab";
-import {
-  useTeacher,
-  useTeacherFull,
-  useDeleteTeacher,
-  teacherKeys,
-} from "@/lib/hooks/useTeachers";
-import { teachersApi } from "@/lib/api/teachers";
+} from "@/components/ui/alert-dialog"
+import { DataError } from "@/components/shared/DataError"
+import { DetailHero } from "@/components/shared/DetailHero"
+import { AccountSection } from "@/components/shared/account/AccountSection"
+import { ContactActions } from "@/components/shared/ContactActions"
+import { ArchiveActionDialog, ARCHIVE_MENU_LABEL } from "@/components/shared/ArchiveActionDialog"
+import { useArchiveAction } from "@/lib/hooks/useArchiveAction"
+import type { HeroKpi } from "@/components/shared/PageHero"
+import { TeacherEditModal } from "./TeacherEditModal"
+import { TeacherOverviewTab } from "./tabs/TeacherOverviewTab"
+import { TeacherProfileTab } from "./tabs/TeacherProfileTab"
+import { TeacherClassesTab } from "./tabs/TeacherClassesTab"
+import { TeacherEvaluationsTab } from "./tabs/TeacherEvaluationsTab"
+import { TeacherTimetableTab } from "./tabs/TeacherTimetableTab"
+import { TeacherAvailabilityTab } from "./tabs/TeacherAvailabilityTab"
+import { TeacherAttendanceTab } from "./tabs/TeacherAttendanceTab"
+import { useTeacher, useTeacherFull, useDeleteTeacher, teacherKeys } from "@/lib/hooks/useTeachers"
+import { teachersApi } from "@/lib/api/teachers"
 import {
   RecordPhotoSurfaces,
   useRecordPhoto,
-} from "@/components/shared/upload-handoff/useRecordPhoto";
-import { usePermissions } from "@/lib/hooks/usePermissions";
-import { getUploadUrl } from "@/lib/utils";
+} from "@/components/shared/upload-handoff/useRecordPhoto"
+import { usePermissions } from "@/lib/hooks/usePermissions"
+import { getUploadUrl } from "@/lib/utils"
 
 interface TeacherDetailClientProps {
-  teacherId: number;
+  teacherId: number
 }
 
 export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
-  const router = useRouter();
+  const router = useRouter()
   // Le formulaire de creneau renvoie ici avec ?tab=disponibilites quand
   // l'enseignant choisi bloque : autant arriver sur le bon onglet.
-  const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
-  const { has } = usePermissions();
+  const searchParams = useSearchParams()
+  const queryClient = useQueryClient()
+  const { has } = usePermissions()
 
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState(false);
-  const [activeTab, setActiveTab] = useState(
-    searchParams.get("tab") ?? "overview",
-  );
-  const [photoLoaded, setPhotoLoaded] = useState(false);
+  const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState(false)
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") ?? "overview")
+  const [photoLoaded, setPhotoLoaded] = useState(false)
 
-  const { data: teacher, isLoading, isError, refetch } = useTeacher(teacherId);
-  const { data: fullData } = useTeacherFull(teacherId);
-  const { mutate: deleteTeacher, isPending: deleting } = useDeleteTeacher();
+  const { data: teacher, isLoading, isError, refetch } = useTeacher(teacherId)
+  const { data: fullData } = useTeacherFull(teacherId)
+  const { mutate: deleteTeacher, isPending: deleting } = useDeleteTeacher()
   const archiveAction = useArchiveAction({
     entity: "teacher",
     id: teacherId,
     listRoute: "/admin/teachers",
-  });
+  })
 
   // `teachersApi.uploadPhoto` existait depuis toujours et n'avait aucun
   // appelant : la fiche enseignant affichait la photo sans jamais offrir de la
@@ -109,34 +99,30 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
     subjectId: teacherId,
     upload: (file) => teachersApi.uploadPhoto(teacherId, file),
     onSaved: () => queryClient.invalidateQueries({ queryKey: teacherKeys.all }),
-  });
-  const canEditPhoto = has("admin:teachers:update");
+  })
+  const canEditPhoto = has("admin:teachers:update")
 
   const handleDelete = () => {
     deleteTeacher(teacherId, {
       onSuccess: () => {
-        router.push("/admin/teachers");
+        router.push("/admin/teachers")
       },
-    });
-  };
+    })
+  }
 
-  if (isLoading) return <DetailSkeleton />;
+  if (isLoading) return <DetailSkeleton />
   if (isError)
     return (
-      <DataError
-        message="Impossible de charger la fiche enseignant."
-        onRetry={() => refetch()}
-      />
-    );
-  if (!teacher) return <DataError message="Enseignant introuvable." />;
+      <DataError message="Impossible de charger la fiche enseignant." onRetry={() => refetch()} />
+    )
+  if (!teacher) return <DataError message="Enseignant introuvable." />
 
-  const initials =
-    `${teacher.first_name?.[0] ?? ""}${teacher.last_name?.[0] ?? ""}`.toUpperCase();
-  const fullName = `${teacher.last_name} ${teacher.first_name}`;
+  const initials = `${teacher.first_name?.[0] ?? ""}${teacher.last_name?.[0] ?? ""}`.toUpperCase()
+  const fullName = `${teacher.last_name} ${teacher.first_name}`
   const photoSrc = getUploadUrl(
     (teacher as Record<string, unknown>).photo_url as string | null | undefined,
-  );
-  const userEmail = fullData?.user_email as string | null | undefined;
+  )
+  const userEmail = fullData?.user_email as string | null | undefined
   const heroKpis: HeroKpi[] = [
     {
       label: "Classes",
@@ -153,7 +139,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
       value: (fullData?.hours_per_week as number | undefined) ?? 0,
       icon: Clock,
     },
-  ];
+  ]
 
   return (
     <div className="space-y-6">
@@ -164,13 +150,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
         initials={initials}
         name={fullName}
         subtitle={teacher.speciality ?? "Enseignant"}
-        contact={
-          <ContactActions
-            phone={teacher.phone}
-            email={userEmail}
-            variant="hero"
-          />
-        }
+        contact={<ContactActions phone={teacher.phone} email={userEmail} variant="hero" />}
         kpis={heroKpis}
         onAvatarClick={() => photoLoaded && setPhotoPreview(true)}
         onPhotoStatus={setPhotoLoaded}
@@ -186,19 +166,13 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
                 Modifier les infos
               </DropdownMenuItem>
               {canEditPhoto && (
-                <DropdownMenuItem
-                  onClick={photo.pickFile}
-                  disabled={photo.busy}
-                >
+                <DropdownMenuItem onClick={photo.pickFile} disabled={photo.busy}>
                   <Camera className="mr-2 h-4 w-4" />
                   {photoSrc ? "Changer la photo" : "Ajouter une photo"}
                 </DropdownMenuItem>
               )}
               {canEditPhoto && photo.phoneOffered && (
-                <DropdownMenuItem
-                  onClick={photo.usePhone}
-                  disabled={photo.busy}
-                >
+                <DropdownMenuItem onClick={photo.usePhone} disabled={photo.busy}>
                   <Smartphone className="mr-2 h-4 w-4" />
                   Photo depuis mon téléphone
                 </DropdownMenuItem>
@@ -234,11 +208,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
           <DialogContent className="max-w-md p-2 sm:p-2">
             <div className="relative aspect-square w-full overflow-hidden rounded-lg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photoSrc}
-                alt={fullName}
-                className="h-full w-full object-cover"
-              />
+              <img src={photoSrc} alt={fullName} className="h-full w-full object-cover" />
             </div>
             <p className="px-2 pb-1 text-sm font-medium">{fullName}</p>
           </DialogContent>
@@ -246,11 +216,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
       )}
 
       {/* Tabs — controlled + scroll-x mobile (pattern principe 13/14) */}
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="space-y-4"
-      >
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="-mx-1 overflow-x-auto px-1 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
           <TabsList className="w-max max-w-none">
             <TabsTrigger value="overview">
@@ -322,18 +288,10 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
       <AccountSection entityType="teacher" entityId={teacherId} />
 
       {/* Edit modal */}
-      <TeacherEditModal
-        teacherId={teacherId}
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-      />
+      <TeacherEditModal teacherId={teacherId} open={editOpen} onClose={() => setEditOpen(false)} />
 
       {/* Archivage — hors du menu déroulant, qui se démonte à la fermeture */}
-      <ArchiveActionDialog
-        action={archiveAction}
-        entity="teacher"
-        subject={fullName}
-      />
+      <ArchiveActionDialog action={archiveAction} entity="teacher" subject={fullName} />
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -341,8 +299,8 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cet enseignant ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. L&apos;enseignant {fullName} sera
-              définitivement supprimé.
+              Cette action est irréversible. L&apos;enseignant {fullName} sera définitivement
+              supprimé.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -358,7 +316,7 @@ export function TeacherDetailClient({ teacherId }: TeacherDetailClientProps) {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
+  )
 }
 
 // ---------- Skeleton ----------
@@ -376,5 +334,5 @@ function DetailSkeleton() {
       <Skeleton className="h-10 w-full max-w-xs rounded-lg" />
       <Skeleton className="h-48 rounded-lg" />
     </div>
-  );
+  )
 }

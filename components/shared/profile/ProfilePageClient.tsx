@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Camera, Trash2, Loader2, Smartphone } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DataError } from "@/components/shared/DataError";
-import { ProfileInfoCard } from "./ProfileInfoCard";
-import { NotificationPrefsCard } from "./NotificationPrefsCard";
-import { MyLeaveCard } from "@/components/shared/leave/MyLeaveCard";
+import { useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+import { Camera, Trash2, Loader2, Smartphone } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Skeleton } from "@/components/ui/skeleton"
+import { DataError } from "@/components/shared/DataError"
+import { ProfileInfoCard } from "./ProfileInfoCard"
+import { NotificationPrefsCard } from "./NotificationPrefsCard"
+import { MyLeaveCard } from "@/components/shared/leave/MyLeaveCard"
 import {
   RecordPhotoSurfaces,
   useRecordPhoto,
-} from "@/components/shared/upload-handoff/useRecordPhoto";
+} from "@/components/shared/upload-handoff/useRecordPhoto"
 
-const LEAVE_ROLES = ["admin", "director", "teacher", "staff"];
-import { useMyProfile, profileKeys } from "@/lib/hooks/useProfile";
-import { profileApi } from "@/lib/api/profile";
-import { getUploadUrl } from "@/lib/utils";
+const LEAVE_ROLES = ["admin", "director", "teacher", "staff"]
+import { useMyProfile, profileKeys } from "@/lib/hooks/useProfile"
+import { profileApi } from "@/lib/api/profile"
+import { getUploadUrl } from "@/lib/utils"
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrateur",
@@ -27,12 +27,12 @@ const ROLE_LABELS: Record<string, string> = {
   student: "Élève",
   parent: "Parent",
   super_admin: "Super administrateur",
-};
+}
 
 export function ProfilePageClient() {
-  const { data: profile, isLoading, isError, refetch } = useMyProfile();
-  const queryClient = useQueryClient();
-  const [photoLoaded, setPhotoLoaded] = useState(false);
+  const { data: profile, isLoading, isError, refetch } = useMyProfile()
+  const queryClient = useQueryClient()
+  const [photoLoaded, setPhotoLoaded] = useState(false)
 
   // Aucun `subjectId` : la cible `profile_photo` est un self-service, et le
   // serveur impose l'appelant. Personne n'ouvre une session sur le profil d'un
@@ -41,35 +41,28 @@ export function ProfilePageClient() {
     targetKind: "profile_photo",
     upload: (file) => profileApi.uploadPhoto(file),
     onSaved: () => queryClient.invalidateQueries({ queryKey: profileKeys.me }),
-  });
+  })
 
   const handleDelete = async () => {
     try {
-      await profileApi.deletePhoto();
-      queryClient.invalidateQueries({ queryKey: profileKeys.me });
-      toast.success("Photo supprimée");
+      await profileApi.deletePhoto()
+      queryClient.invalidateQueries({ queryKey: profileKeys.me })
+      toast.success("Photo supprimée")
     } catch {
-      toast.error("Erreur lors de la suppression de la photo");
+      toast.error("Erreur lors de la suppression de la photo")
     }
-  };
+  }
 
-  if (isLoading) return <ProfileSkeleton />;
+  if (isLoading) return <ProfileSkeleton />
   if (isError || !profile)
-    return (
-      <DataError
-        message="Impossible de charger votre profil."
-        onRetry={() => refetch()}
-      />
-    );
+    return <DataError message="Impossible de charger votre profil." onRetry={() => refetch()} />
 
-  const fullName =
-    `${profile.last_name} ${profile.first_name}`.trim() || profile.email;
+  const fullName = `${profile.last_name} ${profile.first_name}`.trim() || profile.email
   const initials =
-    `${profile.first_name?.[0] ?? ""}${profile.last_name?.[0] ?? ""}`.toUpperCase() ||
-    "?";
-  const photoSrc = getUploadUrl(profile.photo_url);
-  const roleLabel = ROLE_LABELS[profile.role] ?? profile.role;
-  const hasPhoto = Boolean(photoSrc && photoLoaded);
+    `${profile.first_name?.[0] ?? ""}${profile.last_name?.[0] ?? ""}`.toUpperCase() || "?"
+  const photoSrc = getUploadUrl(profile.photo_url)
+  const roleLabel = ROLE_LABELS[profile.role] ?? profile.role
+  const hasPhoto = Boolean(photoSrc && photoLoaded)
 
   return (
     <div className="space-y-6">
@@ -108,9 +101,7 @@ export function ProfilePageClient() {
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-              <h1 className="font-serif text-2xl font-bold tracking-tight">
-                {fullName}
-              </h1>
+              <h1 className="font-serif text-2xl font-bold tracking-tight">{fullName}</h1>
               <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-white">
                 {roleLabel}
               </span>
@@ -153,7 +144,7 @@ export function ProfilePageClient() {
 
       <NotificationPrefsCard />
     </div>
-  );
+  )
 }
 
 function ProfileSkeleton() {
@@ -162,5 +153,5 @@ function ProfileSkeleton() {
       <Skeleton className="h-40 rounded-2xl" />
       <Skeleton className="h-56 rounded-xl" />
     </div>
-  );
+  )
 }
