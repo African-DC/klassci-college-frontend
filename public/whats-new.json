@@ -1,11 +1,33 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-03T12:08:35Z",
+  "generated_at": "2026-09-04T03:16:10Z",
   "version": "Unreleased",
   "released": false,
-  "total": 312,
+  "total": 315,
   "sections": {
     "Added": [
+      {
+        "text": "Le point par catégorie garde ses filtres dans l'adresse : le lien « Tenue, 6e A, ce mois-ci » s'envoie à un collègue, et le bouton retour défait le dernier filtre",
+        "audience": [
+          "comptable",
+          "caissier"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Le point par catégorie se trie par état, avec le nombre d'élèves par seau calculé sur tout le périmètre, et se cherche par nom, prénom ou matricule",
+        "audience": [
+          "comptable"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Le point par catégorie montre enfin le montant dû par élève, le taux de recouvrement et l'attendu, que seul le document imprimé portait",
+        "audience": [
+          "comptable"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Le point par catégorie s'affiche en aperçu avant d'être édité, et s'exporte au choix en document PDF officiel ou en classeur",
         "audience": [
@@ -26,29 +48,6 @@
         "audience": [
           "comptable",
           "caissier"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Saisie par classe : dire qui est nouveau et qui a déposé son article, sans ouvrir chaque fiche",
-        "audience": [
-          "admin",
-          "secrétariat"
-        ],
-        "pull_request": 428
-      },
-      {
-        "text": "Les réglages disent combien d'élèves sont rattachés aux années passées avant de laisser cocher « historique complet »",
-        "audience": [
-          "admin"
-        ],
-        "pull_request": 426
-      },
-      {
-        "text": "Un tarif peut ne concerner que les nouveaux élèves ou que les anciens : l'autre groupe ne le paie pas du tout",
-        "audience": [
-          "admin",
-          "comptable"
         ],
         "pull_request": null
       }

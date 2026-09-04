@@ -9,6 +9,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Le point par catégorie garde ses filtres dans l'adresse : le lien « Tenue, 6e A, ce mois-ci » s'envoie à un collègue, et le bouton retour défait le dernier filtre *(comptable, caissier)*
+- Le point par catégorie se trie par état, avec le nombre d'élèves par seau calculé sur tout le périmètre, et se cherche par nom, prénom ou matricule *(comptable)*
+- Le point par catégorie montre enfin le montant dû par élève, le taux de recouvrement et l'attendu, que seul le document imprimé portait *(comptable)*
 - Le point par catégorie s'affiche en aperçu avant d'être édité, et s'exporte au choix en document PDF officiel ou en classeur *(comptable, caissier)*
 - Une fenêtre « Nouveautés » dit ce qui a changé pour votre rôle, signalée par une pastille quand il y a du neuf *(tous)*
 - Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse *(comptable, caissier)*
