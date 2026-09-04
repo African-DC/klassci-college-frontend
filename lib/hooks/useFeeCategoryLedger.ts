@@ -65,7 +65,16 @@ export function useFeeCategoryLedger(
       feeCategoryLedgerApi.point({ ...complets, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (derniere: CategoryLedger, pages: unknown[]) =>
-      pageSuivante({ items: derniere.lignes, size: derniere.size ?? size }, pages.length),
+      // Un repêchage approché ne se pagine pas : c'est un classement par
+      // pertinence, calculé en mémoire et déjà tronqué à une page. En proposer
+      // une seconde relançait une recherche EXACTE, qui rend zéro ligne — et
+      // l'en-tête de cette page vide effaçait la mention « voici les plus
+      // proches » pendant que les fiches approchantes restaient à l'écran.
+      // Elles se lisaient alors comme la réponse exacte, et on encaisse sur
+      // l'homonyme.
+      derniere.recherche_approchee
+        ? undefined
+        : pageSuivante({ items: derniere.lignes, size: derniere.size ?? size }, pages.length),
     enabled: pret,
     staleTime: 1000 * 15,
     // Pendant un changement d'onglet ou de période, on garde les chiffres
@@ -76,9 +85,15 @@ export function useFeeCategoryLedger(
   })
 
   const pages = requete.data?.pages
+  // L'en-tête vient de la PREMIÈRE page, pas de la dernière.
+  //
+  // Les totaux, les compteurs, le périmètre et la mention de repêchage portent
+  // sur la lecture entière ; les reprendre de la dernière page les faisait
+  // dépendre du nombre de fois qu'on a cliqué « charger plus ». Seules les
+  // lignes s'accumulent.
   const data: CategoryLedger | undefined = pages?.length
     ? {
-        ...pages[pages.length - 1],
+        ...pages[0],
         lignes: pages.flatMap((page) => page.lignes),
       }
     : undefined
