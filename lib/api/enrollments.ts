@@ -6,7 +6,17 @@ import {
   FeeVariantOptionSchema,
   NewStudentSuggestionSchema,
 } from "@/lib/contracts/enrollment"
-import type { BulkValidateResult, Enrollment, EnrollmentCreate, EnrollmentUpdate, FeeRegenerationResult, FeeVariantOption, NewEnrollment, NewStudentSuggestion, ReEnrollment } from "@/lib/contracts/enrollment"
+import type {
+  BulkValidateResult,
+  Enrollment,
+  EnrollmentCreate,
+  EnrollmentUpdate,
+  FeeRegenerationResult,
+  FeeVariantOption,
+  NewEnrollment,
+  NewStudentSuggestion,
+  ReEnrollment,
+} from "@/lib/contracts/enrollment"
 import { InKindRosterSchema, type InKindRoster } from "@/lib/contracts/in-kind-roster"
 import { createCrudApi } from "./createCrudApi"
 import { apiFetch, safeValidate } from "./client"
@@ -22,6 +32,19 @@ const FeeVariantOptionListSchema = z.array(FeeVariantOptionSchema)
  */
 function withExplicitProfile<T extends { is_new_student?: boolean | null }>(payload: T) {
   return { ...payload, is_new_student: payload.is_new_student ?? null }
+}
+
+/**
+ * Le motif de dérogation, là où le serveur le lit : en paramètre de requête.
+ *
+ * Il n'est pas dans le corps parce que ce corps est partagé avec la promotion
+ * de masse, qui ne dérogera jamais. Vide, il ne part pas du tout : envoyer un
+ * motif blanc reviendrait à demander une dérogation sans la justifier, et le
+ * serveur la refuserait de toute façon.
+ */
+function overrideQuery(reason?: string | null): string {
+  const motif = (reason ?? "").trim()
+  return motif ? `?override_reason=${encodeURIComponent(motif)}` : ""
 }
 
 export const enrollmentsApi = {
@@ -44,25 +67,24 @@ export const enrollmentsApi = {
   ): Promise<NewStudentSuggestion> => {
     const path = `/enrollments/new-student-suggestion?student_id=${studentId}&academic_year_id=${academicYearId}`
     const data = await apiFetch<unknown>(path)
-    return safeValidate(
-      NewStudentSuggestionSchema,
-      data,
-      "GET /enrollments/new-student-suggestion",
-    )
+    return safeValidate(NewStudentSuggestionSchema, data, "GET /enrollments/new-student-suggestion")
   },
 
-  createWithStudent: async (data: NewEnrollment) => {
+  createWithStudent: async (data: NewEnrollment, overrideReason?: string) => {
     const { type, ...payload } = data
-    const res = await apiFetch<unknown>("/enrollments/with-student", {
-      method: "POST",
-      body: JSON.stringify(withExplicitProfile(payload)),
-    })
+    const res = await apiFetch<unknown>(
+      `/enrollments/with-student${overrideQuery(overrideReason)}`,
+      {
+        method: "POST",
+        body: JSON.stringify(withExplicitProfile(payload)),
+      },
+    )
     return safeValidate(EnrollmentSchema, res, "POST /enrollments/with-student")
   },
 
-  reEnroll: async (data: ReEnrollment) => {
+  reEnroll: async (data: ReEnrollment, overrideReason?: string) => {
     const { type, ...payload } = data
-    const res = await apiFetch<unknown>("/enrollments/re-enroll", {
+    const res = await apiFetch<unknown>(`/enrollments/re-enroll${overrideQuery(overrideReason)}`, {
       method: "POST",
       body: JSON.stringify(withExplicitProfile(payload)),
     })

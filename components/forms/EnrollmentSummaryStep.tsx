@@ -2,10 +2,16 @@
 
 import { CreditCard, GraduationCap, UserPlus } from "lucide-react"
 import { assignmentStatusLabel, newStudentLabel } from "@/lib/contracts/enrollment"
-import type { NewEnrollment, ReEnrollment, FeeVariantOption } from "@/lib/contracts/enrollment"
+import type {
+  EnrollmentBlockedDetail,
+  NewEnrollment,
+  ReEnrollment,
+  FeeVariantOption,
+} from "@/lib/contracts/enrollment"
 import type { Student } from "@/lib/contracts/student"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { EnrollmentArrearsRefusal } from "@/components/forms/EnrollmentArrearsRefusal"
 
 const RELATIONSHIP_TYPES = [
   { value: "father", label: "Père" },
@@ -32,6 +38,10 @@ interface EnrollmentSummaryStepProps {
   createError?: string
   reEnrollError?: string
   inKindDeposits?: Record<number, boolean>
+  /** Le refus pour dette d'un exercice précédent, quand le serveur l'a opposé. */
+  blocked?: EnrollmentBlockedDetail | null
+  pending?: boolean
+  onOverride?: (reason: string) => void
 }
 
 export function EnrollmentSummaryStep({
@@ -48,10 +58,15 @@ export function EnrollmentSummaryStep({
   createError,
   reEnrollError,
   inKindDeposits = {},
+  blocked,
+  pending,
+  onOverride,
 }: EnrollmentSummaryStepProps) {
   const mandatory = feeVariants.filter((variant) => variant.is_mandatory !== false)
   const optionalAmount =
-    selectedFeeVariant && selectedFeeVariant.is_mandatory === false ? Number(selectedFeeVariant.amount) : 0
+    selectedFeeVariant && selectedFeeVariant.is_mandatory === false
+      ? Number(selectedFeeVariant.amount)
+      : 0
   const total =
     mandatory
       .filter((variant) => !variant.accepts_in_kind || !inKindDeposits[variant.fee_category_id])
@@ -140,7 +155,9 @@ export function EnrollmentSummaryStep({
                   ) : null}
                   <dt className="text-muted-foreground">Lien</dt>
                   <dd>
-                    {RELATIONSHIP_TYPES.find((item) => item.value === newValues.parent?.relationship_type)?.label ?? "Tuteur"}
+                    {RELATIONSHIP_TYPES.find(
+                      (item) => item.value === newValues.parent?.relationship_type,
+                    )?.label ?? "Tuteur"}
                   </dd>
                 </dl>
               </div>
@@ -160,14 +177,18 @@ export function EnrollmentSummaryStep({
               <dt className="text-muted-foreground">Affectation</dt>
               <dd>{assignmentStatusLabel(values.assignment_status)}</dd>
               <dt className="text-muted-foreground">Profil</dt>
-              <dd className={values.is_new_student == null ? "text-amber-700 dark:text-amber-400" : undefined}>
+              <dd
+                className={
+                  values.is_new_student == null ? "text-amber-700 dark:text-amber-400" : undefined
+                }
+              >
                 {newStudentLabel(values.is_new_student)}
               </dd>
             </dl>
             {values.is_new_student == null ? (
               <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-                Sans profil tranché, les frais réservés aux nouveaux ou aux anciens élèves ne
-                seront pas facturés. Revenez à l&apos;étape Classe pour trancher.
+                Sans profil tranché, les frais réservés aux nouveaux ou aux anciens élèves ne seront
+                pas facturés. Revenez à l&apos;étape Classe pour trancher.
               </p>
             ) : null}
           </div>
@@ -181,18 +202,27 @@ export function EnrollmentSummaryStep({
                   Frais
                 </h4>
                 {mandatory.map((variant) => {
-                  const deposited = !!variant.accepts_in_kind && !!inKindDeposits[variant.fee_category_id]
+                  const deposited =
+                    !!variant.accepts_in_kind && !!inKindDeposits[variant.fee_category_id]
                   return (
                     <div key={variant.id} className="flex justify-between py-0.5 text-sm">
-                      <span className="text-muted-foreground">{variant.category_name ?? "Frais"}</span>
-                      <span className="font-mono">{deposited ? "Déposé" : formatXof(Number(variant.amount))}</span>
+                      <span className="text-muted-foreground">
+                        {variant.category_name ?? "Frais"}
+                      </span>
+                      <span className="font-mono">
+                        {deposited ? "Déposé" : formatXof(Number(variant.amount))}
+                      </span>
                     </div>
                   )
                 })}
                 {selectedFeeVariant && selectedFeeVariant.is_mandatory === false ? (
                   <div className="flex justify-between py-0.5 text-sm">
-                    <span className="text-muted-foreground">{selectedFeeVariant.category_name ?? "Option"}</span>
-                    <span className="font-mono">{formatXof(Number(selectedFeeVariant.amount))}</span>
+                    <span className="text-muted-foreground">
+                      {selectedFeeVariant.category_name ?? "Option"}
+                    </span>
+                    <span className="font-mono">
+                      {formatXof(Number(selectedFeeVariant.amount))}
+                    </span>
                   </div>
                 ) : null}
                 <div className="mt-1 flex justify-between border-t border-border/50 pt-1 text-sm">
@@ -215,7 +245,9 @@ export function EnrollmentSummaryStep({
         </CardContent>
       </Card>
 
-      {createError || reEnrollError ? (
+      {blocked ? (
+        <EnrollmentArrearsRefusal blocked={blocked} pending={pending} onOverride={onOverride} />
+      ) : createError || reEnrollError ? (
         <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
           <p className="text-sm text-destructive">{createError || reEnrollError}</p>
         </div>

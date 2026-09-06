@@ -9,6 +9,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Au moment de réinscrire, l'écran signale ce que l'élève doit encore au titre des années précédentes, avec le montant quand vous avez le droit de le lire *(admin, secrétariat)*
+- L'établissement choisit ce qu'il fait d'une dette d'une année précédente : ignorer, informer le guichet, ou refuser la réinscription au-delà d'un montant *(admin)*
+- Une réinscription refusée pour dette dit pourquoi, et propose de passer outre avec un motif enregistré à qui en a le droit *(admin, secrétariat)*
 - Le point par catégorie s'ouvre sur une carte par frais, avec son taux, ses compteurs et « entré / attendu » : on voit quel frais rentre mal avant d'en choisir un *(comptable, caissier)*
 - Chaque ligne d'impayé mène à la fiche de l'élève, et à l'encaissement pré-rempli pour qui a le droit d'enregistrer un versement *(comptable, caissier)*
 - Le point par catégorie garde ses filtres dans l'adresse : le lien « Tenue, 6e A, ce mois-ci » s'envoie à un collègue, et le bouton retour défait le dernier filtre *(comptable, caissier)*
