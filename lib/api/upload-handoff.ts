@@ -53,6 +53,18 @@ export const uploadHandoffApi = {
         target_kind: targetKind,
         subject_id: subjectId,
         extras: extras ?? {},
+        // L'adresse que le navigateur a sous les yeux : c'est elle que le
+        // téléphone doit atteindre, et elle seule le sait.
+        //
+        // Le serveur tourne derrière un proxy : il ne voit ni le schéma ni le
+        // domaine du dehors, et devait donc les lire dans une variable. Celle-ci
+        // portait un domaine d'établissement en valeur par défaut — toute
+        // installation qui l'oubliait envoyait ses téléphones chez le voisin,
+        // avec un jeton qui n'y existe pas, et un code QR d'apparence parfaite.
+        //
+        // Le serveur confronte cette origine à son allowlist : on l'annonce,
+        // il ne la croit pas sur parole.
+        origin: typeof window === "undefined" ? null : window.location.origin,
       }),
     })
     return safeValidate(HandoffOpenedSchema, json, `POST ${RACINE}`)
