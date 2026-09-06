@@ -67,20 +67,20 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
     defaultValues: RE_ENROLLMENT_DEFAULTS,
   })
 
-  const watchedClassId = enrollmentType === "new"
-    ? newForm.watch("class_id")
-    : reForm.watch("class_id")
+  const watchedClassId =
+    enrollmentType === "new" ? newForm.watch("class_id") : reForm.watch("class_id")
 
   // Fee variants for selected class
   const { data: feeVariants, isLoading: feeVariantsLoading } = useFeeVariants(
-    watchedClassId && watchedClassId > 0 ? watchedClassId : undefined
+    watchedClassId && watchedClassId > 0 ? watchedClassId : undefined,
   )
 
   // Selected student for re-enrollment
-  const selectedStudentId = enrollmentType === "re-enrollment" ? reForm.watch("student_id") : undefined
+  const selectedStudentId =
+    enrollmentType === "re-enrollment" ? reForm.watch("student_id") : undefined
   const selectedStudent = useMemo(
     () => students.find((s) => s.id === selectedStudentId),
-    [students, selectedStudentId]
+    [students, selectedStudentId],
   )
 
   const ensureProfileAnswered = useNewStudentGuard({
@@ -90,30 +90,30 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
     studentId: selectedStudentId,
   })
 
-  const { submit, isPending, submitLabel, createError, reEnrollError } = useEnrollmentSubmit({
-    enrollmentType,
-    newForm,
-    reForm,
-    showParentFields,
-    inKindDeposits,
-    photo,
-    onPhotoConsumed: () => setPhoto(null),
-    onSuccess,
-  })
+  const { submit, isPending, submitLabel, blocked, createError, reEnrollError } =
+    useEnrollmentSubmit({
+      enrollmentType,
+      newForm,
+      reForm,
+      showParentFields,
+      inKindDeposits,
+      photo,
+      onPhotoConsumed: () => setPhoto(null),
+      onSuccess,
+    })
 
   // Selected class name for summary
   const selectedClassName = useMemo(
     () => classes.find((c) => c.id === watchedClassId)?.name ?? "",
-    [classes, watchedClassId]
+    [classes, watchedClassId],
   )
 
   // Selected fee variant for summary
-  const selectedFeeVariantId = enrollmentType === "new"
-    ? newForm.watch("fee_variant_id")
-    : reForm.watch("fee_variant_id")
+  const selectedFeeVariantId =
+    enrollmentType === "new" ? newForm.watch("fee_variant_id") : reForm.watch("fee_variant_id")
   const selectedFeeVariant = useMemo(
     () => feeVariants?.find((v) => v.id === selectedFeeVariantId),
-    [feeVariants, selectedFeeVariantId]
+    [feeVariants, selectedFeeVariantId],
   )
 
   // Bug #22 : Quand un student_id arrive via query (?student_id=X), on
@@ -137,7 +137,13 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
   }
 
   async function handleNext() {
-    const valid = await validateEnrollmentStep(step, enrollmentType, newForm, reForm, showParentFields)
+    const valid = await validateEnrollmentStep(
+      step,
+      enrollmentType,
+      newForm,
+      reForm,
+      showParentFields,
+    )
     if (!valid || step >= ENROLLMENT_STEPS.length - 1) return
     if (step === 2 && !ensureProfileAnswered()) return
     goToStep(step + 1)
@@ -171,9 +177,7 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
       pending={isPending}
       submitLabel={submitLabel}
     >
-      {step === 0 && (
-        <EnrollmentTypeStep value={enrollmentType} onChange={setEnrollmentType} />
-      )}
+      {step === 0 && <EnrollmentTypeStep value={enrollmentType} onChange={setEnrollmentType} />}
 
       {step === 1 && (
         <EnrollmentStudentStep
@@ -226,10 +230,12 @@ export function EnrollmentForm({ onSuccess, preselectedStudentId }: EnrollmentFo
           showParentFields={showParentFields}
           createError={createError}
           reEnrollError={reEnrollError}
+          blocked={blocked}
+          pending={isPending}
+          onOverride={(reason) => submit(reason)}
           inKindDeposits={inKindDeposits}
         />
       )}
-
     </EnrollmentWizardShell>
   )
 }

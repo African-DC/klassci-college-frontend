@@ -149,6 +149,11 @@ export class ApiError extends Error {
 
 function apiErrorFrom(status: number, detail: unknown, fallback: string): ApiError {
   if (typeof detail === "string") return new ApiError(detail, status, detail)
+  // 422 de FastAPI : une liste d'erreurs de validation, chacune avec son `msg`.
+  if (Array.isArray(detail) && detail.length > 0) {
+    const message = detail.map((d: { msg?: string }) => d?.msg ?? JSON.stringify(d)).join(", ")
+    return new ApiError(message, status, detail)
+  }
   if (detail !== null && typeof detail === "object") {
     const message = (detail as { message?: unknown }).message
     return new ApiError(typeof message === "string" ? message : fallback, status, detail)
@@ -176,17 +181,20 @@ function throwIfSessionExpired(res: Response, hadToken: boolean): void {
 }
 
 /**
- * Message lisible tiré du corps d'erreur FastAPI : `detail` est une chaine, ou
- * un tableau d'erreurs de validation pour un 422.
+ * L'erreur d'une réponse en échec, message lisible ET `detail` intact.
+ *
+ * Le message est celui qu'on affichait déjà : la chaine du `detail`, ou les
+ * `msg` concaténés d'un 422. Ce qui change, c'est que le `detail` voyage
+ * désormais avec, au lieu d'être lu puis jeté.
+ *
+ * Sans cela, un refus dont le `detail` est un OBJET — un 402 « il faut payer »
+ * qui porte un montant, le droit de déroger et le motif à saisir — arrivait à
+ * l'écran sous la forme « Erreur 402 » : la personne au guichet lisait un
+ * numéro, et le module qui savait quoi en faire n'avait plus rien à lire.
  */
-async function readErrorMessage(res: Response, fallback: string): Promise<string> {
+async function readApiError(res: Response, fallback: string): Promise<ApiError> {
   const body = (await res.json().catch(() => null)) as { detail?: unknown } | null
-  const detail = body?.detail
-  if (typeof detail === "string") return detail
-  if (Array.isArray(detail) && detail.length > 0) {
-    return detail.map((d: { msg?: string; loc?: string[] }) => d.msg ?? JSON.stringify(d)).join(", ")
-  }
-  return fallback
+  return apiErrorFrom(res.status, body?.detail, fallback)
 }
 
 interface BlobRequestOptions {
@@ -201,10 +209,7 @@ interface BlobRequestOptions {
  * s'imprime. Le verbe et le corps sont donc paramétrables, le contrat 401 et
  * la lecture du `detail` backend restent les mêmes.
  */
-export async function apiFetchBlob(
-  path: string,
-  options: BlobRequestOptions = {},
-): Promise<Blob> {
+export async function apiFetchBlob(path: string, options: BlobRequestOptions = {}): Promise<Blob> {
   const headers = await authHeaders()
   if (options.body === undefined) delete headers["Content-Type"]
   const hadToken = "Authorization" in headers
@@ -237,7 +242,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   throwIfSessionExpired(res, hadToken)
 
   if (!res.ok) {
-    throw new Error(await readErrorMessage(res, `Erreur ${res.status}`))
+    throw await readApiError(res, `Erreur ${res.status}`)
   }
 
   if (res.status === 204) return undefined as T
@@ -286,7 +291,7 @@ export async function apiFetchMultipart<T>(
   throwIfSessionExpired(res, hadToken)
 
   if (!res.ok) {
-    throw new Error(await readErrorMessage(res, fallback ?? `Erreur ${res.status}`))
+    throw await readApiError(res, fallback ?? `Erreur ${res.status}`)
   }
 
   if (res.status === 204) return undefined as T

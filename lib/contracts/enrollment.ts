@@ -14,7 +14,11 @@ export const AssignmentStatusSchema = z.enum(["affecte", "reaffecte", "non_affec
 export const ASSIGNMENT_STATUSES = [
   { value: "affecte" as const, label: "Affecté", hint: "Subventionné par l'État" },
   { value: "reaffecte" as const, label: "Réaffecté", hint: "Réorienté, subventionné également" },
-  { value: "non_affecte" as const, label: "Non affecté", hint: "Scolarité à la charge de la famille" },
+  {
+    value: "non_affecte" as const,
+    label: "Non affecté",
+    hint: "Scolarité à la charge de la famille",
+  },
 ]
 
 export function assignmentStatusLabel(status: string | null | undefined): string {
@@ -39,7 +43,13 @@ export function newStudentLabel(value: boolean | null | undefined): string {
   return "Non tranché"
 }
 
-export const EnrollmentStatusSchema = z.enum(["prospect", "en_validation", "valide", "rejete", "annule"])
+export const EnrollmentStatusSchema = z.enum([
+  "prospect",
+  "en_validation",
+  "valide",
+  "rejete",
+  "annule",
+])
 
 export const EnrollmentSchema = z.object({
   id: z.number(),
@@ -70,7 +80,9 @@ export const EnrollmentCreateSchema = z.object({
   assignment_decision_number: z.string().nullable().optional(),
   /** Absent = le serveur déduit. Envoyé à `null` = l'école laisse en suspens. */
   is_new_student: z.boolean().nullable().optional(),
-  academic_year_id: z.number({ required_error: "L'année académique est requise" }).positive("L'année académique est requise"),
+  academic_year_id: z
+    .number({ required_error: "L'année académique est requise" })
+    .positive("L'année académique est requise"),
   fee_variant_id: z.number().positive().optional().nullable(),
   notes: z.string().optional().nullable(),
   in_kind_deposits: z
@@ -208,9 +220,91 @@ export type BulkValidateResult = z.infer<typeof BulkValidateResultSchema>
 export const NewStudentSuggestionSchema = z.object({
   suggested: z.boolean().nullable(),
   reason: z.string(),
+  /**
+   * Reste dû sur les exercices AUTRES que celui de l'inscription en cours.
+   *
+   * `null` ne veut pas dire zéro : il veut dire « ce lecteur n'a pas le droit
+   * de lire les montants ». Le serveur a déjà tranché selon `payments:read` ;
+   * l'écran affiche un tiret et n'en déduit rien de plus. Un zéro à la place
+   * dirait « cette famille ne doit rien ailleurs », ce qui est un mensonge.
+   *
+   * Repli à `null` : un serveur qui n'envoie pas encore le champ masque, il ne
+   * publie pas — et surtout, la réponse entière continue de passer.
+   */
+  fees_arrears_other_years: z.coerce.number().nullish().default(null),
+  /**
+   * L'alerte seule, sans somme : ce que voit `payments:status:read`. `null`
+   * quand le lecteur n'a droit ni aux montants ni à l'état.
+   */
+  has_arrears_other_years: z.boolean().nullish().default(null),
 })
 
 export type NewStudentSuggestion = z.infer<typeof NewStudentSuggestionSchema>
+
+// ---------------------------------------------------------------------------
+// Le refus : réinscription bloquée par une dette d'un exercice précédent
+// ---------------------------------------------------------------------------
+
+/** Code que le backend pose dans le `detail` de son 402. */
+export const ENROLLMENT_BLOCKED_CODE = "ENROLLMENT_BLOCKED_BY_ARREARS"
+
+export interface EnrollmentBlockedDetail {
+  code: typeof ENROLLMENT_BLOCKED_CODE
+  /** Phrase composée par le serveur. Elle porte le chiffre quand il est lisible. */
+  message: string
+  /** `null` quand le lecteur n'a pas le droit de lire les montants. Jamais `0`. */
+  arrears_amount: number | null
+  /** `null` quand il n'a droit ni aux montants ni à l'état. */
+  has_arrears: boolean | null
+  student_id: number | null
+  academic_year_id: number | null
+  /**
+   * Vient de `enrollments:arrears:override`, résolu par le serveur. L'écran ne
+   * propose la dérogation que si ce booléen est vrai : refaire le raisonnement
+   * ici donnerait deux vérités, et la nôtre serait fausse le jour où une école
+   * redistribue ce droit.
+   */
+  can_override: boolean
+}
+
+/**
+ * Reconnaît le refus pour dette parmi les erreurs d'une création d'inscription.
+ *
+ * Même forme que `asDocumentBlocked` pour la retenue des documents : le client
+ * HTTP ne connaît pas la sémantique des codes métier, chaque module lit le sien.
+ *
+ * Le montant n'est repris que s'il EST un nombre. `Number(null)` vaut `0`, et
+ * un zéro se lirait « la famille ne doit rien » — exactement le mensonge que
+ * ce refus existe pour ne plus dire.
+ */
+export function asEnrollmentBlocked(error: unknown): EnrollmentBlockedDetail | null {
+  const detail = (error as { detail?: unknown } | null)?.detail
+  if (detail === null || typeof detail !== "object") return null
+  const candidate = detail as Record<string, unknown>
+  if (candidate.code !== ENROLLMENT_BLOCKED_CODE) return null
+  return {
+    code: ENROLLMENT_BLOCKED_CODE,
+    message:
+      typeof candidate.message === "string" && candidate.message
+        ? candidate.message
+        : "Réinscription bloquée : un exercice précédent n'est pas soldé.",
+    arrears_amount: numberOrNull(candidate.arrears_amount),
+    has_arrears: typeof candidate.has_arrears === "boolean" ? candidate.has_arrears : null,
+    student_id: numberOrNull(candidate.student_id),
+    academic_year_id: numberOrNull(candidate.academic_year_id),
+    can_override: candidate.can_override === true,
+  }
+}
+
+/** Un nombre lisible, ou `null`. Ne fabrique jamais un `0` à partir d'un vide. */
+function numberOrNull(value: unknown): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
+}
 
 /**
  * Ce que rend une régénération des frais d'une inscription.
