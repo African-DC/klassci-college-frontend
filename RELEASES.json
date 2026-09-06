@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-04T16:04:32Z",
+  "generated_at": "2026-09-06T01:53:37Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -1108,6 +1108,14 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Le code QR de reprise photo mène au portail de l'établissement qui l'affiche, et non à celui inscrit dans la configuration du serveur",
+            "audience": [
+              "admin",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
           {
             "text": "La photo choisie depuis la fiche élève, une fiche du personnel ou votre profil est allégée et vérifiée avant l'envoi, comme à l'inscription",
             "audience": [
