@@ -6,7 +6,12 @@ import { PageHero } from "@/components/shared/PageHero"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataError } from "@/components/shared/DataError"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { useSettings } from "@/lib/hooks/useSettings"
+import {
+  ArrearsPolicySection,
+  ARREARS_POLICY_PERMISSION,
+} from "@/components/admin/settings/ArrearsPolicySection"
 import { SchoolInfoSection } from "./SchoolInfoSection"
 import { TrimesterSection } from "./TrimesterSection"
 import { EnrollmentHistorySection } from "@/components/admin/settings/EnrollmentHistorySection"
@@ -18,6 +23,10 @@ import { PaymentMethodSection } from "./PaymentMethodSection"
 
 export function SettingsPageClient() {
   const { data: settings, isLoading, isError, refetch } = useSettings()
+  // Le droit, jamais le rôle : une école qui confie les règles d'argent à son
+  // économe lui ouvre cet onglet sans qu'on touche au code.
+  const { has } = usePermissions()
+  const peutReglerLesDettes = has(ARREARS_POLICY_PERMISSION)
 
   return (
     <div className="space-y-6">
@@ -40,6 +49,7 @@ export function SettingsPageClient() {
             <TabsTrigger value="identity">Identité visuelle</TabsTrigger>
             <TabsTrigger value="trimesters">Calendrier</TabsTrigger>
             <TabsTrigger value="payment-methods">Moyens de paiement</TabsTrigger>
+            {peutReglerLesDettes ? <TabsTrigger value="arrears">Réinscriptions</TabsTrigger> : null}
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="mailpulse">MailPulse</TabsTrigger>
           </TabsList>
@@ -61,6 +71,12 @@ export function SettingsPageClient() {
           <TabsContent value="payment-methods">
             <PaymentMethodSection />
           </TabsContent>
+
+          {peutReglerLesDettes ? (
+            <TabsContent value="arrears">
+              <ArrearsPolicySection />
+            </TabsContent>
+          ) : null}
 
           <TabsContent value="notifications">
             <NotificationSection settings={settings} />
@@ -84,11 +100,14 @@ export function SettingsPageClient() {
         <div className="min-w-0 flex-1">
           <p className="font-medium">Rôles &amp; permissions</p>
           <p className="text-sm text-muted-foreground">
-            Configurez qui peut faire quoi dans votre établissement (créer des
-            évaluations, valider les paiements, gérer les inscriptions…).
+            Configurez qui peut faire quoi dans votre établissement (créer des évaluations, valider
+            les paiements, gérer les inscriptions…).
           </p>
         </div>
-        <ArrowRight aria-hidden="true" className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        <ArrowRight
+          aria-hidden="true"
+          className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+        />
       </Link>
     </div>
   )

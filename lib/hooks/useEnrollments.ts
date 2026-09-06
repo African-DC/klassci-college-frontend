@@ -3,7 +3,14 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { enrollmentsApi } from "@/lib/api/enrollments"
-import type { Enrollment, EnrollmentCreate, EnrollmentUpdate, NewEnrollment, ReEnrollment } from "@/lib/contracts/enrollment"
+import { asEnrollmentBlocked } from "@/lib/contracts/enrollment"
+import type {
+  Enrollment,
+  EnrollmentCreate,
+  EnrollmentUpdate,
+  NewEnrollment,
+  ReEnrollment,
+} from "@/lib/contracts/enrollment"
 import { createCrudHooks } from "./createCrudHooks"
 import { installmentKeys } from "./useInstallments"
 
@@ -29,32 +36,53 @@ export const useCreateEnrollment = useCreate
 export const useUpdateEnrollment = useUpdate
 export const useDeleteEnrollment = useDelete
 
+/**
+ * Une inscription à envoyer, et le motif s'il a fallu passer outre une dette.
+ *
+ * Le motif n'accompagne que la seconde tentative : la première part sans, et
+ * c'est le refus du serveur qui dit s'il y avait quelque chose à outrepasser.
+ */
+export interface EnrollmentSubmission<T> {
+  data: T
+  overrideReason?: string
+}
+
+/**
+ * Le refus pour dette s'affiche dans l'écran, pas dans une bulle qui s'efface.
+ *
+ * Il porte un montant, un droit de dérogation et un motif à saisir : c'est un
+ * formulaire à remplir, pas une notification à lire. Le doubler d'un toast
+ * ferait disparaître la moitié du message trois secondes plus tard.
+ */
+function toastSaufRefusPourDette(error: Error) {
+  if (asEnrollmentBlocked(error)) return
+  toast.error("Erreur", { description: error.message })
+}
+
 export function useCreateWithStudent() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: NewEnrollment) => enrollmentsApi.createWithStudent(data),
+    mutationFn: ({ data, overrideReason }: EnrollmentSubmission<NewEnrollment>) =>
+      enrollmentsApi.createWithStudent(data, overrideReason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["enrollments"] })
       queryClient.invalidateQueries({ queryKey: ["students"] })
       toast.success("Inscription enregistree")
     },
-    onError: (error: Error) => {
-      toast.error("Erreur", { description: error.message })
-    },
+    onError: toastSaufRefusPourDette,
   })
 }
 
 export function useReEnroll() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: ReEnrollment) => enrollmentsApi.reEnroll(data),
+    mutationFn: ({ data, overrideReason }: EnrollmentSubmission<ReEnrollment>) =>
+      enrollmentsApi.reEnroll(data, overrideReason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["enrollments"] })
       toast.success("Reinscription enregistree")
     },
-    onError: (error: Error) => {
-      toast.error("Erreur", { description: error.message })
-    },
+    onError: toastSaufRefusPourDette,
   })
 }
 
@@ -96,9 +124,7 @@ export function useBulkValidateEnrollments() {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all })
       const n = res.validated.length
       if (n > 0) {
-        toast.success(
-          n === 1 ? "1 inscription validée" : `${n} inscriptions validées`,
-        )
+        toast.success(n === 1 ? "1 inscription validée" : `${n} inscriptions validées`)
       }
       if (res.failed.length > 0) {
         toast.error(
@@ -125,10 +151,7 @@ export function useBulkValidateEnrollments() {
  * Sans cette invalidation, la carte continue d'annoncer un retard calculé sur
  * des frais qui n'existent plus.
  */
-export function invalidateEnrollmentFeeViews(
-  queryClient: QueryClient,
-  enrollmentIds: number[],
-) {
+export function invalidateEnrollmentFeeViews(queryClient: QueryClient, enrollmentIds: number[]) {
   queryClient.invalidateQueries({ queryKey: ["students"] })
   queryClient.invalidateQueries({ queryKey: ["enrollments"] })
   queryClient.invalidateQueries({ queryKey: ["payments"] })

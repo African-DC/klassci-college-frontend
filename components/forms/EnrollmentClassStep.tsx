@@ -7,6 +7,7 @@ import { Form } from "@/components/ui/form"
 import { AssignmentStatusField } from "@/components/forms/AssignmentStatusField"
 import { ClassAndFeesFields } from "@/components/forms/EnrollmentClassFields"
 import { NewStudentField } from "@/components/forms/NewStudentField"
+import { PriorArrearsNotice } from "@/components/forms/PriorArrearsNotice"
 
 interface EnrollmentClassStepProps {
   enrollmentType: "new" | "re-enrollment"
@@ -55,9 +56,7 @@ export function EnrollmentClassStep({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Choisissez la classe et la formule de frais.
-      </p>
+      <p className="text-sm text-muted-foreground">Choisissez la classe et la formule de frais.</p>
 
       {enrollmentType === "new" ? (
         <>
@@ -125,6 +124,14 @@ export function EnrollmentClassStep({
               onDecisionCleared={() => reForm.setValue("assignment_decision_number", null)}
             />
           </Form>
+
+          {/* La dette des autres exercices se lit ici, avant de réinscrire :
+              une fois l'inscription créée, les portails et la fiche élève
+              basculent sur la nouvelle année et plus personne ne la voit. */}
+          <PriorArrearsNotice
+            studentId={reForm.watch("student_id")}
+            academicYearId={academicYearId}
+          />
 
           <NewStudentField
             studentId={reForm.watch("student_id")}

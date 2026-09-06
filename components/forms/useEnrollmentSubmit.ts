@@ -1,6 +1,7 @@
 "use client"
 
 import type { UseFormReturn } from "react-hook-form"
+import { asEnrollmentBlocked } from "@/lib/contracts/enrollment"
 import type { NewEnrollment, ReEnrollment } from "@/lib/contracts/enrollment"
 import { useCreateWithStudent, useReEnroll } from "@/lib/hooks/useEnrollments"
 import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
@@ -48,31 +49,47 @@ export function useEnrollmentSubmit({
       ? "Enregistrement..."
       : "Enregistrer l'inscription"
 
-  function submit() {
+  // Le refus pour dette d'un exercice précédent, reconnu parmi les erreurs.
+  // C'est le serveur qui a tranché, montant et droit de dérogation compris :
+  // l'écran lit son verdict et ne le recalcule pas.
+  const blocked =
+    asEnrollmentBlocked(createWithStudent.error) ?? asEnrollmentBlocked(reEnroll.error)
+
+  /**
+   * Envoie l'inscription. Le motif n'accompagne que la seconde tentative,
+   * celle qui suit un refus, et le serveur la rejette de nouveau s'il est vide.
+   */
+  function submit(overrideReason?: string) {
     if (enrollmentType === "new") {
       newForm.handleSubmit((data) => {
         if (!showParentFields) data.parent = null
         data.in_kind_deposits = inKindDepositsPayload(inKindDeposits)
-        createWithStudent.mutate(data, {
-          onSuccess: async (enrollment) => {
-            await attachPhoto.mutateAsync({ studentId: enrollment.student_id, photo })
-            newForm.reset()
-            onPhotoConsumed()
-            onSuccess()
+        createWithStudent.mutate(
+          { data, overrideReason },
+          {
+            onSuccess: async (enrollment) => {
+              await attachPhoto.mutateAsync({ studentId: enrollment.student_id, photo })
+              newForm.reset()
+              onPhotoConsumed()
+              onSuccess()
+            },
           },
-        })
+        )
       })()
       return
     }
 
     reForm.handleSubmit((data) => {
       data.in_kind_deposits = inKindDepositsPayload(inKindDeposits)
-      reEnroll.mutate(data, {
-        onSuccess: () => {
-          reForm.reset()
-          onSuccess()
+      reEnroll.mutate(
+        { data, overrideReason },
+        {
+          onSuccess: () => {
+            reForm.reset()
+            onSuccess()
+          },
         },
-      })
+      )
     })()
   }
 
@@ -80,7 +97,10 @@ export function useEnrollmentSubmit({
     submit,
     isPending,
     submitLabel,
-    createError: createWithStudent.error?.message,
-    reEnrollError: reEnroll.error?.message,
+    blocked,
+    // Le refus pour dette s'affiche à part, avec son montant et sa dérogation :
+    // le répéter en texte brut au-dessus le dirait deux fois.
+    createError: blocked ? undefined : createWithStudent.error?.message,
+    reEnrollError: blocked ? undefined : reEnroll.error?.message,
   }
 }
