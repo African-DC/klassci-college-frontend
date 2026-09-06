@@ -22,6 +22,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse *(comptable, caissier)*
 
 ### Fixed
+- Le code QR de reprise photo mène au portail de l'établissement qui l'affiche, et non à celui inscrit dans la configuration du serveur *(admin, secrétariat)*
 - La photo choisie depuis la fiche élève, une fiche du personnel ou votre profil est allégée et vérifiée avant l'envoi, comme à l'inscription *(admin, secrétariat, tous)*
 - Une photo choisie dans la galerie du téléphone est allégée avant l'envoi, au lieu d'être refusée au-delà de 5 Mo *(admin, secrétariat)*
 - Une photo prise en portrait ne ressort plus couchée une fois enregistrée *(admin, secrétariat)*
