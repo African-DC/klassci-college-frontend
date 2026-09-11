@@ -14,6 +14,7 @@ import {
   type PaymentCreate,
   type PaymentListParams,
   type PaymentAllocationInput,
+  type PaymentReallocate,
   type PaymentMethodOption,
 } from "@/lib/contracts/payment"
 import { PaginatedResponseSchema, type PaginatedResponse } from "@/lib/contracts"
@@ -184,6 +185,21 @@ export const paymentsApi = {
       unwrapPayment(json),
       `POST /payments/${id}/cancel`,
     )
+  },
+
+  /**
+   * Deplacer une imputation vers le bon frais, sans toucher au versement.
+   *
+   * Le versement garde son montant, sa date et son caissier : la caisse n'est
+   * pas touchee. C'est ce qui distingue ce geste de l'annulation, et ce qui
+   * fait qu'il n'a pas a etre aussi rare qu'elle.
+   */
+  reallocate: async (id: number, body: PaymentReallocate): Promise<Payment> => {
+    const json = await apiFetch<unknown>(`/payments/${id}/reallocate`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+    return safeValidate(PaymentSchema, unwrapPayment(json), `POST /payments/${id}/reallocate`)
   },
 
   // Résumé financier (KPIs dashboard)

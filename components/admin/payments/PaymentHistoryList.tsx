@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Receipt, Loader2, ArrowRight } from "lucide-react"
+import { Receipt, Loader2, ArrowRight, ArrowLeftRight } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,13 @@ import { paymentsApi } from "@/lib/api/payments"
 import type { Payment } from "@/lib/contracts/payment"
 import { paymentMethodLabel } from "@/lib/payment-methods"
 import { paymentMethodIcon } from "@/components/admin/payments/method-icon"
+import { usePermissions } from "@/lib/hooks/usePermissions"
+import { useReallocatePayment } from "@/lib/hooks/usePayments"
+import {
+  ReallocateAllocationDialog,
+  type ReallocationTarget,
+} from "@/components/admin/payments/ReallocateAllocationDialog"
+import type { EnrollmentFeeItem } from "@/components/admin/payments/EnrollmentFeesBreakdown"
 
 const fmt = (n: number) => `${Number(n).toLocaleString("fr-FR")} FCFA`
 
@@ -36,9 +43,28 @@ function formatDate(iso: string): string {
  * de chaque versement sur les frais. Comble le vide : l'API renvoyait déjà les
  * allocations mais aucune vue ne les montrait. Chaque versement propose son reçu.
  */
-export function PaymentHistoryList({ enrollmentId }: { enrollmentId: number }) {
+export function PaymentHistoryList({
+  enrollmentId,
+  fees = [],
+}: {
+  enrollmentId: number
+  /**
+   * Les frais du dossier, pour dire ou une imputation peut etre deplacee.
+   *
+   * Passes par l'onglet plutot que relus ici : il les tient deja, et deux
+   * lectures des memes frais finiraient par afficher deux restes dus.
+   */
+  fees?: EnrollmentFeeItem[]
+}) {
   const { data: payments, isLoading } = useEnrollmentPayments(enrollmentId)
   const [downloading, setDownloading] = useState<number | null>(null)
+  const [aDeplacer, setADeplacer] = useState<ReallocationTarget | null>(null)
+  const { has } = usePermissions()
+  // Le meme droit que l'endpoint exige. La regle fine — sa propre caisse,
+  // journee ouverte — reste au serveur, qui seul la connait ; son refus arrive
+  // alors en toutes lettres plutot qu'en 403 muet.
+  const peutCorriger = has("payments:create")
+  const reimputation = useReallocatePayment(enrollmentId)
 
   async function openReceipt(payment: Payment) {
     setDownloading(payment.id)
@@ -135,6 +161,28 @@ export function PaymentHistoryList({ enrollmentId }: { enrollmentId: number }) {
                             </Badge>
                           )}
                           <span className="shrink-0 font-semibold tabular-nums text-primary">+ {fmt(a.amount)}</span>
+                          {/* Le geste est pose sur la ligne meme, la ou l'erreur
+                              se voit — et seulement sur un versement encaisse :
+                              le serveur refuse les autres, et un bouton qui
+                              repond 409 a tous les coups vaut moins que rien. */}
+                          {peutCorriger && p.status === "completed" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 shrink-0 px-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+                              onClick={() =>
+                                setADeplacer({
+                                  paymentId: p.id,
+                                  fromFeeId: a.enrollment_fee_id,
+                                  fromFeeName: a.fee_category_name ?? "Frais",
+                                  allocated: Number(a.amount),
+                                })
+                              }
+                            >
+                              <ArrowLeftRight aria-hidden className="mr-1 h-3 w-3" />
+                              Réimputer
+                            </Button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -145,6 +193,26 @@ export function PaymentHistoryList({ enrollmentId }: { enrollmentId: number }) {
           </div>
         )}
       </CardContent>
+
+      <ReallocateAllocationDialog
+        target={aDeplacer}
+        fees={fees}
+        busy={reimputation.isPending}
+        onClose={() => setADeplacer(null)}
+        onConfirm={({ toFeeId, amount, reason }) => {
+          if (!aDeplacer) return
+          reimputation.mutate(
+            {
+              id: aDeplacer.paymentId,
+              from_enrollment_fee_id: aDeplacer.fromFeeId,
+              to_enrollment_fee_id: toFeeId,
+              amount,
+              reason,
+            },
+            { onSuccess: () => setADeplacer(null) },
+          )
+        }}
+      />
     </Card>
   )
 }
