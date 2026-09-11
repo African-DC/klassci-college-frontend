@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- L'onglet Paiements d'une inscription ne se ferme plus à qui n'a pas accès aux finances : il liste les articles à déclarer déposés, sans aucun montant *(éducateur, secrétariat)*
 - Au moment de réinscrire, l'écran signale ce que l'élève doit encore au titre des années précédentes, avec le montant quand vous avez le droit de le lire *(admin, secrétariat)*
 - L'établissement choisit ce qu'il fait d'une dette d'une année précédente : ignorer, informer le guichet, ou refuser la réinscription au-delà d'un montant *(admin)*
 - Une réinscription refusée pour dette dit pourquoi, et propose de passer outre avec un motif enregistré à qui en a le droit *(admin, secrétariat)*
@@ -25,6 +26,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse *(comptable, caissier)*
 
 ### Fixed
+- Un article déjà réglé à la caisse ne propose plus de le marquer déposé : le bouton échouait à tous les coups, sur la fiche comme en saisie par classe *(éducateur, secrétariat)*
 - Le code QR de reprise photo mène au portail de l'établissement qui l'affiche, et non à celui inscrit dans la configuration du serveur *(admin, secrétariat)*
 - La photo choisie depuis la fiche élève, une fiche du personnel ou votre profil est allégée et vérifiée avant l'envoi, comme à l'inscription *(admin, secrétariat, tous)*
 - Une photo choisie dans la galerie du téléphone est allégée avant l'envoi, au lieu d'être refusée au-delà de 5 Mo *(admin, secrétariat)*

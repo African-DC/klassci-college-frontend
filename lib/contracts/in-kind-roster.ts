@@ -36,13 +36,38 @@ export const InKindRosterSchema = z.object({
   items: z.array(InKindRosterRowSchema),
 })
 
+/**
+ * Les articles déposables d'une seule inscription, sans un montant dedans.
+ *
+ * C'est ce que lit la fiche d'inscription pour qui n'a pas le droit de lire la
+ * caisse. Le détail des frais est fait de sommes, donc fermé à l'éducateur —
+ * et l'écran lui répondait une porte close là où il a le droit de déclarer un
+ * dépôt. Le nom de l'article et son état suffisent à savoir quoi proposer.
+ */
+export const DepositableFeeListSchema = z.object({
+  items: z.array(DepositableFeeSchema),
+})
+
 export type DepositableFee = z.infer<typeof DepositableFeeSchema>
 export type InKindRosterRow = z.infer<typeof InKindRosterRowSchema>
 export type InKindRoster = z.infer<typeof InKindRosterSchema>
+export type DepositableFeeList = z.infer<typeof DepositableFeeListSchema>
 
-/** Ce frais est-il déjà déposé ? */
-export function estDepose(fee: DepositableFee): boolean {
-  return fee.status === "in_kind"
+/**
+ * Le geste qu'un écran peut proposer sur un article.
+ *
+ * `aucun` couvre les lignes réglées, partiellement réglées ou exonérées : leur
+ * catégorie accepte le dépôt, mais celle-ci n'attend plus rien. Le serveur
+ * refuse alors les deux gestes, et un bouton qui répond « un versement y est
+ * déjà imputé » vaut moins que pas de bouton du tout.
+ */
+export type GesteDepot = "deposer" | "annuler" | "aucun"
+
+/** Ce qu'on peut faire de cet article, et rien d'autre. */
+export function gesteDepot(fee: DepositableFee): GesteDepot {
+  if (fee.status === "in_kind") return "annuler"
+  if (fee.status === "pending") return "deposer"
+  return "aucun"
 }
 
 /**

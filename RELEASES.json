@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-06T03:30:38Z",
+  "generated_at": "2026-09-11T18:40:01Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,14 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "L'onglet Paiements d'une inscription ne se ferme plus à qui n'a pas accès aux finances : il liste les articles à déclarer déposés, sans aucun montant",
+            "audience": [
+              "éducateur",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Au moment de réinscrire, l'écran signale ce que l'élève doit encore au titre des années précédentes, avec le montant quand vous avez le droit de le lire",
             "audience": [
@@ -1131,6 +1139,14 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Un article déjà réglé à la caisse ne propose plus de le marquer déposé : le bouton échouait à tous les coups, sur la fiche comme en saisie par classe",
+            "audience": [
+              "éducateur",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Le code QR de reprise photo mène au portail de l'établissement qui l'affiche, et non à celui inscrit dans la configuration du serveur",
             "audience": [

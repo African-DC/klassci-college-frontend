@@ -3,7 +3,7 @@
 import { Check, Loader2, Package, Undo2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NewStudentChoiceGroup } from "@/components/forms/NewStudentChoiceGroup"
-import { estDepose, type InKindRosterRow } from "@/lib/contracts/in-kind-roster"
+import { gesteDepot, type InKindRosterRow } from "@/lib/contracts/in-kind-roster"
 import { cn } from "@/lib/utils"
 
 interface StudentBatchCardProps {
@@ -74,7 +74,7 @@ export function StudentBatchCard({
           <p className="text-xs font-medium text-muted-foreground">Articles déposés</p>
           <div className="space-y-2">
             {row.fees.map((fee) => {
-              const depose = estDepose(fee)
+              const geste = gesteDepot(fee)
               const enCours = feeEnCours === fee.fee_id
               return (
                 <div
@@ -85,7 +85,14 @@ export function StudentBatchCard({
                     <Package aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <span className="min-w-0 truncate">{fee.category_name}</span>
                   </span>
-                  {depose ? (
+                  {/* Un article deja regle a la caisse n'attend plus rien :
+                      le serveur refuse les deux gestes, et le bouton qui
+                      repondait 409 est remplace par ce qu'il en est. */}
+                  {geste === "aucun" ? (
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      Plus à remettre
+                    </span>
+                  ) : geste === "annuler" ? (
                     <Button
                       type="button"
                       variant="ghost"
