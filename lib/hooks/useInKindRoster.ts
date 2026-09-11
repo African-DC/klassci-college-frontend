@@ -8,6 +8,25 @@ import { invalidateEnrollmentFeeViews } from "@/lib/hooks/useEnrollments"
 export const inKindRosterKeys = {
   all: ["in-kind-roster"] as const,
   classe: (classId: number, yearId: number) => ["in-kind-roster", classId, yearId] as const,
+  /**
+   * Les articles d'une seule inscription.
+   *
+   * Rangee sous `enrollments` a dessein, et non sous `in-kind-roster` : c'est
+   * la prefixe que `invalidateEnrollmentFeeViews` rafraichit apres un depot, et
+   * cette liste doit suivre le geste qu'on vient de poser sur elle.
+   */
+  inscription: (enrollmentId: number) =>
+    ["enrollments", enrollmentId, "in-kind-fees"] as const,
+}
+
+/** Les articles deposables d'une seule inscription, sans aucun montant. */
+export function useDepositableFees(enrollmentId: number) {
+  return useQuery({
+    queryKey: inKindRosterKeys.inscription(enrollmentId),
+    queryFn: () => enrollmentsApi.depositableFees(enrollmentId),
+    enabled: Boolean(enrollmentId),
+    staleTime: 1000 * 60,
+  })
 }
 
 /** La classe entière, avec ce qu'il reste à renseigner sur chaque élève. */

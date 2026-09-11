@@ -17,7 +17,12 @@ import type {
   NewStudentSuggestion,
   ReEnrollment,
 } from "@/lib/contracts/enrollment"
-import { InKindRosterSchema, type InKindRoster } from "@/lib/contracts/in-kind-roster"
+import {
+  DepositableFeeListSchema,
+  InKindRosterSchema,
+  type DepositableFee,
+  type InKindRoster,
+} from "@/lib/contracts/in-kind-roster"
 import { createCrudApi } from "./createCrudApi"
 import { apiFetch, safeValidate } from "./client"
 
@@ -138,6 +143,22 @@ export const enrollmentsApi = {
     return apiFetch(`/enrollments/${enrollmentId}/fees/${feeId}/in-kind-deposit`, {
       method: "DELETE",
     })
+  },
+
+  /**
+   * Les articles deposables de cette inscription, sans aucun montant.
+   *
+   * Ce que lit la fiche pour qui inscrit sans lire la caisse. Le detail des
+   * frais est fait de sommes, donc ferme a l'educateur : la fiche lui montrait
+   * une porte close la ou il a le droit de declarer un depot.
+   */
+  depositableFees: async (enrollmentId: number): Promise<DepositableFee[]> => {
+    const json = await apiFetch<unknown>(`/enrollments/${enrollmentId}/in-kind-fees`)
+    return safeValidate(
+      DepositableFeeListSchema,
+      json,
+      `GET /enrollments/${enrollmentId}/in-kind-fees`,
+    ).items
   },
 
   /** La classe entiere, avec ce qu'il reste a renseigner sur chaque eleve. */
