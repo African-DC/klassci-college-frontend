@@ -150,7 +150,7 @@ export function EnrollmentPaymentsTab({
         markingFeeId={depots.ligneEnCours}
       />
 
-      <PaymentHistoryList enrollmentId={enrollmentId} />
+      <PaymentHistoryList enrollmentId={enrollmentId} fees={feeList} />
 
       <InKindDepositDialogs actions={depots} studentName={studentName} />
 

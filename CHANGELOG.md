@@ -9,6 +9,8 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Une imputation posée sur le mauvais frais se déplace depuis la ligne elle-même, sans annuler ni ressaisir le versement *(comptable, caissier)*
+- La boîte annonce les deux plafonds avant la saisie — ce qui est posé là, ce qui reste dû ailleurs — et ne propose que les frais qui attendent encore de l'argent *(comptable, caissier)*
 - L'onglet Paiements d'une inscription ne se ferme plus à qui n'a pas accès aux finances : il liste les articles à déclarer déposés, sans aucun montant *(éducateur, secrétariat)*
 - Au moment de réinscrire, l'écran signale ce que l'élève doit encore au titre des années précédentes, avec le montant quand vous avez le droit de le lire *(admin, secrétariat)*
 - L'établissement choisit ce qu'il fait d'une dette d'une année précédente : ignorer, informer le guichet, ou refuser la réinscription au-delà d'un montant *(admin)*

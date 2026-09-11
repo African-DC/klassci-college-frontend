@@ -36,6 +36,22 @@ export function cashRemaining(status: string, amount: number, paid: number): num
   return Math.max(0, amount - paid)
 }
 
+/**
+ * Ce frais peut-il encore recevoir de l'argent ?
+ *
+ * Le miroir de `_can_receive_cash` côté serveur, et il faut les deux
+ * conditions. Le reste dû ne suffit pas : il ignore le statut « soldé », et un
+ * frais payé dont les versements ne seraient pas encore relus paraîtrait
+ * redevable. Le statut ne suffit pas non plus : une ligne partielle dont le
+ * reste est tombé à zéro n'attend plus rien.
+ *
+ * Tout écran qui propose « où mettre cet argent » doit poser cette question-là
+ * et pas une approximation : sinon il propose un frais que la caisse refuse.
+ */
+export function peutRecevoirDeLArgent(status: string, remaining: number): boolean {
+  return (status === "pending" || status === "partial") && remaining > 0
+}
+
 export const FEE_STATUS_LABEL: Record<string, string> = {
   paid: "Payé",
   partial: "Partiel",
@@ -83,6 +99,23 @@ export const PaymentSchema = z.object({
   // compat avec les call sites qui ne consomment pas ce champ.
   allocations: z.array(PaymentAllocationSchema).optional(),
 })
+
+/**
+ * Déplacer une imputation d'un frais vers un autre, sur un versement encaissé.
+ *
+ * Le montant est borné par deux plafonds que seul le serveur connaît pour de
+ * bon — ce qui est réellement imputé sur le frais de départ, et le reste dû du
+ * frais d'arrivée. L'écran les annonce avant la saisie plutôt qu'après le
+ * refus, mais c'est le serveur qui tranche.
+ */
+export const PaymentReallocateSchema = z.object({
+  from_enrollment_fee_id: z.number().int().positive(),
+  to_enrollment_fee_id: z.number().int().positive(),
+  amount: z.coerce.number().positive(),
+  reason: z.string(),
+})
+
+export type PaymentReallocate = z.infer<typeof PaymentReallocateSchema>
 
 // Body POST /payments (legacy) — cible un frais spécifique.
 export const PaymentCreateSchema = z.object({
