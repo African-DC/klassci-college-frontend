@@ -1,11 +1,27 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-11T18:40:01Z",
+  "generated_at": "2026-09-11T22:46:35Z",
   "version": "Unreleased",
   "released": false,
-  "total": 329,
+  "total": 331,
   "sections": {
     "Added": [
+      {
+        "text": "Une imputation posée sur le mauvais frais se déplace depuis la ligne elle-même, sans annuler ni ressaisir le versement",
+        "audience": [
+          "comptable",
+          "caissier"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "La boîte annonce les deux plafonds avant la saisie — ce qui est posé là, ce qui reste dû ailleurs — et ne propose que les frais qui attendent encore de l'argent",
+        "audience": [
+          "comptable",
+          "caissier"
+        ],
+        "pull_request": null
+      },
       {
         "text": "L'onglet Paiements d'une inscription ne se ferme plus à qui n'a pas accès aux finances : il liste les articles à déclarer déposés, sans aucun montant",
         "audience": [
@@ -34,22 +50,6 @@
         "audience": [
           "admin",
           "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Le point par catégorie s'ouvre sur une carte par frais, avec son taux, ses compteurs et « entré / attendu » : on voit quel frais rentre mal avant d'en choisir un",
-        "audience": [
-          "comptable",
-          "caissier"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Chaque ligne d'impayé mène à la fiche de l'élève, et à l'encaissement pré-rempli pour qui a le droit d'enregistrer un versement",
-        "audience": [
-          "comptable",
-          "caissier"
         ],
         "pull_request": null
       }

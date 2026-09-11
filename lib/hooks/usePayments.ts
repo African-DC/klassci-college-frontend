@@ -16,8 +16,10 @@ import type {
   PaymentAllocationInput,
   PaymentCreate,
   PaymentListParams,
+  PaymentReallocate,
 } from "@/lib/contracts/payment"
 import type { PaginatedResponse } from "@/lib/contracts"
+import { invalidateEnrollmentFeeViews } from "@/lib/hooks/useEnrollments"
 
 export const paymentKeys = {
   all: ["payments"] as const,
@@ -230,6 +232,37 @@ export function useValidatePayment() {
     },
   })
 }
+
+/**
+ * Deplacer une imputation vers le bon frais.
+ *
+ * Aucune mise a jour optimiste, contrairement a l'annulation : celle-ci ne
+ * change qu'un statut, que l'ecran connait d'avance. Ici deux frais changent
+ * d'etat et le du de la famille bouge — le deviner, c'est risquer d'afficher
+ * une repartition que le serveur n'a pas ecrite.
+ *
+ * `invalidateEnrollmentFeeViews` rafraichit tout ce qui derive de ce du :
+ * l'historique, le detail des frais, et l'echeancier.
+ */
+export function useReallocatePayment(enrollmentId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: PaymentReallocate & { id: number }) =>
+      paymentsApi.reallocate(id, body),
+    onSuccess: () => {
+      toast.success("Imputation deplacee", {
+        description: "Le versement n'a pas bouge : ni son montant, ni la caisse.",
+      })
+      invalidateEnrollmentFeeViews(queryClient, [enrollmentId])
+      queryClient.invalidateQueries({ queryKey: paymentKeys.all })
+      queryClient.invalidateQueries({ queryKey: paymentKeys.summary() })
+    },
+    onError: (err: Error) => {
+      toast.error("Cette imputation n'a pas pu etre deplacee", { description: err.message })
+    },
+  })
+}
+
 
 export function useCancelPayment() {
   const queryClient = useQueryClient()
