@@ -1,19 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { enrollmentsApi } from "@/lib/api/enrollments";
 import { useStudentFees } from "@/lib/hooks/useStudents";
 import { usePermissions } from "@/lib/hooks/usePermissions";
 import { isCashDue } from "@/lib/contracts/payment";
 import { countFeeLines } from "@/lib/enrollment/fee-lines";
 import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero";
 import { RegenerateFeesAction } from "@/components/shared/fees/RegenerateFeesAction";
-import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog";
 import {
   EnrollmentFeesBreakdown,
   type EnrollmentFeeItem,
@@ -21,8 +18,10 @@ import {
 import { PaymentHistoryList } from "@/components/admin/payments/PaymentHistoryList";
 import { StudentPaymentModal } from "@/components/admin/students/tabs/StudentPaymentModal";
 import { EnrollmentScheduleCard } from "@/components/admin/installments/EnrollmentScheduleCard";
-import { installmentKeys } from "@/lib/hooks/useInstallments";
 import { NoPaymentAccessNotice } from "@/components/admin/enrollments/tabs/NoPaymentAccessNotice";
+import { InKindDepositPanel } from "@/components/admin/enrollments/in-kind/InKindDepositPanel";
+import { InKindDepositDialogs } from "@/components/admin/enrollments/in-kind/InKindDepositDialogs";
+import { useInKindDepositActions } from "@/components/admin/enrollments/in-kind/useInKindDepositActions";
 
 interface EnrollmentPaymentsTabProps {
   enrollmentId: number;
@@ -43,13 +42,13 @@ export function EnrollmentPaymentsTab({
   // declarer un depot en nature n'existait pas, alors qu'il y a droit.
   const { has, isLoading: chargementDroits } = usePermissions();
   const peutLireLesVersements = has("payments:read");
+  const peutDeposerEnNature = has("enrollments:update");
 
   const [paymentOpen, setPaymentOpen] = useState(false);
-  const [feeToDeposit, setFeeToDeposit] = useState<EnrollmentFeeItem | null>(
-    null,
-  );
-  const [feeToUndeposit, setFeeToUndeposit] =
-    useState<EnrollmentFeeItem | null>(null);
+  // Poser et defaire un depot vivent dans un hook partage : le panneau servi a
+  // qui n'a pas `payments:read` pose exactement le meme geste, et deux copies
+  // des memes mutations auraient fini par rafraichir deux jeux de vues.
+  const depots = useInKindDepositActions(enrollmentId);
   const queryClient = useQueryClient();
   const studentId = enrollment?.student_id;
 
@@ -78,61 +77,23 @@ export function EnrollmentPaymentsTab({
     [allFees, feeList],
   );
 
-  const depositMutation = useMutation({
-    mutationFn: (feeId: number) =>
-      enrollmentsApi.depositInKind(enrollmentId, feeId),
-    onSuccess: () => {
-      toast.success("Article marqué déposé");
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["enrollments"] });
-      // L'échéancier rendu juste au-dessus dérive des frais : total dû, déjà
-      // versé, et le bandeau « En retard de X F ». Sans cette invalidation il
-      // garde jusqu'à une minute le retard calculé sur la ligne qu'on vient
-      // de solder, et l'écran contredit l'action qu'il vient de confirmer.
-      queryClient.invalidateQueries({
-        queryKey: installmentKeys.schedule(enrollmentId),
-      });
-    },
-    onError: (err: Error) => {
-      toast.error("Impossible de marquer ce frais déposé", {
-        description: err.message,
-      });
-    },
-  });
-
-  /**
-   * Defaire un depot pose par erreur, depuis la fiche ou l'erreur se voit.
-   *
-   * Le serveur refuse de lui-meme si un versement a ete impute sur la ligne :
-   * on ne fait pas reapparaitre une dette deja payee. Les memes vues sont
-   * rafraichies qu'au marquage, dont l'echeancier — le du vient de remonter.
-   */
-  const annulationMutation = useMutation({
-    mutationFn: (feeId: number) =>
-      enrollmentsApi.cancelInKindDeposit(enrollmentId, feeId),
-    onSuccess: () => {
-      toast.success("Dépôt annulé", {
-        description: "Le montant redevient dû en argent, à régler à la caisse.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["enrollments"] });
-      queryClient.invalidateQueries({
-        queryKey: installmentKeys.schedule(enrollmentId),
-      });
-    },
-    onError: (err: Error) => {
-      toast.error("Ce dépôt n'a pas pu être annulé", {
-        description: err.message,
-      });
-    },
-  });
-
   if (chargementDroits) {
     return <Skeleton className="h-40 rounded-2xl" />;
   }
 
+  // Sans le droit de lire la caisse, l'onglet ne se ferme plus : il rend ce que
+  // cette personne-la PEUT faire. L'educateur porte `enrollments:update` et
+  // recoit les articles dans la cour ; lui montrer une porte close lui a fait
+  // croire que declarer un depot depuis la fiche n'existait pas.
   if (!peutLireLesVersements) {
-    return <NoPaymentAccessNotice />;
+    return peutDeposerEnNature ? (
+      <InKindDepositPanel
+        enrollmentId={enrollmentId}
+        studentName={studentName}
+      />
+    ) : (
+      <NoPaymentAccessNotice />
+    );
   }
 
   if (isLoading) {
@@ -144,10 +105,8 @@ export function EnrollmentPaymentsTab({
     );
   }
 
-  const nomArticle = (fee: EnrollmentFeeItem | null) =>
-    fee ? (fee.option_name ?? fee.category_name) : "";
-  const articleName = nomArticle(feeToDeposit);
-  const articleAnnule = nomArticle(feeToUndeposit);
+  const nomArticle = (fee: EnrollmentFeeItem) =>
+    fee.option_name ?? fee.category_name;
   const eleve = studentName?.trim() ? studentName : "cet élève";
 
   return (
@@ -182,81 +141,18 @@ export function EnrollmentPaymentsTab({
 
       <EnrollmentFeesBreakdown
         fees={feeList}
-        onMarkDeposited={setFeeToDeposit}
-        onCancelDeposit={setFeeToUndeposit}
-        markingFeeId={
-          depositMutation.isPending
-            ? (feeToDeposit?.id ?? null)
-            : annulationMutation.isPending
-              ? (feeToUndeposit?.id ?? null)
-              : null
+        onMarkDeposited={(fee) =>
+          depots.demanderDepot({ id: fee.id, name: nomArticle(fee) })
         }
+        onCancelDeposit={(fee) =>
+          depots.demanderAnnulation({ id: fee.id, name: nomArticle(fee) })
+        }
+        markingFeeId={depots.ligneEnCours}
       />
 
       <PaymentHistoryList enrollmentId={enrollmentId} />
 
-      <ConfirmActionDialog
-        open={!!feeToDeposit}
-        onOpenChange={(next) => {
-          if (!next && !depositMutation.isPending) setFeeToDeposit(null);
-        }}
-        tone="warning"
-        title="Marquer cet article comme déposé ?"
-        description={`Vous déclarez que ${eleve} a bien remis « ${articleName} ». Cette ligne sera soldée sans aucun versement : c'est ce geste qui remplace le paiement.`}
-        details={
-          <>
-            <p>
-              Article : <span className="font-semibold">{articleName}</span>
-            </p>
-            <p className="text-muted-foreground">
-              La ligne sort du reste à payer et n&apos;apparaît plus comme
-              impayée, ni ici ni dans le portail de la famille. Aucun reçu de
-              caisse n&apos;est émis.
-            </p>
-          </>
-        }
-        confirmLabel="Oui, l'article est déposé"
-        pendingLabel="Enregistrement..."
-        pending={depositMutation.isPending}
-        onConfirm={() => {
-          if (!feeToDeposit) return;
-          depositMutation.mutate(feeToDeposit.id, {
-            onSettled: () => setFeeToDeposit(null),
-          });
-        }}
-      />
-
-      <ConfirmActionDialog
-        open={!!feeToUndeposit}
-        onOpenChange={(next) => {
-          if (!next && !annulationMutation.isPending) setFeeToUndeposit(null);
-        }}
-        tone="warning"
-        title="Annuler ce dépôt ?"
-        description={`Vous déclarez que ${eleve} n'a finalement pas remis « ${articleAnnule} ». La ligne redevient due en argent.`}
-        details={
-          <>
-            <p>
-              Article : <span className="font-semibold">{articleAnnule}</span>
-            </p>
-            <p className="text-muted-foreground">
-              Le montant réapparaît dans le reste à payer, ici comme dans le
-              portail de la famille, et devra être réglé à la caisse. Si un
-              versement a déjà été imputé sur cette ligne, le serveur refusera :
-              on ne fait pas réapparaître une dette payée.
-            </p>
-          </>
-        }
-        confirmLabel="Oui, annuler le dépôt"
-        pendingLabel="Annulation..."
-        pending={annulationMutation.isPending}
-        onConfirm={() => {
-          if (!feeToUndeposit) return;
-          annulationMutation.mutate(feeToUndeposit.id, {
-            onSettled: () => setFeeToUndeposit(null),
-          });
-        }}
-      />
+      <InKindDepositDialogs actions={depots} studentName={studentName} />
 
       {studentId && (
         <StudentPaymentModal
