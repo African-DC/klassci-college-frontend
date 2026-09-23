@@ -7,6 +7,7 @@
  * enregistrer la valeur, pas sa présentation.
  */
 
+import type { AuditEntry } from "@/lib/contracts/audit"
 import { entityLabel, knowsEntity } from "./audit-labels"
 
 /**
@@ -202,23 +203,69 @@ export function comparableValue(key: string, value: unknown): string {
   return rendu.kind === "text" ? rendu.text : JSON.stringify(rendu.value)
 }
 
+/** Clés dont le type ne se déduit pas en retirant `_id`. */
+const TYPES_DE_CLES: Record<string, string> = { slot_id: "timetable_slot" }
+
+/** Ce qu'une ligne sait dire des identifiants qu'elle cite. */
+export type NamedEntry = Pick<AuditEntry, "value_labels" | "related_entities">
+
 /**
- * Le libellé d'une fiche liée, quand la ligne en porte un.
+ * Le nom derrière un identifiant cité dans une valeur : « 6e » pour
+ * `level_id: 3`.
  *
- * Les valeurs numériques en `*_id` restent des identifiants : le journal ne
- * résout rien à la lecture (le nom est figé à l'écriture, côté serveur). Mais
- * quand l'entité liée est déjà nommée dans la ligne, on montre le nom.
+ * Le serveur a déjà résolu ces noms pour la page, rangés sous la clé du champ
+ * (`value_labels["level_id:3"]`) : l'écran n'a pas à savoir que `slot_id`
+ * désigne un créneau. Les fiches liées figées à l'écriture
+ * (`related_entities`) servent de repli, parce qu'elles restent lisibles
+ * quand la fiche a disparu. `null` quand personne ne sait nommer cet
+ * identifiant : l'écran montre alors le numéro, et le dit.
  */
-export function relatedLabel(
-  key: string,
-  value: unknown,
-  related:
-    | readonly { type?: string | null; id?: number | null; label?: string | null }[]
-    | null
-    | undefined,
-): string | null {
-  if (!related?.length || typeof value !== "number") return null
-  const type = key.replace(/_id$/, "")
-  const match = related.find((entry) => entry.type === type && entry.id === value)
-  return match?.label ?? null
+export function idLabel(key: string, value: unknown, entry: NamedEntry): string | null {
+  if (typeof value !== "number" || !key.endsWith("_id")) return null
+  const resolu = entry.value_labels?.[`${key}:${value}`]
+  if (resolu) return resolu
+  const type = TYPES_DE_CLES[key] ?? key.slice(0, -3)
+  const lie = entry.related_entities?.find((r) => r.type === type && r.id === value)
+  return lie?.label ?? null
+}
+
+/**
+ * Une valeur telle que l'écran la montre, identifiants compris.
+ *
+ * Un seul calcul pour le résumé de la liste, le tableau du détail et les
+ * lignes d'une répartition : trois rendus qui décidaient chacun de leur côté
+ * finissaient par montrer « 12 » ici et « 6e B » là pour la même valeur.
+ */
+export type DisplayedValue =
+  | { kind: "text"; text: string }
+  /** Un identifiant nommé : le nom d'abord, le numéro en petit. */
+  | { kind: "named"; name: string; ref: string }
+  /** Un identifiant sans nom connu : « n° 12 », pas « 12 », qui se lirait comme une quantité. */
+  | { kind: "ref"; ref: string }
+  | { kind: "structured"; value: unknown }
+
+export function displayValue(key: string, value: unknown, entry: NamedEntry): DisplayedValue {
+  const rendu = formatValue(key, value)
+  if (rendu.kind === "structured") return rendu
+  if (key.endsWith("_id") && typeof value === "number") {
+    const nom = idLabel(key, value, entry)
+    const ref = `n° ${value}`
+    return nom ? { kind: "named", name: nom, ref } : { kind: "ref", ref }
+  }
+  return rendu
+}
+
+type Values = Record<string, unknown>
+
+/**
+ * Les champs qui ont changé pour le lecteur, dans l'ordre où la ligne les
+ * porte.
+ *
+ * Un seul calcul, partagé par le détail et par le résumé de la liste : s'ils
+ * divergeaient, la liste annoncerait un changement que le détail ne montre pas.
+ */
+export function changedKeys(before: Values, after: Values): string[] {
+  return Array.from(new Set([...Object.keys(before), ...Object.keys(after)])).filter(
+    (key) => comparableValue(key, before[key]) !== comparableValue(key, after[key]),
+  )
 }

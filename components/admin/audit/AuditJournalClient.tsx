@@ -1,32 +1,18 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { ChevronRight, Eye, PencilLine, ScrollText, Users } from "lucide-react"
+import { Eye, PencilLine, ScrollText, Users } from "lucide-react"
 import { PageHero, type HeroKpi } from "@/components/shared/PageHero"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuditFilters, useAuditJournal } from "@/lib/hooks/useAudit"
 import type { AuditEntry, AuditQuery } from "@/lib/contracts/audit"
-import { AuditActionBadge } from "./AuditActionBadge"
 import { AuditDetailDialog } from "./AuditDetailDialog"
 import { AuditFilterBar } from "./AuditFilterBar"
-import { entityLabel, formatStamp, roleLabel } from "./audit-labels"
+import { AuditJournalList } from "./AuditJournalList"
 
 const PAGE_SIZE = 50
-
-/**
- * Ce qu'on écrit sous le nom du sujet.
- *
- * Quand la ligne porte un nom, la seconde ligne dit de quelle sorte de fiche
- * il s'agit. Sinon elle retombe sur l'identifiant, et le dit comme tel : les
- * lignes écrites avant que le journal ne nomme ses sujets n'ont que ça.
- */
-function subjectHint(entry: AuditEntry): string {
-  const type = entityLabel(entry.entity_type)
-  if (entry.subject_label) return type
-  return entry.entity_id ? `${type} n° ${entry.entity_id}` : type
-}
 
 /**
  * Le journal de l'établissement : qui a fait quoi, sur quelle fiche, quand.
@@ -111,93 +97,7 @@ export function AuditJournalClient() {
             </div>
           ) : (
             <>
-              <div className="hidden overflow-x-auto rounded-lg border md:block">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
-                    <tr>
-                      <th className="px-3 py-2.5 text-left font-medium">Quand</th>
-                      <th className="px-3 py-2.5 text-left font-medium">Qui</th>
-                      <th className="px-3 py-2.5 text-left font-medium">Action</th>
-                      <th className="px-3 py-2.5 text-left font-medium">Sur quoi</th>
-                      <th className="px-3 py-2.5" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((entry) => {
-                      const stamp = formatStamp(entry.created_at)
-                      return (
-                        <tr
-                          key={entry.id}
-                          className="cursor-pointer border-b transition-colors last:border-0 hover:bg-muted/50"
-                          onClick={() => setSelected(entry)}
-                        >
-                          <td className="whitespace-nowrap px-3 py-2.5">
-                            <p className="font-medium">{stamp.date}</p>
-                            <p className="text-xs text-muted-foreground">{stamp.time}</p>
-                          </td>
-                          <td className="px-3 py-2.5">
-                            <p className="font-medium">
-                              {entry.actor_name ?? entry.actor_email ?? "Compte supprimé"}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {roleLabel(entry.actor_role) ?? entry.actor_email ?? "—"}
-                            </p>
-                          </td>
-                          <td className="px-3 py-2.5">
-                            <AuditActionBadge action={entry.action} />
-                          </td>
-                          <td className="px-3 py-2.5">
-                            <p className="font-medium">
-                              {entry.subject_label ?? entityLabel(entry.entity_type)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">{subjectHint(entry)}</p>
-                          </td>
-                          <td className="px-3 py-2.5 text-right">
-                            <ChevronRight
-                              aria-hidden="true"
-                              className="ml-auto h-4 w-4 text-muted-foreground"
-                            />
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="space-y-2 md:hidden">
-                {items.map((entry) => {
-                  const stamp = formatStamp(entry.created_at)
-                  return (
-                    <button
-                      key={entry.id}
-                      type="button"
-                      onClick={() => setSelected(entry)}
-                      className="flex w-full items-start gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:bg-muted/50"
-                    >
-                      <div className="min-w-0 flex-1 space-y-1.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <AuditActionBadge action={entry.action} />
-                          <span className="text-sm font-medium">
-                            {entry.subject_label ?? entityLabel(entry.entity_type)}
-                          </span>
-                        </div>
-                        <p className="truncate text-sm">
-                          {subjectHint(entry)} ·{" "}
-                          {entry.actor_name ?? entry.actor_email ?? "Compte supprimé"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {stamp.date} à {stamp.time}
-                        </p>
-                      </div>
-                      <ChevronRight
-                        aria-hidden="true"
-                        className="mt-1 h-4 w-4 shrink-0 text-muted-foreground"
-                      />
-                    </button>
-                  )
-                })}
-              </div>
+              <AuditJournalList items={items} onSelect={setSelected} />
 
               <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
                 <p className="text-xs text-muted-foreground">

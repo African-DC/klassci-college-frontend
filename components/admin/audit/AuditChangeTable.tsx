@@ -1,97 +1,25 @@
 "use client"
 
 import type { AuditEntry } from "@/lib/contracts/audit"
-import { comparableValue, fieldLabel, formatValue, relatedLabel } from "./audit-fields"
+import { AuditValue } from "./AuditValue"
+import { changedKeys, fieldLabel } from "./audit-fields"
 
 type Values = Record<string, unknown>
-
-/**
- * Rend une valeur qui n'est pas scalaire : une liste de tranches, une
- * répartition de versement.
- *
- * `JSON.stringify` donnait une ligne que personne ne lisait. Une répartition
- * est ce qu'un parent conteste au guichet : elle doit se lire ligne à ligne.
- */
-function StructuredValue({ value }: { value: unknown }) {
-  if (Array.isArray(value)) {
-    if (value.length === 0) return <span className="text-muted-foreground">Aucun</span>
-    return (
-      <ul className="space-y-1">
-        {value.map((item, index) => (
-          <li key={index} className="flex flex-wrap gap-x-2 gap-y-0.5">
-            {typeof item === "object" && item !== null ? (
-              <Pairs values={item as Values} />
-            ) : (
-              <span className="text-xs font-medium">{String(item)}</span>
-            )}
-          </li>
-        ))}
-      </ul>
-    )
-  }
-  if (typeof value === "object" && value !== null) {
-    return (
-      <ul className="space-y-0.5">
-        {Object.entries(value as Values).map(([key, raw]) => (
-          <li key={key} className="text-xs">
-            <Pair field={key} value={raw} />
-          </li>
-        ))}
-      </ul>
-    )
-  }
-  return <span>{String(value)}</span>
-}
-
-function Pair({ field, value }: { field: string; value: unknown }) {
-  const rendu = formatValue(field, value)
-  return (
-    <>
-      <span className="text-muted-foreground">{fieldLabel(field)} </span>
-      <span className="font-medium">
-        {rendu.kind === "text" ? rendu.text : <StructuredValue value={rendu.value} />}
-      </span>
-    </>
-  )
-}
-
-function Pairs({ values }: { values: Values }) {
-  return (
-    <>
-      {Object.entries(values).map(([key, raw]) => (
-        <span key={key} className="whitespace-nowrap text-xs">
-          <Pair field={key} value={raw} />
-        </span>
-      ))}
-    </>
-  )
-}
 
 function Cell({
   field,
   value,
-  related,
+  entry,
   muted,
 }: {
   field: string
   value: unknown
-  related: AuditEntry["related_entities"]
+  entry: AuditEntry
   muted?: boolean
 }) {
-  const rendu = formatValue(field, value)
-  const nom = relatedLabel(field, value, related)
   return (
-    <td className={`px-3 py-2 align-top ${muted ? "text-muted-foreground" : ""}`}>
-      {rendu.kind === "structured" ? (
-        <StructuredValue value={rendu.value} />
-      ) : nom ? (
-        <>
-          <span className="font-medium">{nom}</span>
-          <span className="ml-1 text-xs text-muted-foreground">n° {rendu.text}</span>
-        </>
-      ) : (
-        rendu.text
-      )}
+    <td className={`px-3 py-2 align-top ${muted ? "text-muted-foreground" : "font-medium"}`}>
+      <AuditValue field={field} value={value} entry={entry} />
     </td>
   )
 }
@@ -111,9 +39,7 @@ function Cell({
 export function AuditChangeTable({ entry }: { entry: AuditEntry }) {
   const before = (entry.old_values ?? {}) as Values
   const after = (entry.new_values ?? {}) as Values
-  const keys = Array.from(new Set([...Object.keys(before), ...Object.keys(after)])).filter(
-    (key) => comparableValue(key, before[key]) !== comparableValue(key, after[key]),
-  )
+  const keys = changedKeys(before, after)
 
   if (keys.length === 0) {
     return (
@@ -145,10 +71,8 @@ export function AuditChangeTable({ entry }: { entry: AuditEntry }) {
             {keys.map((key) => (
               <tr key={key} className="border-b last:border-0">
                 <td className="px-3 py-2 align-top font-medium">{fieldLabel(key)}</td>
-                <Cell field={key} value={before[key]} related={entry.related_entities} muted />
-                {suppression ? null : (
-                  <Cell field={key} value={after[key]} related={entry.related_entities} />
-                )}
+                <Cell field={key} value={before[key]} entry={entry} muted />
+                {suppression ? null : <Cell field={key} value={after[key]} entry={entry} />}
               </tr>
             ))}
           </tbody>

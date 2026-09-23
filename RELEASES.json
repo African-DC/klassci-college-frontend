@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-23T06:47:49Z",
+  "generated_at": "2026-09-23T14:04:48Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -1197,6 +1197,32 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Le journal montre ce qui a changé directement dans la liste, l'ancienne valeur à côté de la nouvelle, sans ouvrir le détail",
+            "audience": [
+              "admin",
+              "directeur",
+              "comptable"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Chaque ligne affiche le nom de la fiche en premier, le numéro en petit, et signale une fiche archivée ou supprimée",
+            "audience": [
+              "admin",
+              "directeur",
+              "comptable"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Le détail d'une action ouvre directement la fiche concernée quand elle est encore active",
+            "audience": [
+              "admin",
+              "directeur"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Un article déjà réglé à la caisse ne propose plus de le marquer déposé : le bouton échouait à tous les coups, sur la fiche comme en saisie par classe",
             "audience": [
