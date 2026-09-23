@@ -70,7 +70,40 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 export function entityLabel(slug: string): string {
-  return ENTITY_LABELS[slug] ?? slug.replaceAll("_", " ")
+  return knowsEntity(slug) ? ENTITY_LABELS[slug] : slug.replaceAll("_", " ")
+}
+
+/**
+ * Ce catalogue connait-il ce type d'entite ?
+ *
+ * `entityLabel` retombe sur le slug desossé quand elle ne sait pas, ce qui se
+ * lit comme une traduction alors que c'en est une invention. Qui derive un
+ * libelle a partir d'un type doit donc pouvoir demander d'abord.
+ */
+export function knowsEntity(slug: string): boolean {
+  // `hasOwn`, pas `in` : `in` remonte la chaine des prototypes, et
+  // `knowsEntity("constructor")` rendait vrai, puis `entityLabel` une fonction
+  // la ou son type promet une chaine.
+  return Object.hasOwn(ENTITY_LABELS, slug)
+}
+
+/**
+ * Le verbe, pour raconter la ligne en une phrase : « Sophie Yao a modifie... ».
+ *
+ * A cote du nom de l'action, et non dans le dialogue qui s'en sert : les deux
+ * listes portent les memes six cles, et deux listes finissent par diverger.
+ */
+const ACTION_VERBS: Record<string, string> = {
+  create: "a créé",
+  update: "a modifié",
+  delete: "a supprimé",
+  read: "a consulté",
+  login: "s'est connecté",
+  logout: "s'est déconnecté",
+}
+
+export function actionVerb(slug: string): string {
+  return ACTION_VERBS[slug] ?? actionLabel(slug).toLowerCase()
 }
 
 export function actionLabel(slug: string): string {

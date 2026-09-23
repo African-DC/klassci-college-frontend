@@ -14,6 +14,18 @@ export const AuditEntrySchema = z.object({
   entity_type: z.string(),
   entity_id: z.number().nullish(),
   user_id: z.number().nullish(),
+  /** Nom du sujet, figé au moment de l'acte : « Aminata Traoré · 6e B ». */
+  subject_label: z.string().nullish(),
+  /** Les autres fiches touchées par l'action, nommées elles aussi. */
+  related_entities: z
+    .array(
+      z.object({
+        type: z.string().nullish(),
+        id: z.number().nullish(),
+        label: z.string().nullish(),
+      }),
+    )
+    .nullish(),
   actor_name: z.string().nullish(),
   actor_email: z.string().nullish(),
   actor_role: z.string().nullish(),

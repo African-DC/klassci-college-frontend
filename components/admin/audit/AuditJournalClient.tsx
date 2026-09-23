@@ -16,6 +16,19 @@ import { entityLabel, formatStamp, roleLabel } from "./audit-labels"
 const PAGE_SIZE = 50
 
 /**
+ * Ce qu'on écrit sous le nom du sujet.
+ *
+ * Quand la ligne porte un nom, la seconde ligne dit de quelle sorte de fiche
+ * il s'agit. Sinon elle retombe sur l'identifiant, et le dit comme tel : les
+ * lignes écrites avant que le journal ne nomme ses sujets n'ont que ça.
+ */
+function subjectHint(entry: AuditEntry): string {
+  const type = entityLabel(entry.entity_type)
+  if (entry.subject_label) return type
+  return entry.entity_id ? `${type} n° ${entry.entity_id}` : type
+}
+
+/**
  * Le journal de l'établissement : qui a fait quoi, sur quelle fiche, quand.
  *
  * Le comptable n'y voit que les écritures d'argent. L'écran le dit au lieu de
@@ -134,10 +147,10 @@ export function AuditJournalClient() {
                             <AuditActionBadge action={entry.action} />
                           </td>
                           <td className="px-3 py-2.5">
-                            <p className="font-medium">{entityLabel(entry.entity_type)}</p>
-                            {entry.entity_id ? (
-                              <p className="text-xs text-muted-foreground">#{entry.entity_id}</p>
-                            ) : null}
+                            <p className="font-medium">
+                              {entry.subject_label ?? entityLabel(entry.entity_type)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{subjectHint(entry)}</p>
                           </td>
                           <td className="px-3 py-2.5 text-right">
                             <ChevronRight
@@ -166,11 +179,11 @@ export function AuditJournalClient() {
                         <div className="flex flex-wrap items-center gap-2">
                           <AuditActionBadge action={entry.action} />
                           <span className="text-sm font-medium">
-                            {entityLabel(entry.entity_type)}
-                            {entry.entity_id ? ` #${entry.entity_id}` : ""}
+                            {entry.subject_label ?? entityLabel(entry.entity_type)}
                           </span>
                         </div>
                         <p className="truncate text-sm">
+                          {subjectHint(entry)} ·{" "}
                           {entry.actor_name ?? entry.actor_email ?? "Compte supprimé"}
                         </p>
                         <p className="text-xs text-muted-foreground">
