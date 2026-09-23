@@ -14,7 +14,7 @@ export const AuditEntrySchema = z.object({
   entity_type: z.string(),
   entity_id: z.number().nullish(),
   user_id: z.number().nullish(),
-  /** Nom du sujet, figé au moment de l'acte : « Aminata Traoré · 6e B ». */
+  /** Nom du sujet : figé au moment de l'acte, sinon nom actuel de la fiche. */
   subject_label: z.string().nullish(),
   /** Les autres fiches touchées par l'action, nommées elles aussi. */
   related_entities: z
@@ -26,6 +26,13 @@ export const AuditEntrySchema = z.object({
       }),
     )
     .nullish(),
+  /**
+   * État de la fiche aujourd'hui. `null` quand le serveur ne sait pas la
+   * chercher : l'écran ne propose alors pas de l'ouvrir.
+   */
+  subject_state: z.enum(["active", "archived", "deleted"]).nullish(),
+  /** `"clé:id"` → nom, pour les identifiants cités dans les valeurs (`"level_id:3"`). */
+  value_labels: z.record(z.string()).default({}),
   actor_name: z.string().nullish(),
   actor_email: z.string().nullish(),
   actor_role: z.string().nullish(),

@@ -1,9 +1,9 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-23T06:47:49Z",
+  "generated_at": "2026-09-23T14:16:55Z",
   "version": "Unreleased",
   "released": false,
-  "total": 336,
+  "total": 340,
   "sections": {
     "Added": [
       {
@@ -59,6 +59,40 @@
     ],
     "Fixed": [
       {
+        "text": "Le journal montre ce qui a changé directement dans la liste, l'ancienne valeur à côté de la nouvelle, sans ouvrir le détail",
+        "audience": [
+          "admin",
+          "directeur",
+          "comptable"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Chaque ligne affiche le nom de la fiche en premier, le numéro en petit, et signale une fiche archivée ou supprimée",
+        "audience": [
+          "admin",
+          "directeur",
+          "comptable"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Depuis la consultation d'une attestation ou d'un certificat, le détail ouvre la fiche de l'élève",
+        "audience": [
+          "admin",
+          "directeur"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Le détail d'une action ouvre directement la fiche concernée quand elle est encore active",
+        "audience": [
+          "admin",
+          "directeur"
+        ],
+        "pull_request": null
+      },
+      {
         "text": "Un article déjà réglé à la caisse ne propose plus de le marquer déposé : le bouton échouait à tous les coups, sur la fiche comme en saisie par classe",
         "audience": [
           "éducateur",
@@ -71,40 +105,6 @@
         "audience": [
           "admin",
           "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "La photo choisie depuis la fiche élève, une fiche du personnel ou votre profil est allégée et vérifiée avant l'envoi, comme à l'inscription",
-        "audience": [
-          "admin",
-          "secrétariat",
-          "tous"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Une photo choisie dans la galerie du téléphone est allégée avant l'envoi, au lieu d'être refusée au-delà de 5 Mo",
-        "audience": [
-          "admin",
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Une photo prise en portrait ne ressort plus couchée une fois enregistrée",
-        "audience": [
-          "admin",
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Un dépôt en nature posé par erreur s'annule désormais depuis la fiche de l'élève, et le montant redevient dû à la caisse",
-        "audience": [
-          "admin",
-          "comptable",
-          "éducateur"
         ],
         "pull_request": null
       }

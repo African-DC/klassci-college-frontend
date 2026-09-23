@@ -33,6 +33,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse *(comptable, caissier)*
 
 ### Fixed
+- Le journal montre ce qui a changé directement dans la liste, l'ancienne valeur à côté de la nouvelle, sans ouvrir le détail *(admin, directeur, comptable)*
+- Chaque ligne affiche le nom de la fiche en premier, le numéro en petit, et signale une fiche archivée ou supprimée *(admin, directeur, comptable)*
+- Depuis la consultation d'une attestation ou d'un certificat, le détail ouvre la fiche de l'élève *(admin, directeur)*
+- Le détail d'une action ouvre directement la fiche concernée quand elle est encore active *(admin, directeur)*
 - Un article déjà réglé à la caisse ne propose plus de le marquer déposé : le bouton échouait à tous les coups, sur la fiche comme en saisie par classe *(éducateur, secrétariat)*
 - Le code QR de reprise photo mène au portail de l'établissement qui l'affiche, et non à celui inscrit dans la configuration du serveur *(admin, secrétariat)*
 - La photo choisie depuis la fiche élève, une fiche du personnel ou votre profil est allégée et vérifiée avant l'envoi, comme à l'inscription *(admin, secrétariat, tous)*
