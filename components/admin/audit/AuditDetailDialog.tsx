@@ -3,70 +3,99 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { AuditEntry } from "@/lib/contracts/audit"
 import { AuditActionBadge } from "./AuditActionBadge"
-import { entityLabel, formatStamp, roleLabel } from "./audit-labels"
+import { AuditChangeTable } from "./AuditChangeTable"
+import { AuditRelatedChips } from "./AuditRelatedChips"
+import { actionVerb, entityLabel, formatStamp, roleLabel } from "./audit-labels"
 
 interface AuditDetailDialogProps {
   entry: AuditEntry | null
   onClose: () => void
 }
 
-function renderValue(value: unknown): string {
-  if (value === null || value === undefined) return "—"
-  if (typeof value === "object") return JSON.stringify(value)
-  return String(value)
+/**
+ * Le récit de la ligne, en une phrase, avant tout tableau.
+ *
+ * C'est ce qu'une directrice lit d'abord et ce qu'elle répète au téléphone à
+ * un parent. Le détail champ par champ vient après, pour qui veut vérifier.
+ */
+function Recit({ entry }: { entry: AuditEntry }) {
+  const stamp = formatStamp(entry.created_at)
+  const qui = entry.actor_name ?? entry.actor_email ?? "Un compte supprimé"
+  const quoi = entityLabel(entry.entity_type).toLowerCase()
+  const sujet = entry.subject_label
+
+  return (
+    <p className="text-sm leading-relaxed">
+      <span className="font-medium">{qui}</span>
+      {roleLabel(entry.actor_role) ? (
+        <span className="text-muted-foreground"> ({roleLabel(entry.actor_role)})</span>
+      ) : null}{" "}
+      {actionVerb(entry.action)}{" "}
+      {entry.action === "login" || entry.action === "logout" ? null : (
+        <>
+          <span>{quoi}</span>{" "}
+          {sujet ? (
+            <span className="font-medium">{sujet}</span>
+          ) : entry.entity_id ? (
+            <span className="text-muted-foreground">n° {entry.entity_id}</span>
+          ) : null}{" "}
+        </>
+      )}
+      le {stamp.date} à {stamp.time}.
+    </p>
+  )
 }
 
 /**
- * Le détail d'une ligne, avec l'avant et l'après côte à côte.
- *
- * On ne montre que les champs qui ont réellement changé : une modification de
- * numéro de téléphone au milieu de quarante champs identiques serait
- * introuvable, et c'est exactement ce qu'on vient chercher ici.
+ * Le détail d'une ligne : ce qui s'est passé, sur qui, et ce qui a changé.
  */
 export function AuditDetailDialog({ entry, onClose }: AuditDetailDialogProps) {
   if (!entry) return null
 
-  const before = entry.old_values ?? {}
-  const after = entry.new_values ?? {}
-  const keys = Array.from(new Set([...Object.keys(before), ...Object.keys(after)])).filter(
-    (key) => renderValue(before[key]) !== renderValue(after[key]),
-  )
   const stamp = formatStamp(entry.created_at)
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[85vh] space-y-4 overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2">
             <AuditActionBadge action={entry.action} />
-            <span>{entityLabel(entry.entity_type)}</span>
-            {entry.entity_id ? (
-              <span className="text-sm font-normal text-muted-foreground">#{entry.entity_id}</span>
+            <span>{entry.subject_label ?? entityLabel(entry.entity_type)}</span>
+            {entry.subject_label ? (
+              <span className="text-sm font-normal text-muted-foreground">
+                {entityLabel(entry.entity_type)}
+              </span>
+            ) : entry.entity_id ? (
+              <span className="text-sm font-normal text-muted-foreground">
+                n° {entry.entity_id}
+              </span>
             ) : null}
           </DialogTitle>
         </DialogHeader>
 
-        <dl className="grid gap-3 rounded-lg border border-border/60 bg-muted/40 p-4 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-muted-foreground">Auteur</dt>
-            <dd className="font-medium">{entry.actor_name ?? entry.actor_email ?? "Compte supprimé"}</dd>
+        <div className="rounded-lg border border-border/60 bg-muted/40 p-4">
+          <Recit entry={entry} />
+          <dl className="mt-3 grid gap-2 border-t border-border/60 pt-3 text-xs text-muted-foreground sm:grid-cols-2">
             {entry.actor_email ? (
-              <dd className="text-xs text-muted-foreground">{entry.actor_email}</dd>
+              <div>
+                <dt className="inline">Compte : </dt>
+                <dd className="inline">{entry.actor_email}</dd>
+              </div>
             ) : null}
-            {roleLabel(entry.actor_role) ? (
-              <dd className="text-xs text-muted-foreground">{roleLabel(entry.actor_role)}</dd>
-            ) : null}
-          </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-muted-foreground">Quand</dt>
-            <dd className="font-medium">
-              {stamp.date} à {stamp.time}
-            </dd>
             {entry.ip_address ? (
-              <dd className="text-xs text-muted-foreground">Depuis {entry.ip_address}</dd>
+              <div>
+                <dt className="inline">Depuis : </dt>
+                <dd className="inline">{entry.ip_address}</dd>
+              </div>
             ) : null}
-          </div>
-        </dl>
+            <div>
+              <dt className="inline">Horodatage : </dt>
+              <dd className="inline">
+                {stamp.date} à {stamp.time}
+              </dd>
+            </div>
+          </dl>
+        </div>
 
         {entry.notes ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
@@ -75,34 +104,9 @@ export function AuditDetailDialog({ entry, onClose }: AuditDetailDialogProps) {
           </div>
         ) : null}
 
-        {keys.length > 0 ? (
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium">Champ</th>
-                  <th className="px-3 py-2 text-left font-medium">Avant</th>
-                  <th className="px-3 py-2 text-left font-medium">Après</th>
-                </tr>
-              </thead>
-              <tbody>
-                {keys.map((key) => (
-                  <tr key={key} className="border-b last:border-0">
-                    <td className="px-3 py-2 font-medium">{key}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{renderValue(before[key])}</td>
-                    <td className="px-3 py-2">{renderValue(after[key])}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
-            {entry.action === "read"
-              ? "Une consultation ne modifie rien : il n'y a pas de valeurs à comparer."
-              : "Aucune valeur enregistrée pour cette action."}
-          </p>
-        )}
+        <AuditRelatedChips entry={entry} />
+
+        <AuditChangeTable entry={entry} />
       </DialogContent>
     </Dialog>
   )
