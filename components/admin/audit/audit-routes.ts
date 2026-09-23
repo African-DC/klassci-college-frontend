@@ -15,6 +15,10 @@ const ROUTES: Record<string, (id: number) => Route> = {
   staff: (id) => `/admin/staff/${id}` as Route,
   class: (id) => `/admin/classes/${id}` as Route,
   enrollment: (id) => `/admin/enrollments/${id}` as Route,
+  // Un document d'élève est journalisé sous l'identifiant de l'élève.
+  document_attestation: (id) => `/admin/students/${id}` as Route,
+  document_certificat: (id) => `/admin/students/${id}` as Route,
+  document_release_override: (id) => `/admin/students/${id}` as Route,
 }
 
 /** Le chemin de la fiche, ou `null` quand elle n'a pas de page à ouvrir. */
