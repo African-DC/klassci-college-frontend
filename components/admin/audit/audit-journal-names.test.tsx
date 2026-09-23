@@ -5,6 +5,7 @@ import { AuditChangeSummary } from "./AuditChangeSummary"
 import { AuditChangeTable } from "./AuditChangeTable"
 import { AuditSubject } from "./AuditSubject"
 import { changedKeys, idLabel } from "./audit-fields"
+import { entityHref } from "./audit-routes"
 
 /**
  * Le journal doit se lire avec des noms, et une modification doit montrer
@@ -155,6 +156,13 @@ describe("idLabel", () => {
     expect(idLabel("class_id", 99, entree)).toBeNull()
     // Une valeur qui n'est pas un identifiant n'est jamais « nommée ».
     expect(idLabel("capacity", 12, entree)).toBeNull()
+  })
+})
+
+describe("entityHref", () => {
+  it("ouvre la fiche de l'élève depuis la consultation d'un de ses documents", () => {
+    expect(entityHref("document_attestation", 94)).toBe("/admin/students/94")
+    expect(entityHref("school_settings", 1)).toBeNull()
   })
 })
 
