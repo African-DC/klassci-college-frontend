@@ -1,55 +1,58 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-11T22:46:35Z",
+  "generated_at": "2026-09-23T06:47:49Z",
   "version": "Unreleased",
   "released": false,
-  "total": 331,
+  "total": 336,
   "sections": {
     "Added": [
+      {
+        "text": "Le journal d'audit se lit en français : noms de champs traduits, montants en FCFA, dates en toutes lettres, moyens de paiement et statuts nommés comme au guichet",
+        "audience": [
+          "admin",
+          "directeur",
+          "comptable"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Le détail d'une action s'ouvre sur une phrase qui dit qui a fait quoi, sur qui et quand, avant tout tableau",
+        "audience": [
+          "admin",
+          "directeur"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Un versement mène en un clic à l'élève et à l'inscription concernés, lisibles même après suppression de la fiche",
+        "audience": [
+          "admin",
+          "directeur",
+          "comptable"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "La répartition d'un versement se lit ligne à ligne au lieu d'une ligne de code brute",
+        "audience": [
+          "comptable",
+          "caissier"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Quand l'état d'avant n'a pas été enregistré, l'écran le dit au lieu d'afficher un tiret qu'on lirait comme « champ vide »",
+        "audience": [
+          "admin",
+          "directeur"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Une imputation posée sur le mauvais frais se déplace depuis la ligne elle-même, sans annuler ni ressaisir le versement",
         "audience": [
           "comptable",
           "caissier"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "La boîte annonce les deux plafonds avant la saisie — ce qui est posé là, ce qui reste dû ailleurs — et ne propose que les frais qui attendent encore de l'argent",
-        "audience": [
-          "comptable",
-          "caissier"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "L'onglet Paiements d'une inscription ne se ferme plus à qui n'a pas accès aux finances : il liste les articles à déclarer déposés, sans aucun montant",
-        "audience": [
-          "éducateur",
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Au moment de réinscrire, l'écran signale ce que l'élève doit encore au titre des années précédentes, avec le montant quand vous avez le droit de le lire",
-        "audience": [
-          "admin",
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "L'établissement choisit ce qu'il fait d'une dette d'une année précédente : ignorer, informer le guichet, ou refuser la réinscription au-delà d'un montant",
-        "audience": [
-          "admin"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Une réinscription refusée pour dette dit pourquoi, et propose de passer outre avec un motif enregistré à qui en a le droit",
-        "audience": [
-          "admin",
-          "secrétariat"
         ],
         "pull_request": null
       }
