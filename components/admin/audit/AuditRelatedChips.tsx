@@ -1,20 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import type { Route } from "next"
 import { ExternalLink } from "lucide-react"
 import type { AuditEntry } from "@/lib/contracts/audit"
 import { entityLabel } from "./audit-labels"
-
-/** Types d'entités dont la fiche a une page où l'on peut se rendre. */
-const ROUTES: Record<string, (id: number) => Route> = {
-  student: (id) => `/admin/students/${id}` as Route,
-  parent: (id) => `/admin/parents/${id}` as Route,
-  teacher: (id) => `/admin/teachers/${id}` as Route,
-  staff: (id) => `/admin/staff/${id}` as Route,
-  class: (id) => `/admin/classes/${id}` as Route,
-  enrollment: (id) => `/admin/enrollments/${id}` as Route,
-}
+import { entityHref } from "./audit-routes"
 
 /**
  * Les fiches que l'action touche aussi : l'élève derrière un versement,
@@ -39,7 +29,7 @@ export function AuditRelatedChips({ entry }: { entry: AuditEntry }) {
           // Le type est déjà écrit devant : sans nom, la puce dit « n° 5 » et
           // non « Inscription Inscription n° 5 ».
           const nom = ref.label ?? `n° ${ref.id}`
-          const href = ref.id && ROUTES[kind] ? ROUTES[kind](ref.id) : null
+          const href = entityHref(kind, ref.id)
           const inner = (
             <>
               <span className="text-muted-foreground">{entityLabel(kind)}</span>

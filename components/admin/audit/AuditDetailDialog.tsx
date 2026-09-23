@@ -1,11 +1,15 @@
 "use client"
 
+import Link from "next/link"
+import { ExternalLink } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { AuditEntry } from "@/lib/contracts/audit"
 import { AuditActionBadge } from "./AuditActionBadge"
 import { AuditChangeTable } from "./AuditChangeTable"
 import { AuditRelatedChips } from "./AuditRelatedChips"
 import { actionVerb, entityLabel, formatStamp, roleLabel } from "./audit-labels"
+import { entityHref } from "./audit-routes"
 
 interface AuditDetailDialogProps {
   entry: AuditEntry | null
@@ -47,6 +51,43 @@ function Recit({ entry }: { entry: AuditEntry }) {
 }
 
 /**
+ * Aller à la fiche dont parle la ligne, quand elle existe encore.
+ *
+ * C'est ce qui manquait pour s'y retrouver : lire « 6e B » dans le journal
+ * sans pouvoir ouvrir la classe obligeait à la rechercher ailleurs. Une fiche
+ * supprimée ou archivée n'a pas de lien, et le dit, plutôt que de mener à
+ * une page vide.
+ */
+function OuvrirLaFiche({ entry }: { entry: AuditEntry }) {
+  const href = entityHref(entry.entity_type, entry.entity_id)
+  if (!href) return null
+  if (entry.subject_state === "deleted") {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Cette fiche a été supprimée depuis : elle ne peut plus être ouverte.
+      </p>
+    )
+  }
+  if (entry.subject_state === "archived") {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Cette fiche a été archivée depuis : elle n&apos;apparaît plus dans les listes.
+      </p>
+    )
+  }
+  // État inconnu : on ne promet pas une page qui pourrait ne rien afficher.
+  if (entry.subject_state !== "active") return null
+  return (
+    <Button asChild variant="outline" className="h-11 w-full sm:h-10 sm:w-auto">
+      <Link href={href}>
+        <ExternalLink aria-hidden="true" className="mr-2 h-4 w-4" />
+        Ouvrir la fiche
+      </Link>
+    </Button>
+  )
+}
+
+/**
  * Le détail d'une ligne : ce qui s'est passé, sur qui, et ce qui a changé.
  */
 export function AuditDetailDialog({ entry, onClose }: AuditDetailDialogProps) {
@@ -72,6 +113,8 @@ export function AuditDetailDialog({ entry, onClose }: AuditDetailDialogProps) {
             ) : null}
           </DialogTitle>
         </DialogHeader>
+
+        <OuvrirLaFiche entry={entry} />
 
         <div className="rounded-lg border border-border/60 bg-muted/40 p-4">
           <Recit entry={entry} />
