@@ -1,11 +1,19 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-24T16:20:39Z",
+  "generated_at": "2026-09-24T20:41:03Z",
   "version": "Unreleased",
   "released": false,
-  "total": 349,
+  "total": 350,
   "sections": {
     "Added": [
+      {
+        "text": "« Modifier l'inscription » permet de choisir nouvel élève, déjà inscrit ici avant ou non tranché, et prévient que les frais liés au profil seront recalculés",
+        "audience": [
+          "admin",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
       {
         "text": "L'export Excel des élèves sépare le nom et les prénoms en deux colonnes",
         "audience": [
@@ -43,15 +51,6 @@
         "audience": [
           "caissier",
           "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Une inscription sans versement propose « Encaisser » au lieu de « Valider », et la fiche indique la prochaine étape du dossier",
-        "audience": [
-          "secrétariat",
-          "caissier",
-          "directeur"
         ],
         "pull_request": null
       }
