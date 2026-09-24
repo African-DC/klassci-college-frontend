@@ -30,6 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { AssignmentStatusField } from "@/components/forms/AssignmentStatusField"
+import { NewStudentChoiceGroup } from "@/components/forms/NewStudentChoiceGroup"
 
 interface EnrollmentEditModalProps {
   enrollmentId: number | null
@@ -66,6 +67,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
           status: enrollment.status,
           assignment_status: enrollment.assignment_status ?? null,
           assignment_decision_number: enrollment.assignment_decision_number ?? null,
+          is_new_student: enrollment.is_new_student ?? null,
           notes: enrollment.notes,
         }
       : undefined,
@@ -74,6 +76,10 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
   // La décision d'affectation arrive parfois après l'inscription : on suit la
   // valeur en direct pour révéler le numéro de décision dès qu'il devient utile.
   const assignmentStatus = form.watch("assignment_status")
+  // Le profil décide des frais réservés aux nouveaux ou aux anciens : le
+  // changer les recalcule. On le dit dès qu'il change, pas après l'envoi.
+  const profil = form.watch("is_new_student")
+  const profilChange = enrollment !== undefined && (profil ?? null) !== (enrollment.is_new_student ?? null)
 
   if (isLoading || !enrollment) return <EditFormSkeleton />
 
@@ -110,6 +116,34 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
                   ))}
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="is_new_student"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Profil de l&apos;élève</FormLabel>
+              <NewStudentChoiceGroup
+                value={field.value ?? null}
+                onChange={field.onChange}
+                allowUndecided
+                disabled={isPending}
+              />
+              {profilChange ? (
+                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+                  Les frais réservés aux nouveaux ou aux anciens élèves (chemise, RAM…) seront
+                  recalculés. Ceux déjà payés ou déposés ne changent pas.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Première année dans KLASSCI : un élève déjà présent dans l&apos;école avant est
+                  « déjà inscrit ici avant ».
+                </p>
+              )}
               <FormMessage />
             </FormItem>
           )}
