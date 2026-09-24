@@ -1,58 +1,58 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-24T11:32:08Z",
+  "generated_at": "2026-09-24T13:06:32Z",
   "version": "Unreleased",
   "released": false,
-  "total": 341,
+  "total": 346,
   "sections": {
     "Added": [
+      {
+        "text": "Après une inscription, la fenêtre enchaîne sur l'encaissement de cette inscription, puis sur le reçu et la validation, sans rechercher l'élève à nouveau",
+        "audience": [
+          "secrétariat",
+          "caissier"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Chaque encaissement se termine sur un écran de reçu : répartition, reste à payer et bouton « Voir et imprimer le reçu »",
+        "audience": [
+          "caissier",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Une inscription sans versement propose « Encaisser » au lieu de « Valider », et la fiche indique la prochaine étape du dossier",
+        "audience": [
+          "secrétariat",
+          "caissier",
+          "directeur"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Les notifications « Versement attendu » et « Inscription à valider » ouvrent directement l'encaissement ou la validation",
+        "audience": [
+          "secrétariat",
+          "caissier",
+          "directeur"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Sans droit d'encaisser, l'inscription se termine sur « Dossier transmis à la caisse » plutôt que sur un formulaire refusé",
+        "audience": [
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Le journal d'audit se lit en français : noms de champs traduits, montants en FCFA, dates en toutes lettres, moyens de paiement et statuts nommés comme au guichet",
         "audience": [
           "admin",
           "directeur",
           "comptable"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Le détail d'une action s'ouvre sur une phrase qui dit qui a fait quoi, sur qui et quand, avant tout tableau",
-        "audience": [
-          "admin",
-          "directeur"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Un versement mène en un clic à l'élève et à l'inscription concernés, lisibles même après suppression de la fiche",
-        "audience": [
-          "admin",
-          "directeur",
-          "comptable"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "La répartition d'un versement se lit ligne à ligne au lieu d'une ligne de code brute",
-        "audience": [
-          "comptable",
-          "caissier"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Quand l'état d'avant n'a pas été enregistré, l'écran le dit au lieu d'afficher un tiret qu'on lirait comme « champ vide »",
-        "audience": [
-          "admin",
-          "directeur"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Une imputation posée sur le mauvais frais se déplace depuis la ligne elle-même, sans annuler ni ressaisir le versement",
-        "audience": [
-          "comptable",
-          "caissier"
         ],
         "pull_request": null
       }

@@ -1,17 +1,14 @@
 "use client"
 
-import { Check } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AssignmentStatusBadge } from "@/components/shared/AssignmentStatusBadge"
 import { cn } from "@/lib/utils"
-import { STATUTS_VALIDABLES } from "@/lib/enrollment/selection"
+import { prochaineEtape } from "@/lib/enrollment/selection"
 import { enrollmentStatusView } from "@/lib/enrollment/status"
 import type { Enrollment } from "@/lib/contracts/enrollment"
-
-const TO_VALIDATE_STATUSES = STATUTS_VALIDABLES
+import { EnrollmentNextAction } from "./EnrollmentNextAction"
 
 function StudentInitialsAvatar({
   firstName,
@@ -44,6 +41,10 @@ interface ColonnesOptions {
   onToutSelectionner: (tout: boolean) => void
   /** Ouvre la confirmation de validation pour une ligne. */
   onValider: (enrollment: Enrollment) => void
+  /** Ouvre l'encaissement de cette inscription. */
+  onEncaisser: (enrollment: Enrollment) => void
+  peutEncaisser: boolean
+  peutValider: boolean
 }
 
 /**
@@ -63,6 +64,9 @@ export function colonnesInscriptions({
   validables,
   onToutSelectionner,
   onValider,
+  onEncaisser,
+  peutEncaisser,
+  peutValider,
 }: ColonnesOptions): ColumnDef<Enrollment>[] {
   return [
       {
@@ -78,9 +82,10 @@ export function colonnesInscriptions({
           />
         ),
         cell: ({ row }) => {
-          // Une inscription deja validee n'a rien a offrir au lot : la case
-          // absente dit pourquoi mieux qu'une case grisee.
-          if (!TO_VALIDATE_STATUSES.has(row.original.status)) return null
+          // Une inscription deja validee, ou qui attend encore son versement,
+          // n'a rien a offrir au lot : la case absente dit pourquoi mieux
+          // qu'une case grisee.
+          if (!peutValider || prochaineEtape(row.original) !== "valider") return null
           return (
             <Checkbox
               checked={selection.has(row.original.id)}
@@ -140,24 +145,15 @@ export function colonnesInscriptions({
       {
         id: "validate-action",
         header: "",
-        cell: ({ row }) => {
-          const e = row.original
-          if (!TO_VALIDATE_STATUSES.has(e.status)) return null
-          return (
-            <Button
-              type="button"
-              size="sm"
-              className="h-9 bg-emerald-600 text-white hover:bg-emerald-700"
-              onClick={(ev) => {
-                ev.stopPropagation()
-                onValider(e)
-              }}
-            >
-              <Check className="mr-1 h-4 w-4" />
-              Valider
-            </Button>
-          )
-        },
+        cell: ({ row }) => (
+          <EnrollmentNextAction
+            enrollment={row.original}
+            peutEncaisser={peutEncaisser}
+            peutValider={peutValider}
+            onEncaisser={onEncaisser}
+            onValider={onValider}
+          />
+        ),
       },
   ]
 }

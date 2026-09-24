@@ -9,6 +9,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Après une inscription, la fenêtre enchaîne sur l'encaissement de cette inscription, puis sur le reçu et la validation, sans rechercher l'élève à nouveau *(secrétariat, caissier)*
+- Chaque encaissement se termine sur un écran de reçu : répartition, reste à payer et bouton « Voir et imprimer le reçu » *(caissier, secrétariat)*
+- Une inscription sans versement propose « Encaisser » au lieu de « Valider », et la fiche indique la prochaine étape du dossier *(secrétariat, caissier, directeur)*
+- Les notifications « Versement attendu » et « Inscription à valider » ouvrent directement l'encaissement ou la validation *(secrétariat, caissier, directeur)*
+- Sans droit d'encaisser, l'inscription se termine sur « Dossier transmis à la caisse » plutôt que sur un formulaire refusé *(secrétariat)*
 - Le journal d'audit se lit en français : noms de champs traduits, montants en FCFA, dates en toutes lettres, moyens de paiement et statuts nommés comme au guichet *(admin, directeur, comptable)*
 - Le détail d'une action s'ouvre sur une phrase qui dit qui a fait quoi, sur qui et quand, avant tout tableau *(admin, directeur)*
 - Un versement mène en un clic à l'élève et à l'inscription concernés, lisibles même après suppression de la fiche *(admin, directeur, comptable)*

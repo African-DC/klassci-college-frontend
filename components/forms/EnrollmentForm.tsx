@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import {
   NewEnrollmentSchema,
   ReEnrollmentSchema,
+  type Enrollment,
   type NewEnrollment,
   type ReEnrollment,
 } from "@/lib/contracts/enrollment"
@@ -31,7 +32,7 @@ import { useEnrollmentSubmit } from "@/components/forms/useEnrollmentSubmit"
 import { useNewStudentGuard } from "@/components/forms/useNewStudentGuard"
 
 interface EnrollmentFormProps {
-  onSuccess: () => void
+  onSuccess: (enrollment: Enrollment) => void
   /**
    * Élève pré-sélectionné (depuis ex. badge "À inscrire" sur /admin/students).
    * Quand fourni : le type est forcé à "re-enrollment", student_id est rempli
