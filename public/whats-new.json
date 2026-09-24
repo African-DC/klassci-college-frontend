@@ -1,11 +1,19 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-24T13:06:32Z",
+  "generated_at": "2026-09-24T14:58:04Z",
   "version": "Unreleased",
   "released": false,
-  "total": 346,
+  "total": 347,
   "sections": {
     "Added": [
+      {
+        "text": "Les exports Excel et PDF portent le logo de l'établissement, et l'Excel reprend l'en-tête officiel : ministère, République de Côte d'Ivoire, nom, code, contacts et devise",
+        "audience": [
+          "admin",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Après une inscription, la fenêtre enchaîne sur l'encaissement de cette inscription, puis sur le reçu et la validation, sans rechercher l'élève à nouveau",
         "audience": [
@@ -44,15 +52,6 @@
         "text": "Sans droit d'encaisser, l'inscription se termine sur « Dossier transmis à la caisse » plutôt que sur un formulaire refusé",
         "audience": [
           "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Le journal d'audit se lit en français : noms de champs traduits, montants en FCFA, dates en toutes lettres, moyens de paiement et statuts nommés comme au guichet",
-        "audience": [
-          "admin",
-          "directeur",
-          "comptable"
         ],
         "pull_request": null
       }

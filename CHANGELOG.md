@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Les exports Excel et PDF portent le logo de l'établissement, et l'Excel reprend l'en-tête officiel : ministère, République de Côte d'Ivoire, nom, code, contacts et devise *(admin, secrétariat)*
 - Après une inscription, la fenêtre enchaîne sur l'encaissement de cette inscription, puis sur le reçu et la validation, sans rechercher l'élève à nouveau *(secrétariat, caissier)*
 - Chaque encaissement se termine sur un écran de reçu : répartition, reste à payer et bouton « Voir et imprimer le reçu » *(caissier, secrétariat)*
 - Une inscription sans versement propose « Encaisser » au lieu de « Valider », et la fiche indique la prochaine étape du dossier *(secrétariat, caissier, directeur)*
