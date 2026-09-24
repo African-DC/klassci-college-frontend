@@ -71,6 +71,13 @@ export const EnrollmentSchema = z.object({
   student_first_name: z.string().nullable().optional(),
   student_last_name: z.string().nullable().optional(),
   class_name: z.string().nullable().optional(),
+  /**
+   * L'inscription attend-elle un versement pour être validée ? Calculé par le
+   * serveur avec la règle même de sa garde (aucun versement ET un reste dû en
+   * argent). `null` ou absent : la réponse ne le calcule pas, l'écran ne
+   * présume rien.
+   */
+  awaiting_payment: z.boolean().nullish(),
 })
 
 export const EnrollmentCreateSchema = z.object({

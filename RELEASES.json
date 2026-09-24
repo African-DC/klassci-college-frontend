@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-24T11:32:08Z",
+  "generated_at": "2026-09-24T13:06:32Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,47 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "Après une inscription, la fenêtre enchaîne sur l'encaissement de cette inscription, puis sur le reçu et la validation, sans rechercher l'élève à nouveau",
+            "audience": [
+              "secrétariat",
+              "caissier"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Chaque encaissement se termine sur un écran de reçu : répartition, reste à payer et bouton « Voir et imprimer le reçu »",
+            "audience": [
+              "caissier",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Une inscription sans versement propose « Encaisser » au lieu de « Valider », et la fiche indique la prochaine étape du dossier",
+            "audience": [
+              "secrétariat",
+              "caissier",
+              "directeur"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Les notifications « Versement attendu » et « Inscription à valider » ouvrent directement l'encaissement ou la validation",
+            "audience": [
+              "secrétariat",
+              "caissier",
+              "directeur"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Sans droit d'encaisser, l'inscription se termine sur « Dossier transmis à la caisse » plutôt que sur un formulaire refusé",
+            "audience": [
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Le journal d'audit se lit en français : noms de champs traduits, montants en FCFA, dates en toutes lettres, moyens de paiement et statuts nommés comme au guichet",
             "audience": [

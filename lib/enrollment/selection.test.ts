@@ -8,16 +8,16 @@
  */
 
 import { describe, expect, it } from "vitest"
-import { selectionVisible } from "./selection"
+import { prochaineEtape, selectionVisible } from "./selection"
 
 const page1 = [
-  { id: 1, status: "prospect" },
-  { id: 2, status: "en_validation" },
-  { id: 3, status: "valide" },
+  { id: 1, status: "prospect", awaiting_payment: false },
+  { id: 2, status: "en_validation", awaiting_payment: false },
+  { id: 3, status: "valide", awaiting_payment: false },
 ]
 const page2 = [
-  { id: 10, status: "prospect" },
-  { id: 11, status: "prospect" },
+  { id: 10, status: "prospect", awaiting_payment: false },
+  { id: 11, status: "prospect", awaiting_payment: false },
 ]
 
 describe("ce qui part au serveur quand on valide une sélection", () => {
@@ -34,7 +34,7 @@ describe("ce qui part au serveur quand on valide une sélection", () => {
     // La liste se recharge, la ligne 1 est passée « valide » : l'envoyer
     // reviendrait à demander une action déjà faite, et à récolter un refus
     // qui inquiéterait pour rien.
-    const rechargee = [{ id: 1, status: "valide" }, { id: 2, status: "prospect" }]
+    const rechargee = [{ id: 1, status: "valide", awaiting_payment: false }, { id: 2, status: "prospect", awaiting_payment: false }]
     expect(selectionVisible(rechargee, new Set([1, 2])).map((l) => l.id)).toEqual([2])
   })
 
@@ -44,5 +44,31 @@ describe("ce qui part au serveur quand on valide une sélection", () => {
 
   it("ne renvoie rien quand rien n'est coché", () => {
     expect(selectionVisible(page1, new Set())).toEqual([])
+  })
+})
+
+describe("ce qu'une ligne attend au guichet", () => {
+  it("demande d'encaisser tant qu'aucun versement n'est reçu", () => {
+    expect(prochaineEtape({ id: 1, status: "prospect", awaiting_payment: true })).toBe("encaisser")
+  })
+
+  it("propose de valider une fois le versement reçu", () => {
+    expect(prochaineEtape({ id: 1, status: "prospect", awaiting_payment: false })).toBe("valider")
+  })
+
+  it("ne devine rien quand le serveur ne dit pas si un versement est attendu", () => {
+    expect(prochaineEtape({ id: 1, status: "en_validation", awaiting_payment: null })).toBeNull()
+  })
+
+  it("n'attend plus rien d'une inscription déjà validée", () => {
+    expect(prochaineEtape({ id: 1, status: "valide", awaiting_payment: false })).toBeNull()
+  })
+
+  it("n'envoie pas à la validation groupée un dossier sans versement", () => {
+    const lignes = [
+      { id: 1, status: "prospect", awaiting_payment: true },
+      { id: 2, status: "prospect", awaiting_payment: false },
+    ]
+    expect(selectionVisible(lignes, new Set([1, 2])).map((l) => l.id)).toEqual([2])
   })
 })

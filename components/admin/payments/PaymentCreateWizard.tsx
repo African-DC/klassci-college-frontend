@@ -7,7 +7,8 @@ import { Progress } from "@/components/ui/progress"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { StudentPicker } from "@/components/shared/StudentPicker"
 import { StepSelectEnrollment } from "@/components/admin/payments/wizard/StepSelectEnrollment"
-import { StepRecordPayment } from "@/components/admin/payments/wizard/StepRecordPayment"
+import { EnrollmentCheckout } from "@/components/admin/payments/checkout/EnrollmentCheckout"
+import { checkoutContexte } from "@/components/admin/payments/checkout/checkout-target"
 import { cn } from "@/lib/utils"
 import type { Student } from "@/lib/contracts/student"
 import type { Enrollment } from "@/lib/contracts/enrollment"
@@ -106,10 +107,11 @@ export function PaymentCreateWizard({ open, onClose }: PaymentCreateWizardProps)
         )}
 
         {wizard.step === 3 && wizard.student && wizard.enrollment && (
-          <StepRecordPayment
-            student={wizard.student}
-            enrollment={wizard.enrollment}
-            onSuccess={handleClose}
+          <EnrollmentCheckout
+            enrollmentId={wizard.enrollment.id}
+            studentName={`${wizard.student.last_name} ${wizard.student.first_name}`}
+            contexte={checkoutContexte(wizard.enrollment)}
+            onDone={handleClose}
           />
         )}
       </DialogContent>
