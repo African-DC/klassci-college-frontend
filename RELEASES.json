@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-24T14:58:04Z",
+  "generated_at": "2026-09-24T16:12:49Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,14 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "La fiche d'une classe propose la liste de classe en Excel à côté du PDF, avec tous les élèves, le logo et l'en-tête officiel",
+            "audience": [
+              "admin",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Les exports Excel et PDF portent le logo de l'établissement, et l'Excel reprend l'en-tête officiel : ministère, République de Côte d'Ivoire, nom, code, contacts et devise",
             "audience": [
