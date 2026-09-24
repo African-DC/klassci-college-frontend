@@ -1,11 +1,19 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-24T16:12:49Z",
+  "generated_at": "2026-09-24T16:20:39Z",
   "version": "Unreleased",
   "released": false,
-  "total": 348,
+  "total": 349,
   "sections": {
     "Added": [
+      {
+        "text": "L'export Excel des élèves sépare le nom et les prénoms en deux colonnes",
+        "audience": [
+          "admin",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
       {
         "text": "La fiche d'une classe propose la liste de classe en Excel à côté du PDF, avec tous les élèves, le logo et l'en-tête officiel",
         "audience": [
@@ -40,15 +48,6 @@
       },
       {
         "text": "Une inscription sans versement propose « Encaisser » au lieu de « Valider », et la fiche indique la prochaine étape du dossier",
-        "audience": [
-          "secrétariat",
-          "caissier",
-          "directeur"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Les notifications « Versement attendu » et « Inscription à valider » ouvrent directement l'encaissement ou la validation",
         "audience": [
           "secrétariat",
           "caissier",
