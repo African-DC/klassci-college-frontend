@@ -23,6 +23,7 @@ import { SectionCard, EmptyState, InitialsAvatar } from "@/components/admin/stud
 import { getUploadUrl } from "@/lib/utils"
 import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { fetchClassRoster, fileSafeName, triggerBlobDownload } from "./class-downloads"
+import { ClassRosterExcelButton } from "./ClassRosterExcelButton"
 
 interface StudentsTabProps {
   classId: number
@@ -106,6 +107,13 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
         )}
         Liste (PDF)
       </Button>
+      {students.length > 0 ? (
+        <ClassRosterExcelButton
+          classId={classId}
+          className={className}
+          buttonClassName="h-11 w-auto sm:h-9"
+        />
+      ) : null}
     </div>
   )
 

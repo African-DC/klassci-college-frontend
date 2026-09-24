@@ -35,6 +35,7 @@ import {
   fileSafeName,
   triggerBlobDownload,
 } from "./class-downloads"
+import { ClassRosterExcelButton } from "./ClassRosterExcelButton"
 
 interface OverviewTabProps {
   classData: Class
@@ -79,6 +80,7 @@ function DocRow({
   filename,
   label,
   accent,
+  extra,
 }: {
   title: string
   description: string
@@ -86,6 +88,8 @@ function DocRow({
   filename: string
   label: string
   accent?: boolean
+  /** Une action de plus, à côté du PDF (la version Excel d'une liste). */
+  extra?: React.ReactNode
 }) {
   const [downloading, setDownloading] = useState(false)
 
@@ -131,6 +135,7 @@ function DocRow({
           )}
           Télécharger
         </Button>
+        {extra}
       </div>
     </div>
   )
@@ -242,7 +247,7 @@ export function OverviewTab({ classData, slots }: OverviewTabProps) {
       <SectionCard
         icon={<FileText className="h-4 w-4" />}
         title="Documents"
-        description="Générer les documents officiels de la classe au format PDF."
+        description="Générer les documents officiels de la classe au format PDF, et la liste de classe en Excel."
       >
         <div className="space-y-3">
           {/* Liste de classe (roster) */}
@@ -253,6 +258,7 @@ export function OverviewTab({ classData, slots }: OverviewTabProps) {
             filename={`liste-classe-${safeName}.pdf`}
             label={`la liste de la classe ${name}`}
             accent
+            extra={<ClassRosterExcelButton classId={classData.id} className={name} />}
           />
 
           {/* Feuille d'appel (présences vierges) */}
