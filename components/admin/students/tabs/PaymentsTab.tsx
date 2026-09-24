@@ -129,6 +129,7 @@ export function PaymentsTab({ studentId, studentName }: PaymentsTabProps) {
 
       <StudentPaymentModal
         studentId={studentId}
+        studentName={studentName}
         open={paymentOpen}
         onClose={() => setPaymentOpen(false)}
       />

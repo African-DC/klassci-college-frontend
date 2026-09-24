@@ -9,6 +9,12 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Les exports Excel et PDF portent le logo de l'établissement, et l'Excel reprend l'en-tête officiel : ministère, République de Côte d'Ivoire, nom, code, contacts et devise *(admin, secrétariat)*
+- Après une inscription, la fenêtre enchaîne sur l'encaissement de cette inscription, puis sur le reçu et la validation, sans rechercher l'élève à nouveau *(secrétariat, caissier)*
+- Chaque encaissement se termine sur un écran de reçu : répartition, reste à payer et bouton « Voir et imprimer le reçu » *(caissier, secrétariat)*
+- Une inscription sans versement propose « Encaisser » au lieu de « Valider », et la fiche indique la prochaine étape du dossier *(secrétariat, caissier, directeur)*
+- Les notifications « Versement attendu » et « Inscription à valider » ouvrent directement l'encaissement ou la validation *(secrétariat, caissier, directeur)*
+- Sans droit d'encaisser, l'inscription se termine sur « Dossier transmis à la caisse » plutôt que sur un formulaire refusé *(secrétariat)*
 - Le journal d'audit se lit en français : noms de champs traduits, montants en FCFA, dates en toutes lettres, moyens de paiement et statuts nommés comme au guichet *(admin, directeur, comptable)*
 - Le détail d'une action s'ouvre sur une phrase qui dit qui a fait quoi, sur qui et quand, avant tout tableau *(admin, directeur)*
 - Un versement mène en un clic à l'élève et à l'inscription concernés, lisibles même après suppression de la fiche *(admin, directeur, comptable)*
@@ -33,6 +39,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse *(comptable, caissier)*
 
 ### Fixed
+- L'export Excel ou PDF d'une liste de classe contient tous les élèves, et plus seulement les vingt premiers affichés à l'écran *(admin, secrétariat)* (#487)
 - Le journal montre ce qui a changé directement dans la liste, l'ancienne valeur à côté de la nouvelle, sans ouvrir le détail *(admin, directeur, comptable)*
 - Chaque ligne affiche le nom de la fiche en premier, le numéro en petit, et signale une fiche archivée ou supprimée *(admin, directeur, comptable)*
 - Depuis la consultation d'une attestation ou d'un certificat, le détail ouvre la fiche de l'élève *(admin, directeur)*

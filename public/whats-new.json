@@ -1,63 +1,70 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-23T14:16:55Z",
+  "generated_at": "2026-09-24T14:58:04Z",
   "version": "Unreleased",
   "released": false,
-  "total": 340,
+  "total": 347,
   "sections": {
     "Added": [
       {
-        "text": "Le journal d'audit se lit en français : noms de champs traduits, montants en FCFA, dates en toutes lettres, moyens de paiement et statuts nommés comme au guichet",
+        "text": "Les exports Excel et PDF portent le logo de l'établissement, et l'Excel reprend l'en-tête officiel : ministère, République de Côte d'Ivoire, nom, code, contacts et devise",
         "audience": [
           "admin",
-          "directeur",
-          "comptable"
+          "secrétariat"
         ],
         "pull_request": null
       },
       {
-        "text": "Le détail d'une action s'ouvre sur une phrase qui dit qui a fait quoi, sur qui et quand, avant tout tableau",
+        "text": "Après une inscription, la fenêtre enchaîne sur l'encaissement de cette inscription, puis sur le reçu et la validation, sans rechercher l'élève à nouveau",
         "audience": [
-          "admin",
-          "directeur"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Un versement mène en un clic à l'élève et à l'inscription concernés, lisibles même après suppression de la fiche",
-        "audience": [
-          "admin",
-          "directeur",
-          "comptable"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "La répartition d'un versement se lit ligne à ligne au lieu d'une ligne de code brute",
-        "audience": [
-          "comptable",
+          "secrétariat",
           "caissier"
         ],
         "pull_request": null
       },
       {
-        "text": "Quand l'état d'avant n'a pas été enregistré, l'écran le dit au lieu d'afficher un tiret qu'on lirait comme « champ vide »",
+        "text": "Chaque encaissement se termine sur un écran de reçu : répartition, reste à payer et bouton « Voir et imprimer le reçu »",
         "audience": [
-          "admin",
+          "caissier",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Une inscription sans versement propose « Encaisser » au lieu de « Valider », et la fiche indique la prochaine étape du dossier",
+        "audience": [
+          "secrétariat",
+          "caissier",
           "directeur"
         ],
         "pull_request": null
       },
       {
-        "text": "Une imputation posée sur le mauvais frais se déplace depuis la ligne elle-même, sans annuler ni ressaisir le versement",
+        "text": "Les notifications « Versement attendu » et « Inscription à valider » ouvrent directement l'encaissement ou la validation",
         "audience": [
-          "comptable",
-          "caissier"
+          "secrétariat",
+          "caissier",
+          "directeur"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Sans droit d'encaisser, l'inscription se termine sur « Dossier transmis à la caisse » plutôt que sur un formulaire refusé",
+        "audience": [
+          "secrétariat"
         ],
         "pull_request": null
       }
     ],
     "Fixed": [
+      {
+        "text": "L'export Excel ou PDF d'une liste de classe contient tous les élèves, et plus seulement les vingt premiers affichés à l'écran",
+        "audience": [
+          "admin",
+          "secrétariat"
+        ],
+        "pull_request": 487
+      },
       {
         "text": "Le journal montre ce qui a changé directement dans la liste, l'ancienne valeur à côté de la nouvelle, sans ouvrir le détail",
         "audience": [
@@ -96,14 +103,6 @@
         "text": "Un article déjà réglé à la caisse ne propose plus de le marquer déposé : le bouton échouait à tous les coups, sur la fiche comme en saisie par classe",
         "audience": [
           "éducateur",
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Le code QR de reprise photo mène au portail de l'établissement qui l'affiche, et non à celui inscrit dans la configuration du serveur",
-        "audience": [
-          "admin",
           "secrétariat"
         ],
         "pull_request": null

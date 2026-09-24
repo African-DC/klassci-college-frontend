@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useStudentFees } from "@/lib/hooks/useStudents";
 import { usePermissions } from "@/lib/hooks/usePermissions";
 import { isCashDue } from "@/lib/contracts/payment";
+import type { Enrollment } from "@/lib/contracts/enrollment";
 import { countFeeLines } from "@/lib/enrollment/fee-lines";
 import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero";
 import { RegenerateFeesAction } from "@/components/shared/fees/RegenerateFeesAction";
@@ -16,7 +17,8 @@ import {
   type EnrollmentFeeItem,
 } from "@/components/admin/payments/EnrollmentFeesBreakdown";
 import { PaymentHistoryList } from "@/components/admin/payments/PaymentHistoryList";
-import { StudentPaymentModal } from "@/components/admin/students/tabs/StudentPaymentModal";
+import { EnrollmentCheckoutDialog } from "@/components/admin/payments/checkout/EnrollmentCheckoutDialog";
+import { checkoutTarget } from "@/components/admin/payments/checkout/checkout-target";
 import { EnrollmentScheduleCard } from "@/components/admin/installments/EnrollmentScheduleCard";
 import { NoPaymentAccessNotice } from "@/components/admin/enrollments/tabs/NoPaymentAccessNotice";
 import { InKindDepositPanel } from "@/components/admin/enrollments/in-kind/InKindDepositPanel";
@@ -25,7 +27,7 @@ import { useInKindDepositActions } from "@/components/admin/enrollments/in-kind/
 
 interface EnrollmentPaymentsTabProps {
   enrollmentId: number;
-  enrollment?: { student_id?: number };
+  enrollment: Enrollment;
   /** Nommé dans les confirmations : on solde le frais d'un élève, pas d'un numéro. */
   studentName?: string;
 }
@@ -154,19 +156,18 @@ export function EnrollmentPaymentsTab({
 
       <InKindDepositDialogs actions={depots} studentName={studentName} />
 
-      {studentId && (
-        <StudentPaymentModal
-          studentId={studentId}
-          open={paymentOpen}
-          onClose={() => {
-            setPaymentOpen(false);
-            queryClient.invalidateQueries({ queryKey: ["students"] });
-            queryClient.invalidateQueries({
-              queryKey: ["payments", "enrollment", enrollmentId],
-            });
-          }}
-        />
-      )}
+      {/* L'inscription est connue : on l'encaisse elle, sans la redéduire
+          des frais de l'élève, qui peut en avoir une par année. */}
+      <EnrollmentCheckoutDialog
+        target={paymentOpen ? checkoutTarget(enrollment) : null}
+        onClose={() => {
+          setPaymentOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["students"] });
+          queryClient.invalidateQueries({
+            queryKey: ["payments", "enrollment", enrollmentId],
+          });
+        }}
+      />
     </div>
   );
 }

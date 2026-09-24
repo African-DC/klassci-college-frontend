@@ -19,6 +19,7 @@ import type { Template } from "@pdfme/common"
 import { image, line, table, text } from "@pdfme/schemas"
 import { downloadBlob } from "@/lib/utils"
 import { formatCell, resolveAlign, todayLabel } from "./format"
+import { withLogo } from "./logo"
 import {
   DEFAULT_PRIMARY_COLOR,
   type ExportColumn,
@@ -231,6 +232,6 @@ export async function exportToPdf(
   payload: ExportPayload,
   filename: string,
 ): Promise<void> {
-  const blob = await buildTablePdf(payload)
+  const blob = await buildTablePdf({ ...payload, branding: await withLogo(payload.branding) })
   downloadBlob(blob, filename.endsWith(".pdf") ? filename : `${filename}.pdf`)
 }

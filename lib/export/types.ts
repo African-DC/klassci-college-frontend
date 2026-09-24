@@ -38,6 +38,15 @@ export interface ExportBranding {
   schoolName: string
   /** Logo en data URL (`data:image/png;base64,...`), optionnel. */
   logoDataUrl?: string
+  /** Chemin du logo dans les paramètres ; `withLogo` en fait `logoDataUrl`. */
+  logoUrl?: string
+  /** Code de l'établissement au ministère. */
+  ministryCode?: string
+  address?: string
+  phone?: string
+  email?: string
+  /** Devise de l'établissement. */
+  motto?: string
   /** Couleur primaire de la marque (entête de table, filet). */
   primaryColor: string
   /** Couleur d'accent (ligne total, finance). */

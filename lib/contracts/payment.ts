@@ -98,6 +98,10 @@ export const PaymentSchema = z.object({
   // BE renvoie toujours `allocations: []` au minimum. Optional côté TS pour
   // compat avec les call sites qui ne consomment pas ce champ.
   allocations: z.array(PaymentAllocationSchema).optional(),
+  /** L'inscription attend-elle encore sa validation après ce versement ? */
+  enrollment_awaiting_validation: z.boolean().optional(),
+  /** Reste à payer après ce versement, lu en base par le serveur. */
+  enrollment_remaining_after: z.coerce.number().nullish(),
 })
 
 /**
@@ -153,6 +157,8 @@ export const EnrollmentPaymentCreateSchema = z.object({
   reference: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   allocations: z.array(PaymentAllocationInputSchema).optional(),
+  /** Clé d'envoi : renvoyée identique après une coupure, voir `newSubmissionKey`. */
+  idempotency_key: z.string().min(8).max(64).optional(),
 })
 
 // Preview de l'allocation avant submit (UX caissier).

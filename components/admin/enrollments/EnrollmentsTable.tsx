@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { Route } from "next"
-import { Check } from "lucide-react"
 import {
   useBulkValidateEnrollments,
   useDeleteEnrollment,
@@ -11,12 +10,15 @@ import {
   useValidateEnrollment,
 } from "@/lib/hooks/useEnrollments"
 import { enrollmentStatusView } from "@/lib/enrollment/status"
-import { STATUTS_VALIDABLES, selectionVisible } from "@/lib/enrollment/selection"
+import { prochaineEtape, selectionVisible } from "@/lib/enrollment/selection"
+import { EnrollmentNextAction } from "@/components/admin/enrollments/EnrollmentNextAction"
+import { EnrollmentCheckoutDialog } from "@/components/admin/payments/checkout/EnrollmentCheckoutDialog"
+import { checkoutTarget } from "@/components/admin/payments/checkout/checkout-target"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { BulkValidateBar } from "@/components/admin/enrollments/BulkValidateBar"
 import { StudentInitialsAvatar, colonnesInscriptions } from "@/components/admin/enrollments/enrollment-columns"
 import type { Enrollment } from "@/lib/contracts/enrollment"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,7 +48,6 @@ import {
 // Cohorte « À valider » = prospect + en_validation. La sémantique queue : c'est
 // ce que l'admin doit traiter activement à la rentrée.
 /** Reexporte pour les filtres locaux ; la source est `lib/enrollment/selection`. */
-const TO_VALIDATE_STATUSES = STATUTS_VALIDABLES
 
 
 const PAGE_SIZE = 20
@@ -121,6 +122,12 @@ export function EnrollmentsTable() {
   const [pickedYearId, setPickedYearId] = useState<number | undefined>(undefined)
   const [assignmentChip, setAssignmentChip] = useState<AssignmentChipKey>("tous")
   const [validateTarget, setValidateTarget] = useState<Enrollment | null>(null)
+  const [aEncaisser, setAEncaisser] = useState<Enrollment | null>(null)
+  // Les boutons suivent les droits de CETTE école, jamais un nom de rôle :
+  // un établissement confie la caisse au secrétariat, un autre à un caissier.
+  const { has } = usePermissions()
+  const peutValider = has("enrollments:validate")
+  const peutEncaisser = has("payments:create")
   const debouncedSearch = useDebounce(search)
   const { academicYearId, years } = useCurrentAcademicYearId(pickedYearId)
   const { data: classesData } = useClasses({ size: 100 })
@@ -180,8 +187,6 @@ export function EnrollmentsTable() {
     })
   }, [validateMutation, validateTarget])
 
-  const isToValidate = (e: Enrollment) => TO_VALIDATE_STATUSES.has(e.status)
-
   // Une liste vide à cause du filtre d'affectation n'est pas une absence de
   // données : sans cette nuance l'admin croit avoir perdu ses inscriptions.
   const emptyMessage =
@@ -189,10 +194,10 @@ export function EnrollmentsTable() {
       ? "Aucune inscription trouvée"
       : "Aucune inscription ne correspond à cette affectation"
 
-  /** Les lignes affichees qu'on a le droit de valider. */
+  /** Les lignes affichees qu'on peut valider maintenant : versement recu, et droit de le faire. */
   const validables = useMemo(
-    () => filteredItems.filter((e) => TO_VALIDATE_STATUSES.has(e.status)),
-    [filteredItems],
+    () => (peutValider ? filteredItems.filter((e) => prochaineEtape(e) === "valider") : []),
+    [filteredItems, peutValider],
   )
   // Ce qui partira au serveur : voir `lib/enrollment/selection.ts`, ou le
   // calcul est teste.
@@ -219,12 +224,15 @@ export function EnrollmentsTable() {
         toutSelectionne,
         validables,
         onValider: setValidateTarget,
+        onEncaisser: setAEncaisser,
+        peutEncaisser,
+        peutValider,
         onToutSelectionner: (tout: boolean) =>
           setSelection(tout ? new Set(validables.map((e) => e.id)) : new Set()),
       }),
     // Sans ces dependances, cocher une case ne redessine pas les cellules :
     // l'etat change, l'ecran ne bouge pas.
-    [basculer, selection, toutSelectionne, validables],
+    [basculer, selection, toutSelectionne, validables, peutEncaisser, peutValider],
   )
 
   const extraFilterCount = [status !== "a_valider", classId, pickedYearId != null].filter(Boolean).length
@@ -409,16 +417,14 @@ export function EnrollmentsTable() {
                 </div>
               }
             />
-            {isToValidate(e) && (
-              <Button
-                type="button"
-                onClick={() => setValidateTarget(e)}
-                className="h-11 w-full bg-emerald-600 text-white hover:bg-emerald-700"
-              >
-                <Check className="mr-1.5 h-4 w-4" />
-                Valider l&apos;inscription
-              </Button>
-            )}
+            <EnrollmentNextAction
+              enrollment={e}
+              peutEncaisser={peutEncaisser}
+              peutValider={peutValider}
+              onEncaisser={setAEncaisser}
+              onValider={setValidateTarget}
+              wide
+            />
           </div>
         ))}
       </div>
@@ -451,6 +457,11 @@ export function EnrollmentsTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EnrollmentCheckoutDialog
+        target={aEncaisser ? checkoutTarget(aEncaisser) : null}
+        onClose={() => setAEncaisser(null)}
+      />
     </div>
   )
 }

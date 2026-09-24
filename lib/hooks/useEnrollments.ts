@@ -80,7 +80,7 @@ export function useReEnroll() {
       enrollmentsApi.reEnroll(data, overrideReason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["enrollments"] })
-      toast.success("Reinscription enregistree")
+      toast.success("Réinscription enregistrée")
     },
     onError: toastSaufRefusPourDette,
   })

@@ -13,6 +13,7 @@
 import ExcelJS from "exceljs"
 import { downloadBlob } from "@/lib/utils"
 import { resolveAlign, toDate, toNumber, todayLabel } from "./format"
+import { withLogo } from "./logo"
 import {
   DEFAULT_ACCENT_COLOR,
   DEFAULT_PRIMARY_COLOR,
@@ -62,23 +63,79 @@ function writeDataCell(
   cell.alignment = { horizontal: resolveAlign(column), vertical: "middle" }
 }
 
-/** Ajoute le bloc d'entête marqué et renvoie le numéro de la 1re ligne libre. */
-function writeHeaderBlock(
+const LIGNE_MINISTERE = "MINISTÈRE DE L'ÉDUCATION NATIONALE ET DE L'ALPHABÉTISATION"
+const LIGNE_REPUBLIQUE = "RÉPUBLIQUE DE CÔTE D'IVOIRE"
+const DEVISE_REPUBLIQUE = "Union - Discipline - Travail"
+
+/** Hauteur du logo dans la feuille, en pixels : quatre lignes d'en-tête. */
+const LOGO_PX = 72
+
+/**
+ * L'en-tête officiel, comme sur les documents PDF de l'établissement :
+ * ministère et identité à gauche, République à droite, logo en tête.
+ *
+ * Aucune fusion de cellules : le texte déborde sur les cellules vides voisines,
+ * ce qui garde la zone de données propre au tri, aux filtres et aux tableaux
+ * croisés. Le logo est une image posée sur la feuille, pas une cellule.
+ */
+function writeOfficialHeader(
+  wb: ExcelJS.Workbook,
   ws: ExcelJS.Worksheet,
   payload: ExportPayload,
   primaryArgb: string,
 ): number {
-  const { branding, meta } = payload
-  let row = 1
+  const { branding, columns } = payload
+  const derniere = Math.max(columns.length, 4)
+  // Le logo occupe la première colonne ; le texte commence juste après.
+  const texte = branding.logoDataUrl ? 2 : 1
 
-  const school = ws.getCell(row, 1)
-  school.value = branding.schoolName
-  school.font = { bold: true, size: 14, color: { argb: primaryArgb } }
-  row += 1
+  const gauche: [string, Partial<ExcelJS.Font>][] = [
+    [LIGNE_MINISTERE, { bold: true, size: 9 }],
+    [branding.schoolName.toUpperCase(), { bold: true, size: 13, color: { argb: primaryArgb } }],
+  ]
+  if (branding.ministryCode) gauche.push([`Code établissement : ${branding.ministryCode}`, { size: 9 }])
+  const contact = [branding.address, branding.phone, branding.email].filter(Boolean).join("   ·   ")
+  if (contact) gauche.push([contact, { size: 9, color: { argb: "FF555555" } }])
+  if (branding.motto) gauche.push([branding.motto, { italic: true, size: 9, color: { argb: "FF555555" } }])
+
+  gauche.forEach(([valeur, police], index) => {
+    const cell = ws.getCell(index + 1, texte)
+    cell.value = valeur
+    cell.font = police
+  })
+
+  const republique = ws.getCell(1, derniere)
+  republique.value = LIGNE_REPUBLIQUE
+  republique.font = { bold: true, size: 9 }
+  republique.alignment = { horizontal: "right" }
+  const devise = ws.getCell(2, derniere)
+  devise.value = DEVISE_REPUBLIQUE
+  devise.font = { italic: true, size: 9 }
+  devise.alignment = { horizontal: "right" }
+
+  if (branding.logoDataUrl) {
+    const image = wb.addImage({ base64: branding.logoDataUrl, extension: "png" })
+    ws.addImage(image, { tl: { col: 0.1, row: 0.1 }, ext: { width: LOGO_PX, height: LOGO_PX } })
+    // Assez de hauteur sous le logo pour qu'il ne chevauche pas le titre.
+    for (let r = 1; r <= Math.max(gauche.length, 4); r += 1) ws.getRow(r).height = 20
+  }
+
+  return Math.max(gauche.length, branding.logoDataUrl ? 4 : 2) + 2
+}
+
+/** Ajoute le bloc d'entête marqué et renvoie le numéro de la 1re ligne libre. */
+function writeHeaderBlock(
+  wb: ExcelJS.Workbook,
+  ws: ExcelJS.Worksheet,
+  payload: ExportPayload,
+  primaryArgb: string,
+): number {
+  const { meta } = payload
+  let row = writeOfficialHeader(wb, ws, payload, primaryArgb)
 
   const title = ws.getCell(row, 1)
   title.value = meta.title
-  title.font = { bold: true, size: 12 }
+  title.font = { bold: true, size: 13, color: { argb: primaryArgb } }
   row += 1
 
   if (meta.subtitle) {
@@ -130,7 +187,7 @@ export async function buildWorkbook(
   wb.created = new Date()
   const ws = wb.addWorksheet(payload.meta.title.slice(0, 31) || "Export")
 
-  const headerRowNumber = writeHeaderBlock(ws, payload, primaryArgb)
+  const headerRowNumber = writeHeaderBlock(wb, ws, payload, primaryArgb)
 
   // Largeurs de colonnes
   columns.forEach((col, index) => {
@@ -184,7 +241,7 @@ export async function exportToExcel(
   payload: ExportPayload,
   filename: string,
 ): Promise<void> {
-  const wb = await buildWorkbook(payload)
+  const wb = await buildWorkbook({ ...payload, branding: await withLogo(payload.branding) })
   const buffer = await wb.xlsx.writeBuffer()
   const blob = new Blob([buffer], { type: XLSX_MIME })
   downloadBlob(blob, filename.endsWith(".xlsx") ? filename : `${filename}.xlsx`)

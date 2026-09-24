@@ -3,7 +3,8 @@
  *
  * Centralise le mapping `SchoolSettings` -> `ExportBranding` pour éviter la
  * répétition dans chaque page qui pose un `<ExportMenu>` (élèves, paiements,
- * notes, présences...). Le logo n'est volontairement pas géré ici.
+ * notes, présences...). Le logo n'est ici qu'un chemin : `withLogo` le charge
+ * au moment de l'export, pour ne pas le télécharger à chaque affichage.
  */
 
 import type { SchoolSettings } from "@/lib/contracts/settings"
@@ -18,5 +19,11 @@ export function brandingFromSettings(
     schoolName: settings?.school_name ?? "Établissement",
     primaryColor: settings?.primary_color ?? DEFAULT_PRIMARY_COLOR,
     accentColor: settings?.accent_color ?? DEFAULT_ACCENT_COLOR,
+    logoUrl: settings?.logo_url ?? undefined,
+    ministryCode: settings?.ministry_code ?? undefined,
+    address: settings?.address ?? undefined,
+    phone: settings?.phone ?? undefined,
+    email: settings?.email ?? undefined,
+    motto: settings?.motto ?? undefined,
   }
 }

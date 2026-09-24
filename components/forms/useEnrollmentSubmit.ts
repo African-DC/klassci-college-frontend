@@ -2,7 +2,7 @@
 
 import type { UseFormReturn } from "react-hook-form"
 import { asEnrollmentBlocked } from "@/lib/contracts/enrollment"
-import type { NewEnrollment, ReEnrollment } from "@/lib/contracts/enrollment"
+import type { Enrollment, NewEnrollment, ReEnrollment } from "@/lib/contracts/enrollment"
 import { useCreateWithStudent, useReEnroll } from "@/lib/hooks/useEnrollments"
 import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
 import { inKindDepositsPayload, type EnrollmentType } from "@/components/forms/enrollment-wizard"
@@ -16,7 +16,8 @@ interface UseEnrollmentSubmitOptions {
   inKindDeposits: Record<number, boolean>
   photo: File | null
   onPhotoConsumed: () => void
-  onSuccess: () => void
+  /** Rend l'inscription créée : l'écran enchaîne sur son encaissement. */
+  onSuccess: (enrollment: Enrollment) => void
 }
 
 /**
@@ -71,7 +72,7 @@ export function useEnrollmentSubmit({
               await attachPhoto.mutateAsync({ studentId: enrollment.student_id, photo })
               newForm.reset()
               onPhotoConsumed()
-              onSuccess()
+              onSuccess(enrollment)
             },
           },
         )
@@ -84,9 +85,9 @@ export function useEnrollmentSubmit({
       reEnroll.mutate(
         { data, overrideReason },
         {
-          onSuccess: () => {
+          onSuccess: (enrollment) => {
             reForm.reset()
-            onSuccess()
+            onSuccess(enrollment)
           },
         },
       )

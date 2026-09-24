@@ -1,7 +1,7 @@
 "use client"
 
 import { enrollmentStatusView } from "@/lib/enrollment/status"
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -40,6 +40,7 @@ import { ArchiveActionDialog, ARCHIVE_MENU_LABEL } from "@/components/shared/Arc
 import { useArchiveAction } from "@/lib/hooks/useArchiveAction"
 import type { HeroKpi } from "@/components/shared/PageHero"
 import { EnrollmentEditModal } from "./EnrollmentEditModal"
+import { EnrollmentNextStepCard } from "./EnrollmentNextStepCard"
 import { EnrollmentOverviewTab } from "./tabs/EnrollmentOverviewTab"
 import { EnrollmentPaymentsTab } from "./tabs/EnrollmentPaymentsTab"
 import { useEnrollment, useDeleteEnrollment } from "@/lib/hooks/useEnrollments"
@@ -141,6 +142,11 @@ export function EnrollmentDetailClient({ enrollmentId }: EnrollmentDetailClientP
           </DropdownMenu>
         }
       />
+
+      {/* Suspense : la carte lit l'adresse (`?action=`), ce que Next exige d'isoler. */}
+      <Suspense fallback={null}>
+        <EnrollmentNextStepCard enrollment={enrollment} />
+      </Suspense>
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
