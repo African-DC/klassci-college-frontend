@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-23T14:16:55Z",
+  "generated_at": "2026-09-24T11:32:08Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -1197,6 +1197,14 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "L'export Excel ou PDF d'une liste de classe contient tous les élèves, et plus seulement les vingt premiers affichés à l'écran",
+            "audience": [
+              "admin",
+              "secrétariat"
+            ],
+            "pull_request": 487
+          },
           {
             "text": "Le journal montre ce qui a changé directement dans la liste, l'ancienne valeur à côté de la nouvelle, sans ouvrir le détail",
             "audience": [

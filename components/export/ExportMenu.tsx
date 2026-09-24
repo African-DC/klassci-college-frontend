@@ -48,6 +48,9 @@ export function ExportMenu({ filename, getPayload, disabled, className }: Export
   const handleExport = React.useCallback(
     async (kind: ExportKind) => {
       setLoading(kind)
+      // La charge utile peut devoir charger toute la liste depuis l'API :
+      // on le dit, plutôt que de laisser croire que le clic n'a rien fait.
+      const toastId = toast.loading("Préparation de l'export…")
       try {
         const payload = await getPayload()
         if (kind === "excel") {
@@ -55,12 +58,14 @@ export function ExportMenu({ filename, getPayload, disabled, className }: Export
         } else {
           await exportToPdf(payload, filename)
         }
+        const count = payload.rows.length
         toast.success(
-          kind === "excel" ? "Export Excel généré" : "Export PDF généré",
+          `${kind === "excel" ? "Export Excel généré" : "Export PDF généré"} : ${count} ligne${count > 1 ? "s" : ""}`,
+          { id: toastId },
         )
       } catch (error) {
         console.error("Export error:", error)
-        toast.error("Impossible de générer l'export. Veuillez réessayer.")
+        toast.error("Impossible de générer l'export. Veuillez réessayer.", { id: toastId })
       } finally {
         setLoading(null)
       }

@@ -21,7 +21,7 @@ import { getUploadUrl, cn } from "@/lib/utils"
 import { StudentEditModal } from "./StudentEditModal"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useSettings } from "@/lib/hooks/useSettings"
-import { buildStudentsExportPayload } from "./students-export"
+import { loadStudentsExportPayload } from "./students-export"
 
 // Mini-icône genre inline à côté du nom (KEEP IN DATA pour DREN/bulletin compliance,
 // mais hidden de la colonne dédiée).
@@ -286,7 +286,7 @@ export function StudentsTable({
           filename="eleves"
           disabled={items.length === 0}
           getPayload={() =>
-            buildStudentsExportPayload({ students: items, settings, filters: exportFilters })
+            loadStudentsExportPayload({ params, settings, filters: exportFilters })
           }
         />
       </div>
