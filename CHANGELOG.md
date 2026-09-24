@@ -33,6 +33,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse *(comptable, caissier)*
 
 ### Fixed
+- L'export Excel ou PDF d'une liste de classe contient tous les élèves, et plus seulement les vingt premiers affichés à l'écran *(admin, secrétariat)* (#487)
 - Le journal montre ce qui a changé directement dans la liste, l'ancienne valeur à côté de la nouvelle, sans ouvrir le détail *(admin, directeur, comptable)*
 - Chaque ligne affiche le nom de la fiche en premier, le numéro en petit, et signale une fiche archivée ou supprimée *(admin, directeur, comptable)*
 - Depuis la consultation d'une attestation ou d'un certificat, le détail ouvre la fiche de l'élève *(admin, directeur)*
