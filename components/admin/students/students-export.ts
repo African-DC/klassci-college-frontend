@@ -36,7 +36,10 @@ export function buildStudentsExportPayload({
     },
     columns: [
       { key: "matricule", header: "Matricule" },
+      // Deux colonnes : trier, filtrer ou fusionner le nom et les prénoms est
+      // un geste d'Excel ; les séparer à la main est une corvée.
       { key: "nom", header: "Nom" },
+      { key: "prenoms", header: "Prénoms" },
       { key: "sexe", header: "Sexe" },
       { key: "naissance", header: "Naissance", format: "date" },
       { key: "lieu_naissance", header: "Lieu de naissance" },
@@ -45,7 +48,8 @@ export function buildStudentsExportPayload({
     ],
     rows: students.map((s) => ({
       matricule: s.enrollment_number ?? "",
-      nom: `${s.last_name} ${s.first_name}`.trim(),
+      nom: s.last_name ?? "",
+      prenoms: s.first_name ?? "",
       sexe: s.genre ? (SEX_LABELS[s.genre] ?? s.genre) : "",
       naissance: s.birth_date ?? "",
       lieu_naissance: s.birth_place ?? "",

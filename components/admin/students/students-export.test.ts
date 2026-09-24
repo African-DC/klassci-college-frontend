@@ -9,7 +9,7 @@
 import { describe, expect, it, vi } from "vitest"
 import type { PaginatedResponse } from "@/lib/contracts"
 import type { Student } from "@/lib/contracts/student"
-import { loadStudentsExportPayload } from "./students-export"
+import { buildStudentsExportPayload, loadStudentsExportPayload } from "./students-export"
 
 function eleve(id: number): Student {
   return {
@@ -75,5 +75,18 @@ describe("l'export Excel d'une classe", () => {
     })
 
     expect(payload.rows[0].statut).toBe("Inscrit")
+  })
+})
+
+describe("nom et prénoms", () => {
+  it("sont dans deux colonnes distinctes", () => {
+    const payload = buildStudentsExportPayload({
+      students: [{ ...eleve(1), last_name: "Traoré", first_name: "Aminata Awa" }],
+      settings: undefined,
+    })
+    expect(payload.columns.map((c) => c.header)).toEqual(
+      expect.arrayContaining(["Nom", "Prénoms"]),
+    )
+    expect(payload.rows[0]).toMatchObject({ nom: "Traoré", prenoms: "Aminata Awa" })
   })
 })
