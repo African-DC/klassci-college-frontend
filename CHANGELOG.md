@@ -46,6 +46,9 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - Une fenêtre « Nouveautés » dit ce qui a changé pour votre rôle, signalée par une pastille quand il y a du neuf *(tous)*
 - Le point sur une catégorie de frais : ce qui est entré en argent, ce qui a été déposé en nature, qui doit encore, sur la période choisie, avec export. La caissière y fait le point de sa propre caisse *(comptable, caissier)*
 
+### Changed
+- En corrigeant le niveau antérieur d'un élève sans toucher à sa qualité, l'écran annonce que la qualité sera recalculée : Redoublant si ce niveau est celui de la classe *(secrétariat, éducateur)*
+
 ### Fixed
 - L'export Excel ou PDF d'une liste de classe contient tous les élèves, et plus seulement les vingt premiers affichés à l'écran *(admin, secrétariat)* (#487)
 - Le journal montre ce qui a changé directement dans la liste, l'ancienne valeur à côté de la nouvelle, sans ouvrir le détail *(admin, directeur, comptable)*

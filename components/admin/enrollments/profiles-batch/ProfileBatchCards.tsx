@@ -14,6 +14,7 @@ export function ProfileBatchCards({
   valueOf,
   isChanged,
   isFaulty,
+  qualityHintOf,
   onChange,
   disabled,
   levelName,
@@ -38,7 +39,8 @@ export function ProfileBatchCards({
             idPrefix={`batch-card-${row.enrollment_id}`}
             studentName={rowName(row)}
             value={valueOf(row)}
-            onChange={(next) => onChange(row, next)}
+            onChange={(next, field) => onChange(row, next, field)}
+            qualityHint={qualityHintOf(row)}
             levelName={levelName}
             disabled={disabled}
           />

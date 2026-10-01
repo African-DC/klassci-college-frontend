@@ -50,6 +50,7 @@ vi.mock("@/lib/hooks/useEnrollmentProfile", () => ({
   useUpdateEnrollmentProfile: () => ({ mutate: envoyerProfil, isPending: false }),
 }))
 
+import { pickSelectOption } from "@/tests/radix-select"
 import { EnrollmentEditModal } from "./EnrollmentEditModal"
 
 describe("modifier le profil d'une inscription", () => {
@@ -101,4 +102,54 @@ describe("modifier le profil d'une inscription", () => {
     expect(envoyerProfil).not.toHaveBeenCalled()
     expect(onClose).toHaveBeenCalled()
   })
+
+  it("changer le niveau antérieur seul laisse le serveur recalculer la qualité", async () => {
+    envoyer.mockClear()
+    envoyerProfil.mockClear()
+    render(<EnrollmentEditModal enrollmentId={42} open onClose={() => {}} />)
+    pickSelectOption(screen.getByLabelText("Niveau antérieur"), "6ème")
+    expect(screen.getByText(/sera recalculée à partir du nouveau niveau antérieur/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Mettre à jour" }))
+    await waitFor(() => expect(envoyer).toHaveBeenCalledOnce())
+    ;(envoyer.mock.calls[0][1] as { onSuccess: () => void }).onSuccess()
+    // La qualité ne part pas : sinon le serveur ne la recalculerait jamais.
+    expect(envoyerProfil.mock.calls[0][0]).toEqual({
+      enrollmentId: 42,
+      changes: { previous_level: "6E" },
+    })
+  })
+
+  it("une qualité touchée part avec le niveau antérieur, et l'emporte", async () => {
+    envoyer.mockClear()
+    envoyerProfil.mockClear()
+    render(<EnrollmentEditModal enrollmentId={42} open onClose={() => {}} />)
+    pickSelectOption(screen.getByLabelText("Niveau antérieur"), "6ème")
+    // Choisie à la main, même identique à l'enregistrée, elle part telle quelle.
+    fireEvent.click(screen.getByRole("button", { name: "Non renseigné" }))
+    expect(screen.queryByText(/sera recalculée/)).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "Mettre à jour" }))
+    await waitFor(() => expect(envoyer).toHaveBeenCalledOnce())
+    ;(envoyer.mock.calls[0][1] as { onSuccess: () => void }).onSuccess()
+    expect(envoyerProfil.mock.calls[0][0].changes).toEqual({
+      previous_level: "6E",
+      is_repeater: null,
+    })
+  })
+
+  it("effacer le niveau antérieur n'annonce aucun recalcul et ne touche pas à la qualité", async () => {
+    envoyer.mockClear()
+    envoyerProfil.mockClear()
+    render(<EnrollmentEditModal enrollmentId={42} open onClose={() => {}} />)
+    pickSelectOption(screen.getByLabelText("Niveau antérieur"), "Non renseigné")
+    // Le serveur laisse la qualité telle quelle : promettre un recalcul serait faux.
+    expect(screen.queryByText(/sera recalculée/)).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "Mettre à jour" }))
+    await waitFor(() => expect(envoyer).toHaveBeenCalledOnce())
+    ;(envoyer.mock.calls[0][1] as { onSuccess: () => void }).onSuccess()
+    expect(envoyerProfil.mock.calls[0][0].changes).toEqual({ previous_level: null })
+  })
 })
+

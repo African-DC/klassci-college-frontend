@@ -10,10 +10,12 @@ import {
   type EnrollmentProfile,
 } from "@/lib/contracts/enrollment-profile"
 import { OptionSelect, RepeaterChoice } from "./ProfileInputs"
+import { QualityHintText, type QualityHint } from "./QualityHintText"
 
 interface EnrollmentProfileFieldsProps {
   value: EnrollmentProfile
-  onChange: (next: EnrollmentProfile) => void
+  /** `field` nomme le champ touché : les écrans de correction suivent la qualité. */
+  onChange: (next: EnrollmentProfile, field: keyof EnrollmentProfile) => void
   /** Niveau de la classe choisie : en 6ème et en 5ème, pas de LV2. */
   levelName?: string | null
   disabled?: boolean
@@ -22,10 +24,14 @@ interface EnrollmentProfileFieldsProps {
   /** Réinscription : dire que le serveur reprend l'an dernier si on laisse vide. */
   reEnrollment?: boolean
   /**
-   * Création d'une inscription : le serveur y déduit la qualité du niveau
-   * antérieur quand on la laisse sur « Non renseigné ». Ailleurs, il ne déduit rien.
+   * Ce que le serveur fera de la qualité laissée de côté, pour le dire sous le champ :
+   * - `creation` : à la création, une qualité « Non renseigné » est déduite
+   *   du niveau antérieur ;
+   * - `recompute` : en correction, le niveau antérieur a changé sans que la
+   *   qualité soit touchée, le serveur la recalcule ;
+   * - `null` : rien à annoncer.
    */
-  atCreation?: boolean
+  qualityHint?: QualityHint
   /** Saisie par classe : le nom de l'élève titre le bloc et nomme ses champs. */
   studentName?: string
 }
@@ -43,12 +49,12 @@ export function EnrollmentProfileFields({
   disabled,
   idPrefix,
   reEnrollment,
-  atCreation,
+  qualityHint = null,
   studentName,
 }: EnrollmentProfileFieldsProps) {
   const lv2Allowed = lv2AllowedForLevel(levelName)
   const set = <K extends keyof EnrollmentProfile>(key: K, next: EnrollmentProfile[K]) =>
-    onChange({ ...value, [key]: next })
+    onChange({ ...value, [key]: next }, key)
 
   return (
     <fieldset className="space-y-4 rounded-lg border border-border/60 bg-muted/40 p-4">
@@ -96,12 +102,7 @@ export function EnrollmentProfileFields({
           onChange={(v) => set("is_repeater", v)}
           disabled={disabled}
         />
-        {atCreation && value.previous_level && value.is_repeater === null ? (
-          <p className="text-xs text-muted-foreground">
-            Laissée sur « Non renseigné », la qualité sera déduite du niveau antérieur : Redoublant
-            s&apos;il est celui de la classe, Non redoublant sinon.
-          </p>
-        ) : null}
+        <QualityHintText hint={qualityHint} profile={value} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
