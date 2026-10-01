@@ -45,6 +45,8 @@ export const ADMIN_NAVIGATION: AdminNavSection[] = [
       // Saisie en lot : gardee sur `enrollments:update` et non sur `read`, parce
       // qu'un ecran ou chaque bouton rendrait 403 est pire que pas d'entree du tout.
       { label: "Saisie par classe", href: "/admin/enrollments/saisie-classe" as Route, iconName: "ClipboardList", anyOf: ["enrollments:update"] },
+      // Niveau antérieur, qualité, LV2, art : ce que la fiche de renseignements réclame.
+      { label: "Saisie des renseignements", href: "/admin/enrollments/renseignements" as Route, iconName: "ClipboardCheck", anyOf: ["enrollments:update"] },
       { label: "Promotions", href: "/admin/promotions" as Route, iconName: "ArrowUpFromLine", anyOf: ["enrollments:promote"] },
       { label: "Élèves", href: "/admin/students", iconName: "GraduationCap", anyOf: ["admin:students:read"] },
       { label: "Parents", href: "/admin/parents" as Route, iconName: "HeartHandshake", anyOf: ["admin:parents:read"] },

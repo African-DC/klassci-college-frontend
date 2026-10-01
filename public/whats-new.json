@@ -1,55 +1,53 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-09-24T20:41:03Z",
+  "generated_at": "2026-10-01T21:16:03Z",
   "version": "Unreleased",
   "released": false,
-  "total": 350,
+  "total": 355,
   "sections": {
     "Added": [
+      {
+        "text": "La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune",
+        "audience": [
+          "comptable",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Niveau antérieur, qualité, LV2 et discipline artistique se saisissent à l'inscription, sur la fiche de l'inscription et pour toute une classe d'un coup",
+        "audience": [
+          "secrétariat",
+          "éducateur"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "À la réinscription, les renseignements laissés vides sont repris de l'année précédente",
+        "audience": [
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "La fiche de l'inscription indique si l'élève est boursier, avec la nature de la bourse, l'organisme et le numéro de décision",
+        "audience": [
+          "admin",
+          "comptable"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "La nationalité de l'élève se renseigne à la création et à la modification de sa fiche",
+        "audience": [
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
       {
         "text": "« Modifier l'inscription » permet de choisir nouvel élève, déjà inscrit ici avant ou non tranché, et prévient que les frais liés au profil seront recalculés",
         "audience": [
           "admin",
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "L'export Excel des élèves sépare le nom et les prénoms en deux colonnes",
-        "audience": [
-          "admin",
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "La fiche d'une classe propose la liste de classe en Excel à côté du PDF, avec tous les élèves, le logo et l'en-tête officiel",
-        "audience": [
-          "admin",
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Les exports Excel et PDF portent le logo de l'établissement, et l'Excel reprend l'en-tête officiel : ministère, République de Côte d'Ivoire, nom, code, contacts et devise",
-        "audience": [
-          "admin",
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Après une inscription, la fenêtre enchaîne sur l'encaissement de cette inscription, puis sur le reçu et la validation, sans rechercher l'élève à nouveau",
-        "audience": [
-          "secrétariat",
-          "caissier"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Chaque encaissement se termine sur un écran de reçu : répartition, reste à payer et bouton « Voir et imprimer le reçu »",
-        "audience": [
-          "caissier",
           "secrétariat"
         ],
         "pull_request": null

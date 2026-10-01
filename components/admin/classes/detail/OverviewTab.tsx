@@ -36,6 +36,7 @@ import {
   triggerBlobDownload,
 } from "./class-downloads"
 import { ClassRosterExcelButton } from "./ClassRosterExcelButton"
+import { InformationSheetDocRow } from "../information-sheet/InformationSheetDocRow"
 
 interface OverviewTabProps {
   classData: Class
@@ -260,6 +261,8 @@ export function OverviewTab({ classData, slots }: OverviewTabProps) {
             accent
             extra={<ClassRosterExcelButton classId={classData.id} className={name} />}
           />
+
+          <InformationSheetDocRow classId={classData.id} className={name} />
 
           {/* Feuille d'appel (présences vierges) */}
           <DocRow

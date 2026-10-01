@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { EnrollmentProfileFieldsSchema, ScholarshipSchema } from "./enrollment-profile"
 
 // Miroir de app/schemas/enrollment.py (backend)
 
@@ -78,6 +79,10 @@ export const EnrollmentSchema = z.object({
    * présume rien.
    */
   awaiting_payment: z.boolean().nullish(),
+  // Fiche de renseignements (BE #469) : `null` = pas renseigné, jamais deviné.
+  ...EnrollmentProfileFieldsSchema.shape,
+  /** Réponse seulement. `null` = non boursier (ou pas encore saisi). */
+  scholarship: ScholarshipSchema.nullish(),
 })
 
 export const EnrollmentCreateSchema = z.object({
@@ -95,6 +100,7 @@ export const EnrollmentCreateSchema = z.object({
   in_kind_deposits: z
     .array(z.object({ fee_category_id: z.number(), deposited: z.boolean() }))
     .optional(),
+  ...EnrollmentProfileFieldsSchema.shape,
 })
 
 export const EnrollmentUpdateSchema = z.object({
@@ -148,6 +154,7 @@ export const NewEnrollmentSchema = z.object({
   last_name: z.string().min(1, "Le nom est requis"),
   birth_date: z.string().nullable().optional(),
   birth_place: z.string().nullable().optional(),
+  nationality: z.string().max(60, "60 caractères maximum").nullable().optional(),
   genre: z.enum(["M", "F"]).nullable().optional(),
   enrollment_number: z.string().nullable().optional(),
   city: z.string().nullable().optional(),
@@ -166,6 +173,7 @@ export const NewEnrollmentSchema = z.object({
   in_kind_deposits: z
     .array(z.object({ fee_category_id: z.number(), deposited: z.boolean() }))
     .optional(),
+  ...EnrollmentProfileFieldsSchema.shape,
 })
 
 export const ReEnrollmentSchema = z.object({
@@ -182,6 +190,8 @@ export const ReEnrollmentSchema = z.object({
   in_kind_deposits: z
     .array(z.object({ fee_category_id: z.number(), deposited: z.boolean() }))
     .optional(),
+  // Vides, le serveur reprend ceux de l'an dernier (réinscription).
+  ...EnrollmentProfileFieldsSchema.shape,
 })
 
 export const FeeVariantOptionSchema = z.object({
