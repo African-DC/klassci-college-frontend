@@ -61,6 +61,8 @@ export interface ExportMeta {
   subtitle?: string
   /** Description des filtres appliqués (ex : "Classe 6e A, T1"). */
   filters?: string
+  /** Nom de la feuille Excel (défaut : le titre). Nettoyé avant usage. */
+  sheetName?: string
   /** Date de génération lisible (défaut : date du jour si omise). */
   date?: string
 }

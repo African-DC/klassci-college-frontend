@@ -24,6 +24,7 @@ import { getUploadUrl } from "@/lib/utils"
 import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { fetchClassRoster, fileSafeName, triggerBlobDownload } from "./class-downloads"
 import { ClassRosterExcelButton } from "./ClassRosterExcelButton"
+import { InformationSheetExcelButton } from "../information-sheet/InformationSheetExcelButton"
 
 interface StudentsTabProps {
   classId: number
@@ -85,7 +86,7 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
   }
 
   const downloadBtn = (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <PdfPreviewButton
         fetchBlob={() => fetchClassRoster(classId)}
         label={`la liste de la classe ${className}`}
@@ -108,11 +109,18 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
         Liste (PDF)
       </Button>
       {students.length > 0 ? (
-        <ClassRosterExcelButton
-          classId={classId}
-          className={className}
-          buttonClassName="h-11 w-auto sm:h-9"
-        />
+        <>
+          <ClassRosterExcelButton
+            classId={classId}
+            className={className}
+            buttonClassName="h-11 w-auto sm:h-9"
+          />
+          <InformationSheetExcelButton
+            classId={classId}
+            className={className}
+            buttonClassName="h-11 w-auto sm:h-9"
+          />
+        </>
       ) : null}
     </div>
   )

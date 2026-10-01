@@ -1,13 +1,19 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { EnrollmentUpdateSchema, type EnrollmentUpdate } from "@/lib/contracts/enrollment"
+import {
+  profileChanges,
+  profileOf,
+  type EnrollmentProfile,
+} from "@/lib/contracts/enrollment-profile"
 import { useEnrollment, useUpdateEnrollment } from "@/lib/hooks/useEnrollments"
+import { useUpdateEnrollmentProfile } from "@/lib/hooks/useEnrollmentProfile"
 import { useClasses } from "@/lib/hooks/useClasses"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   Select,
   SelectContent,
@@ -31,6 +37,8 @@ import {
 } from "@/components/ui/form"
 import { AssignmentStatusField } from "@/components/forms/AssignmentStatusField"
 import { NewStudentChoiceGroup } from "@/components/forms/NewStudentChoiceGroup"
+import { EnrollmentProfileFields } from "@/components/shared/enrollment-profile/EnrollmentProfileFields"
+import { EditFormSkeleton, EnrollmentStatusField } from "./EnrollmentEditFields"
 
 interface EnrollmentEditModalProps {
   enrollmentId: number | null
@@ -38,24 +46,14 @@ interface EnrollmentEditModalProps {
   onClose: () => void
 }
 
-function EditFormSkeleton() {
-  return (
-    <div className="space-y-5">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="space-y-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-11 w-full" />
-        </div>
-      ))}
-      <Skeleton className="h-11 w-full" />
-    </div>
-  )
-}
-
 function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: () => void }) {
   const { data: enrollment, isLoading } = useEnrollment(enrollmentId)
   const { mutate, isPending, error } = useUpdateEnrollment(enrollmentId)
+  const updateProfile = useUpdateEnrollmentProfile()
   const { data: classesData, isLoading: classesLoading } = useClasses({ size: 100 })
+  // Les renseignements de la fiche partent par leur propre route
+  // (PATCH /profile) : `null` tant que la secrétaire n'y a pas touché.
+  const [profileDraft, setProfileDraft] = useState<EnrollmentProfile | null>(null)
 
   const classes = classesData?.items ?? []
 
@@ -80,12 +78,24 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
   // changer les recalcule. On le dit dès qu'il change, pas après l'envoi.
   const profil = form.watch("is_new_student")
   const profilChange = enrollment !== undefined && (profil ?? null) !== (enrollment.is_new_student ?? null)
+  const levelName = classes.find((c) => c.id === form.watch("class_id"))?.level_name ?? null
 
   if (isLoading || !enrollment) return <EditFormSkeleton />
 
+  const savedProfile = profileOf(enrollment)
+  const profile = profileDraft ?? savedProfile
+  const pending = isPending || updateProfile.isPending
+
   function onSubmit(data: EnrollmentUpdate) {
+    // Rien ne part tant que la secrétaire n'a pas touché aux renseignements.
+    // Pas de nettoyage silencieux de la LV2 au changement de classe : le
+    // serveur la retire lui-même quand la nouvelle classe est une 6ème ou 5ème.
+    const changes = profileDraft ? profileChanges(savedProfile, profileDraft) : {}
     mutate(data, {
-      onSuccess: () => onClose(),
+      onSuccess: () => {
+        if (Object.keys(changes).length === 0) return onClose()
+        updateProfile.mutate({ enrollmentId, changes }, { onSuccess: () => onClose() })
+      },
     })
   }
 
@@ -131,7 +141,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
                 value={field.value ?? null}
                 onChange={field.onChange}
                 allowUndecided
-                disabled={isPending}
+                disabled={pending}
               />
               {profilChange ? (
                 <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
@@ -157,30 +167,15 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
           onDecisionCleared={() => form.setValue("assignment_decision_number", null)}
         />
 
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Statut</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Sélectionner un statut" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="prospect">Prospect</SelectItem>
-                  <SelectItem value="en_validation">En validation</SelectItem>
-                  <SelectItem value="valide">Validé</SelectItem>
-                  <SelectItem value="rejete">Rejeté</SelectItem>
-                  <SelectItem value="annule">Annulé</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
+        <EnrollmentProfileFields
+          idPrefix={`enrollment-edit-${enrollmentId}`}
+          value={profile}
+          onChange={setProfileDraft}
+          levelName={levelName}
+          disabled={pending}
         />
+
+        <EnrollmentStatusField control={form.control} />
 
         <FormField
           control={form.control}
@@ -207,13 +202,8 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
           </div>
         )}
 
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full h-11 font-semibold"
-          disabled={isPending}
-        >
-          {isPending ? "Mise à jour..." : "Mettre à jour"}
+        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={pending}>
+          {pending ? "Mise à jour..." : "Mettre à jour"}
         </Button>
       </form>
     </Form>
@@ -223,7 +213,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
 export function EnrollmentEditModal({ enrollmentId, open, onClose }: EnrollmentEditModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg" aria-describedby={undefined}>
+      <DialogContent className="max-h-[92dvh] max-w-lg overflow-y-auto" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Modifier l&apos;inscription</DialogTitle>
         </DialogHeader>

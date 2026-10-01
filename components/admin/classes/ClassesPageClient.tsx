@@ -7,6 +7,7 @@ import { useAdminSummary } from "@/lib/hooks/useDashboard"
 import { ClassesTable } from "./ClassesTable"
 import { ClassesTreeView } from "./ClassesTreeView"
 import { ClassCreateModal } from "./ClassCreateModal"
+import { AllClassesInformationSheetButton } from "./information-sheet/AllClassesInformationSheetButton"
 
 export function ClassesPageClient() {
   const [createOpen, setCreateOpen] = useState(false)
@@ -54,6 +55,8 @@ export function ClassesPageClient() {
                 Table
               </button>
             </div>
+            {/* Toutes les classes de l'année en un classeur, une feuille par classe. */}
+            <AllClassesInformationSheetButton className={heroGlassBtn} />
             <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
               <Plus aria-hidden="true" className="h-4 w-4" />
               Nouvelle classe

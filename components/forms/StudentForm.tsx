@@ -26,6 +26,7 @@ import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhot
 import { useAttachStudentPhoto } from "@/lib/hooks/useStudentPhoto"
 import { DuplicateWarning } from "@/components/shared/DuplicateWarning"
 import { useFormDuplicates } from "@/lib/hooks/useFormDuplicates"
+import { NationalityField } from "@/components/forms/NationalityField"
 
 interface StudentFormProps {
   onSuccess: () => void
@@ -43,6 +44,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
       enrollment_number: "",
       birth_date: "",
       birth_place: "",
+      nationality: null,
       genre: undefined,
       city: "",
       commune: "",
@@ -204,6 +206,8 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
             )}
           />
         </div>
+
+        <NationalityField control={form.control} name="nationality" />
 
         <div className="grid grid-cols-2 gap-4">
           <FormField
