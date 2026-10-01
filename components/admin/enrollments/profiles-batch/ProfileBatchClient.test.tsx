@@ -72,6 +72,7 @@ vi.mock("@/lib/hooks/useEnrollmentProfile", () => ({
 
 import { ApiError } from "@/lib/api/client"
 import { ProfileBatchError } from "@/lib/api/enrollment-profile"
+import { pickSelectOption } from "@/tests/radix-select"
 import { ProfileBatchClient } from "./ProfileBatchClient"
 
 /** Le premier groupe « Qualité » de l'élève : le tableau (les cartes en ont un aussi). */
@@ -122,6 +123,33 @@ describe("la saisie des renseignements par classe", () => {
     expect(within(ligne).getByText("KONÉ Awa")).toBeInTheDocument()
     expect(ligne).toHaveAttribute("aria-invalid", "true")
     etat.error = null
+  })
+
+  it("un niveau antérieur changé seul n'envoie pas la qualité, et l'annonce", () => {
+    envoyer.mockClear()
+    render(<ProfileBatchClient />)
+    pickSelectOption(
+      screen.getAllByRole("combobox", { name: "Niveau antérieur de KONÉ Awa" })[0],
+      "6ème",
+    )
+    expect(screen.getAllByText(/sera recalculée à partir du nouveau niveau antérieur/).length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole("button", { name: /Enregistrer/ }))
+    expect(envoyer.mock.calls[0][0]).toEqual([{ enrollment_id: 2, previous_level: "6E" }])
+  })
+
+  it("une qualité touchée part avec le niveau antérieur", () => {
+    envoyer.mockClear()
+    render(<ProfileBatchClient />)
+    pickSelectOption(
+      screen.getAllByRole("combobox", { name: "Niveau antérieur de KONÉ Awa" })[0],
+      "6ème",
+    )
+    fireEvent.click(within(qualite("KONÉ Awa")).getByRole("button", { name: "Non renseigné" }))
+    expect(screen.queryByText(/sera recalculée/)).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: /Enregistrer/ }))
+    expect(envoyer.mock.calls[0][0]).toEqual([
+      { enrollment_id: 2, previous_level: "6E", is_repeater: null },
+    ])
   })
 })
 

@@ -21,6 +21,10 @@ import {
   type EnrollmentProfile,
 } from "@/lib/contracts/enrollment-profile"
 import { cn } from "@/lib/utils"
+import {
+  QualityHintText,
+  type QualityHint,
+} from "@/components/shared/enrollment-profile/QualityHintText"
 import { rowName } from "./profile-batch"
 
 export interface ProfileBatchViewProps {
@@ -29,7 +33,13 @@ export interface ProfileBatchViewProps {
   isChanged: (row: InformationSheetRow) => boolean
   /** Refusée par le serveur au dernier envoi : à corriger avant de renvoyer. */
   isFaulty: (row: InformationSheetRow) => boolean
-  onChange: (row: InformationSheetRow, next: EnrollmentProfile) => void
+  /** `recompute` : le niveau antérieur a changé, la qualité sera recalculée. */
+  qualityHintOf: (row: InformationSheetRow) => QualityHint
+  onChange: (
+    row: InformationSheetRow,
+    next: EnrollmentProfile,
+    field: keyof EnrollmentProfile,
+  ) => void
   lv2Allowed: boolean
   disabled: boolean
 }
@@ -40,6 +50,7 @@ export function ProfileBatchTable({
   valueOf,
   isChanged,
   isFaulty,
+  qualityHintOf,
   onChange,
   lv2Allowed,
   disabled,
@@ -60,7 +71,8 @@ export function ProfileBatchTable({
           {rows.map((row) => {
             const value = valueOf(row)
             const name = rowName(row)
-            const set = (patch: Partial<EnrollmentProfile>) => onChange(row, { ...value, ...patch })
+            const set = <K extends keyof EnrollmentProfile>(field: K, next: EnrollmentProfile[K]) =>
+              onChange(row, { ...value, [field]: next }, field)
             const id = `batch-${row.enrollment_id}`
             return (
               <TableRow
@@ -88,7 +100,7 @@ export function ProfileBatchTable({
                       ariaLabel={`Niveau antérieur de ${name}`}
                       value={value.previous_level}
                       options={PREVIOUS_LEVELS}
-                      onChange={(v) => set({ previous_level: v })}
+                      onChange={(v) => set("previous_level", v)}
                       disabled={disabled}
                     />
                     <Input
@@ -99,7 +111,7 @@ export function ProfileBatchTable({
                       value={value.previous_series ?? ""}
                       disabled={disabled}
                       onChange={(e) =>
-                        set({ previous_series: e.target.value.trim() ? e.target.value : null })
+                        set("previous_series", e.target.value.trim() ? e.target.value : null)
                       }
                     />
                   </div>
@@ -109,9 +121,10 @@ export function ProfileBatchTable({
                     compact
                     label={`Qualité de ${name}`}
                     value={value.is_repeater}
-                    onChange={(v) => set({ is_repeater: v })}
+                    onChange={(v) => set("is_repeater", v)}
                     disabled={disabled}
                   />
+                  <QualityHintText compact hint={qualityHintOf(row)} profile={value} />
                 </TableCell>
                 <TableCell>
                   <OptionSelect
@@ -119,7 +132,7 @@ export function ProfileBatchTable({
                     ariaLabel={`LV2 de ${name}`}
                     value={lv2Allowed ? value.lv2 : null}
                     options={LV2_OPTIONS}
-                    onChange={(v) => set({ lv2: v })}
+                    onChange={(v) => set("lv2", v)}
                     disabled={disabled || !lv2Allowed}
                     emptyLabel={lv2Allowed ? "Non renseigné" : "Non concerné"}
                   />
@@ -130,7 +143,7 @@ export function ProfileBatchTable({
                     ariaLabel={`Discipline artistique de ${name}`}
                     value={value.artistic_discipline}
                     options={ARTISTIC_DISCIPLINES}
-                    onChange={(v) => set({ artistic_discipline: v })}
+                    onChange={(v) => set("artistic_discipline", v)}
                     disabled={disabled}
                   />
                 </TableCell>

@@ -8,18 +8,21 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ClassSelect } from "@/components/shared/ClassSelect"
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { DataError } from "@/components/shared/DataError"
-import {
-  lv2AllowedForLevel,
-  profileChanges,
-  profileOf,
-  type EnrollmentProfile,
-} from "@/lib/contracts/enrollment-profile"
+import { lv2AllowedForLevel, type EnrollmentProfile } from "@/lib/contracts/enrollment-profile"
 import type { InformationSheetRow } from "@/lib/contracts/information-sheet"
 import { useClassChoice } from "@/lib/hooks/useClassChoice"
 import { useBatchUpdateEnrollmentProfiles } from "@/lib/hooks/useEnrollmentProfile"
 import { useClassInformationSheet } from "@/lib/hooks/useInformationSheet"
 import { describeBatchFailure } from "@/lib/enrollment/profile-batch-errors"
-import { changedItems, rowName, rowProfile, type ProfileDrafts } from "./profile-batch"
+import {
+  changedItems,
+  rowChanges,
+  rowName,
+  rowProfile,
+  rowQualityHint,
+  withRowChange,
+  type ProfileDrafts,
+} from "./profile-batch"
 import { ProfileBatchCards } from "./ProfileBatchCards"
 import { ProfileBatchTable } from "./ProfileBatchTable"
 
@@ -64,10 +67,13 @@ export function ProfileBatchClient() {
   const viewProps = {
     rows,
     valueOf: (row: InformationSheetRow) => rowProfile(row, drafts),
-    isChanged: (row: InformationSheetRow) =>
-      Object.keys(profileChanges(profileOf(row), rowProfile(row, drafts))).length > 0,
-    onChange: (row: InformationSheetRow, next: EnrollmentProfile) =>
-      setDrafts((prev) => ({ ...prev, [row.enrollment_id]: next })),
+    isChanged: (row: InformationSheetRow) => Object.keys(rowChanges(row, drafts)).length > 0,
+    qualityHintOf: (row: InformationSheetRow) => rowQualityHint(row, drafts),
+    onChange: (
+      row: InformationSheetRow,
+      next: EnrollmentProfile,
+      field: keyof EnrollmentProfile,
+    ) => setDrafts((prev) => withRowChange(prev, row, next, field)),
     isFaulty: (row: InformationSheetRow) => faulty.has(row.enrollment_id),
     disabled: save.isPending,
   }
