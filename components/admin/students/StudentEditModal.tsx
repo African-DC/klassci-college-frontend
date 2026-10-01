@@ -6,6 +6,7 @@ import { StudentUpdateSchema, type StudentUpdate } from "@/lib/contracts/student
 import { useStudent, useUpdateStudent } from "@/lib/hooks/useStudents"
 import { DuplicateWarning } from "@/components/shared/DuplicateWarning"
 import { useFormDuplicates } from "@/lib/hooks/useFormDuplicates"
+import { NationalityField } from "@/components/forms/NationalityField"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,6 +54,7 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
           enrollment_number: student.enrollment_number ?? undefined,
           birth_date: student.birth_date ?? undefined,
           birth_place: student.birth_place ?? undefined,
+          nationality: student.nationality ?? null,
           genre: student.genre ?? undefined,
         }
       : undefined,
@@ -178,6 +180,8 @@ function EditForm({ studentId, onClose }: { studentId: number; onClose: () => vo
             )}
           />
         </div>
+
+        <NationalityField control={form.control} name="nationality" />
 
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">

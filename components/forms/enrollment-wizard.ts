@@ -1,6 +1,7 @@
 import type { UseFormReturn } from "react-hook-form"
 import { Check, GraduationCap, UserPlus } from "lucide-react"
 import type { NewEnrollment, ReEnrollment } from "@/lib/contracts/enrollment"
+import { EMPTY_PROFILE } from "@/lib/contracts/enrollment-profile"
 
 export type EnrollmentType = "new" | "re-enrollment"
 
@@ -26,6 +27,7 @@ export const NEW_ENROLLMENT_DEFAULTS: Partial<NewEnrollment> = {
   last_name: "",
   birth_date: null,
   birth_place: null,
+  nationality: null,
   genre: null,
   enrollment_number: null,
   city: null,
@@ -37,6 +39,7 @@ export const NEW_ENROLLMENT_DEFAULTS: Partial<NewEnrollment> = {
   is_new_student: null,
   fee_variant_id: null,
   notes: null,
+  ...EMPTY_PROFILE,
 }
 
 export const RE_ENROLLMENT_DEFAULTS: Partial<ReEnrollment> = {
@@ -48,6 +51,8 @@ export const RE_ENROLLMENT_DEFAULTS: Partial<ReEnrollment> = {
   is_new_student: null,
   fee_variant_id: null,
   notes: null,
+  // `null` partout : le serveur reprend alors l'inscription de l'an dernier.
+  ...EMPTY_PROFILE,
 }
 
 /**

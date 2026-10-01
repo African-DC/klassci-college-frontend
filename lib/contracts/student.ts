@@ -15,6 +15,8 @@ export const StudentSchema = z.object({
   last_name: z.string(),
   birth_date: z.string().nullish(),
   birth_place: z.string().nullish(),
+  /** Ex. « Ivoirienne ». `null` tant que l'école ne l'a pas renseignée. */
+  nationality: z.string().nullish(),
   genre: z.enum(["M", "F"]).nullish(),
   enrollment_number: z.string().nullish(),
   city: z.string().nullish(),
@@ -47,6 +49,8 @@ export const StudentCreateSchema = z.object({
   password: z.string({ required_error: "Le mot de passe est requis" }).min(8, "8 caractères minimum"),
   birth_date: z.string().optional(),
   birth_place: z.string().optional(),
+  // `null` efface : une chaîne vide enregistrerait une nationalité « vide ».
+  nationality: z.string().max(60, "60 caractères maximum").nullable().optional(),
   genre: z.enum(["M", "F"]).optional(),
   enrollment_number: z.string().optional(),
   city: z.string().optional(),
@@ -58,6 +62,8 @@ export const StudentUpdateSchema = z.object({
   last_name: z.string().min(1).optional(),
   birth_date: z.string().optional(),
   birth_place: z.string().optional(),
+  // `null` efface : une chaîne vide enregistrerait une nationalité « vide ».
+  nationality: z.string().max(60, "60 caractères maximum").nullable().optional(),
   genre: z.enum(["M", "F"]).optional(),
   enrollment_number: z.string().optional(),
   city: z.string().optional(),
@@ -93,6 +99,8 @@ export const StudentFullSchema = z.object({
   last_name: z.string(),
   birth_date: z.string().nullish(),
   birth_place: z.string().nullish(),
+  /** Ex. « Ivoirienne ». `null` tant que l'école ne l'a pas renseignée. */
+  nationality: z.string().nullish(),
   genre: z.string().nullish(),
   enrollment_number: z.string().nullish(),
   photo_url: z.string().nullish(),

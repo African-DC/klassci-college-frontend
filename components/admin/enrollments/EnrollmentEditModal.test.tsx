@@ -9,6 +9,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
 const envoyer = vi.hoisted(() => vi.fn())
+const envoyerProfil = vi.hoisted(() => vi.fn())
 
 vi.mock("@/lib/hooks/useEnrollments", () => ({
   useEnrollment: () => ({
@@ -28,12 +29,25 @@ vi.mock("@/lib/hooks/useEnrollments", () => ({
       assignment_status: null,
       assignment_decision_number: null,
       is_new_student: null,
+      previous_level: "5E",
+      previous_series: null,
+      is_repeater: null,
+      // Une LV2 restée d'avant, dans une classe de 6ème : l'écran ne la nettoie
+      // pas en silence, le serveur s'en charge.
+      lv2: "allemand",
+      artistic_discipline: null,
     },
   }),
   useUpdateEnrollment: () => ({ mutate: envoyer, isPending: false, error: null }),
 }))
 vi.mock("@/lib/hooks/useClasses", () => ({
-  useClasses: () => ({ isLoading: false, data: { items: [{ id: 3, name: "6eme 1" }] } }),
+  useClasses: () => ({
+    isLoading: false,
+    data: { items: [{ id: 3, name: "6eme 1", level_name: "6ème" }] },
+  }),
+}))
+vi.mock("@/lib/hooks/useEnrollmentProfile", () => ({
+  useUpdateEnrollmentProfile: () => ({ mutate: envoyerProfil, isPending: false }),
 }))
 
 import { EnrollmentEditModal } from "./EnrollmentEditModal"
@@ -54,5 +68,37 @@ describe("modifier le profil d'une inscription", () => {
     fireEvent.click(screen.getByRole("button", { name: "Mettre à jour" }))
     await waitFor(() => expect(envoyer).toHaveBeenCalledOnce())
     expect(envoyer.mock.calls[0][0]).toMatchObject({ is_new_student: false })
+  })
+
+  it("envoie les renseignements de la fiche modifiés, et seulement eux", async () => {
+    envoyer.mockClear()
+    envoyerProfil.mockClear()
+    const onClose = vi.fn()
+    render(<EnrollmentEditModal enrollmentId={42} open onClose={onClose} />)
+    fireEvent.click(screen.getByRole("button", { name: "Redoublant" }))
+    fireEvent.click(screen.getByRole("button", { name: "Mettre à jour" }))
+
+    await waitFor(() => expect(envoyer).toHaveBeenCalledOnce())
+    // Le profil part par sa propre route, une fois l'inscription enregistrée.
+    expect(envoyerProfil).not.toHaveBeenCalled()
+    const options = envoyer.mock.calls[0][1] as { onSuccess: () => void }
+    options.onSuccess()
+    expect(envoyerProfil).toHaveBeenCalledOnce()
+    expect(envoyerProfil.mock.calls[0][0]).toEqual({
+      enrollmentId: 42,
+      changes: { is_repeater: true },
+    })
+  })
+
+  it("ne touche pas aux renseignements quand rien n'a changé", async () => {
+    envoyer.mockClear()
+    envoyerProfil.mockClear()
+    const onClose = vi.fn()
+    render(<EnrollmentEditModal enrollmentId={42} open onClose={onClose} />)
+    fireEvent.click(screen.getByRole("button", { name: "Mettre à jour" }))
+    await waitFor(() => expect(envoyer).toHaveBeenCalledOnce())
+    ;(envoyer.mock.calls[0][1] as { onSuccess: () => void }).onSuccess()
+    expect(envoyerProfil).not.toHaveBeenCalled()
+    expect(onClose).toHaveBeenCalled()
   })
 })

@@ -9,6 +9,11 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune *(comptable, secrétariat)*
+- Niveau antérieur, qualité, LV2 et discipline artistique se saisissent à l'inscription, sur la fiche de l'inscription et pour toute une classe d'un coup *(secrétariat, éducateur)*
+- À la réinscription, les renseignements laissés vides sont repris de l'année précédente *(secrétariat)*
+- La fiche de l'inscription indique si l'élève est boursier, avec la nature de la bourse, l'organisme et le numéro de décision *(admin, comptable)*
+- La nationalité de l'élève se renseigne à la création et à la modification de sa fiche *(secrétariat)*
 - « Modifier l'inscription » permet de choisir nouvel élève, déjà inscrit ici avant ou non tranché, et prévient que les frais liés au profil seront recalculés *(admin, secrétariat)*
 - L'export Excel des élèves sépare le nom et les prénoms en deux colonnes *(admin, secrétariat)*
 - La fiche d'une classe propose la liste de classe en Excel à côté du PDF, avec tous les élèves, le logo et l'en-tête officiel *(admin, secrétariat)*

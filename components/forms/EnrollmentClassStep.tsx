@@ -8,6 +8,8 @@ import { AssignmentStatusField } from "@/components/forms/AssignmentStatusField"
 import { ClassAndFeesFields } from "@/components/forms/EnrollmentClassFields"
 import { NewStudentField } from "@/components/forms/NewStudentField"
 import { PriorArrearsNotice } from "@/components/forms/PriorArrearsNotice"
+import { EnrollmentProfileStepFields } from "@/components/forms/EnrollmentProfileStepFields"
+import { lv2AllowedForLevel } from "@/lib/contracts/enrollment-profile"
 
 interface EnrollmentClassStepProps {
   enrollmentType: "new" | "re-enrollment"
@@ -45,6 +47,9 @@ export function EnrollmentClassStep({
   onClassSelected,
   academicYearId,
 }: EnrollmentClassStepProps) {
+  // Changer pour une 6ème ou une 5ème efface une LV2 déjà choisie : le serveur
+  // la refuserait (422) au moment d'enregistrer.
+  const levelOf = (id: number) => classes.find((c) => c.id === id)?.level_name
   const shared = {
     classes,
     classesLoading,
@@ -67,6 +72,7 @@ export function EnrollmentClassStep({
             notes={newForm.watch("notes")}
             onClassChange={(id) => {
               newForm.setValue("class_id", id, { shouldValidate: true })
+              if (!lv2AllowedForLevel(levelOf(id))) newForm.setValue("lv2", null)
               onClassSelected()
             }}
             onFeeVariantChange={(id) => newForm.setValue("fee_variant_id", id)}
@@ -98,6 +104,8 @@ export function EnrollmentClassStep({
               newForm.clearErrors("is_new_student")
             }}
           />
+
+          <EnrollmentProfileStepFields enrollmentType="new" form={newForm} classes={classes} />
         </>
       ) : (
         <>
@@ -108,6 +116,7 @@ export function EnrollmentClassStep({
             notes={reForm.watch("notes")}
             onClassChange={(id) => {
               reForm.setValue("class_id", id, { shouldValidate: true })
+              if (!lv2AllowedForLevel(levelOf(id))) reForm.setValue("lv2", null)
               onClassSelected()
             }}
             onFeeVariantChange={(id) => reForm.setValue("fee_variant_id", id)}
@@ -143,6 +152,8 @@ export function EnrollmentClassStep({
               reForm.clearErrors("is_new_student")
             }}
           />
+
+          <EnrollmentProfileStepFields enrollmentType="re-enrollment" form={reForm} classes={classes} />
         </>
       )}
     </div>

@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-09-24T20:41:03Z",
+  "generated_at": "2026-10-01T21:16:03Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,44 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune",
+            "audience": [
+              "comptable",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Niveau antérieur, qualité, LV2 et discipline artistique se saisissent à l'inscription, sur la fiche de l'inscription et pour toute une classe d'un coup",
+            "audience": [
+              "secrétariat",
+              "éducateur"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "À la réinscription, les renseignements laissés vides sont repris de l'année précédente",
+            "audience": [
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "La fiche de l'inscription indique si l'élève est boursier, avec la nature de la bourse, l'organisme et le numéro de décision",
+            "audience": [
+              "admin",
+              "comptable"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "La nationalité de l'élève se renseigne à la création et à la modification de sa fiche",
+            "audience": [
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
           {
             "text": "« Modifier l'inscription » permet de choisir nouvel élève, déjà inscrit ici avant ou non tranché, et prévient que les frais liés au profil seront recalculés",
             "audience": [

@@ -15,6 +15,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { AssignmentStatusBadge } from "@/components/shared/AssignmentStatusBadge"
 import { newStudentLabel, type Enrollment } from "@/lib/contracts/enrollment"
 import { NewStudentProfileAction } from "@/components/admin/enrollments/NewStudentProfileAction"
+import { EnrollmentProfileCard } from "@/components/admin/enrollments/profile/EnrollmentProfileCard"
+import { ScholarshipCard } from "@/components/admin/enrollments/profile/ScholarshipCard"
 
 interface EnrollmentOverviewTabProps {
   enrollment: Enrollment
@@ -161,6 +163,9 @@ export function EnrollmentOverviewTab({ enrollment }: EnrollmentOverviewTabProps
           </div>
         </CardContent>
       </Card>
+
+      <EnrollmentProfileCard enrollment={enrollment} />
+      <ScholarshipCard enrollment={enrollment} studentName={studentName} />
     </div>
   )
 }

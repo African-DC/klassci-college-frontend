@@ -7,6 +7,7 @@ import { useFormDuplicates } from "@/lib/hooks/useFormDuplicates"
 import type { NewEnrollment } from "@/lib/contracts/enrollment"
 import { StudentPhotoField } from "@/components/admin/students/photo/StudentPhotoField"
 import { EnrollmentParentFields } from "@/components/forms/EnrollmentParentFields"
+import { NationalityField } from "@/components/forms/NationalityField"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
@@ -158,6 +159,7 @@ export function EnrollmentNewStudentStep({
               </FormItem>
             )}
           />
+          <NationalityField control={form.control} name="nationality" />
         </div>
 
         <FormField

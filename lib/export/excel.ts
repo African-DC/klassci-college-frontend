@@ -14,6 +14,7 @@ import ExcelJS from "exceljs"
 import { downloadBlob } from "@/lib/utils"
 import { resolveAlign, toDate, toNumber, todayLabel } from "./format"
 import { withLogo } from "./logo"
+import { worksheetName } from "./sheet-name"
 import {
   DEFAULT_ACCENT_COLOR,
   DEFAULT_PRIMARY_COLOR,
@@ -21,7 +22,7 @@ import {
   type ExportPayload,
 } from "./types"
 
-const XLSX_MIME =
+export const XLSX_MIME =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 const NUM_FMT_XOF = '#,##0" XOF"'
@@ -173,19 +174,20 @@ function styleHeaderRow(row: ExcelJS.Row, primaryArgb: string): void {
 }
 
 /**
- * Construit le classeur ExcelJS complet à partir du payload.
+ * Ajoute au classeur une feuille complète (en-tête officiel, table, filtres).
+ *
+ * Partagée par le classeur à une feuille et par les classeurs à plusieurs
+ * feuilles (une par classe) : chaque feuille garde la même identité.
  */
-export async function buildWorkbook(
+export function addSheet(
+  wb: ExcelJS.Workbook,
   payload: ExportPayload,
-): Promise<ExcelJS.Workbook> {
+  sheetName: string,
+): ExcelJS.Worksheet {
   const { columns, rows, totalsRow, branding } = payload
   const primaryArgb = toArgb(branding.primaryColor || DEFAULT_PRIMARY_COLOR)
   const accentArgb = toArgb(branding.accentColor || DEFAULT_ACCENT_COLOR)
-
-  const wb = new ExcelJS.Workbook()
-  wb.creator = branding.schoolName
-  wb.created = new Date()
-  const ws = wb.addWorksheet(payload.meta.title.slice(0, 31) || "Export")
+  const ws = wb.addWorksheet(sheetName)
 
   const headerRowNumber = writeHeaderBlock(wb, ws, payload, primaryArgb)
 
@@ -231,6 +233,27 @@ export async function buildWorkbook(
   // Volet figé sous l'entête de table
   ws.views = [{ state: "frozen", ySplit: headerRowNumber }]
 
+  return ws
+}
+
+/** Un classeur vide, signé du nom de l'établissement. */
+export function newWorkbook(schoolName: string): ExcelJS.Workbook {
+  const wb = new ExcelJS.Workbook()
+  wb.creator = schoolName
+  wb.created = new Date()
+  return wb
+}
+
+/**
+ * Construit le classeur ExcelJS complet à partir du payload.
+ */
+export async function buildWorkbook(
+  payload: ExportPayload,
+): Promise<ExcelJS.Workbook> {
+  const wb = newWorkbook(payload.branding.schoolName)
+  // Nettoyé ici et nulle part ailleurs : un titre « Liste · T/A 1 » faisait
+  // planter ExcelJS, qui refuse « / » dans un nom de feuille.
+  addSheet(wb, payload, worksheetName(payload.meta.sheetName ?? payload.meta.title))
   return wb
 }
 
