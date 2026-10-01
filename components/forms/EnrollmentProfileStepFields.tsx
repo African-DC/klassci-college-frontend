@@ -46,6 +46,7 @@ export function EnrollmentProfileStepFields(props: StepProps) {
       onChange={(p) => writeProfile(props, p)}
       levelName={levelName}
       reEnrollment={props.enrollmentType === "re-enrollment"}
+      atCreation
     />
   )
 }

@@ -21,6 +21,11 @@ interface EnrollmentProfileFieldsProps {
   idPrefix: string
   /** Réinscription : dire que le serveur reprend l'an dernier si on laisse vide. */
   reEnrollment?: boolean
+  /**
+   * Création d'une inscription : le serveur y déduit la qualité du niveau
+   * antérieur quand on la laisse sur « Non renseigné ». Ailleurs, il ne déduit rien.
+   */
+  atCreation?: boolean
   /** Saisie par classe : le nom de l'élève titre le bloc et nomme ses champs. */
   studentName?: string
 }
@@ -38,6 +43,7 @@ export function EnrollmentProfileFields({
   disabled,
   idPrefix,
   reEnrollment,
+  atCreation,
   studentName,
 }: EnrollmentProfileFieldsProps) {
   const lv2Allowed = lv2AllowedForLevel(levelName)
@@ -51,8 +57,9 @@ export function EnrollmentProfileFields({
       </legend>
       {reEnrollment ? (
         <p className="text-xs text-muted-foreground">
-          Laissés vides, le niveau antérieur, la qualité, la LV2 et la discipline artistique sont
-          repris de l&apos;inscription de l&apos;an dernier.
+          Laissés vides, le niveau antérieur, la LV2 et la discipline artistique sont repris de
+          l&apos;inscription de l&apos;année précédente, s&apos;il y en a une. La qualité est
+          alors déduite du niveau antérieur.
         </p>
       ) : null}
 
@@ -89,6 +96,12 @@ export function EnrollmentProfileFields({
           onChange={(v) => set("is_repeater", v)}
           disabled={disabled}
         />
+        {atCreation && value.previous_level && value.is_repeater === null ? (
+          <p className="text-xs text-muted-foreground">
+            Laissée sur « Non renseigné », la qualité sera déduite du niveau antérieur : Redoublant
+            s&apos;il est celui de la classe, Non redoublant sinon.
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

@@ -44,6 +44,30 @@ describe("les renseignements de la fiche", () => {
     }
   })
 
+  it("à la création, prévient que la qualité sera déduite du niveau antérieur", () => {
+    const { rerender } = render(
+      <EnrollmentProfileFields
+        idPrefix="c"
+        value={{ ...EMPTY_PROFILE, previous_level: "4E" }}
+        onChange={vi.fn()}
+        levelName="4ème"
+        atCreation
+      />,
+    )
+    expect(screen.getByText(/sera déduite du niveau antérieur/)).toBeInTheDocument()
+
+    // Hors création, le serveur ne déduit rien : on ne le promet pas.
+    rerender(
+      <EnrollmentProfileFields
+        idPrefix="c"
+        value={{ ...EMPTY_PROFILE, previous_level: "4E" }}
+        onChange={vi.fn()}
+        levelName="4ème"
+      />,
+    )
+    expect(screen.queryByText(/sera déduite du niveau antérieur/)).toBeNull()
+  })
+
   it("propose la qualité en trois réponses, dont « Non renseigné »", () => {
     const onChange = renderFor("4ème")
     fireEvent.click(screen.getByRole("button", { name: "Redoublant" }))

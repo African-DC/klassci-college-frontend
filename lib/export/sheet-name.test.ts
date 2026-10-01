@@ -31,6 +31,10 @@ describe("le nom de la feuille Excel", () => {
     expect(name.length).toBeLessThanOrEqual(31)
   })
 
+  it("remplace la barre oblique inverse, qu'Excel refuse aussi", () => {
+    expect(worksheetName("6e\\1")).toBe("6e 1")
+  })
+
   it("retire une apostrophe laissée en fin de nom par la coupe ou le suffixe", () => {
     const thirty = "A".repeat(30)
     expect(worksheetName(`${thirty}'B`)).toBe(thirty)

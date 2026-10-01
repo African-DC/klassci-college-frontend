@@ -1,5 +1,5 @@
 /** Caractères qu'Excel refuse dans un nom de feuille. */
-const FORBIDDEN = /[\/?*[\]:]/g
+const FORBIDDEN = /[\\/?*[\]:]/g
 const MAX_LENGTH = 31
 
 /** Excel refuse une apostrophe en tête ou en fin de nom. */
