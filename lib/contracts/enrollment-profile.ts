@@ -158,6 +158,41 @@ export function profileChanges(
   return changes
 }
 
+/**
+ * Le serveur recalcule la qualité quand le niveau antérieur change et que la
+ * qualité n'est pas envoyée (BE #472). Vrai tant que la secrétaire a changé
+ * le niveau antérieur sans toucher à la qualité : l'écran le dit.
+ */
+export function qualityWillRecompute(
+  saved: EnrollmentProfile,
+  draft: EnrollmentProfile,
+  repeaterTouched: boolean,
+): boolean {
+  return !repeaterTouched && draft.previous_level !== saved.previous_level
+}
+
+/**
+ * Ce qu'une correction envoie au serveur.
+ *
+ * La qualité ne part que si on l'a touchée : envoyée, elle l'emporte sur le
+ * recalcul ; absente, le serveur la déduit du nouveau niveau antérieur. Une
+ * qualité touchée part même remise à sa valeur d'origine quand le niveau
+ * antérieur change : c'est un choix explicite, il ne doit pas être recalculé.
+ */
+export function profileUpdateChanges(
+  saved: EnrollmentProfile,
+  draft: EnrollmentProfile,
+  repeaterTouched: boolean,
+): Partial<EnrollmentProfile> {
+  const changes = profileChanges(saved, draft)
+  if (!repeaterTouched) {
+    delete changes.is_repeater
+  } else if ("previous_level" in changes) {
+    changes.is_repeater = draft.is_repeater
+  }
+  return changes
+}
+
 export const ProfileBatchResultSchema = z.object({ updated: z.number() })
 export type ProfileBatchResult = z.infer<typeof ProfileBatchResultSchema>
 

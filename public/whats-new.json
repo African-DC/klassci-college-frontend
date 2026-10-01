@@ -1,9 +1,9 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-10-01T21:16:03Z",
+  "generated_at": "2026-10-01T23:27:49Z",
   "version": "Unreleased",
   "released": false,
-  "total": 355,
+  "total": 356,
   "sections": {
     "Added": [
       {
@@ -49,6 +49,55 @@
         "audience": [
           "admin",
           "secrétariat"
+        ],
+        "pull_request": null
+      }
+    ],
+    "Changed": [
+      {
+        "text": "En corrigeant le niveau antérieur d'un élève sans toucher à sa qualité, l'écran annonce que la qualité sera recalculée : Redoublant si ce niveau est celui de la classe",
+        "audience": [
+          "secrétariat",
+          "éducateur"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Le journal des versements et les soldes par catégorie se replient sous une entrée « Caisse » : deux lectures de la même caisse, au même endroit du menu",
+        "audience": [
+          "admin",
+          "comptable",
+          "caissier"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Marquer un frais déposé demande maintenant confirmation et nomme l'article : ce geste solde la ligne sans aucun versement",
+        "audience": [
+          "admin",
+          "secrétariat"
+        ],
+        "pull_request": 419
+      },
+      {
+        "text": "Toutes les listes chargent la suite en approchant du bas, au lieu de boutons de page : élèves, inscriptions, enseignants, parents, personnel, classes, niveaux, séries, salles, rôles, corbeille, appels, bulletins, convocations, billets d'annulation",
+        "audience": [
+          "admin",
+          "élève"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Les pieds de liste distinguent ce qui est affiché de ce que l'établissement compte, et les compteurs des puces d'inscription déclarent quand ils ne portent que sur le chargé",
+        "audience": [
+          "admin"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Montées de dépendances de `main` reportées sur `develop` : lucide-react 1.14, jsdom 29, postcss 8.5.13",
+        "audience": [
+          "technique"
         ],
         "pull_request": null
       }
@@ -101,54 +150,6 @@
         "audience": [
           "éducateur",
           "secrétariat"
-        ],
-        "pull_request": null
-      }
-    ],
-    "Changed": [
-      {
-        "text": "Le journal des versements et les soldes par catégorie se replient sous une entrée « Caisse » : deux lectures de la même caisse, au même endroit du menu",
-        "audience": [
-          "admin",
-          "comptable",
-          "caissier"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Marquer un frais déposé demande maintenant confirmation et nomme l'article : ce geste solde la ligne sans aucun versement",
-        "audience": [
-          "admin",
-          "secrétariat"
-        ],
-        "pull_request": 419
-      },
-      {
-        "text": "Toutes les listes chargent la suite en approchant du bas, au lieu de boutons de page : élèves, inscriptions, enseignants, parents, personnel, classes, niveaux, séries, salles, rôles, corbeille, appels, bulletins, convocations, billets d'annulation",
-        "audience": [
-          "admin",
-          "élève"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Les pieds de liste distinguent ce qui est affiché de ce que l'établissement compte, et les compteurs des puces d'inscription déclarent quand ils ne portent que sur le chargé",
-        "audience": [
-          "admin"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Montées de dépendances de `main` reportées sur `develop` : lucide-react 1.14, jsdom 29, postcss 8.5.13",
-        "audience": [
-          "technique"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Le journal des paiements se charge au fil du défilement : la pagination affichait « Page 1/92 » sans permettre d'atteindre la seconde",
-        "audience": [
-          "admin"
         ],
         "pull_request": null
       }

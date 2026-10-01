@@ -1,13 +1,10 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { EnrollmentProfileFields } from "@/components/shared/enrollment-profile/EnrollmentProfileFields"
-import {
-  profileChanges,
-  type EnrollmentProfile,
-} from "@/lib/contracts/enrollment-profile"
+import { useProfileCorrection } from "@/components/shared/enrollment-profile/useProfileCorrection"
+import type { EnrollmentProfile } from "@/lib/contracts/enrollment-profile"
 import { useUpdateEnrollmentProfile } from "@/lib/hooks/useEnrollmentProfile"
 
 interface EnrollmentProfileDialogProps {
@@ -26,13 +23,13 @@ export function EnrollmentProfileDialog({
   open,
   onClose,
 }: EnrollmentProfileDialogProps) {
-  const [draft, setDraft] = useState<EnrollmentProfile>(saved)
+  const correction = useProfileCorrection(saved)
   const update = useUpdateEnrollmentProfile()
-  const changes = profileChanges(saved, draft)
+  const changes = correction.changes
   const nothingChanged = Object.keys(changes).length === 0
 
   function close() {
-    setDraft(saved)
+    correction.reset()
     onClose()
   }
 
@@ -44,8 +41,9 @@ export function EnrollmentProfileDialog({
         </DialogHeader>
         <EnrollmentProfileFields
           idPrefix={`enrollment-profile-${enrollmentId}`}
-          value={draft}
-          onChange={setDraft}
+          value={correction.value}
+          onChange={correction.onChange}
+          qualityHint={correction.qualityHint}
           levelName={levelName}
           disabled={update.isPending}
         />

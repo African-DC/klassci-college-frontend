@@ -1,14 +1,9 @@
 "use client"
 
-import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { EnrollmentUpdateSchema, type EnrollmentUpdate } from "@/lib/contracts/enrollment"
-import {
-  profileChanges,
-  profileOf,
-  type EnrollmentProfile,
-} from "@/lib/contracts/enrollment-profile"
+import { profileOf } from "@/lib/contracts/enrollment-profile"
 import { useEnrollment, useUpdateEnrollment } from "@/lib/hooks/useEnrollments"
 import { useUpdateEnrollmentProfile } from "@/lib/hooks/useEnrollmentProfile"
 import { useClasses } from "@/lib/hooks/useClasses"
@@ -38,6 +33,7 @@ import {
 import { AssignmentStatusField } from "@/components/forms/AssignmentStatusField"
 import { NewStudentChoiceGroup } from "@/components/forms/NewStudentChoiceGroup"
 import { EnrollmentProfileFields } from "@/components/shared/enrollment-profile/EnrollmentProfileFields"
+import { useProfileCorrection } from "@/components/shared/enrollment-profile/useProfileCorrection"
 import { EditFormSkeleton, EnrollmentStatusField } from "./EnrollmentEditFields"
 
 interface EnrollmentEditModalProps {
@@ -52,8 +48,8 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
   const updateProfile = useUpdateEnrollmentProfile()
   const { data: classesData, isLoading: classesLoading } = useClasses({ size: 100 })
   // Les renseignements de la fiche partent par leur propre route
-  // (PATCH /profile) : `null` tant que la secrétaire n'y a pas touché.
-  const [profileDraft, setProfileDraft] = useState<EnrollmentProfile | null>(null)
+  // (PATCH /profile), et seulement ce que la secrétaire a touché.
+  const correction = useProfileCorrection(enrollment ? profileOf(enrollment) : null)
 
   const classes = classesData?.items ?? []
 
@@ -82,15 +78,13 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
 
   if (isLoading || !enrollment) return <EditFormSkeleton />
 
-  const savedProfile = profileOf(enrollment)
-  const profile = profileDraft ?? savedProfile
   const pending = isPending || updateProfile.isPending
 
   function onSubmit(data: EnrollmentUpdate) {
     // Rien ne part tant que la secrétaire n'a pas touché aux renseignements.
     // Pas de nettoyage silencieux de la LV2 au changement de classe : le
     // serveur la retire lui-même quand la nouvelle classe est une 6ème ou 5ème.
-    const changes = profileDraft ? profileChanges(savedProfile, profileDraft) : {}
+    const changes = correction.changes
     mutate(data, {
       onSuccess: () => {
         if (Object.keys(changes).length === 0) return onClose()
@@ -169,8 +163,9 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
 
         <EnrollmentProfileFields
           idPrefix={`enrollment-edit-${enrollmentId}`}
-          value={profile}
-          onChange={setProfileDraft}
+          value={correction.value}
+          onChange={correction.onChange}
+          qualityHint={correction.qualityHint}
           levelName={levelName}
           disabled={pending}
         />

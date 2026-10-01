@@ -51,7 +51,7 @@ describe("les renseignements de la fiche", () => {
         value={{ ...EMPTY_PROFILE, previous_level: "4E" }}
         onChange={vi.fn()}
         levelName="4ème"
-        atCreation
+        qualityHint="creation"
       />,
     )
     expect(screen.getByText(/sera déduite du niveau antérieur/)).toBeInTheDocument()
@@ -71,7 +71,12 @@ describe("les renseignements de la fiche", () => {
   it("propose la qualité en trois réponses, dont « Non renseigné »", () => {
     const onChange = renderFor("4ème")
     fireEvent.click(screen.getByRole("button", { name: "Redoublant" }))
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ is_repeater: true }))
+    // Le champ touché accompagne la valeur : les écrans de correction en
+    // déduisent si la qualité doit partir ou être recalculée par le serveur.
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ is_repeater: true }),
+      "is_repeater",
+    )
     expect(screen.getByRole("button", { name: "Non renseigné" })).toHaveAttribute(
       "aria-pressed",
       "true",

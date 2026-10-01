@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-10-01T21:16:03Z",
+  "generated_at": "2026-10-01T23:27:49Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -1307,6 +1307,569 @@
             "pull_request": 111
           }
         ],
+        "Changed": [
+          {
+            "text": "En corrigeant le niveau antérieur d'un élève sans toucher à sa qualité, l'écran annonce que la qualité sera recalculée : Redoublant si ce niveau est celui de la classe",
+            "audience": [
+              "secrétariat",
+              "éducateur"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Le journal des versements et les soldes par catégorie se replient sous une entrée « Caisse » : deux lectures de la même caisse, au même endroit du menu",
+            "audience": [
+              "admin",
+              "comptable",
+              "caissier"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Marquer un frais déposé demande maintenant confirmation et nomme l'article : ce geste solde la ligne sans aucun versement",
+            "audience": [
+              "admin",
+              "secrétariat"
+            ],
+            "pull_request": 419
+          },
+          {
+            "text": "Toutes les listes chargent la suite en approchant du bas, au lieu de boutons de page : élèves, inscriptions, enseignants, parents, personnel, classes, niveaux, séries, salles, rôles, corbeille, appels, bulletins, convocations, billets d'annulation",
+            "audience": [
+              "admin",
+              "élève"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Les pieds de liste distinguent ce qui est affiché de ce que l'établissement compte, et les compteurs des puces d'inscription déclarent quand ils ne portent que sur le chargé",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Montées de dépendances de `main` reportées sur `develop` : lucide-react 1.14, jsdom 29, postcss 8.5.13",
+            "audience": [
+              "technique"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Le journal des paiements se charge au fil du défilement : la pagination affichait « Page 1/92 » sans permettre d'atteindre la seconde",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Les chiffres du bandeau suivent les filtres, et chaque carte dit si elle les suit ou parle de l'année entière",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Le créneau se trace directement sur la semaine de l'enseignant : on clique, on descend, l'heure de début et de fin suivent",
+            "audience": [
+              "admin",
+              "directeur des études"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "La fenêtre d'ajout de créneau occupe la largeur disponible et montre la semaine à côté des champs, au lieu de la reléguer sous un ascenseur",
+            "audience": [
+              "admin",
+              "directeur des études"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Les états de la semaine se distinguent par leur matière et non par leur seule couleur : un cours est plein, une indisponibilité hachurée, une heure non déclarée tramée",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Bouton « Actualiser » sur la semaine, et relecture automatique au retour sur l'onglet quand les plages ont bougé ailleurs",
+            "audience": [
+              "admin",
+              "directeur des études"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Le mode de paiement du formulaire d'encaissement ne montre que les moyens que la personne connectée peut réellement utiliser : plus de choix proposé puis refusé au moment d'enregistrer",
+            "audience": [
+              "caissier",
+              "comptable",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Les versements enregistrés autrefois en « Mobile Money » gardent ce libellé partout et restent filtrables dans le journal des versements : l'historique d'une école ne change pas de sens",
+            "audience": [
+              "comptable",
+              "parent"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Le journal des versements s'exporte désormais depuis le serveur : le PDF sort au gabarit officiel de l'établissement, et le classeur Excel porte les couleurs, le logo, la période et les filtres appliqués, au lieu d'un tableau sans identité",
+            "audience": [
+              "comptable",
+              "caissier"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "La période choisie sur l'écran des versements est appliquée par le serveur : elle portait jusqu'ici sur la seule page affichée, ce qui pouvait masquer des versements de la période",
+            "audience": [
+              "comptable",
+              "caissier"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "L'écran des évaluations et celui des bulletins s'ouvrent en une fraction de seconde : ils réclamaient toute l'année scolaire au serveur pour n'afficher qu'une vingtaine de lignes, et mettaient plus de quatre secondes à répondre",
+            "audience": [
+              "admin",
+              "directeur des études",
+              "enseignant"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Le pied de la liste des bulletins annonce le nombre de la classe entière et les flèches de page fonctionnent enfin : elles affichaient « Page 1/1 » quel que soit l'effectif",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Le bandeau « publiez-les » de la liste des bulletins compte les brouillons de toute la classe, plus seulement ceux de la page visible",
+            "audience": [
+              "admin",
+              "directeur des études"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Bulletin retenu pour impayé : la carte reste affichée mais grisée, la moyenne montre un tiret plutôt qu'un chiffre, et une phrase dit le trimestre concerné, le montant en retard et d'aller au secrétariat. Le bouton de téléchargement disparaît au lieu d'échouer au clic",
+            "audience": [
+              "élève",
+              "parent"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Un lien « Consulter les notes publiées » figure sur chaque bulletin retenu : les notes restent accessibles, et la famille voit que ce n'est pas une panne",
+            "audience": [
+              "élève",
+              "parent"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Les écrans « Convocations de parent » et « Autorisations de reprise » ouvrent sur l'année scolaire en cours et se lisent par pages de vingt : ils affichaient jusqu'ici tout l'historique de l'établissement, qui n'est jamais purgé",
+            "audience": [
+              "éducateur",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Formulaire du billet d'annulation de zéro : les évaluations manquées ne se cherchent plus à chaque caractère tapé dans les dates, mais une fois la saisie posée",
+            "audience": [
+              "éducateur",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Le choix de l’élève se fait par recherche, dans les convocations, les autorisations de reprise et les versements : on tape deux lettres, nom ou matricule, au lieu de faire défiler une liste tronquée aux cent premiers .",
+            "audience": [
+              "admin",
+              "secrétariat",
+              "caissier"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Fiche Personnel : le rôle d'accès propose désormais six métiers (secrétariat, caissier, éducateur, comptable, directeur des études, directeur), chacun accompagné d'une phrase qui dit ce que la personne pourra faire. « Personnel administratif » devient « Secrétariat » .",
+            "audience": [
+              "admin",
+              "directeur"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Wizard Nouvelle inscription : le modal ne se ferme plus si on appuie hors du cadre (la saisie n'est plus perdue). L'étape élève et la sélection de classe sont lisibles sur téléphone, avec des boutons assez grands. La liste des classes montre les places encore disponibles, pas seulement le maximum .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Publication Windows : le frontend standalone est désormais compilé hors production par la CI puis livré comme artefact versionné.",
+            "audience": [],
+            "pull_request": null
+          },
+          {
+            "text": "Déploiement : l'ancien workflow EC2 est retiré. La démo reste sur le serveur Windows, la production vise le VPS Contabo (artefact + restart, aucun build sur le serveur).",
+            "audience": [],
+            "pull_request": null
+          },
+          {
+            "text": "Fiche inscription et onglet Paiements repensés en premium : en-tête avec bandeau de marque (classe, année, statut), synthèse claire des frais (payé, reste à payer, progression), détail de chaque frais avec sa barre d'avancement et son statut, et historique des versements montrant la répartition sur les frais avec le reçu téléchargeable pour chacun .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Onglet Paiements de la fiche élève : même bandeau de synthèse premium des frais (payé, reste à payer) .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Fiches élève, enseignant et personnel : la carte « Compte de connexion » passe en bas de page, ce n'est pas l'information principale à l'ouverture de la fiche .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Page de connexion repensée en version premium : grande photo d'une classe habillée aux couleurs de la marque avec accroche et points forts à gauche, formulaire présenté dans une carte élégante à droite, plus lisible sur mobile comme sur ordinateur .",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Page Frais repensée : la grille des frais obligatoires s'affiche désormais en arbre par niveau (on voit d'un coup ce qu'un élève d'un niveau paie et le total), et les frais optionnels avec leurs options (montant par option) sont visibles et modifiables directement, au lieu d'être cachés derrière un bouton .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Page de connexion : le panneau d'accueil s'illustre désormais d'une photo de classe (enseignante et élèves), habillée d'un voile bleu-orange aux couleurs de la marque, pour un accueil plus chaleureux et incarné .",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Police des titres remplacée par Nunito Sans, plus sobre et lisible, à la place de l'ancienne police jugée trop fantaisiste .",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Saisie des notes repensée dans la ligne premium KLASSCI : en-tête au dégradé bleu-orange avec le détail de l'évaluation et les indicateurs clés (saisies, moyenne de la classe, état de sauvegarde), « Mode dictée » mis en avant en orange. Sur grand écran, les élèves s'affichent sur deux colonnes pour moins de défilement ; une seule colonne sur téléphone .",
+            "audience": [
+              "enseignant",
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Mode dictée sur grand écran : l'espace est désormais utilisé avec un panneau « Classe » à droite listant tous les élèves et leur note, l'élève en cours surligné, cliquable pour y sauter directement. Sur téléphone, l'affichage plein écran séquentiel reste inchangé .",
+            "audience": [
+              "enseignant",
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Page Emploi du temps repensée dans la ligne premium KLASSCI : bandeau bleu-orange rappelant « Semaine type · Année en cours », classe et actions (générer, exporter PDF) regroupées dans une carte de contrôle avec sélection rapide par classe .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Page Notes repensée dans la ligne premium KLASSCI : bandeau bleu-orange avec les indicateurs clés (évaluations, terminées, en retard, taux de saisie), filtres et actions PDF regroupés, onglets de statut harmonisés .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Onglet MailPulse aux vraies couleurs de la marque : bandeau sombre, logo enveloppe orange et wordmark « Mail·Pulse », avec l'état de la clé API en pastille. La mise en page a été resserrée pour supprimer la barre de défilement superflue .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "L'onglet Disponibilités d'un enseignant précise désormais qu'il s'agit du planning **annuel** récurrent, base de la génération de l'emploi du temps (et non un réglage semaine par semaine) ; pour une absence ponctuelle, on passe par une demande de congé .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Emploi du temps : les flèches « Semaine précédente / suivante » sont retirées au profit d'un repère fixe « Semaine type · Année {en cours} ». L'emploi du temps vaut pour toute l'année scolaire ; l'ancien sélecteur laissait croire, à tort, que chaque semaine avait son propre planning .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Bandeau de synthèse des Frais (élève, parent) repassé au dégradé bleu-orange de la marque, et indicateurs de la page Années scolaires intégrés au bandeau d'en-tête .",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Tableaux de bord enseignant, élève et parent désormais en tête de page sur le bandeau bleu-orange KLASSCI, indicateurs clés intégrés. Pages Promotions, Paramètres, Conseil de classe et Statistiques DREN harmonisées sur le même bandeau .",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Refonte visuelle de toute l'application : chaque page (tableau de bord, listes d'administration, portails enseignant et parent) s'ouvre désormais sur un bandeau au dégradé **bleu et orange** (les deux couleurs du logo KLASSCI), avec les indicateurs clés intégrés en blanc et l'action principale mise en avant en orange. Les en-têtes de section reprennent l'orange de la marque. Identité cohérente du haut de page jusqu'aux moindres détails, vérifiée en mode clair et sombre .",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Pages Frais (élève, parent) avec un bandeau de synthèse bleu marque : total attendu, montant payé en vert et « Reste à payer » mis en avant en orange, avec barre de progression. Plus lisible d'un coup d'œil .",
+            "audience": [
+              "élève",
+              "parent"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Page Frais admin refondue : bandeau dégradé bleu, cartes de catégories sobres et lisibles aussi bien en clair qu'en sombre .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Indicateurs clés des pages de gestion désormais alimentés par un calcul serveur : les chiffres restent exacts même au-delà de 100 lignes (grands établissements), là où ils étaient auparavant tronqués .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Tableaux de bord redessinés sur les portails Administration, Enseignant, Élève et Parent : présentation plus claire et épurée, en-tête sobre sans dégradé, indicateurs lisibles d'un coup d'œil et une seule couleur d'accent. Plus lisible en plein soleil sur petit écran .",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Page Paiements sur mobile : la liste des paiements adopte un affichage cartes verticales (montant prominent, statut coloré, méthode, date) au lieu d'une table illisible en scroll horizontal sur Itel S661. Le tap sur une carte ouvre l'aperçu du reçu .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Page Enseignants sur mobile : la liste adopte le même format compact que la page Élèves (avatar + nom + spécialité + chevron), au lieu de la table desktop scrollable. Tap = ouvre la fiche .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Pages Classes, Parents et Personnel sur mobile : même format compact avec avatar + nom + sous-titre + chevron, au lieu de la table desktop scrollable. Une pastille colorée d'occupation (vert / amber / rouge) s'affiche à droite de chaque classe pour signaler les classes pleines en un coup d'œil .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Page Classes : le sélecteur de vue Arbre / Table est désormais caché sur mobile (l'arbre n'était pas lisible sur petit écran). La vue cartes mobile est affichée automatiquement .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Présences admin : sous-titre dynamique qui rappelle la classe et le jour sélectionnés (« Classe 6ème B · lundi ») au lieu d'un message générique, et filtres (Classe, Date, Créneau) à pleine largeur sur mobile avec touch target h-11 pour Itel S661 .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Portail parent — page Documents officiels : si l'enfant n'est pas encore inscrit pour l'année courante, un encart amber prévient que les documents ne pourront pas être délivrés tant que l'inscription n'est pas validée, et les boutons de téléchargement affichent « Disponible après inscription » au lieu de générer une erreur 500 .",
+            "audience": [
+              "parent"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Portail parent — empty state Emploi du temps désambigué : distingue clairement « inscription en attente » (encart amber rassurant) de « pas encore publié par l'administration » (encart neutre) .",
+            "audience": [
+              "parent"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Portail élève — jours de la semaine de l'emploi du temps affichés en toutes lettres (Lundi, Mardi, …) au lieu d'abréviations à 3 lettres difficiles à lire en plein soleil .",
+            "audience": [
+              "élève"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Sélecteur de classe sur l'écran Présences enseignant : pleine largeur sur mobile et touch target h-11 (au lieu de h-10 largeur fixe 256 px) .",
+            "audience": [
+              "enseignant"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Formulaire de connexion plus accessible : boutons d'affichage du mot de passe annoncés aux lecteurs d'écran, messages d'alerte (session expirée, erreur d'identifiants) annoncés en temps réel, icônes décoratives masquées aux lecteurs d'écran .",
+            "audience": [
+              "tous"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Indicateurs du tableau de bord admin annoncés en temps réel aux lecteurs d'écran : chaque carte expose son intitulé + sa valeur (« Élèves inscrits : 42 ») au lieu d'un chiffre orphelin .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Vue Table de la page Matières refondue avec groupage par catalogue : chaque matière apparaît une seule fois (au lieu de 5 lignes dupliquées par niveau), avec un chevron pour déplier les instances et voir coefficient, heures et enseignant pour chaque niveau. Filtres « par niveau » et « avec/sans enseignant » et bandeau de stats : matières uniques, instances totales, heures cumulées .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Fiche élève repensée pour le terrain : Vue d'ensemble centrée sur l'action (solde de paiements, parents avec téléphone clickable « Appeler »), bandeau bleu Wave-style pour le reste à payer, accès direct à la classe en un tap. Plus de doublon entre Vue d'ensemble et Profil .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 139
+          },
+          {
+            "text": "Fiche élève sur mobile : plus de débordement horizontal, photo réduite, onglets ré-ordonnés par usage (Vue, Paiements, Parents, Inscriptions...), boutons d'action regroupés dans un menu pour éviter les suppressions accidentelles .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 139
+          },
+          {
+            "text": "Fiches enseignant et personnel sur mobile : même traitement que la fiche élève — plus de débordement horizontal, photo réduite, onglets qui défilent latéralement, boutons d'action regroupés dans un menu, téléphone enseignant clickable pour appel direct .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 149
+          },
+          {
+            "text": "Vue d'ensemble enseignant rendue actionnable : les 4 indicateurs (classes, élèves, heures, disponibilité) sont des cartes clickables qui ouvrent l'onglet correspondant en un tap, plus de doublon « Spécialité » avec l'en-tête, statut de compte plus juste (« En attente » au lieu de « Inactif » pour un compte jamais utilisé) .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 151
+          },
+          {
+            "text": "Onglet Profil personnel allégé : plus de doublon « Poste » avec l'en-tête, statut de compte avec le même tri-état que les autres fiches (« En attente » / « Désactivé » / « Actif ») .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Onglet Paiements de la fiche élève : les boutons d'action « Régénérer les frais » et « Enregistrer un paiement » s'empilent verticalement sur mobile au lieu de déborder hors de l'écran .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 141
+          },
+          {
+            "text": "Onglet Profil allégé : le matricule, le genre et l'email apparaissent une seule fois (déjà visibles dans l'en-tête ou la section Compte) au lieu d'être répétés .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 141
+          },
+          {
+            "text": "Statut du compte utilisateur plus juste : « En attente » (orange) si l'élève n'a jamais ouvert le portail, « Désactivé » (rouge) seulement si le compte a été explicitement désactivé. Plus de « Inactif » rouge alarmant pour un simple compte non-encore-utilisé .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 141
+          },
+          {
+            "text": "Création d'une classe simplifiée : plus de champ « année académique » à choisir. Les classes sont permanentes, l'année est portée par chaque inscription. Le formulaire de classe ne demande que nom, niveau, série, salle et capacité .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 97
+          },
+          {
+            "text": "Promotion de fin d'année simplifiée : un seul catalogue de classes pour la source et la cible, les doublons « 6ème A 2025-2026 / 6ème A 2026-2027 » disparaissent .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 97
+          },
+          {
+            "text": "Page Inscriptions repensée queue-first : on voit d'un coup d'œil la queue à valider, on valide une inscription en un tap depuis la liste avec confirmation, plus de cartes de KPI redondantes .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 121
+          },
+          {
+            "text": "Confirmation propre par dialogue (au lieu du dialogue système du navigateur) avant de quitter le mode dictée avec des saisies non enregistrées .",
+            "audience": [
+              "enseignant"
+            ],
+            "pull_request": 108
+          },
+          {
+            "text": "Page Élèves repensée : on voit enfin la classe de chaque élève d'un coup d'œil, on filtre par classe ou « à inscrire » d'un tap, et la version mobile s'aligne sur le terrain .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 116
+          },
+          {
+            "text": "Création d'évaluation : la liste des matières se filtre automatiquement selon la classe choisie, plus rapide à parcourir et impossible de se tromper de matière .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 112
+          },
+          {
+            "text": "Saisie des notes : sauvegarde déclenchée après une courte pause, avec retour visuel et statistiques en temps réel .",
+            "audience": [
+              "enseignant"
+            ],
+            "pull_request": 108
+          },
+          {
+            "text": "Page de supervision des notes côté admin : hero card avec indicateurs clés, filtres classe/matière/trimestre, onglets de statut .",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": 108
+          }
+        ],
         "Fixed": [
           {
             "text": "L'export Excel ou PDF d'une liste de classe contient tous les élèves, et plus seulement les vingt premiers affichés à l'écran",
@@ -2086,561 +2649,6 @@
               "enseignant"
             ],
             "pull_request": 111
-          }
-        ],
-        "Changed": [
-          {
-            "text": "Le journal des versements et les soldes par catégorie se replient sous une entrée « Caisse » : deux lectures de la même caisse, au même endroit du menu",
-            "audience": [
-              "admin",
-              "comptable",
-              "caissier"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Marquer un frais déposé demande maintenant confirmation et nomme l'article : ce geste solde la ligne sans aucun versement",
-            "audience": [
-              "admin",
-              "secrétariat"
-            ],
-            "pull_request": 419
-          },
-          {
-            "text": "Toutes les listes chargent la suite en approchant du bas, au lieu de boutons de page : élèves, inscriptions, enseignants, parents, personnel, classes, niveaux, séries, salles, rôles, corbeille, appels, bulletins, convocations, billets d'annulation",
-            "audience": [
-              "admin",
-              "élève"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Les pieds de liste distinguent ce qui est affiché de ce que l'établissement compte, et les compteurs des puces d'inscription déclarent quand ils ne portent que sur le chargé",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Montées de dépendances de `main` reportées sur `develop` : lucide-react 1.14, jsdom 29, postcss 8.5.13",
-            "audience": [
-              "technique"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Le journal des paiements se charge au fil du défilement : la pagination affichait « Page 1/92 » sans permettre d'atteindre la seconde",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Les chiffres du bandeau suivent les filtres, et chaque carte dit si elle les suit ou parle de l'année entière",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Le créneau se trace directement sur la semaine de l'enseignant : on clique, on descend, l'heure de début et de fin suivent",
-            "audience": [
-              "admin",
-              "directeur des études"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "La fenêtre d'ajout de créneau occupe la largeur disponible et montre la semaine à côté des champs, au lieu de la reléguer sous un ascenseur",
-            "audience": [
-              "admin",
-              "directeur des études"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Les états de la semaine se distinguent par leur matière et non par leur seule couleur : un cours est plein, une indisponibilité hachurée, une heure non déclarée tramée",
-            "audience": [
-              "tous"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Bouton « Actualiser » sur la semaine, et relecture automatique au retour sur l'onglet quand les plages ont bougé ailleurs",
-            "audience": [
-              "admin",
-              "directeur des études"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Le mode de paiement du formulaire d'encaissement ne montre que les moyens que la personne connectée peut réellement utiliser : plus de choix proposé puis refusé au moment d'enregistrer",
-            "audience": [
-              "caissier",
-              "comptable",
-              "secrétariat"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Les versements enregistrés autrefois en « Mobile Money » gardent ce libellé partout et restent filtrables dans le journal des versements : l'historique d'une école ne change pas de sens",
-            "audience": [
-              "comptable",
-              "parent"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Le journal des versements s'exporte désormais depuis le serveur : le PDF sort au gabarit officiel de l'établissement, et le classeur Excel porte les couleurs, le logo, la période et les filtres appliqués, au lieu d'un tableau sans identité",
-            "audience": [
-              "comptable",
-              "caissier"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "La période choisie sur l'écran des versements est appliquée par le serveur : elle portait jusqu'ici sur la seule page affichée, ce qui pouvait masquer des versements de la période",
-            "audience": [
-              "comptable",
-              "caissier"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "L'écran des évaluations et celui des bulletins s'ouvrent en une fraction de seconde : ils réclamaient toute l'année scolaire au serveur pour n'afficher qu'une vingtaine de lignes, et mettaient plus de quatre secondes à répondre",
-            "audience": [
-              "admin",
-              "directeur des études",
-              "enseignant"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Le pied de la liste des bulletins annonce le nombre de la classe entière et les flèches de page fonctionnent enfin : elles affichaient « Page 1/1 » quel que soit l'effectif",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Le bandeau « publiez-les » de la liste des bulletins compte les brouillons de toute la classe, plus seulement ceux de la page visible",
-            "audience": [
-              "admin",
-              "directeur des études"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Bulletin retenu pour impayé : la carte reste affichée mais grisée, la moyenne montre un tiret plutôt qu'un chiffre, et une phrase dit le trimestre concerné, le montant en retard et d'aller au secrétariat. Le bouton de téléchargement disparaît au lieu d'échouer au clic",
-            "audience": [
-              "élève",
-              "parent"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Un lien « Consulter les notes publiées » figure sur chaque bulletin retenu : les notes restent accessibles, et la famille voit que ce n'est pas une panne",
-            "audience": [
-              "élève",
-              "parent"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Les écrans « Convocations de parent » et « Autorisations de reprise » ouvrent sur l'année scolaire en cours et se lisent par pages de vingt : ils affichaient jusqu'ici tout l'historique de l'établissement, qui n'est jamais purgé",
-            "audience": [
-              "éducateur",
-              "secrétariat"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Formulaire du billet d'annulation de zéro : les évaluations manquées ne se cherchent plus à chaque caractère tapé dans les dates, mais une fois la saisie posée",
-            "audience": [
-              "éducateur",
-              "secrétariat"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Le choix de l’élève se fait par recherche, dans les convocations, les autorisations de reprise et les versements : on tape deux lettres, nom ou matricule, au lieu de faire défiler une liste tronquée aux cent premiers .",
-            "audience": [
-              "admin",
-              "secrétariat",
-              "caissier"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Fiche Personnel : le rôle d'accès propose désormais six métiers (secrétariat, caissier, éducateur, comptable, directeur des études, directeur), chacun accompagné d'une phrase qui dit ce que la personne pourra faire. « Personnel administratif » devient « Secrétariat » .",
-            "audience": [
-              "admin",
-              "directeur"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Wizard Nouvelle inscription : le modal ne se ferme plus si on appuie hors du cadre (la saisie n'est plus perdue). L'étape élève et la sélection de classe sont lisibles sur téléphone, avec des boutons assez grands. La liste des classes montre les places encore disponibles, pas seulement le maximum .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Publication Windows : le frontend standalone est désormais compilé hors production par la CI puis livré comme artefact versionné.",
-            "audience": [],
-            "pull_request": null
-          },
-          {
-            "text": "Déploiement : l'ancien workflow EC2 est retiré. La démo reste sur le serveur Windows, la production vise le VPS Contabo (artefact + restart, aucun build sur le serveur).",
-            "audience": [],
-            "pull_request": null
-          },
-          {
-            "text": "Fiche inscription et onglet Paiements repensés en premium : en-tête avec bandeau de marque (classe, année, statut), synthèse claire des frais (payé, reste à payer, progression), détail de chaque frais avec sa barre d'avancement et son statut, et historique des versements montrant la répartition sur les frais avec le reçu téléchargeable pour chacun .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Onglet Paiements de la fiche élève : même bandeau de synthèse premium des frais (payé, reste à payer) .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Fiches élève, enseignant et personnel : la carte « Compte de connexion » passe en bas de page, ce n'est pas l'information principale à l'ouverture de la fiche .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Page de connexion repensée en version premium : grande photo d'une classe habillée aux couleurs de la marque avec accroche et points forts à gauche, formulaire présenté dans une carte élégante à droite, plus lisible sur mobile comme sur ordinateur .",
-            "audience": [
-              "tous"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Page Frais repensée : la grille des frais obligatoires s'affiche désormais en arbre par niveau (on voit d'un coup ce qu'un élève d'un niveau paie et le total), et les frais optionnels avec leurs options (montant par option) sont visibles et modifiables directement, au lieu d'être cachés derrière un bouton .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Page de connexion : le panneau d'accueil s'illustre désormais d'une photo de classe (enseignante et élèves), habillée d'un voile bleu-orange aux couleurs de la marque, pour un accueil plus chaleureux et incarné .",
-            "audience": [
-              "tous"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Police des titres remplacée par Nunito Sans, plus sobre et lisible, à la place de l'ancienne police jugée trop fantaisiste .",
-            "audience": [
-              "tous"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Saisie des notes repensée dans la ligne premium KLASSCI : en-tête au dégradé bleu-orange avec le détail de l'évaluation et les indicateurs clés (saisies, moyenne de la classe, état de sauvegarde), « Mode dictée » mis en avant en orange. Sur grand écran, les élèves s'affichent sur deux colonnes pour moins de défilement ; une seule colonne sur téléphone .",
-            "audience": [
-              "enseignant",
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Mode dictée sur grand écran : l'espace est désormais utilisé avec un panneau « Classe » à droite listant tous les élèves et leur note, l'élève en cours surligné, cliquable pour y sauter directement. Sur téléphone, l'affichage plein écran séquentiel reste inchangé .",
-            "audience": [
-              "enseignant",
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Page Emploi du temps repensée dans la ligne premium KLASSCI : bandeau bleu-orange rappelant « Semaine type · Année en cours », classe et actions (générer, exporter PDF) regroupées dans une carte de contrôle avec sélection rapide par classe .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Page Notes repensée dans la ligne premium KLASSCI : bandeau bleu-orange avec les indicateurs clés (évaluations, terminées, en retard, taux de saisie), filtres et actions PDF regroupés, onglets de statut harmonisés .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Onglet MailPulse aux vraies couleurs de la marque : bandeau sombre, logo enveloppe orange et wordmark « Mail·Pulse », avec l'état de la clé API en pastille. La mise en page a été resserrée pour supprimer la barre de défilement superflue .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "L'onglet Disponibilités d'un enseignant précise désormais qu'il s'agit du planning **annuel** récurrent, base de la génération de l'emploi du temps (et non un réglage semaine par semaine) ; pour une absence ponctuelle, on passe par une demande de congé .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Emploi du temps : les flèches « Semaine précédente / suivante » sont retirées au profit d'un repère fixe « Semaine type · Année {en cours} ». L'emploi du temps vaut pour toute l'année scolaire ; l'ancien sélecteur laissait croire, à tort, que chaque semaine avait son propre planning .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Bandeau de synthèse des Frais (élève, parent) repassé au dégradé bleu-orange de la marque, et indicateurs de la page Années scolaires intégrés au bandeau d'en-tête .",
-            "audience": [
-              "tous"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Tableaux de bord enseignant, élève et parent désormais en tête de page sur le bandeau bleu-orange KLASSCI, indicateurs clés intégrés. Pages Promotions, Paramètres, Conseil de classe et Statistiques DREN harmonisées sur le même bandeau .",
-            "audience": [
-              "tous"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Refonte visuelle de toute l'application : chaque page (tableau de bord, listes d'administration, portails enseignant et parent) s'ouvre désormais sur un bandeau au dégradé **bleu et orange** (les deux couleurs du logo KLASSCI), avec les indicateurs clés intégrés en blanc et l'action principale mise en avant en orange. Les en-têtes de section reprennent l'orange de la marque. Identité cohérente du haut de page jusqu'aux moindres détails, vérifiée en mode clair et sombre .",
-            "audience": [
-              "tous"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Pages Frais (élève, parent) avec un bandeau de synthèse bleu marque : total attendu, montant payé en vert et « Reste à payer » mis en avant en orange, avec barre de progression. Plus lisible d'un coup d'œil .",
-            "audience": [
-              "élève",
-              "parent"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Page Frais admin refondue : bandeau dégradé bleu, cartes de catégories sobres et lisibles aussi bien en clair qu'en sombre .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Indicateurs clés des pages de gestion désormais alimentés par un calcul serveur : les chiffres restent exacts même au-delà de 100 lignes (grands établissements), là où ils étaient auparavant tronqués .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Tableaux de bord redessinés sur les portails Administration, Enseignant, Élève et Parent : présentation plus claire et épurée, en-tête sobre sans dégradé, indicateurs lisibles d'un coup d'œil et une seule couleur d'accent. Plus lisible en plein soleil sur petit écran .",
-            "audience": [
-              "tous"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Page Paiements sur mobile : la liste des paiements adopte un affichage cartes verticales (montant prominent, statut coloré, méthode, date) au lieu d'une table illisible en scroll horizontal sur Itel S661. Le tap sur une carte ouvre l'aperçu du reçu .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Page Enseignants sur mobile : la liste adopte le même format compact que la page Élèves (avatar + nom + spécialité + chevron), au lieu de la table desktop scrollable. Tap = ouvre la fiche .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Pages Classes, Parents et Personnel sur mobile : même format compact avec avatar + nom + sous-titre + chevron, au lieu de la table desktop scrollable. Une pastille colorée d'occupation (vert / amber / rouge) s'affiche à droite de chaque classe pour signaler les classes pleines en un coup d'œil .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Page Classes : le sélecteur de vue Arbre / Table est désormais caché sur mobile (l'arbre n'était pas lisible sur petit écran). La vue cartes mobile est affichée automatiquement .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Présences admin : sous-titre dynamique qui rappelle la classe et le jour sélectionnés (« Classe 6ème B · lundi ») au lieu d'un message générique, et filtres (Classe, Date, Créneau) à pleine largeur sur mobile avec touch target h-11 pour Itel S661 .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Portail parent — page Documents officiels : si l'enfant n'est pas encore inscrit pour l'année courante, un encart amber prévient que les documents ne pourront pas être délivrés tant que l'inscription n'est pas validée, et les boutons de téléchargement affichent « Disponible après inscription » au lieu de générer une erreur 500 .",
-            "audience": [
-              "parent"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Portail parent — empty state Emploi du temps désambigué : distingue clairement « inscription en attente » (encart amber rassurant) de « pas encore publié par l'administration » (encart neutre) .",
-            "audience": [
-              "parent"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Portail élève — jours de la semaine de l'emploi du temps affichés en toutes lettres (Lundi, Mardi, …) au lieu d'abréviations à 3 lettres difficiles à lire en plein soleil .",
-            "audience": [
-              "élève"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Sélecteur de classe sur l'écran Présences enseignant : pleine largeur sur mobile et touch target h-11 (au lieu de h-10 largeur fixe 256 px) .",
-            "audience": [
-              "enseignant"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Formulaire de connexion plus accessible : boutons d'affichage du mot de passe annoncés aux lecteurs d'écran, messages d'alerte (session expirée, erreur d'identifiants) annoncés en temps réel, icônes décoratives masquées aux lecteurs d'écran .",
-            "audience": [
-              "tous"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Indicateurs du tableau de bord admin annoncés en temps réel aux lecteurs d'écran : chaque carte expose son intitulé + sa valeur (« Élèves inscrits : 42 ») au lieu d'un chiffre orphelin .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Vue Table de la page Matières refondue avec groupage par catalogue : chaque matière apparaît une seule fois (au lieu de 5 lignes dupliquées par niveau), avec un chevron pour déplier les instances et voir coefficient, heures et enseignant pour chaque niveau. Filtres « par niveau » et « avec/sans enseignant » et bandeau de stats : matières uniques, instances totales, heures cumulées .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Fiche élève repensée pour le terrain : Vue d'ensemble centrée sur l'action (solde de paiements, parents avec téléphone clickable « Appeler »), bandeau bleu Wave-style pour le reste à payer, accès direct à la classe en un tap. Plus de doublon entre Vue d'ensemble et Profil .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 139
-          },
-          {
-            "text": "Fiche élève sur mobile : plus de débordement horizontal, photo réduite, onglets ré-ordonnés par usage (Vue, Paiements, Parents, Inscriptions...), boutons d'action regroupés dans un menu pour éviter les suppressions accidentelles .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 139
-          },
-          {
-            "text": "Fiches enseignant et personnel sur mobile : même traitement que la fiche élève — plus de débordement horizontal, photo réduite, onglets qui défilent latéralement, boutons d'action regroupés dans un menu, téléphone enseignant clickable pour appel direct .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 149
-          },
-          {
-            "text": "Vue d'ensemble enseignant rendue actionnable : les 4 indicateurs (classes, élèves, heures, disponibilité) sont des cartes clickables qui ouvrent l'onglet correspondant en un tap, plus de doublon « Spécialité » avec l'en-tête, statut de compte plus juste (« En attente » au lieu de « Inactif » pour un compte jamais utilisé) .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 151
-          },
-          {
-            "text": "Onglet Profil personnel allégé : plus de doublon « Poste » avec l'en-tête, statut de compte avec le même tri-état que les autres fiches (« En attente » / « Désactivé » / « Actif ») .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": null
-          },
-          {
-            "text": "Onglet Paiements de la fiche élève : les boutons d'action « Régénérer les frais » et « Enregistrer un paiement » s'empilent verticalement sur mobile au lieu de déborder hors de l'écran .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 141
-          },
-          {
-            "text": "Onglet Profil allégé : le matricule, le genre et l'email apparaissent une seule fois (déjà visibles dans l'en-tête ou la section Compte) au lieu d'être répétés .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 141
-          },
-          {
-            "text": "Statut du compte utilisateur plus juste : « En attente » (orange) si l'élève n'a jamais ouvert le portail, « Désactivé » (rouge) seulement si le compte a été explicitement désactivé. Plus de « Inactif » rouge alarmant pour un simple compte non-encore-utilisé .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 141
-          },
-          {
-            "text": "Création d'une classe simplifiée : plus de champ « année académique » à choisir. Les classes sont permanentes, l'année est portée par chaque inscription. Le formulaire de classe ne demande que nom, niveau, série, salle et capacité .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 97
-          },
-          {
-            "text": "Promotion de fin d'année simplifiée : un seul catalogue de classes pour la source et la cible, les doublons « 6ème A 2025-2026 / 6ème A 2026-2027 » disparaissent .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 97
-          },
-          {
-            "text": "Page Inscriptions repensée queue-first : on voit d'un coup d'œil la queue à valider, on valide une inscription en un tap depuis la liste avec confirmation, plus de cartes de KPI redondantes .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 121
-          },
-          {
-            "text": "Confirmation propre par dialogue (au lieu du dialogue système du navigateur) avant de quitter le mode dictée avec des saisies non enregistrées .",
-            "audience": [
-              "enseignant"
-            ],
-            "pull_request": 108
-          },
-          {
-            "text": "Page Élèves repensée : on voit enfin la classe de chaque élève d'un coup d'œil, on filtre par classe ou « à inscrire » d'un tap, et la version mobile s'aligne sur le terrain .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 116
-          },
-          {
-            "text": "Création d'évaluation : la liste des matières se filtre automatiquement selon la classe choisie, plus rapide à parcourir et impossible de se tromper de matière .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 112
-          },
-          {
-            "text": "Saisie des notes : sauvegarde déclenchée après une courte pause, avec retour visuel et statistiques en temps réel .",
-            "audience": [
-              "enseignant"
-            ],
-            "pull_request": 108
-          },
-          {
-            "text": "Page de supervision des notes côté admin : hero card avec indicateurs clés, filtres classe/matière/trimestre, onglets de statut .",
-            "audience": [
-              "admin"
-            ],
-            "pull_request": 108
           }
         ],
         "Security": [
