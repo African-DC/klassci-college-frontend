@@ -137,5 +137,19 @@ describe("modifier le profil d'une inscription", () => {
       is_repeater: null,
     })
   })
+
+  it("effacer le niveau antérieur n'annonce aucun recalcul et ne touche pas à la qualité", async () => {
+    envoyer.mockClear()
+    envoyerProfil.mockClear()
+    render(<EnrollmentEditModal enrollmentId={42} open onClose={() => {}} />)
+    pickSelectOption(screen.getByLabelText("Niveau antérieur"), "Non renseigné")
+    // Le serveur laisse la qualité telle quelle : promettre un recalcul serait faux.
+    expect(screen.queryByText(/sera recalculée/)).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "Mettre à jour" }))
+    await waitFor(() => expect(envoyer).toHaveBeenCalledOnce())
+    ;(envoyer.mock.calls[0][1] as { onSuccess: () => void }).onSuccess()
+    expect(envoyerProfil.mock.calls[0][0].changes).toEqual({ previous_level: null })
+  })
 })
 

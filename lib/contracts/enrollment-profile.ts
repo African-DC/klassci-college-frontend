@@ -162,13 +162,20 @@ export function profileChanges(
  * Le serveur recalcule la qualité quand le niveau antérieur change et que la
  * qualité n'est pas envoyée (BE #472). Vrai tant que la secrétaire a changé
  * le niveau antérieur sans toucher à la qualité : l'écran le dit.
+ *
+ * Un niveau antérieur effacé ne recalcule rien : le serveur laisse alors la
+ * qualité telle qu'elle est, et l'écran n'annonce pas de recalcul.
  */
 export function qualityWillRecompute(
   saved: EnrollmentProfile,
   draft: EnrollmentProfile,
   repeaterTouched: boolean,
 ): boolean {
-  return !repeaterTouched && draft.previous_level !== saved.previous_level
+  return (
+    !repeaterTouched &&
+    draft.previous_level !== null &&
+    draft.previous_level !== saved.previous_level
+  )
 }
 
 /**
