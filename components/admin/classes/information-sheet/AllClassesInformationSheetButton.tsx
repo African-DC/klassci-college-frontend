@@ -28,7 +28,12 @@ export function AllClassesInformationSheetButton({ className }: { className?: st
     try {
       const sheet = await informationSheetApi.forYear()
       if (sheet.classes.length === 0) {
-        throw new Error("Aucune classe n'a d'inscription pour cette année.")
+        // Une année sans inscription n'est pas une panne : on le dit, sans rouge.
+        toast.info("Aucun élève inscrit cette année", {
+          id: toastId,
+          description: "Les fiches de renseignements se rempliront avec les inscriptions.",
+        })
+        return
       }
       const year = sheet.academic_year.name
       await exportSheetsToExcel(
@@ -59,7 +64,8 @@ export function AllClassesInformationSheetButton({ className }: { className?: st
       type="button"
       onClick={exporter}
       disabled={enCours}
-      className={cn("disabled:cursor-not-allowed disabled:opacity-70", className)}
+      // Après `className` : la cible tactile h-11 l'emporte sur la hauteur du hero.
+      className={cn("disabled:cursor-not-allowed disabled:opacity-70", className, "h-11 sm:h-9")}
     >
       {enCours ? (
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />

@@ -5,42 +5,15 @@
 import { downloadBlob } from "@/lib/utils"
 import { addSheet, newWorkbook, XLSX_MIME } from "./excel"
 import { withLogo } from "./logo"
+import { worksheetName } from "./sheet-name"
 import type { ExportPayload } from "./types"
+
+export { worksheetName }
 
 export interface WorkbookSheet {
   /** Nom souhaité ; `worksheetName` le rend acceptable par Excel. */
   name: string
   payload: ExportPayload
-}
-
-/** Caractères qu'Excel refuse dans un nom de feuille. */
-const FORBIDDEN = /[\\/?*[\]:]/g
-const MAX_LENGTH = 31
-
-/**
- * Un nom de feuille qu'Excel accepte et qui ne double aucun autre.
- *
- * Excel refuse `\ / ? * [ ] :`, plus de 31 caractères, un nom vide, une
- * apostrophe en tête ou en fin, et deux feuilles de même nom (sans tenir
- * compte de la casse). « 6ème 1 » passe tel quel ; deux classes que la coupe
- * à 31 caractères rendrait identiques reçoivent « (2) », « (3) ».
- */
-export function worksheetName(name: string, used: Set<string>): string {
-  const clean =
-    name
-      .replace(FORBIDDEN, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .replace(/^'+|'+$/g, "")
-      .slice(0, MAX_LENGTH)
-      .trim() || "Feuille"
-  let candidate = clean
-  for (let n = 2; used.has(candidate.toLowerCase()); n += 1) {
-    const suffix = ` (${n})`
-    candidate = `${clean.slice(0, MAX_LENGTH - suffix.length).trim()}${suffix}`
-  }
-  used.add(candidate.toLowerCase())
-  return candidate
 }
 
 /** Génère puis télécharge un classeur à plusieurs feuilles. */

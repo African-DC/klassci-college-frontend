@@ -10,6 +10,24 @@ import {
 } from "@/lib/contracts/enrollment-profile"
 import { apiFetch, safeValidate } from "./client"
 
+/**
+ * Un lot refusé, avec ce qui était déjà enregistré avant lui.
+ *
+ * `updated` compte les lignes des lots précédents, déjà en base ; `chunk` est
+ * le lot refusé, dont aucune ligne n'est partie (tout ou rien côté serveur).
+ * `reason` garde l'erreur d'origine et son `detail`.
+ */
+export class ProfileBatchError extends Error {
+  constructor(
+    readonly reason: unknown,
+    readonly updated: number,
+    readonly chunk: ProfileBatchItem[],
+  ) {
+    super(reason instanceof Error ? reason.message : "Enregistrement refusé")
+    this.name = "ProfileBatchError"
+  }
+}
+
 /** Taille maximale d'un lot accepté par le serveur. */
 export const PROFILE_BATCH_MAX = 100
 
@@ -32,16 +50,23 @@ export const enrollmentProfileApi = {
   },
 
   /**
-   * Tout ou rien côté serveur : un refus annule le lot entier et nomme
-   * l'inscription fautive. Au-delà de 100 lignes, on découpe ici.
+   * Tout ou rien côté serveur, mais par lot de 100 : au-delà, on découpe ici.
+   * Si un lot est refusé, les précédents restent enregistrés, et l'erreur le
+   * dit (`ProfileBatchError.updated`) au lieu de prétendre que rien n'est parti.
    */
   updateBatch: async (items: ProfileBatchItem[]): Promise<ProfileBatchResult> => {
     let updated = 0
     for (let i = 0; i < items.length; i += PROFILE_BATCH_MAX) {
-      const json = await apiFetch<unknown>("/enrollments/profiles/batch", {
-        method: "PATCH",
-        body: JSON.stringify({ items: items.slice(i, i + PROFILE_BATCH_MAX) }),
-      })
+      const chunk = items.slice(i, i + PROFILE_BATCH_MAX)
+      let json: unknown
+      try {
+        json = await apiFetch<unknown>("/enrollments/profiles/batch", {
+          method: "PATCH",
+          body: JSON.stringify({ items: chunk }),
+        })
+      } catch (cause) {
+        throw new ProfileBatchError(cause, updated, chunk)
+      }
       updated += safeValidate(ProfileBatchResultSchema, json, "PATCH /enrollments/profiles/batch")
         .updated
     }

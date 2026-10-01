@@ -18,7 +18,8 @@ import type { InformationSheetRow } from "@/lib/contracts/information-sheet"
 import { useClassChoice } from "@/lib/hooks/useClassChoice"
 import { useBatchUpdateEnrollmentProfiles } from "@/lib/hooks/useEnrollmentProfile"
 import { useClassInformationSheet } from "@/lib/hooks/useInformationSheet"
-import { changedItems, rowProfile, type ProfileDrafts } from "./profile-batch"
+import { describeBatchFailure } from "@/lib/enrollment/profile-batch-errors"
+import { changedItems, rowName, rowProfile, type ProfileDrafts } from "./profile-batch"
 import { ProfileBatchCards } from "./ProfileBatchCards"
 import { ProfileBatchTable } from "./ProfileBatchTable"
 
@@ -38,19 +39,25 @@ export function ProfileBatchClient() {
   const fromLink = Number(params.get("class"))
   const choice = useClassChoice(Number.isFinite(fromLink) && fromLink > 0 ? fromLink : undefined)
   const { data, isLoading, isError, refetch } = useClassInformationSheet(choice.classId)
-  const save = useBatchUpdateEnrollmentProfiles()
-  const [drafts, setDrafts] = useState<ProfileDrafts>({})
-  const [pendingClass, setPendingClass] = useState<number | null>(null)
-
   const classe = data?.classes[0]
   const rows = classe?.rows ?? []
+  const nameOf = (id: number) => {
+    const row = rows.find((r) => r.enrollment_id === id)
+    return row ? rowName(row) : `l'inscription ${id}`
+  }
+  const save = useBatchUpdateEnrollmentProfiles(nameOf)
+  const [drafts, setDrafts] = useState<ProfileDrafts>({})
+  const [pendingClass, setPendingClass] = useState<number | null>(null)
+  // Les lignes que le serveur a refusées, surlignées jusqu'au prochain envoi.
+  const faulty = new Set(save.error ? describeBatchFailure(save.error, nameOf).faultyIds : [])
   const levelName = classe?.level_name ?? null
-  const items = changedItems(rows, drafts, levelName)
+  const items = changedItems(rows, drafts)
   const dirty = items.length > 0
 
   function changeClass(id: number) {
     if (dirty) return setPendingClass(id)
     setDrafts({})
+    save.reset()
     choice.setClassId(id)
   }
 
@@ -61,6 +68,7 @@ export function ProfileBatchClient() {
       Object.keys(profileChanges(profileOf(row), rowProfile(row, drafts))).length > 0,
     onChange: (row: InformationSheetRow, next: EnrollmentProfile) =>
       setDrafts((prev) => ({ ...prev, [row.enrollment_id]: next })),
+    isFaulty: (row: InformationSheetRow) => faulty.has(row.enrollment_id),
     disabled: save.isPending,
   }
 
@@ -142,6 +150,7 @@ export function ProfileBatchClient() {
         onConfirm={() => {
           if (pendingClass !== null) choice.setClassId(pendingClass)
           setDrafts({})
+          save.reset()
           setPendingClass(null)
         }}
       />

@@ -44,7 +44,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
       enrollment_number: "",
       birth_date: "",
       birth_place: "",
-      nationality: "",
+      nationality: null,
       genre: undefined,
       city: "",
       commune: "",
@@ -207,7 +207,7 @@ export function StudentForm({ onSuccess }: StudentFormProps) {
           />
         </div>
 
-        <NationalityField control={form.control} name="nationality" emptyAs="" />
+        <NationalityField control={form.control} name="nationality" />
 
         <div className="grid grid-cols-2 gap-4">
           <FormField

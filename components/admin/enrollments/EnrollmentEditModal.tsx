@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { EnrollmentUpdateSchema, type EnrollmentUpdate } from "@/lib/contracts/enrollment"
 import {
-  lv2AllowedForLevel,
   profileChanges,
   profileOf,
   type EnrollmentProfile,
@@ -88,9 +87,10 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
   const pending = isPending || updateProfile.isPending
 
   function onSubmit(data: EnrollmentUpdate) {
-    // Passée en 6ème ou en 5ème, l'inscription perd sa LV2 : le serveur la refuserait.
-    const target = lv2AllowedForLevel(levelName) ? profile : { ...profile, lv2: null }
-    const changes = profileChanges(savedProfile, target)
+    // Rien ne part tant que la secrétaire n'a pas touché aux renseignements.
+    // Pas de nettoyage silencieux de la LV2 au changement de classe : le
+    // serveur la retire lui-même quand la nouvelle classe est une 6ème ou 5ème.
+    const changes = profileDraft ? profileChanges(savedProfile, profileDraft) : {}
     mutate(data, {
       onSuccess: () => {
         if (Object.keys(changes).length === 0) return onClose()

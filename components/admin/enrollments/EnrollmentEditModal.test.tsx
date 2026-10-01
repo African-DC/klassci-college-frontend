@@ -32,7 +32,9 @@ vi.mock("@/lib/hooks/useEnrollments", () => ({
       previous_level: "5E",
       previous_series: null,
       is_repeater: null,
-      lv2: null,
+      // Une LV2 restée d'avant, dans une classe de 6ème : l'écran ne la nettoie
+      // pas en silence, le serveur s'en charge.
+      lv2: "allemand",
       artistic_discipline: null,
     },
   }),
@@ -41,7 +43,7 @@ vi.mock("@/lib/hooks/useEnrollments", () => ({
 vi.mock("@/lib/hooks/useClasses", () => ({
   useClasses: () => ({
     isLoading: false,
-    data: { items: [{ id: 3, name: "4eme 1", level_name: "4ème" }] },
+    data: { items: [{ id: 3, name: "6eme 1", level_name: "6ème" }] },
   }),
 }))
 vi.mock("@/lib/hooks/useEnrollmentProfile", () => ({

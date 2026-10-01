@@ -49,7 +49,8 @@ export const StudentCreateSchema = z.object({
   password: z.string({ required_error: "Le mot de passe est requis" }).min(8, "8 caractères minimum"),
   birth_date: z.string().optional(),
   birth_place: z.string().optional(),
-  nationality: z.string().max(60, "60 caractères maximum").optional(),
+  // `null` efface : une chaîne vide enregistrerait une nationalité « vide ».
+  nationality: z.string().max(60, "60 caractères maximum").nullable().optional(),
   genre: z.enum(["M", "F"]).optional(),
   enrollment_number: z.string().optional(),
   city: z.string().optional(),
@@ -61,7 +62,8 @@ export const StudentUpdateSchema = z.object({
   last_name: z.string().min(1).optional(),
   birth_date: z.string().optional(),
   birth_place: z.string().optional(),
-  nationality: z.string().max(60, "60 caractères maximum").optional(),
+  // `null` efface : une chaîne vide enregistrerait une nationalité « vide ».
+  nationality: z.string().max(60, "60 caractères maximum").nullable().optional(),
   genre: z.enum(["M", "F"]).optional(),
   enrollment_number: z.string().optional(),
   city: z.string().optional(),

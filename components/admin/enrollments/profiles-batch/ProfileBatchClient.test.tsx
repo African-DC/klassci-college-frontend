@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from "vitest"
 import type { InformationSheetRow } from "@/lib/contracts/information-sheet"
 
 const envoyer = vi.hoisted(() => vi.fn())
+const etat = vi.hoisted(() => ({ error: null as unknown }))
 
 function row(id: number, last: string, patch: Partial<InformationSheetRow> = {}): InformationSheetRow {
   return {
@@ -61,9 +62,16 @@ vi.mock("@/lib/hooks/useInformationSheet", () => ({
   }),
 }))
 vi.mock("@/lib/hooks/useEnrollmentProfile", () => ({
-  useBatchUpdateEnrollmentProfiles: () => ({ mutate: envoyer, isPending: false }),
+  useBatchUpdateEnrollmentProfiles: () => ({
+    mutate: envoyer,
+    isPending: false,
+    error: etat.error,
+    reset: vi.fn(),
+  }),
 }))
 
+import { ApiError } from "@/lib/api/client"
+import { ProfileBatchError } from "@/lib/api/enrollment-profile"
 import { ProfileBatchClient } from "./ProfileBatchClient"
 
 /** Le premier groupe « Qualité » de l'élève : le tableau (les cartes en ont un aussi). */
@@ -99,4 +107,21 @@ describe("la saisie des renseignements par classe", () => {
     render(<ProfileBatchClient />)
     expect(screen.getAllByRole("combobox", { name: "LV2 de KONÉ Awa" })[0]).toBeDisabled()
   })
+
+  it("surligne l'élève que le serveur a refusé, nommé et non numéroté", () => {
+    etat.error = new ProfileBatchError(
+      new ApiError("Inscription 2 : valeur refusée", 422, "x"),
+      0,
+      [{ enrollment_id: 2, is_repeater: true }],
+    )
+    render(<ProfileBatchClient />)
+    const refus = screen.getAllByText("Refusé : à corriger")
+    // Une fois dans le tableau, une fois dans les cartes : la même ligne.
+    expect(refus.length).toBeGreaterThan(0)
+    const ligne = refus[0].closest("tr") as HTMLElement
+    expect(within(ligne).getByText("KONÉ Awa")).toBeInTheDocument()
+    expect(ligne).toHaveAttribute("aria-invalid", "true")
+    etat.error = null
+  })
 })
+

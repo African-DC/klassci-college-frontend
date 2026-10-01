@@ -1,6 +1,5 @@
 import type { InformationSheetRow } from "@/lib/contracts/information-sheet"
 import {
-  lv2AllowedForLevel,
   profileChanges,
   profileOf,
   type EnrollmentProfile,
@@ -20,17 +19,13 @@ export function rowProfile(row: InformationSheetRow, drafts: ProfileDrafts): Enr
  * chacune seulement les champs changés. Une ligne modifiée puis remise à sa
  * valeur d'origine ne part pas.
  */
-export function changedItems(
-  rows: InformationSheetRow[],
-  drafts: ProfileDrafts,
-  levelName: string | null,
-): ProfileBatchItem[] {
-  const lv2Allowed = lv2AllowedForLevel(levelName)
+export function changedItems(rows: InformationSheetRow[], drafts: ProfileDrafts): ProfileBatchItem[] {
+  // Pas de nettoyage de la LV2 ici : en 6ème et 5ème le champ est fermé, et
+  // le serveur retire de lui-même une LV2 qui n'a plus lieu d'être.
   return rows.flatMap((row) => {
     const draft = drafts[row.enrollment_id]
     if (!draft) return []
-    const target = lv2Allowed ? draft : { ...draft, lv2: null }
-    const changes = profileChanges(profileOf(row), target)
+    const changes = profileChanges(profileOf(row), draft)
     return Object.keys(changes).length > 0 ? [{ enrollment_id: row.enrollment_id, ...changes }] : []
   })
 }

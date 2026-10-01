@@ -27,6 +27,8 @@ export interface ProfileBatchViewProps {
   rows: InformationSheetRow[]
   valueOf: (row: InformationSheetRow) => EnrollmentProfile
   isChanged: (row: InformationSheetRow) => boolean
+  /** Refusée par le serveur au dernier envoi : à corriger avant de renvoyer. */
+  isFaulty: (row: InformationSheetRow) => boolean
   onChange: (row: InformationSheetRow, next: EnrollmentProfile) => void
   lv2Allowed: boolean
   disabled: boolean
@@ -37,6 +39,7 @@ export function ProfileBatchTable({
   rows,
   valueOf,
   isChanged,
+  isFaulty,
   onChange,
   lv2Allowed,
   disabled,
@@ -60,13 +63,23 @@ export function ProfileBatchTable({
             const set = (patch: Partial<EnrollmentProfile>) => onChange(row, { ...value, ...patch })
             const id = `batch-${row.enrollment_id}`
             return (
-              <TableRow key={row.enrollment_id} className={cn(isChanged(row) && "bg-accent/5")}>
+              <TableRow
+                key={row.enrollment_id}
+                aria-invalid={isFaulty(row) || undefined}
+                className={cn(
+                  isChanged(row) && "bg-accent/5",
+                  isFaulty(row) && "bg-destructive/10 ring-1 ring-inset ring-destructive/60",
+                )}
+              >
                 <TableCell>
                   <p className="text-sm font-medium">{name}</p>
                   <p className="text-xs text-muted-foreground">
                     {row.matricule ?? "Sans matricule"}
                     {isChanged(row) ? " · modifié" : ""}
                   </p>
+                  {isFaulty(row) ? (
+                    <p className="text-xs font-semibold text-destructive">Refusé : à corriger</p>
+                  ) : null}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">

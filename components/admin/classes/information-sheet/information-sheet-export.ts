@@ -84,6 +84,7 @@ export function buildInformationSheetPayload(
     branding: brandingFromSettings(settings),
     meta: {
       title: `Fiche de renseignements · ${classe.name}`,
+      sheetName: classe.name,
       subtitle: `Année scolaire ${academicYearName} · ${n} élève${n > 1 ? "s" : ""}`,
       date: new Date().toLocaleDateString("fr-FR"),
     },

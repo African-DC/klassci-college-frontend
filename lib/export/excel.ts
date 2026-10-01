@@ -14,6 +14,7 @@ import ExcelJS from "exceljs"
 import { downloadBlob } from "@/lib/utils"
 import { resolveAlign, toDate, toNumber, todayLabel } from "./format"
 import { withLogo } from "./logo"
+import { worksheetName } from "./sheet-name"
 import {
   DEFAULT_ACCENT_COLOR,
   DEFAULT_PRIMARY_COLOR,
@@ -250,7 +251,9 @@ export async function buildWorkbook(
   payload: ExportPayload,
 ): Promise<ExcelJS.Workbook> {
   const wb = newWorkbook(payload.branding.schoolName)
-  addSheet(wb, payload, payload.meta.title.slice(0, 31) || "Export")
+  // Nettoyé ici et nulle part ailleurs : un titre « Liste · T/A 1 » faisait
+  // planter ExcelJS, qui refuse « / » dans un nom de feuille.
+  addSheet(wb, payload, worksheetName(payload.meta.sheetName ?? payload.meta.title))
   return wb
 }
 
