@@ -3,9 +3,17 @@
   "generated_at": "2026-10-01T23:27:49Z",
   "version": "Unreleased",
   "released": false,
-  "total": 356,
+  "total": 357,
   "sections": {
     "Added": [
+      {
+        "text": "La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable",
+        "audience": [
+          "direction",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
       {
         "text": "La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune",
         "audience": [
@@ -40,14 +48,6 @@
       {
         "text": "La nationalité de l'élève se renseigne à la création et à la modification de sa fiche",
         "audience": [
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "« Modifier l'inscription » permet de choisir nouvel élève, déjà inscrit ici avant ou non tranché, et prévient que les frais liés au profil seront recalculés",
-        "audience": [
-          "admin",
           "secrétariat"
         ],
         "pull_request": null
