@@ -13,6 +13,11 @@ export function fetchClassRoster(classId: number): Promise<Blob> {
   return apiFetchBlob(`/admin/classes/${classId}/roster`)
 }
 
+/** Liste nominative complète en Word éditable (.docx). */
+export function fetchClassRosterWord(classId: number): Promise<Blob> {
+  return apiFetchBlob(`/admin/classes/${classId}/roster.docx`)
+}
+
 /** Rapport de synthèse de la classe pour un trimestre — PDF. */
 export function fetchClassSynthesis(
   classId: number,
