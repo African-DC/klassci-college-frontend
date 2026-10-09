@@ -11,6 +11,14 @@
       "sections": {
         "Added": [
           {
+            "text": "La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable",
+            "audience": [
+              "direction",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
+          {
             "text": "La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune",
             "audience": [
               "comptable",
