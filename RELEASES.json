@@ -11,6 +11,14 @@
       "sections": {
         "Added": [
           {
+            "text": "Gestion des enseignants : nouveau constructeur d'exports avec aperçu PDF et téléchargement PDF, Word ou Excel, filtres scolaires, colonnes et mise en page personnalisables",
+            "audience": [
+              "direction",
+              "secrétariat"
+            ],
+            "pull_request": 514
+          },
+          {
             "text": "La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune",
             "audience": [
               "comptable",
