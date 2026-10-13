@@ -9,7 +9,7 @@ import {
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { buildAccountingScope, scopeTitle, todayLocal, type PaymentScope } from "@/lib/payment-accounting-scope"
+import { buildAccountingScope, isValidAccountingDate, scopeTitle, todayLocal, type PaymentScope } from "@/lib/payment-accounting-scope"
 import { PaymentsFilters } from "@/components/admin/payments/PaymentsFilters"
 import {
   AcademicYearChip,
@@ -68,7 +68,9 @@ export function PaymentsPageClient() {
     ...scopeParams,
   }), [params, scopeParams, paymentScope])
   const allYears = paymentScope !== "current_year"
-  const scopeReady = allYears || academicYearId != null
+  const dateValid = (paymentScope !== "date" && paymentScope !== "week") ||
+    isValidAccountingDate(accountingDate)
+  const scopeReady = (allYears || academicYearId != null) && dateValid
 
   const {
     data,
@@ -79,7 +81,8 @@ export function PaymentsPageClient() {
   } = useInfinitePayments(scopedParams, scopeReady && allYears)
   // Le bandeau recoit les memes criteres que la liste : sinon il annonce
   // l'annee entiere au-dessus de trois lignes filtrees.
-  const { data: summary } = useFinancialSummary(allYears ? undefined : academicYearId, scopedParams, scopeReady && allYears)
+  const { data: rawSummary } = useFinancialSummary(allYears ? undefined : academicYearId, scopedParams, scopeReady && allYears)
+  const summary = scopeReady ? rawSummary : undefined
   const { mutate: validatePayment, isPending: validating } = useValidatePayment()
   const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
   const { data: feeCategories } = useFeeCategories()
@@ -87,10 +90,10 @@ export function PaymentsPageClient() {
 
   // Les pages chargees, mises bout a bout.
   const payments = useMemo(
-    () => data?.pages.flatMap((page) => page.items) ?? [],
-    [data],
+    () => scopeReady ? data?.pages.flatMap((page) => page.items) ?? [] : [],
+    [data, scopeReady],
   )
-  const total = data?.pages[0]?.total ?? 0
+  const total = scopeReady ? data?.pages[0]?.total ?? 0 : 0
 
   const sentinelle = useScrollSentinel({
     actif: Boolean(hasNextPage) && !isFetchingNextPage,
@@ -106,6 +109,7 @@ export function PaymentsPageClient() {
   // sous le même cloisonnement : un caissier n'obtient jamais dans un fichier
   // ce que son tableau ne lui montre pas.
   async function handleExport(format: "pdf" | "xlsx") {
+    if (!scopeReady) return
     setExporting(format)
     try {
       const blob = await paymentsApi.downloadJournal(scopedParams, format)
@@ -122,6 +126,7 @@ export function PaymentsPageClient() {
   }
 
   async function handleDailyCashBook() {
+    if (!scopeReady) return
     const day = paymentScope === "today" ? todayLocal() : accountingDate
     setExporting("daily")
     try {
@@ -138,6 +143,7 @@ export function PaymentsPageClient() {
   }
 
   async function handleExportPreview() {
+    if (!scopeReady) return
     setExporting("preview")
     try {
       await openPdfPreview(() => paymentsApi.downloadJournal(scopedParams, "pdf"))
@@ -262,7 +268,7 @@ export function PaymentsPageClient() {
               type="button"
               className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={() => handleExport("xlsx")}
-              disabled={exporting !== null || payments.length === 0}
+              disabled={!scopeReady || exporting !== null || payments.length === 0}
               aria-label="Télécharger le journal des versements au format Excel"
             >
               {exporting === "xlsx" ? (
@@ -276,7 +282,7 @@ export function PaymentsPageClient() {
               type="button"
               className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={handleExportPreview}
-              disabled={exporting !== null || payments.length === 0}
+              disabled={!scopeReady || exporting !== null || payments.length === 0}
               aria-label="Aperçu avant impression du journal des versements"
             >
               {exporting === "preview" ? (
@@ -290,7 +296,7 @@ export function PaymentsPageClient() {
               type="button"
               className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={() => handleExport("pdf")}
-              disabled={exporting !== null || payments.length === 0}
+              disabled={!scopeReady || exporting !== null || payments.length === 0}
               aria-label="Télécharger le journal des versements au format PDF"
             >
               {exporting === "pdf" ? (
@@ -305,7 +311,7 @@ export function PaymentsPageClient() {
                 type="button"
                 className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
                 onClick={handleDailyCashBook}
-                disabled={exporting !== null || activeCount > 0 || Boolean(filters.search)}
+                disabled={!scopeReady || exporting !== null || activeCount > 0 || Boolean(filters.search)}
                 title="Bordereau complet de la date, disponible sans filtre complémentaire"
               >
                 {exporting === "daily" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Receipt className="h-4 w-4" />}
@@ -341,6 +347,7 @@ export function PaymentsPageClient() {
           )}
         </div>
         <p className="text-sm text-muted-foreground" role="status">{scopeTitle[paymentScope]}{paymentScope === "week" ? ` · semaine du ${scopeParams.date_from?.slice(0, 10) ?? "—"} au ${scopeParams.date_to?.slice(0, 10) ?? "—"}` : paymentScope === "date" ? ` · ${accountingDate}` : ""}. Le journal, les totaux de caisse et les exports respectent ce périmètre.</p>
+        {!dateValid && <p role="alert" className="text-sm text-destructive">Sélectionnez une date valide avant de consulter ou d’exporter des paiements.</p>}
       </div>
 
       {paymentScope === "current_year" && <AcademicYearScopeBar
