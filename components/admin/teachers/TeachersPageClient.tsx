@@ -5,6 +5,7 @@ import { CrudPageLayout } from "@/components/shared/CrudPageLayout"
 import { type HeroKpi } from "@/components/shared/PageHero"
 import { TeachersTable } from "./TeachersTable"
 import { TeacherCreateModal } from "./TeacherCreateModal"
+import { TeachersExportDialog } from "./TeachersExportDialog"
 import { useAdminSummary } from "@/lib/hooks/useDashboard"
 
 export function TeachersPageClient() {
@@ -24,7 +25,7 @@ export function TeachersPageClient() {
       createLabel="Nouvel enseignant"
       icon={BookOpen}
       kpis={kpis}
-      table={<TeachersTable />}
+      table={<div className="space-y-4"><div className="flex justify-end"><TeachersExportDialog /></div><TeachersTable /></div>}
       createModal={(props) => <TeacherCreateModal {...props} />}
     />
   )
