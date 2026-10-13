@@ -9,7 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
-- Workflow de livraison Next.js sur Dokploy, inactif avant validation des accès, avec image immuable, verrou serveur et retour applicatif ciblé *(technique, déploiement)*
+- Workflow GitHub de préparation des images Next.js dans GHCR et vérification de connexion Dokploy en lecture seule, sans déploiement automatique activé *(technique, déploiement)*
 - La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune *(comptable, secrétariat)*
 - Niveau antérieur, qualité, LV2 et discipline artistique se saisissent à l'inscription, sur la fiche de l'inscription et pour toute une classe d'un coup *(secrétariat, éducateur)*
 - À la réinscription, les renseignements laissés vides sont repris de l'année précédente *(secrétariat)*
