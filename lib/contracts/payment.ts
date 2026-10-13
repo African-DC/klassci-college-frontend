@@ -234,6 +234,7 @@ export const PaymentListParamsSchema = z.object({
   fee_category_id: z.number().optional(),
   enrollment_id: z.number().optional(),
   academic_year_id: z.number().optional(),
+  linked_year_only: z.boolean().optional(),
   search: z.string().optional(),
   page: z.number().optional(),
   size: z.number().optional(),
