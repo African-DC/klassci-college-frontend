@@ -13,6 +13,7 @@ import { DirectoryFiltersBar } from "@/components/shared/list/DirectoryFiltersBa
 import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { TeacherEditModal } from "./TeacherEditModal"
+import { TeachersExportDialog } from "./TeachersExportDialog"
 import { getUploadUrl, cn } from "@/lib/utils"
 
 // Avatar avec photo si disponible, fallback initiales propre.
@@ -150,11 +151,16 @@ export function TeachersTable() {
 
   return (
     <div className="space-y-4">
-      <DirectoryFiltersBar
-        search={search}
-        onSearchChange={setSearch}
-        placeholder="Rechercher un enseignant..."
-      />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-[240px] flex-1">
+          <DirectoryFiltersBar
+            search={search}
+            onSearchChange={setSearch}
+            placeholder="Rechercher un enseignant..."
+          />
+        </div>
+        <TeachersExportDialog search={debouncedSearch} />
+      </div>
       {/* Desktop : table dense via CrudTable. Mobile : liste minimale via
           MobileEntityListItem. Tailwind hidden classes = display:none, zero JS,
           un seul layout visible à la fois. */}
