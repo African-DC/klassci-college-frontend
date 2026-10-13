@@ -330,7 +330,15 @@ export function PaymentsPageClient() {
       <div className="rounded-xl border border-border bg-card p-3 sm:p-4 space-y-3" aria-label="Périmètre comptable des paiements">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <span className="text-sm font-medium">Périmètre comptable</span>
-          <Select value={paymentScope} onValueChange={(value) => setPaymentScope(value as PaymentScope)}>
+          <Select value={paymentScope} onValueChange={(value) => {
+            const next = value as PaymentScope
+            setPaymentScope(next)
+            if (next !== "current_year") {
+              // Do not keep hidden date-range filters when switching to day/week/history.
+              set("dateFrom", "")
+              set("dateTo", "")
+            }
+          }}>
             <SelectTrigger className="w-full sm:w-[290px]" aria-label="Choisir le périmètre des paiements">
               <SelectValue />
             </SelectTrigger>
