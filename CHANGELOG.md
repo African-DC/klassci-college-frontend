@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Le répertoire enseignant s'exporte à présent en PDF avec aperçu, Word modifiable et Excel ; l'établissement choisit ses colonnes, son classement et l'orientation. Une vue séparée restitue les affectations réelles par matière, classe, niveau et série, sur l'année scolaire choisie, avec le logo et la charte graphique enregistrés dans les paramètres *(direction, secrétariat)*.
 - La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable *(direction, secrétariat)*
 
 ### Added
