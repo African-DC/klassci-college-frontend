@@ -241,6 +241,11 @@ export const paymentsApi = {
     return safeValidate(CashierArraySchema, unwrap(json), "GET /payments/cashiers")
   },
 
+  // Bordereau comptable de la date, toutes années scolaires confondues.
+  // Ce document signé est DISTINCT de l'export filtrable du journal.
+  downloadDailyCashBook: (day: string): Promise<Blob> =>
+    apiFetchBlob(`/payments/daily-cash-book${toQuery({ date: day })}`),
+
   // Journal des versements, mêmes filtres que la liste affichée. Le
   // cloisonnement est appliqué par le serveur : l'export ne peut pas montrer
   // plus que l'écran.
