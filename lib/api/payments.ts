@@ -256,7 +256,7 @@ export const paymentsApi = {
     // La pagination reste à l'écran : un journal se lit en entier, et un
     // document qui ne couvrirait que la page affichée annoncerait un total
     // faux sans le dire.
-    const filters: Record<string, string | number | undefined> = { format }
+    const filters: Record<string, string | number | boolean | undefined> = { format }
     for (const [key, value] of Object.entries(params)) {
       if (key !== "page" && key !== "size") filters[key] = value as string | number | boolean | undefined
     }
