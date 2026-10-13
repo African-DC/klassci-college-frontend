@@ -195,7 +195,7 @@ export function PaymentsPageClient() {
 
   // Le serveur ne sert pas le recouvrement a qui ne lit que sa propre caisse.
   // Son absence est donc le signal, et il n'y en a pas d'autre a inventer.
-  const cloisonne = !allYears && summary?.total_expected === null
+  const cloisonne = summary?.total_expected === null
 
   // Un filtre actif change le sens de la moitie des chiffres. Le dire sur
   // chaque carte evite de lire « 3 versements » en ayant oublie un filtre
