@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { buildAccountingScope } from "./payment-accounting-scope"
+import { buildAccountingScope, isValidAccountingDate } from "./payment-accounting-scope"
 
 describe("accounting scope", () => {
   it("filters only current-year enrollment payments", () => {
@@ -26,7 +26,10 @@ describe("accounting scope", () => {
   it("does not limit historical lookups to the current school year", () => {
     expect(buildAccountingScope("all", 7, "2026-10-13")).toEqual({})
   })
-  it("rejects invalid calendar dates", () => {
+  it("rejects invalid and missing dates before querying the ledger", () => {
+    expect(isValidAccountingDate("2026-02-30")).toBe(false)
+    expect(isValidAccountingDate("")).toBe(false)
+    expect(isValidAccountingDate("2026-10-13")).toBe(true)
     expect(buildAccountingScope("date", 7, "2026-02-30")).toEqual({})
   })
 })
