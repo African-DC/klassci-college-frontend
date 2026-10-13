@@ -3,9 +3,18 @@
   "generated_at": "2026-10-01T23:27:49Z",
   "version": "Unreleased",
   "released": false,
-  "total": 359,
+  "total": 360,
   "sections": {
     "Added": [
+      {
+        "text": "Le journal des paiements propose des périmètres explicites : année scolaire, bordereau du jour, date précise, semaine et historique complet, avec les encaissements d'arriérés conservés dans le jour de leur paiement et des exports cohérents avec l'écran",
+        "audience": [
+          "comptable",
+          "direction",
+          "caisse"
+        ],
+        "pull_request": null
+      },
       {
         "text": "La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable",
         "audience": [
@@ -43,13 +52,6 @@
         "audience": [
           "secrétariat",
           "éducateur"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "À la réinscription, les renseignements laissés vides sont repris de l'année précédente",
-        "audience": [
-          "secrétariat"
         ],
         "pull_request": null
       }
