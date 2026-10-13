@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable *(direction, secrétariat)*
 - Workflow GitHub de préparation des images Next.js dans GHCR et vérification de connexion Dokploy en lecture seule, sans déploiement automatique activé *(technique, déploiement)*
 - Gestion des enseignants : nouveau constructeur d'exports avec aperçu PDF et téléchargement PDF, Word ou Excel, filtres scolaires, colonnes et mise en page personnalisables *(direction, secrétariat)* (#514)
 - La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune *(comptable, secrétariat)*

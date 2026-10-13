@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Download, Eye, FileSpreadsheet, FileText, Loader2, Settings2 } from "lucide-react"
+import { Download, Eye, FileSpreadsheet, FileText, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"

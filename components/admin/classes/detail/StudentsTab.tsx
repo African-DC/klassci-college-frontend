@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
-import { Download, Loader2, Users } from "lucide-react"
+import { Download, FileText, Loader2, Users } from "lucide-react"
 import type { Route } from "next"
 import type { Student } from "@/lib/contracts/student"
 import { useStudents } from "@/lib/hooks/useStudents"
@@ -22,7 +22,7 @@ import { MobileEntityListItem } from "@/components/shared/MobileEntityListItem"
 import { SectionCard, EmptyState, InitialsAvatar } from "@/components/admin/students/tabs/_primitives"
 import { getUploadUrl } from "@/lib/utils"
 import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
-import { fetchClassRoster, fileSafeName, triggerBlobDownload } from "./class-downloads"
+import { fetchClassRoster, fetchClassRosterWord, fileSafeName, triggerBlobDownload } from "./class-downloads"
 import { ClassRosterExcelButton } from "./ClassRosterExcelButton"
 import { InformationSheetExcelButton } from "../information-sheet/InformationSheetExcelButton"
 
@@ -68,6 +68,7 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
     size: 100,
   })
   const [downloading, setDownloading] = useState(false)
+  const [downloadingWord, setDownloadingWord] = useState(false)
 
   const students = data?.items ?? []
 
@@ -82,6 +83,21 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
       })
     } finally {
       setDownloading(false)
+    }
+  }
+
+  async function handleWordRoster() {
+    setDownloadingWord(true)
+    try {
+      const blob = await fetchClassRosterWord(classId)
+      triggerBlobDownload(blob, `liste-classe-${fileSafeName(className)}.docx`)
+      toast.success("Liste Word téléchargée")
+    } catch (err) {
+      toast.error("Téléchargement Word impossible", {
+        description: err instanceof Error ? err.message : "Erreur lors de la génération du document",
+      })
+    } finally {
+      setDownloadingWord(false)
     }
   }
 
@@ -107,6 +123,17 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
           <Download className="mr-2 h-4 w-4" aria-hidden="true" />
         )}
         Liste (PDF)
+      </Button>
+      <Button
+        variant="outline"
+        onClick={handleWordRoster}
+        disabled={downloadingWord || students.length === 0}
+        size="sm"
+        aria-label={`Télécharger la liste de la classe ${className} en Word`}
+        className="h-11 sm:h-9"
+      >
+        {downloadingWord ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+        Word
       </Button>
       {students.length > 0 ? (
         <>

@@ -11,6 +11,14 @@
       "sections": {
         "Added": [
           {
+            "text": "La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable",
+            "audience": [
+              "direction",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
+          {
             "text": "Workflow GitHub de préparation des images Next.js dans GHCR et vérification de connexion Dokploy en lecture seule, sans déploiement automatique activé",
             "audience": [
               "technique",
