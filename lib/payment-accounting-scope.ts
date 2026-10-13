@@ -2,12 +2,22 @@ import type { PaymentListParams } from "@/lib/contracts/payment"
 
 export type PaymentScope = "current_year" | "today" | "date" | "week" | "all"
 
-function localDate(date: Date): string {
-  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-")
+// The school cash day is fixed to Abidjan, not the cashier's browser timezone.
+export function todayLocal(): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Abidjan",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date())
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? ""
+  return [get("year"), get("month"), get("day")].join("-")
 }
 
-export function todayLocal(): string {
-  return localDate(new Date())
+export function isValidAccountingDate(day: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return false
+  const parsed = new Date(day + "T12:00:00Z")
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === day
 }
 
 export function buildAccountingScope(
@@ -19,17 +29,16 @@ export function buildAccountingScope(
     return academicYearId == null ? {} : { academic_year_id: academicYearId }
   }
   if (scope === "all") return {}
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) return {}
-  const start = new Date(selectedDate + "T12:00:00")
-  if (Number.isNaN(start.getTime()) || localDate(start) !== selectedDate) return {}
+  if (!isValidAccountingDate(selectedDate)) return {}
+  const start = new Date(selectedDate + "T12:00:00Z")
   if (scope === "week") {
     const monday = new Date(start)
-    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+    monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7))
     const sunday = new Date(monday)
     sunday.setDate(sunday.getDate() + 6)
     return {
-      date_from: localDate(monday) + "T00:00:00",
-      date_to: localDate(sunday) + "T23:59:59.999999",
+      date_from: monday.toISOString().slice(0, 10) + "T00:00:00",
+      date_to: sunday.toISOString().slice(0, 10) + "T23:59:59.999999",
     }
   }
   return {
