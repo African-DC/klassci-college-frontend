@@ -71,7 +71,7 @@ export function TeachersExportDialog({ search = "" }: { search?: string }) {
   }
   function makeQuery(): string {
     if (!columns.length) throw new Error("Choisissez au moins une colonne.")
-    if (view === "assignments" && !year) throw new Error("Choisissez l'année scolaire pour lire les affectations.")
+    // À défaut d'année explicite, l'API sélectionne l'année courante du tenant.
     const p = new URLSearchParams({ view, grouping: group, orientation })
     if (year) p.set("academic_year_id", year)
     if (search.trim()) p.set("search", search.trim())
@@ -109,7 +109,7 @@ export function TeachersExportDialog({ search = "" }: { search?: string }) {
       <div className="space-y-5">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {([["directory", "Répertoire", "Fiches et spécialités déclarées"],
-             ["assignments", "Affectations", "Matières réellement enseignées dans les classes"]] as const).map(([id, title, hint]) =>
+             ["assignments", "Affectations", "Matières et classes des emplois du temps de l'année scolaire"]] as const).map(([id, title, hint]) =>
             <button key={id} type="button" aria-pressed={view === id} onClick={() => setMode(id)}
               className={"rounded-xl border p-3 text-left " + (view === id ? "border-primary bg-primary/5" : "")}>
               <span className="block text-sm font-semibold">{title}</span>
@@ -120,7 +120,7 @@ export function TeachersExportDialog({ search = "" }: { search?: string }) {
           <label className="text-sm">Année scolaire
             <select className="mt-1 block h-10 w-full rounded-lg border bg-background px-2"
               value={year} onChange={e => setYear(e.target.value)}>
-              <option value="">Sélectionner une année</option>
+              <option value="">Année scolaire courante</option>
               {(catalog?.years ?? []).map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
             </select>
           </label>
