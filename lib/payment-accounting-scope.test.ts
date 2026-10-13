@@ -3,7 +3,7 @@ import { buildAccountingScope, isValidAccountingDate } from "./payment-accountin
 
 describe("accounting scope", () => {
   it("filters only current-year enrollment payments", () => {
-    expect(buildAccountingScope("current_year", 7, "2026-10-13")).toEqual({ academic_year_id: 7 })
+    expect(buildAccountingScope("current_year", 7, "2026-10-13")).toEqual({ academic_year_id: 7, linked_year_only: true })
   })
   it("does not filter previous-year arrears out of today's cash", () => {
     expect(buildAccountingScope("today", 7, "2026-10-13")).toEqual({
