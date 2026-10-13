@@ -258,7 +258,7 @@ export function PaymentsPageClient() {
         icon={CreditCard}
         title="Paiements"
         subtitle={
-          selectedYear
+          paymentScope === "current_year" && selectedYear
             ? `Suivi des paiements et tableau de bord financier · Année ${selectedYear.name}`
             : "Suivi des paiements et tableau de bord financier"
         }
@@ -404,7 +404,7 @@ export function PaymentsPageClient() {
           ) : (
             <>
             <div className="flex items-center px-4 pt-4 md:hidden">
-              <AcademicYearChip year={selectedYear} />
+              {paymentScope === "current_year" && <AcademicYearChip year={selectedYear} />}
             </div>
             <PaymentsTable
               payments={payments}
