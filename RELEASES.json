@@ -11,6 +11,14 @@
       "sections": {
         "Added": [
           {
+            "text": "Workflow de livraison Next.js sur Dokploy, inactif avant validation des accès, avec image immuable, verrou serveur et retour applicatif ciblé",
+            "audience": [
+              "technique",
+              "déploiement"
+            ],
+            "pull_request": null
+          },
+          {
             "text": "La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune",
             "audience": [
               "comptable",
