@@ -52,13 +52,6 @@
           "comptable"
         ],
         "pull_request": null
-      },
-      {
-        "text": "La nationalité de l'élève se renseigne à la création et à la modification de sa fiche",
-        "audience": [
-          "secrétariat"
-        ],
-        "pull_request": null
       }
     ],
     "Changed": [
