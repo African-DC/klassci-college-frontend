@@ -143,8 +143,8 @@ export function TeacherExportDialog() {
   ), [options?.series, selection.level_ids])
 
   const subjects = useMemo(() => (options?.subjects ?? []).filter((item) =>
-    (!selection.level_ids.length || item.level_id === null || selection.level_ids.includes(item.level_id)) &&
-    (!selection.series_ids.length || item.series_id === null || selection.series_ids.includes(item.series_id))
+    (!selection.level_ids.length || (item.level_id !== null && selection.level_ids.includes(item.level_id))) &&
+    (!selection.series_ids.length || (item.series_id !== null && selection.series_ids.includes(item.series_id)))
   ), [options?.subjects, selection.level_ids, selection.series_ids])
 
   // Une sélection de niveau/série incompatible n'est pas envoyée silencieusement.
