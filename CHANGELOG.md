@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Le répertoire des enseignants propose un aperçu PDF et des exports Word ou Excel aux colonnes et rubriques choisies *(admin, secrétariat)* (#508)
 - La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable *(direction, secrétariat)*
 
 ### Added
