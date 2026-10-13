@@ -7,6 +7,9 @@ import {
   Receipt, FileSpreadsheet, Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { buildAccountingScope, scopeTitle, todayLocal, type PaymentScope } from "@/lib/payment-accounting-scope"
 import { PaymentsFilters } from "@/components/admin/payments/PaymentsFilters"
 import {
   AcademicYearChip,
@@ -49,17 +52,23 @@ export function PaymentsPageClient() {
   // l'année marquée courante. Sans ça, le journal additionnait 2025-2026
   // et 2026-2027, et « Collecté » gonflait de l'exercice d'à côté.
   const [pickedYearId, setPickedYearId] = useState<number | undefined>(undefined)
+  const [paymentScope, setPaymentScope] = useState<PaymentScope>("current_year")
+  const [accountingDate, setAccountingDate] = useState(todayLocal)
   const { academicYearId, years, isLoading: loadingYears } = useCurrentAcademicYearId(pickedYearId)
   const selectedYear = years?.find((y) => y.id === academicYearId)
   const currentYear = years?.find((y) => y.is_current)
 
-  const scopedParams = useMemo(
-    () => ({
-      ...params,
-      ...(academicYearId != null ? { academic_year_id: academicYearId } : {}),
-    }),
-    [params, academicYearId],
+  const scopeParams = useMemo(
+    () => buildAccountingScope(paymentScope, academicYearId, paymentScope === "today" ? todayLocal() : accountingDate),
+    [paymentScope, academicYearId, accountingDate],
   )
+  const scopedParams = useMemo(() => ({
+    ...params,
+    ...(paymentScope !== "current_year" ? { date_from: undefined, date_to: undefined } : {}),
+    ...scopeParams,
+  }), [params, scopeParams, paymentScope])
+  const allYears = paymentScope !== "current_year"
+  const scopeReady = allYears || academicYearId != null
 
   const {
     data,
@@ -67,10 +76,10 @@ export function PaymentsPageClient() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfinitePayments(scopedParams)
+  } = useInfinitePayments(scopedParams, scopeReady && allYears)
   // Le bandeau recoit les memes criteres que la liste : sinon il annonce
   // l'annee entiere au-dessus de trois lignes filtrees.
-  const { data: summary } = useFinancialSummary(academicYearId, params)
+  const { data: summary } = useFinancialSummary(allYears ? undefined : academicYearId, scopedParams, scopeReady && allYears)
   const { mutate: validatePayment, isPending: validating } = useValidatePayment()
   const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
   const { data: feeCategories } = useFeeCategories()
@@ -171,7 +180,7 @@ export function PaymentsPageClient() {
   // pose dix minutes plus tot, et de croire que la caisse est vide.
   const filtre = activeCount > 0 || Boolean(filters.search)
   const surLeFiltre = filtre ? "sur le filtre actif" : undefined
-  const horsFiltre = filtre ? "toute l'année, hors filtre" : undefined
+  const horsFiltre = allYears ? "Recouvrement annuel non applicable" : filtre ? "toute l'année, hors filtre" : undefined
   const avec = (base: string | undefined, mention: string | undefined) =>
     [base, mention].filter(Boolean).join(" · ") || undefined
 
@@ -182,7 +191,7 @@ export function PaymentsPageClient() {
           // Une caissiere ne lit pas le recouvrement de l'etablissement : le
           // tiret dit « pas de votre ressort », la ou un 0 F dirait « rien
           // n'est du ».
-          value: cloisonne ? "—" : `${summary.total_expected!.toLocaleString("fr-FR")} F`,
+          value: cloisonne || allYears ? "—" : `${summary.total_expected!.toLocaleString("fr-FR")} F`,
           icon: Banknote,
           // Le recouvrement parle de la dette de l'ecole, pas des lignes
           // affichees : filtrer une dette sur un moyen de paiement ne veut
@@ -191,7 +200,7 @@ export function PaymentsPageClient() {
         },
         {
           label: cloisonne ? "Encaissé par vous" : "Collecté",
-          value: `${summary.total_paid.toLocaleString("fr-FR")} F`,
+          value: `${(allYears ? summary.total_collected ?? 0 : summary.total_paid).toLocaleString("fr-FR")} F`,
           icon: Wallet,
           // Cloisonne, ce montant est la recette de la personne, agregee sur
           // les memes versements que le compte : la carte entiere suit le
@@ -210,7 +219,7 @@ export function PaymentsPageClient() {
         },
         {
           label: "Taux de recouvrement",
-          value: cloisonne ? "—" : `${summary.completion_rate!.toFixed(1)}%`,
+          value: cloisonne || allYears ? "—" : `${summary.completion_rate!.toFixed(1)}%`,
           icon: TrendingUp,
           hint: avec(
             summary.total_cancelled > 0
@@ -286,7 +295,29 @@ export function PaymentsPageClient() {
         kpis={heroKpis}
       />
 
-      <AcademicYearScopeBar
+      <div className="rounded-xl border border-border bg-card p-3 sm:p-4 space-y-3" aria-label="Périmètre comptable des paiements">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <span className="text-sm font-medium">Périmètre comptable</span>
+          <Select value={paymentScope} onValueChange={(value) => setPaymentScope(value as PaymentScope)}>
+            <SelectTrigger className="w-full sm:w-[290px]" aria-label="Choisir le périmètre des paiements">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="current_year">Année scolaire sélectionnée</SelectItem>
+              <SelectItem value="today">Aujourd’hui — toutes années</SelectItem>
+              <SelectItem value="date">Date précise — toutes années</SelectItem>
+              <SelectItem value="week">Semaine — toutes années</SelectItem>
+              <SelectItem value="all">Tous les paiements</SelectItem>
+            </SelectContent>
+          </Select>
+          {(paymentScope === "date" || paymentScope === "week") && (
+            <Input type="date" aria-label={paymentScope === "week" ? "Choisir une date dans la semaine" : "Choisir la date"} value={accountingDate} onChange={(event) => setAccountingDate(event.target.value)} className="w-full sm:w-[180px]" />
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground" role="status">{scopeTitle[paymentScope]}{paymentScope === "week" ? ` · semaine du ${scopeParams.date_from?.slice(0, 10) ?? "—"} au ${scopeParams.date_to?.slice(0, 10) ?? "—"}` : paymentScope === "date" ? ` · ${accountingDate}` : ""}. Le journal, les totaux de caisse et les exports respectent ce périmètre.</p>
+      </div>
+
+      {paymentScope === "current_year" && <AcademicYearScopeBar
         years={years}
         selectedYearId={academicYearId}
         onSelect={setPickedYearId}
@@ -297,7 +328,7 @@ export function PaymentsPageClient() {
           `Ce n'est pas l'année en cours${currentYear ? ` (${currentYear.name})` : ""}. ` +
           "Les totaux et le journal ci-dessous ne parlent plus de l'exercice actuel."
         }
-      />
+      />}
 
       <PaymentsFilters
         filters={filters}
@@ -307,6 +338,7 @@ export function PaymentsPageClient() {
         feeCategories={feeCategories}
         cashiers={cashiers}
         showCashier={showCashierFilter}
+        showDateRange={paymentScope === "current_year"}
       />
 
       {/* Tableau des paiements premium */}
