@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Le journal des paiements propose des périmètres explicites : année scolaire, bordereau du jour, date précise, semaine et historique complet, avec les encaissements d'arriérés conservés dans le jour de leur paiement et des exports cohérents avec l'écran *(comptable, direction, caisse)*
 - La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable *(direction, secrétariat)*
 - Workflow GitHub de préparation des images Next.js dans GHCR et vérification de connexion Dokploy en lecture seule, sans déploiement automatique activé *(technique, déploiement)*
 - Gestion des enseignants : nouveau constructeur d'exports avec aperçu PDF et téléchargement PDF, Word ou Excel, filtres scolaires, colonnes et mise en page personnalisables *(direction, secrétariat)* (#514)
