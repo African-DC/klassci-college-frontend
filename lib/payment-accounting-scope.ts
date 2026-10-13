@@ -26,7 +26,7 @@ export function buildAccountingScope(
   selectedDate: string,
 ): PaymentListParams {
   if (scope === "current_year") {
-    return academicYearId == null ? {} : { academic_year_id: academicYearId }
+    return academicYearId == null ? {} : { academic_year_id: academicYearId, linked_year_only: true }
   }
   if (scope === "all") return {}
   if (!isValidAccountingDate(selectedDate)) return {}
