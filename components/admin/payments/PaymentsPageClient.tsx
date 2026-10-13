@@ -45,7 +45,7 @@ export function PaymentsPageClient() {
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewPaymentId, setPreviewPaymentId] = useState<number | null>(null)
-  const [exporting, setExporting] = useState<"pdf" | "xlsx" | "preview" | null>(null)
+  const [exporting, setExporting] = useState<"pdf" | "xlsx" | "preview" | "daily" | null>(null)
 
   const { filters, set, reset, params, activeCount } = usePaymentFilters()
   // `undefined` tant que l'utilisateur n'a rien choisi : l'écran suit alors
@@ -114,6 +114,22 @@ export function PaymentsPageClient() {
       toast.success(format === "pdf" ? "Journal PDF téléchargé" : "Journal Excel téléchargé")
     } catch (err) {
       toast.error("Export impossible", {
+        description: err instanceof Error ? err.message : "Erreur inconnue",
+      })
+    } finally {
+      setExporting(null)
+    }
+  }
+
+  async function handleDailyCashBook() {
+    const day = paymentScope === "today" ? todayLocal() : accountingDate
+    setExporting("daily")
+    try {
+      const blob = await paymentsApi.downloadDailyCashBook(day)
+      downloadBlob(blob, `bordereau-${day}.pdf`)
+      toast.success("Bordereau comptable téléchargé")
+    } catch (err) {
+      toast.error("Bordereau indisponible", {
         description: err instanceof Error ? err.message : "Erreur inconnue",
       })
     } finally {
@@ -284,6 +300,18 @@ export function PaymentsPageClient() {
               )}
               PDF
             </button>
+            {(paymentScope === "today" || paymentScope === "date") && (
+              <button
+                type="button"
+                className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+                onClick={handleDailyCashBook}
+                disabled={exporting !== null || activeCount > 0 || Boolean(filters.search)}
+                title="Bordereau complet de la date, disponible sans filtre complémentaire"
+              >
+                {exporting === "daily" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Receipt className="h-4 w-4" />}
+                Bordereau du {paymentScope === "today" ? "jour" : "jour choisi"}
+              </button>
+            )}
             <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4" />
               Nouveau paiement
