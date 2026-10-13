@@ -7,6 +7,9 @@ import {
   Receipt, FileSpreadsheet, Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { buildAccountingScope, isValidAccountingDate, scopeTitle, todayLocal, type PaymentScope } from "@/lib/payment-accounting-scope"
 import { PaymentsFilters } from "@/components/admin/payments/PaymentsFilters"
 import {
   AcademicYearChip,
@@ -42,24 +45,32 @@ export function PaymentsPageClient() {
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewPaymentId, setPreviewPaymentId] = useState<number | null>(null)
-  const [exporting, setExporting] = useState<"pdf" | "xlsx" | "preview" | null>(null)
+  const [exporting, setExporting] = useState<"pdf" | "xlsx" | "preview" | "daily" | null>(null)
 
   const { filters, set, reset, params, activeCount } = usePaymentFilters()
   // `undefined` tant que l'utilisateur n'a rien choisi : l'écran suit alors
   // l'année marquée courante. Sans ça, le journal additionnait 2025-2026
   // et 2026-2027, et « Collecté » gonflait de l'exercice d'à côté.
   const [pickedYearId, setPickedYearId] = useState<number | undefined>(undefined)
+  const [paymentScope, setPaymentScope] = useState<PaymentScope>("current_year")
+  const [accountingDate, setAccountingDate] = useState(todayLocal)
   const { academicYearId, years, isLoading: loadingYears } = useCurrentAcademicYearId(pickedYearId)
   const selectedYear = years?.find((y) => y.id === academicYearId)
   const currentYear = years?.find((y) => y.is_current)
 
-  const scopedParams = useMemo(
-    () => ({
-      ...params,
-      ...(academicYearId != null ? { academic_year_id: academicYearId } : {}),
-    }),
-    [params, academicYearId],
+  const scopeParams = useMemo(
+    () => buildAccountingScope(paymentScope, academicYearId, paymentScope === "today" ? todayLocal() : accountingDate),
+    [paymentScope, academicYearId, accountingDate],
   )
+  const scopedParams = useMemo(() => ({
+    ...params,
+    ...(paymentScope !== "current_year" ? { date_from: undefined, date_to: undefined } : {}),
+    ...scopeParams,
+  }), [params, scopeParams, paymentScope])
+  const allYears = paymentScope !== "current_year"
+  const dateValid = (paymentScope !== "date" && paymentScope !== "week") ||
+    isValidAccountingDate(accountingDate)
+  const scopeReady = (allYears || academicYearId != null) && dateValid
 
   const {
     data,
@@ -67,10 +78,11 @@ export function PaymentsPageClient() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfinitePayments(scopedParams)
+  } = useInfinitePayments(scopedParams, scopeReady && allYears)
   // Le bandeau recoit les memes criteres que la liste : sinon il annonce
   // l'annee entiere au-dessus de trois lignes filtrees.
-  const { data: summary } = useFinancialSummary(academicYearId, params)
+  const { data: rawSummary } = useFinancialSummary(allYears ? undefined : academicYearId, scopedParams, scopeReady && allYears)
+  const summary = scopeReady ? rawSummary : undefined
   const { mutate: validatePayment, isPending: validating } = useValidatePayment()
   const { mutate: cancelPayment, isPending: cancelling } = useCancelPayment()
   const { data: feeCategories } = useFeeCategories()
@@ -78,10 +90,10 @@ export function PaymentsPageClient() {
 
   // Les pages chargees, mises bout a bout.
   const payments = useMemo(
-    () => data?.pages.flatMap((page) => page.items) ?? [],
-    [data],
+    () => scopeReady ? data?.pages.flatMap((page) => page.items) ?? [] : [],
+    [data, scopeReady],
   )
-  const total = data?.pages[0]?.total ?? 0
+  const total = scopeReady ? data?.pages[0]?.total ?? 0 : 0
 
   const sentinelle = useScrollSentinel({
     actif: Boolean(hasNextPage) && !isFetchingNextPage,
@@ -97,6 +109,7 @@ export function PaymentsPageClient() {
   // sous le même cloisonnement : un caissier n'obtient jamais dans un fichier
   // ce que son tableau ne lui montre pas.
   async function handleExport(format: "pdf" | "xlsx") {
+    if (!scopeReady) return
     setExporting(format)
     try {
       const blob = await paymentsApi.downloadJournal(scopedParams, format)
@@ -112,7 +125,25 @@ export function PaymentsPageClient() {
     }
   }
 
+  async function handleDailyCashBook() {
+    if (!scopeReady) return
+    const day = paymentScope === "today" ? todayLocal() : accountingDate
+    setExporting("daily")
+    try {
+      const blob = await paymentsApi.downloadDailyCashBook(day)
+      downloadBlob(blob, `bordereau-${day}.pdf`)
+      toast.success("Bordereau comptable téléchargé")
+    } catch (err) {
+      toast.error("Bordereau indisponible", {
+        description: err instanceof Error ? err.message : "Erreur inconnue",
+      })
+    } finally {
+      setExporting(null)
+    }
+  }
+
   async function handleExportPreview() {
+    if (!scopeReady) return
     setExporting("preview")
     try {
       await openPdfPreview(() => paymentsApi.downloadJournal(scopedParams, "pdf"))
@@ -164,14 +195,14 @@ export function PaymentsPageClient() {
 
   // Le serveur ne sert pas le recouvrement a qui ne lit que sa propre caisse.
   // Son absence est donc le signal, et il n'y en a pas d'autre a inventer.
-  const cloisonne = summary?.total_expected === null
+  const cloisonne = !allYears && summary?.total_expected === null
 
   // Un filtre actif change le sens de la moitie des chiffres. Le dire sur
   // chaque carte evite de lire « 3 versements » en ayant oublie un filtre
   // pose dix minutes plus tot, et de croire que la caisse est vide.
   const filtre = activeCount > 0 || Boolean(filters.search)
   const surLeFiltre = filtre ? "sur le filtre actif" : undefined
-  const horsFiltre = filtre ? "toute l'année, hors filtre" : undefined
+  const horsFiltre = allYears ? "Recouvrement annuel non applicable" : filtre ? "toute l'année, hors filtre" : undefined
   const avec = (base: string | undefined, mention: string | undefined) =>
     [base, mention].filter(Boolean).join(" · ") || undefined
 
@@ -182,7 +213,7 @@ export function PaymentsPageClient() {
           // Une caissiere ne lit pas le recouvrement de l'etablissement : le
           // tiret dit « pas de votre ressort », la ou un 0 F dirait « rien
           // n'est du ».
-          value: cloisonne ? "—" : `${summary.total_expected!.toLocaleString("fr-FR")} F`,
+          value: cloisonne || allYears ? "—" : `${summary.total_expected!.toLocaleString("fr-FR")} F`,
           icon: Banknote,
           // Le recouvrement parle de la dette de l'ecole, pas des lignes
           // affichees : filtrer une dette sur un moyen de paiement ne veut
@@ -190,17 +221,15 @@ export function PaymentsPageClient() {
           hint: horsFiltre,
         },
         {
-          label: cloisonne ? "Encaissé par vous" : "Collecté",
-          value: `${summary.total_paid.toLocaleString("fr-FR")} F`,
+          label: cloisonne ? "Encaissé par vous" : "Total encaissé",
+          value: summary.total_collected == null ? "—" : `${summary.total_collected.toLocaleString("fr-FR")} F`,
           icon: Wallet,
           // Cloisonne, ce montant est la recette de la personne, agregee sur
           // les memes versements que le compte : la carte entiere suit le
           // filtre. Sinon c'est ce que l'ecole a percu sur sa dette, qui ne
           // le suit pas, et melanger les deux ferait affirmer a la carte une
           // portee qu'elle n'a pas.
-          hint: cloisonne
-            ? avec(`${summary.payment_count} paiement(s)`, surLeFiltre)
-            : avec(`${summary.payment_count} paiement(s) sur le filtre`, horsFiltre),
+          hint: `${summary.payment_count} paiement(s) · même périmètre que le journal`,
         },
         {
           label: "En attente",
@@ -210,7 +239,7 @@ export function PaymentsPageClient() {
         },
         {
           label: "Taux de recouvrement",
-          value: cloisonne ? "—" : `${summary.completion_rate!.toFixed(1)}%`,
+          value: cloisonne || allYears ? "—" : `${summary.completion_rate!.toFixed(1)}%`,
           icon: TrendingUp,
           hint: avec(
             summary.total_cancelled > 0
@@ -239,7 +268,7 @@ export function PaymentsPageClient() {
               type="button"
               className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={() => handleExport("xlsx")}
-              disabled={exporting !== null || payments.length === 0}
+              disabled={!scopeReady || exporting !== null || payments.length === 0}
               aria-label="Télécharger le journal des versements au format Excel"
             >
               {exporting === "xlsx" ? (
@@ -253,7 +282,7 @@ export function PaymentsPageClient() {
               type="button"
               className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={handleExportPreview}
-              disabled={exporting !== null || payments.length === 0}
+              disabled={!scopeReady || exporting !== null || payments.length === 0}
               aria-label="Aperçu avant impression du journal des versements"
             >
               {exporting === "preview" ? (
@@ -267,7 +296,7 @@ export function PaymentsPageClient() {
               type="button"
               className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={() => handleExport("pdf")}
-              disabled={exporting !== null || payments.length === 0}
+              disabled={!scopeReady || exporting !== null || payments.length === 0}
               aria-label="Télécharger le journal des versements au format PDF"
             >
               {exporting === "pdf" ? (
@@ -277,6 +306,18 @@ export function PaymentsPageClient() {
               )}
               PDF
             </button>
+            {(paymentScope === "today" || paymentScope === "date") && (
+              <button
+                type="button"
+                className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+                onClick={handleDailyCashBook}
+                disabled={!scopeReady || exporting !== null || activeCount > 0 || Boolean(filters.search)}
+                title="Bordereau complet de la date, disponible sans filtre complémentaire"
+              >
+                {exporting === "daily" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Receipt className="h-4 w-4" />}
+                Bordereau du {paymentScope === "today" ? "jour" : "jour choisi"}
+              </button>
+            )}
             <button type="button" className={heroAccentBtn} onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4" />
               Nouveau paiement
@@ -286,7 +327,30 @@ export function PaymentsPageClient() {
         kpis={heroKpis}
       />
 
-      <AcademicYearScopeBar
+      <div className="rounded-xl border border-border bg-card p-3 sm:p-4 space-y-3" aria-label="Périmètre comptable des paiements">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <span className="text-sm font-medium">Périmètre comptable</span>
+          <Select value={paymentScope} onValueChange={(value) => setPaymentScope(value as PaymentScope)}>
+            <SelectTrigger className="w-full sm:w-[290px]" aria-label="Choisir le périmètre des paiements">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="current_year">Année scolaire sélectionnée</SelectItem>
+              <SelectItem value="today">Aujourd’hui — toutes années</SelectItem>
+              <SelectItem value="date">Date précise — toutes années</SelectItem>
+              <SelectItem value="week">Semaine — toutes années</SelectItem>
+              <SelectItem value="all">Tous les paiements</SelectItem>
+            </SelectContent>
+          </Select>
+          {(paymentScope === "date" || paymentScope === "week") && (
+            <Input type="date" aria-label={paymentScope === "week" ? "Choisir une date dans la semaine" : "Choisir la date"} value={accountingDate} onChange={(event) => setAccountingDate(event.target.value)} className="w-full sm:w-[180px]" />
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground" role="status">{scopeTitle[paymentScope]}{paymentScope === "week" ? ` · semaine du ${scopeParams.date_from?.slice(0, 10) ?? "—"} au ${scopeParams.date_to?.slice(0, 10) ?? "—"}` : paymentScope === "date" ? ` · ${accountingDate}` : ""}. Le journal, les totaux de caisse et les exports respectent ce périmètre.</p>
+        {!dateValid && <p role="alert" className="text-sm text-destructive">Sélectionnez une date valide avant de consulter ou d’exporter des paiements.</p>}
+      </div>
+
+      {paymentScope === "current_year" && <AcademicYearScopeBar
         years={years}
         selectedYearId={academicYearId}
         onSelect={setPickedYearId}
@@ -297,7 +361,7 @@ export function PaymentsPageClient() {
           `Ce n'est pas l'année en cours${currentYear ? ` (${currentYear.name})` : ""}. ` +
           "Les totaux et le journal ci-dessous ne parlent plus de l'exercice actuel."
         }
-      />
+      />}
 
       <PaymentsFilters
         filters={filters}
@@ -307,6 +371,7 @@ export function PaymentsPageClient() {
         feeCategories={feeCategories}
         cashiers={cashiers}
         showCashier={showCashierFilter}
+        showDateRange={paymentScope === "current_year"}
       />
 
       {/* Tableau des paiements premium */}
