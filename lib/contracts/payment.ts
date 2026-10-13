@@ -211,6 +211,7 @@ export const FinancialSummarySchema = z.object({
   // lirait « rien n'est du ».
   total_expected: z.number().nullable(),
   total_paid: z.number(),
+  total_collected: z.number().optional(),
   total_pending: z.number(),
   total_cancelled: z.number(),
   payment_count: z.number(),
