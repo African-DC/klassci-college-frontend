@@ -35,7 +35,7 @@ export function buildAccountingScope(
     const monday = new Date(start)
     monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7))
     const sunday = new Date(monday)
-    sunday.setDate(sunday.getDate() + 6)
+    sunday.setUTCDate(sunday.getUTCDate() + 6)
     return {
       date_from: monday.toISOString().slice(0, 10) + "T00:00:00",
       date_to: sunday.toISOString().slice(0, 10) + "T23:59:59.999999",
