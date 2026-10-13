@@ -24,7 +24,7 @@ const PaymentArraySchema = z.array(PaymentSchema)
 const CashierArraySchema = z.array(CashierOptionSchema)
 
 /** Sérialise les filtres d'écran en query string, en ignorant les vides. */
-function toQuery(params: Record<string, string | number | undefined>): string {
+function toQuery(params: Record<string, string | number | boolean | undefined>): string {
   const query = new URLSearchParams(
     Object.entries(params)
       .filter(([, value]) => value !== undefined && value !== "")
@@ -258,7 +258,7 @@ export const paymentsApi = {
     // faux sans le dire.
     const filters: Record<string, string | number | undefined> = { format }
     for (const [key, value] of Object.entries(params)) {
-      if (key !== "page" && key !== "size") filters[key] = value as string | number | undefined
+      if (key !== "page" && key !== "size") filters[key] = value as string | number | boolean | undefined
     }
     return apiFetchBlob(`/payments/export${toQuery(filters)}`)
   },
