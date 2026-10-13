@@ -24,7 +24,7 @@ const PaymentArraySchema = z.array(PaymentSchema)
 const CashierArraySchema = z.array(CashierOptionSchema)
 
 /** Sérialise les filtres d'écran en query string, en ignorant les vides. */
-function toQuery(params: Record<string, string | number | undefined>): string {
+function toQuery(params: Record<string, string | number | boolean | undefined>): string {
   const query = new URLSearchParams(
     Object.entries(params)
       .filter(([, value]) => value !== undefined && value !== "")
@@ -241,6 +241,11 @@ export const paymentsApi = {
     return safeValidate(CashierArraySchema, unwrap(json), "GET /payments/cashiers")
   },
 
+  // Bordereau comptable de la date, toutes années scolaires confondues.
+  // Ce document signé est DISTINCT de l'export filtrable du journal.
+  downloadDailyCashBook: (day: string): Promise<Blob> =>
+    apiFetchBlob(`/payments/daily-cash-book${toQuery({ date: day })}`),
+
   // Journal des versements, mêmes filtres que la liste affichée. Le
   // cloisonnement est appliqué par le serveur : l'export ne peut pas montrer
   // plus que l'écran.
@@ -251,9 +256,9 @@ export const paymentsApi = {
     // La pagination reste à l'écran : un journal se lit en entier, et un
     // document qui ne couvrirait que la page affichée annoncerait un total
     // faux sans le dire.
-    const filters: Record<string, string | number | undefined> = { format }
+    const filters: Record<string, string | number | boolean | undefined> = { format }
     for (const [key, value] of Object.entries(params)) {
-      if (key !== "page" && key !== "size") filters[key] = value as string | number | undefined
+      if (key !== "page" && key !== "size") filters[key] = value as string | number | boolean | undefined
     }
     return apiFetchBlob(`/payments/export${toQuery(filters)}`)
   },
