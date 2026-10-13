@@ -11,7 +11,7 @@
       "sections": {
         "Added": [
           {
-            "text": "Workflow de livraison Next.js sur Dokploy, inactif avant validation des accès, avec image immuable, verrou serveur et retour applicatif ciblé",
+            "text": "Workflow GitHub de préparation des images Next.js dans GHCR et vérification de connexion Dokploy en lecture seule, sans déploiement automatique activé",
             "audience": [
               "technique",
               "déploiement"
