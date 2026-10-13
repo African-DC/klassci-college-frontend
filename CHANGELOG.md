@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Workflow GitHub de préparation des images Next.js dans GHCR et vérification de connexion Dokploy en lecture seule, sans déploiement automatique activé *(technique, déploiement)*
 - Gestion des enseignants : nouveau constructeur d'exports avec aperçu PDF et téléchargement PDF, Word ou Excel, filtres scolaires, colonnes et mise en page personnalisables *(direction, secrétariat)* (#514)
 - La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune *(comptable, secrétariat)*
 - Niveau antérieur, qualité, LV2 et discipline artistique se saisissent à l'inscription, sur la fiche de l'inscription et pour toute une classe d'un coup *(secrétariat, éducateur)*
