@@ -7,6 +7,7 @@ import { useLevel, useUpdateLevel } from "@/lib/hooks/useLevels"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Form,
@@ -41,6 +42,7 @@ function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }
       ? {
           name: levelData.name,
           order: levelData.order,
+          lv2_enabled: levelData.lv2_enabled,
         }
       : undefined,
   })
@@ -82,6 +84,23 @@ function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }
                   onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                   value={field.value ?? ""}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="lv2_enabled"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-muted/30 p-4">
+              <div className="space-y-1">
+                <FormLabel className="text-sm font-semibold">LV2 disponible</FormLabel>
+                <p className="text-xs text-muted-foreground">Autoriser la LV2 dans les classes de ce niveau, pour cet établissement.</p>
+              </div>
+              <FormControl>
+                <Switch checked={field.value === true} onCheckedChange={field.onChange} aria-label="Autoriser la LV2 pour ce niveau" />
               </FormControl>
               <FormMessage />
             </FormItem>
