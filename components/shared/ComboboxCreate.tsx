@@ -14,6 +14,10 @@ interface ComboboxCreateProps {
   placeholder?: string
   searchPlaceholder?: string
   className?: string
+  searchAliases?: Readonly<Record<string, string>>
+  allowClear?: boolean
+  disabled?: boolean
+  customActionLabel?: string
 }
 
 /** Combobox « sélectionner ou créer » (Popover shadcn + recherche + création inline). */
@@ -24,12 +28,17 @@ export function ComboboxCreate({
   placeholder = "Sélectionner…",
   searchPlaceholder = "Rechercher ou créer…",
   className,
+  searchAliases,
+  allowClear = false,
+  disabled = false,
+  customActionLabel = "Créer",
 }: ComboboxCreateProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const q = query.trim()
-  const filtered = options.filter((o) => o.toLowerCase().includes(q.toLowerCase()))
-  const exact = options.some((o) => o.toLowerCase() === q.toLowerCase())
+  const normalise = (s: string) => s.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase()
+  const filtered = options.filter((o) => normalise(`${o} ${searchAliases?.[o] ?? ""}`).includes(normalise(q)))
+  const exact = options.some((o) => normalise(o) === normalise(q))
 
   const select = (v: string) => {
     onChange(v)
@@ -45,6 +54,7 @@ export function ComboboxCreate({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           className={cn(
             "h-11 w-full justify-between font-normal",
             !value && "text-muted-foreground",
@@ -66,6 +76,12 @@ export function ComboboxCreate({
           />
         </div>
         <div className="max-h-56 overflow-y-auto p-1">
+          {allowClear && value && (
+            <button type="button" onClick={() => select("")}
+              className="w-full rounded-md px-2 py-2 text-left text-sm text-muted-foreground hover:bg-muted">
+              Effacer la sélection
+            </button>
+          )}
           {filtered.map((o) => (
             <button
               key={o}
@@ -84,7 +100,7 @@ export function ComboboxCreate({
               className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-primary hover:bg-primary/10"
             >
               <Plus className="h-4 w-4 shrink-0" />
-              Créer «&nbsp;{q}&nbsp;»
+              {customActionLabel} «&nbsp;{q}&nbsp;»
             </button>
           )}
           {filtered.length === 0 && !q && (
