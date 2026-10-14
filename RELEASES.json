@@ -11,6 +11,14 @@
       "sections": {
         "Added": [
           {
+            "text": "La fiche d’inscription propose des réductions en francs ou pourcentage, une prévisualisation du nouveau solde, le motif et une annulation sécurisée",
+            "audience": [
+              "direction",
+              "comptable"
+            ],
+            "pull_request": null
+          },
+          {
             "text": "Le journal des paiements propose des périmètres explicites : année scolaire, bordereau du jour, date précise, semaine et historique complet, avec les encaissements d'arriérés conservés dans le jour de leur paiement et des exports cohérents avec l'écran",
             "audience": [
               "comptable",
