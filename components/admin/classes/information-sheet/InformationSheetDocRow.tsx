@@ -18,8 +18,9 @@ export function InformationSheetDocRow({ classId, className }: { classId: number
       <div>
         <p className="text-sm font-medium">Fiche de renseignements</p>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          Les seize colonnes demandées par la comptabilité : naissance, statut, régime, qualité,
-          LV2, niveau antérieur. Les cases vides se complètent à la main.
+          Naissance, nationalité, statut, régime, qualité, LV2 et niveau antérieur :
+          les valeurs connues sont reprises automatiquement. Complétez les données absentes
+          dans les fiches élèves ou dans la saisie des renseignements par classe.
         </p>
       </div>
       <InformationSheetExcelButton classId={classId} className={className} />
