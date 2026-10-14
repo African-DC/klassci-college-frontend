@@ -16,7 +16,7 @@ export function RosterFilterControls({ value, onChange }: Props) {
     <div className="min-w-0 space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <Button type="button" variant="outline" size="sm" aria-expanded={open} onClick={() => setOpen(!open)}>
-          {open ? "Masquer les filtres" : "Filtrer la liste / les exports"}
+          {open ? "Masquer les filtres" : "Personnaliser les exports"}
         </Button>
         {Object.values(value).some(v => Array.isArray(v) ? v.length > 0 : v !== undefined) && (
           <Button type="button" variant="ghost" size="sm" onClick={() => { setNationalities(""); onChange({}) }}>Réinitialiser</Button>
