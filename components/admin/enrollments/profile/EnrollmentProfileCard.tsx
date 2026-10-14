@@ -8,7 +8,7 @@ import type { Enrollment } from "@/lib/contracts/enrollment"
 import {
   ARTISTIC_DISCIPLINES,
   LV2_OPTIONS,
-  lv2AllowedForLevel,
+  lv2AllowedForClass,
   optionLabel,
   previousLevelLabel,
   profileOf,
@@ -43,9 +43,9 @@ export function EnrollmentProfileCard({ enrollment }: { enrollment: Enrollment }
   const [open, setOpen] = useState(false)
   const { has } = usePermissions()
   const { data: classe } = useClass(enrollment.class_id)
-  const levelName = classe?.level_name ?? null
+  const lv2Enabled = classe?.lv2_enabled
   const profile = profileOf(enrollment)
-  const lv2Allowed = lv2AllowedForLevel(levelName)
+  const lv2Allowed = lv2AllowedForClass(lv2Enabled)
 
   return (
     <Card className="border-0 shadow-sm ring-1 ring-border">
@@ -76,7 +76,7 @@ export function EnrollmentProfileCard({ enrollment }: { enrollment: Enrollment }
           <Field
             label="LV2"
             value={optionLabel(LV2_OPTIONS, profile.lv2)}
-            emptyLabel={lv2Allowed ? "Non renseigné" : "Non concerné (6ème, 5ème)"}
+            emptyLabel={lv2Allowed ? "Non renseigné" : "LV2 indisponible pour ce niveau"}
           />
           <Field
             label="Discipline artistique"
@@ -88,7 +88,7 @@ export function EnrollmentProfileCard({ enrollment }: { enrollment: Enrollment }
         <EnrollmentProfileDialog
           enrollmentId={enrollment.id}
           saved={profile}
-          levelName={levelName}
+          lv2Enabled={lv2Enabled}
           open={open}
           onClose={() => setOpen(false)}
         />
