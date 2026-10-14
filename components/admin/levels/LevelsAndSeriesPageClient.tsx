@@ -268,6 +268,10 @@ export function LevelsAndSeriesPageClient() {
                     {level.name}
                   </span>
 
+                  <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${level.lv2_enabled ? "border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-300" : "border-border text-muted-foreground"}`}>
+                    LV2 {level.lv2_enabled ? "autorisée" : "désactivée"}
+                  </span>
+
                   {/* Series count badge */}
                   {levelSeries.length > 0 && (
                     <span className="text-xs text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">
