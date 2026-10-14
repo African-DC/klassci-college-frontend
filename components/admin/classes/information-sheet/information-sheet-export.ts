@@ -11,7 +11,7 @@ import { brandingFromSettings } from "@/lib/export/branding"
 import type { ExportColumn, ExportPayload } from "@/lib/export/types"
 
 /**
- * Les seize colonnes de la fiche, dans l'ordre exact que la comptabilité recopie.
+ * Les dix-sept colonnes de la fiche, dans l'ordre exact que la comptabilité recopie.
  *
  * Tout en texte : « 04 » doit rester « 04 », et une cellule vide doit rester
  * vide pour que l'école la complète à la main.
@@ -26,6 +26,7 @@ export const INFORMATION_SHEET_COLUMNS: ExportColumn[] = [
   { key: "mois", header: "MOIS DE NAIS.", width: 9, align: "center" },
   { key: "annee", header: "ANNÉE DE NAIS.", width: 10, align: "center" },
   { key: "lieu", header: "LIEU DE NAIS.", width: 18 },
+  { key: "nationalite", header: "NATIONALITÉ", width: 16 },
   { key: "statut", header: "STATUT", width: 13 },
   { key: "regime", header: "RÉGIME", width: 13 },
   { key: "qualite", header: "QUALITÉ", width: 15 },
@@ -62,6 +63,7 @@ export function informationSheetRow(row: InformationSheetRow): Record<string, st
     niveau: row.level_name ?? "",
     ...splitBirthDate(row.birth_date),
     lieu: row.birth_place ?? "",
+    nationalite: row.nationality ?? "",
     statut: row.assignment_status ? STATUTS[row.assignment_status] : "",
     // Une bourse, quelle qu'elle soit, fait le boursier. Sans bourse déclarée,
     // l'élève est non boursier : c'est la bourse qui s'enregistre, pas son absence.
