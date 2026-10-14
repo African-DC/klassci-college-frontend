@@ -38,6 +38,7 @@ export function NationalityField<T extends FieldValues>({
               searchPlaceholder="Rechercher une nationalité ou un pays…"
               searchAliases={NATIONALITY_ALIASES}
               customActionLabel="Utiliser"
+              maxLength={60}
               allowClear
               disabled={disabled}
             />
