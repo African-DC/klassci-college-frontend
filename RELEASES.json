@@ -11,6 +11,14 @@
       "sections": {
         "Added": [
           {
+            "text": "Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel",
+            "audience": [
+              "direction",
+              "secrétariat"
+            ],
+            "pull_request": 535
+          },
+          {
             "text": "La nationalité se choisit dans une liste recherchable par nationalité ou pays, conservant les valeurs existantes et les variantes saisies. Les fiches Excel incluent la nationalité et le rapport DEEP indique où corriger les données manquantes",
             "audience": [
               "secrétariat",

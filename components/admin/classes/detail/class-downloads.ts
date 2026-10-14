@@ -1,3 +1,4 @@
+import { rosterQuery, type RosterFilters } from "./roster-filters"
 import { apiFetchBlob } from "@/lib/api/client"
 
 /**
@@ -9,13 +10,13 @@ import { apiFetchBlob } from "@/lib/api/client"
  */
 
 /** Liste de classe (roster) — PDF. */
-export function fetchClassRoster(classId: number): Promise<Blob> {
-  return apiFetchBlob(`/admin/classes/${classId}/roster`)
+export function fetchClassRoster(classId: number, filters: RosterFilters = {}): Promise<Blob> {
+  return apiFetchBlob(`/admin/classes/${classId}/roster${rosterQuery(filters)}`)
 }
 
 /** Liste nominative complète en Word éditable (.docx). */
-export function fetchClassRosterWord(classId: number): Promise<Blob> {
-  return apiFetchBlob(`/admin/classes/${classId}/roster.docx`)
+export function fetchClassRosterWord(classId: number, filters: RosterFilters = {}): Promise<Blob> {
+  return apiFetchBlob(`/admin/classes/${classId}/roster.docx${rosterQuery(filters)}`)
 }
 
 /** Rapport de synthèse de la classe pour un trimestre — PDF. */
@@ -66,4 +67,9 @@ export function fileSafeName(name: string): string {
     .replace(/[^a-zA-Z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .toLowerCase()
+}
+
+/** Excel provenant du même ensemble filtré que les documents PDF/Word. */
+export function fetchClassRosterExcel(classId: number, filters: RosterFilters = {}): Promise<Blob> {
+  return apiFetchBlob(`/admin/classes/${classId}/roster.xlsx${rosterQuery(filters)}`)
 }
