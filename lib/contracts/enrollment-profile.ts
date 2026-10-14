@@ -71,21 +71,9 @@ export function repeaterLabel(value: boolean | null | undefined): string {
   return ""
 }
 
-/**
- * La LV2 commence en 4ème : en 6ème et en 5ème, le serveur la refuse (422).
- *
- * On lit le nom du niveau tel que l'école l'a saisi (« 6ème », « 6e »,
- * « 5eme », « Sixième »). Un niveau inconnu n'interdit rien : le serveur reste
- * juge, l'écran ne bloque pas sur une supposition.
- */
-export function lv2AllowedForLevel(levelName: string | null | undefined): boolean {
-  if (!levelName) return true
-  const n = levelName
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .trim()
-    .toLowerCase()
-  return !/^(6|5)(e|eme|em)?\b/.test(n) && !/^(sixieme|cinquieme)/.test(n)
+/** Disponible uniquement sur indication explicite du serveur tenant. */
+export function lv2AllowedForClass(enabled: boolean | null | undefined): boolean {
+  return enabled === true
 }
 
 export const ScholarshipSchema = z.object({
