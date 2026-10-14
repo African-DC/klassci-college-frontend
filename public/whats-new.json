@@ -3,9 +3,16 @@
   "generated_at": "2026-10-01T23:27:49Z",
   "version": "Unreleased",
   "released": false,
-  "total": 360,
+  "total": 361,
   "sections": {
     "Added": [
+      {
+        "text": "Réductions par élève depuis les paiements d'inscription, avec motif, aperçu du montant et droits distincts",
+        "audience": [
+          "admin"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Le journal des paiements propose des périmètres explicites : année scolaire, bordereau du jour, date précise, semaine et historique complet, avec les encaissements d'arriérés conservés dans le jour de leur paiement et des exports cohérents avec l'écran",
         "audience": [
@@ -44,14 +51,6 @@
         "audience": [
           "comptable",
           "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Niveau antérieur, qualité, LV2 et discipline artistique se saisissent à l'inscription, sur la fiche de l'inscription et pour toute une classe d'un coup",
-        "audience": [
-          "secrétariat",
-          "éducateur"
         ],
         "pull_request": null
       }
