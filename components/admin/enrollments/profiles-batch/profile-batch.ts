@@ -54,8 +54,8 @@ export function rowQualityHint(row: InformationSheetRow, drafts: ProfileDrafts):
 /**
  * Les lignes à envoyer : seulement celles qui diffèrent du serveur, et dans
  * chacune seulement les champs changés. Une ligne modifiée puis remise à sa
- * valeur d'origine ne part pas. Pas de nettoyage de la LV2 : en 6ème et 5ème
- * le champ est fermé, et le serveur retire une LV2 qui n'a plus lieu d'être.
+ * valeur d'origine ne part pas. La LV2 est modifiable uniquement si le
+ * niveau du tenant le permet ; son historique n'est pas effacé ici.
  */
 export function changedItems(rows: InformationSheetRow[], drafts: ProfileDrafts): ProfileBatchItem[] {
   return rows.flatMap((row) => {

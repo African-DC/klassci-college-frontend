@@ -32,6 +32,7 @@ import { PageHero, heroGlassBtn, heroAccentBtn, type HeroKpi } from "@/component
 import { ListSearchBar } from "@/components/shared/list/ListSearchBar"
 import { matchesSearch } from "@/lib/utils/list-search"
 import { useLevels, useDeleteLevel } from "@/lib/hooks/useLevels"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { useSeriesList, useDeleteSeries, seriesKeys } from "@/lib/hooks/useSeries"
 import { seriesApi } from "@/lib/api/series"
 import { LevelCreateModal } from "./LevelCreateModal"
@@ -42,6 +43,10 @@ import type { Level } from "@/lib/contracts/level"
 import type { Series, SeriesUpdate } from "@/lib/contracts/series"
 
 export function LevelsAndSeriesPageClient() {
+  const { has } = usePermissions()
+  const canCreateLevel = has("admin:levels:create")
+  const canUpdateLevel = has("admin:levels:update")
+  const canDeleteLevel = has("admin:levels:delete")
   const { data: levelsData, isLoading: levelsLoading, isError: levelsError, error: levelsErr, refetch: refetchLevels } = useLevels()
   const { data: seriesData, isLoading: seriesLoading } = useSeriesList()
   const { mutate: deleteLevel } = useDeleteLevel()
@@ -181,7 +186,7 @@ export function LevelsAndSeriesPageClient() {
             >
               Tout replier
             </button>
-            <button type="button" className={heroAccentBtn} onClick={() => setLevelCreateOpen(true)}>
+            <button type="button" className={heroAccentBtn} onClick={() => setLevelCreateOpen(true)} disabled={!canCreateLevel}>
               <Plus className="h-4 w-4" />
               Nouveau niveau
             </button>
@@ -268,6 +273,10 @@ export function LevelsAndSeriesPageClient() {
                     {level.name}
                   </span>
 
+                  <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${level.lv2_enabled ? "border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-300" : "border-border text-muted-foreground"}`}>
+                    LV2 {level.lv2_enabled ? "autorisée" : "désactivée"}
+                  </span>
+
                   {/* Series count badge */}
                   {levelSeries.length > 0 && (
                     <span className="text-xs text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">
@@ -288,6 +297,7 @@ export function LevelsAndSeriesPageClient() {
                     type="button"
                     className="p-1.5 rounded hover:bg-muted transition-colors"
                     onClick={() => setEditLevelId(level.id)}
+                    disabled={!canUpdateLevel}
                     title="Modifier le niveau"
                   >
                     <Pencil className="h-4 w-4 text-muted-foreground hover:text-foreground" />
@@ -296,6 +306,7 @@ export function LevelsAndSeriesPageClient() {
                     type="button"
                     className="p-1.5 rounded hover:bg-destructive/10 transition-colors"
                     onClick={() => setDeleteTarget({ type: "level", id: level.id, name: level.name })}
+                    disabled={!canDeleteLevel}
                     title="Supprimer le niveau"
                   >
                     <Trash2 className="h-4 w-4 text-muted-foreground/60 hover:text-destructive" />

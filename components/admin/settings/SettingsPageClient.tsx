@@ -27,6 +27,7 @@ export function SettingsPageClient() {
   // économe lui ouvre cet onglet sans qu'on touche au code.
   const { has } = usePermissions()
   const peutReglerLesDettes = has(ARREARS_POLICY_PERMISSION)
+  const peutVoirLesNiveaux = has("admin:levels:read")
 
   return (
     <div className="space-y-6">
@@ -47,6 +48,7 @@ export function SettingsPageClient() {
           <TabsList>
             <TabsTrigger value="school">Établissement</TabsTrigger>
             <TabsTrigger value="identity">Identité visuelle</TabsTrigger>
+            {peutVoirLesNiveaux ? <TabsTrigger value="academic">Académique</TabsTrigger> : null}
             <TabsTrigger value="trimesters">Calendrier</TabsTrigger>
             <TabsTrigger value="payment-methods">Moyens de paiement</TabsTrigger>
             {peutReglerLesDettes ? <TabsTrigger value="arrears">Réinscriptions</TabsTrigger> : null}
@@ -57,6 +59,18 @@ export function SettingsPageClient() {
           <TabsContent value="school">
             <SchoolInfoSection settings={settings} />
           </TabsContent>
+
+          {peutVoirLesNiveaux ? (
+            <TabsContent value="academic">
+              <Link href="/admin/levels" className="flex items-center justify-between gap-4 rounded-xl border bg-card p-5 hover:border-primary/40 hover:bg-primary/[0.02]">
+                <div>
+                  <p className="font-semibold">Disponibilité de la LV2 par niveau</p>
+                  <p className="text-sm text-muted-foreground">Dans Niveaux & Séries, modifiez chaque niveau pour autoriser ou désactiver la LV2.</p>
+                </div>
+                <ArrowRight aria-hidden className="h-5 w-5 shrink-0 text-muted-foreground" />
+              </Link>
+            </TabsContent>
+          ) : null}
 
           <TabsContent value="identity">
             <PdfIdentitySection settings={settings} isLoading={isLoading} />

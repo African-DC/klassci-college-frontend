@@ -10,7 +10,7 @@ import { useUpdateEnrollmentProfile } from "@/lib/hooks/useEnrollmentProfile"
 interface EnrollmentProfileDialogProps {
   enrollmentId: number
   saved: EnrollmentProfile
-  levelName: string | null
+  lv2Enabled: boolean
   open: boolean
   onClose: () => void
 }
@@ -19,7 +19,7 @@ interface EnrollmentProfileDialogProps {
 export function EnrollmentProfileDialog({
   enrollmentId,
   saved,
-  levelName,
+  lv2Enabled,
   open,
   onClose,
 }: EnrollmentProfileDialogProps) {
@@ -44,7 +44,7 @@ export function EnrollmentProfileDialog({
           value={correction.value}
           onChange={correction.onChange}
           qualityHint={correction.qualityHint}
-          levelName={levelName}
+          lv2Enabled={lv2Enabled}
           disabled={update.isPending}
         />
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

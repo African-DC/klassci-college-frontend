@@ -7,6 +7,9 @@ import { useLevel, useUpdateLevel } from "@/lib/hooks/useLevels"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+import { DataError } from "@/components/shared/DataError"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Form,
@@ -32,7 +35,9 @@ function EditFormSkeleton() {
 }
 
 function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }) {
-  const { data: levelData, isLoading } = useLevel(levelId)
+  const { data: levelData, isLoading, isError, error: loadError, refetch } = useLevel(levelId)
+  const { has } = usePermissions()
+  const canEdit = has("admin:levels:update")
   const { mutate, isPending, error } = useUpdateLevel(levelId)
 
   const form = useForm<LevelUpdate>({
@@ -41,11 +46,14 @@ function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }
       ? {
           name: levelData.name,
           order: levelData.order,
+          lv2_enabled: levelData.lv2_enabled,
         }
       : undefined,
   })
 
-  if (isLoading || !levelData) return <EditFormSkeleton />
+  if (isLoading) return <EditFormSkeleton />
+  if (isError) return <DataError message="Impossible de charger ce niveau." error={loadError} onRetry={() => refetch()} />
+  if (!levelData) return <p className="text-sm text-muted-foreground">Niveau introuvable.</p>
 
   function onSubmit(data: LevelUpdate) {
     mutate(data, { onSuccess: onClose })
@@ -88,13 +96,31 @@ function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }
           )}
         />
 
+        <FormField
+          control={form.control}
+          name="lv2_enabled"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between gap-3 rounded-lg border bg-muted/20 px-4 py-3">
+              <div className="min-w-0 space-y-1">
+                <FormLabel>LV2 autorisée</FormLabel>
+                <p className="text-xs text-muted-foreground">
+                  Autoriser la deuxième langue vivante dans les inscriptions de ce niveau.
+                </p>
+              </div>
+              <FormControl>
+                <Switch checked={field.value ?? false} onCheckedChange={field.onChange} disabled={!canEdit || isPending} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
         {error && (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
             <p className="text-sm text-destructive">{error.message}</p>
           </div>
         )}
 
-        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
+        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending || !canEdit}>
           {isPending ? "Enregistrement..." : "Mettre a jour"}
         </Button>
       </form>

@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ClassSelect } from "@/components/shared/ClassSelect"
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { DataError } from "@/components/shared/DataError"
-import { lv2AllowedForLevel, type EnrollmentProfile } from "@/lib/contracts/enrollment-profile"
+import type { EnrollmentProfile } from "@/lib/contracts/enrollment-profile"
 import type { InformationSheetRow } from "@/lib/contracts/information-sheet"
 import { useClassChoice } from "@/lib/hooks/useClassChoice"
 import { useBatchUpdateEnrollmentProfiles } from "@/lib/hooks/useEnrollmentProfile"
@@ -53,7 +53,7 @@ export function ProfileBatchClient() {
   const [pendingClass, setPendingClass] = useState<number | null>(null)
   // Les lignes que le serveur a refusées, surlignées jusqu'au prochain envoi.
   const faulty = new Set(save.error ? describeBatchFailure(save.error, nameOf).faultyIds : [])
-  const levelName = classe?.level_name ?? null
+  const lv2Enabled = classe?.level_lv2_enabled === true
   const items = changedItems(rows, drafts)
   const dirty = items.length > 0
 
@@ -115,10 +115,10 @@ export function ProfileBatchClient() {
       ) : (
         <>
           <div className="hidden md:block">
-            <ProfileBatchTable {...viewProps} lv2Allowed={lv2AllowedForLevel(levelName)} />
+            <ProfileBatchTable {...viewProps} lv2Allowed={lv2Enabled} />
           </div>
           <div className="md:hidden">
-            <ProfileBatchCards {...viewProps} levelName={levelName} />
+            <ProfileBatchCards {...viewProps} lv2Enabled={lv2Enabled} />
           </div>
         </>
       )}
