@@ -3,9 +3,19 @@
   "generated_at": "2026-10-01T23:27:49Z",
   "version": "Unreleased",
   "released": false,
-  "total": 363,
+  "total": 364,
   "sections": {
     "Added": [
+      {
+        "text": "Votre établissement peut choisir, niveau par niveau, où la LV2 est proposée : ce réglage s'applique aux inscriptions et à la saisie de classe",
+        "audience": [
+          "admin",
+          "direction",
+          "secrétariat",
+          "éducateur"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel",
         "audience": [
