@@ -44,7 +44,7 @@ export const ComboboxCreate = forwardRef<HTMLButtonElement, ComboboxCreateProps>
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const q = query.trim()
-  const normalise = (s: string) => s.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase()
+  const normalise = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
   const filtered = options.filter((o) => normalise(`${o} ${searchAliases?.[o] ?? ""}`).includes(normalise(q)))
   const exact = options.some((o) => normalise(o) === normalise(q))
 
