@@ -20,6 +20,7 @@ import { PaymentHistoryList } from "@/components/admin/payments/PaymentHistoryLi
 import { EnrollmentCheckoutDialog } from "@/components/admin/payments/checkout/EnrollmentCheckoutDialog";
 import { checkoutTarget } from "@/components/admin/payments/checkout/checkout-target";
 import { EnrollmentScheduleCard } from "@/components/admin/installments/EnrollmentScheduleCard";
+import { FeeDiscountsPanel } from "@/components/admin/enrollments/discounts/FeeDiscountsPanel";
 import { NoPaymentAccessNotice } from "@/components/admin/enrollments/tabs/NoPaymentAccessNotice";
 import { InKindDepositPanel } from "@/components/admin/enrollments/in-kind/InKindDepositPanel";
 import { InKindDepositDialogs } from "@/components/admin/enrollments/in-kind/InKindDepositDialogs";
@@ -123,6 +124,12 @@ export function EnrollmentPaymentsTab({
           immédiatement « et pour quand ? ». Le retard affiché compare ce qui
           est déjà exigible au versé, jamais le total de l'année. */}
       <EnrollmentScheduleCard enrollmentId={enrollmentId} />
+
+      <FeeDiscountsPanel
+        enrollmentId={enrollmentId}
+        studentId={studentId ?? 0}
+        fees={feeList}
+      />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
         <RegenerateFeesAction
