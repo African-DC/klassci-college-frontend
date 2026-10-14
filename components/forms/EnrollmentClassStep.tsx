@@ -47,9 +47,8 @@ export function EnrollmentClassStep({
   onClassSelected,
   academicYearId,
 }: EnrollmentClassStepProps) {
-  // Changer pour une 6ème ou une 5ème efface une LV2 déjà choisie : le serveur
-  // la refuserait (422) au moment d'enregistrer.
-  const levelOf = (id: number) => classes.find((c) => c.id === id)?.level_name
+  // Le changement de classe utilise la règle tenant reçue de l'API, jamais le nom.
+  const lv2Of = (id: number) => classes.find((c) => c.id === id)?.lv2_enabled
   const shared = {
     classes,
     classesLoading,
