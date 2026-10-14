@@ -114,7 +114,7 @@ export function EnrollmentClassStep({
             notes={reForm.watch("notes")}
             onClassChange={(id) => {
               reForm.setValue("class_id", id, { shouldValidate: true })
-              if (!lv2AllowedForLevel(levelOf(id))) reForm.setValue("lv2", null)
+              if (classes.find((c) => c.id === id)?.level_lv2_enabled !== true) reForm.setValue("lv2", null)
               onClassSelected()
             }}
             onFeeVariantChange={(id) => reForm.setValue("fee_variant_id", id)}
