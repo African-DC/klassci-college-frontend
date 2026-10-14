@@ -24,6 +24,7 @@ import { getUploadUrl } from "@/lib/utils"
 import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { fetchClassRoster, fetchClassRosterWord, fileSafeName, triggerBlobDownload } from "./class-downloads"
 import { ClassRosterExcelButton } from "./ClassRosterExcelButton"
+import { ClassRosterCustomDialog } from "./ClassRosterCustomDialog"
 import { InformationSheetExcelButton } from "../information-sheet/InformationSheetExcelButton"
 
 interface StudentsTabProps {
@@ -137,6 +138,7 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
       </Button>
       {students.length > 0 ? (
         <>
+          <ClassRosterCustomDialog classId={classId} className={className} />
           <ClassRosterExcelButton
             classId={classId}
             className={className}

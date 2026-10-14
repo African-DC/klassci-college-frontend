@@ -24,6 +24,7 @@ import {
   triggerBlobDownload,
 } from "./class-downloads"
 import { ClassRosterExcelButton } from "./ClassRosterExcelButton"
+import { ClassRosterCustomDialog } from "./ClassRosterCustomDialog"
 import { InformationSheetDocRow } from "../information-sheet/InformationSheetDocRow"
 
 /**
@@ -144,7 +145,7 @@ export function ClassDocumentsSection({ classId, name, academicYearId }: ClassDo
           filename={`liste-classe-${safeName}.pdf`}
           label={`la liste de la classe ${name}`}
           accent
-          extra={<ClassRosterExcelButton classId={classId} className={name} />}
+          extra={<><ClassRosterExcelButton classId={classId} className={name} /><ClassRosterCustomDialog classId={classId} className={name} buttonClassName="h-11 w-full sm:h-10 sm:w-auto" /></>}
         />
 
         <InformationSheetDocRow classId={classId} className={name} />

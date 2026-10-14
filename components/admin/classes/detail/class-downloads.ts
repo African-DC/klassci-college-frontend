@@ -1,4 +1,6 @@
 import { apiFetchBlob } from "@/lib/api/client"
+import { rosterFilterQuery } from "@/lib/api/class-roster"
+import type { ClassRosterFilters } from "@/lib/contracts/class-roster"
 
 /**
  * Téléchargements PDF d'une classe (liste / synthèse).
@@ -9,13 +11,13 @@ import { apiFetchBlob } from "@/lib/api/client"
  */
 
 /** Liste de classe (roster) — PDF. */
-export function fetchClassRoster(classId: number): Promise<Blob> {
-  return apiFetchBlob(`/admin/classes/${classId}/roster`)
+export function fetchClassRoster(classId: number, filters: ClassRosterFilters = {}): Promise<Blob> {
+  return apiFetchBlob(`/admin/classes/${classId}/roster${rosterFilterQuery(filters)}`)
 }
 
 /** Liste nominative complète en Word éditable (.docx). */
-export function fetchClassRosterWord(classId: number): Promise<Blob> {
-  return apiFetchBlob(`/admin/classes/${classId}/roster.docx`)
+export function fetchClassRosterWord(classId: number, filters: ClassRosterFilters = {}): Promise<Blob> {
+  return apiFetchBlob(`/admin/classes/${classId}/roster.docx${rosterFilterQuery(filters)}`)
 }
 
 /** Rapport de synthèse de la classe pour un trimestre — PDF. */

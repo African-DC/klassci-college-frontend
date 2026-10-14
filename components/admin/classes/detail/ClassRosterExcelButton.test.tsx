@@ -8,19 +8,15 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
-const charger = vi.hoisted(() =>
-  vi.fn(async () => ({
-    branding: { schoolName: "Rostan", primaryColor: "#0F3F8C", accentColor: "#F58220" },
-    meta: { title: "Liste des élèves" },
-    columns: [{ key: "nom", header: "Nom" }],
-    rows: Array.from({ length: 45 }, (_, i) => ({ nom: `Élève ${i + 1}` })),
+const charger = vi.hoisted(() => vi.fn(async () => ({
+  class_name: "6e B", academic_year_name: "2026-2027", total: 45,
+  students: Array.from({ length: 45 }, (_, i) => ({
+    enrollment_number: `MAT-${i + 1}`, last_name: `Élève ${i + 1}`, first_name: "A",
   })),
-)
+})))
 const exporter = vi.hoisted(() => vi.fn(async () => {}))
 
-vi.mock("@/components/admin/students/students-export", () => ({
-  loadStudentsExportPayload: charger,
-}))
+vi.mock("@/lib/api/class-roster", () => ({ fetchClassRosterData: charger }))
 vi.mock("@/lib/export/excel", () => ({ exportToExcel: exporter }))
 vi.mock("@/lib/hooks/useSettings", () => ({ useSettings: () => ({ data: undefined }) }))
 
@@ -32,9 +28,7 @@ describe("la liste de classe en Excel", () => {
     fireEvent.click(screen.getByRole("button", { name: /en Excel/ }))
 
     await waitFor(() => expect(exporter).toHaveBeenCalledOnce())
-    expect(charger).toHaveBeenCalledWith(
-      expect.objectContaining({ params: { class_id: 12 }, filters: "Classe 6e B" }),
-    )
+    expect(charger).toHaveBeenCalledWith(12)
     const [payload, fichier] = exporter.mock.calls[0] as unknown as [
       { meta: { title: string }; rows: unknown[] },
       string,
