@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from "vitest"
 import type { InformationSheetRow } from "@/lib/contracts/information-sheet"
 
 const envoyer = vi.hoisted(() => vi.fn())
-const etat = vi.hoisted(() => ({ error: null as unknown }))
+const etat = vi.hoisted(() => ({ error: null as unknown, lv2Enabled: false }))
 
 function row(id: number, last: string, patch: Partial<InformationSheetRow> = {}): InformationSheetRow {
   return {
@@ -55,6 +55,7 @@ vi.mock("@/lib/hooks/useInformationSheet", () => ({
           id: 3,
           name: "6ème 1",
           level_name: "6ème",
+          level_lv2_enabled: etat.lv2Enabled,
           rows: [row(1, "BAMBA"), row(2, "KONÉ", { previous_level: "CM2" }), row(3, "OUATTARA")],
         },
       ],
@@ -104,9 +105,19 @@ describe("la saisie des renseignements par classe", () => {
     expect(screen.getByRole("button", { name: /Enregistrer/ })).toBeDisabled()
   })
 
-  it("ferme la LV2 de toute la classe en 6ème", () => {
+  it("ferme la LV2 lorsque le paramètre du tenant interdit le niveau", () => {
     render(<ProfileBatchClient />)
     expect(screen.getAllByRole("combobox", { name: "LV2 de KONÉ Awa" })[0]).toBeDisabled()
+  })
+
+  it("autorise la LV2 même dans une classe intitulée 6ème quand le tenant l'active", () => {
+    etat.lv2Enabled = true
+    try {
+      render(<ProfileBatchClient />)
+      expect(screen.getAllByRole("combobox", { name: "LV2 de KONÉ Awa" })[0]).not.toBeDisabled()
+    } finally {
+      etat.lv2Enabled = false
+    }
   })
 
   it("surligne l'élève que le serveur a refusé, nommé et non numéroté", () => {
