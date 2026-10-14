@@ -24,6 +24,9 @@ import {
   triggerBlobDownload,
 } from "./class-downloads"
 import { ClassRosterExcelButton } from "./ClassRosterExcelButton"
+import { RosterFilterControls } from "./RosterFilterControls"
+import type { RosterFilters } from "./roster-filters"
+import { fetchClassRosterWord } from "./class-downloads"
 import { InformationSheetDocRow } from "../information-sheet/InformationSheetDocRow"
 
 /**
@@ -108,6 +111,7 @@ interface ClassDocumentsSectionProps {
 /** Les documents de la classe : PDF officiels, liste et fiche de renseignements en Excel. */
 export function ClassDocumentsSection({ classId, name, academicYearId }: ClassDocumentsSectionProps) {
   const [trimester, setTrimester] = useState("1")
+  const [rosterFilters, setRosterFilters] = useState<RosterFilters>({})
   const [downloadingSynthesis, setDownloadingSynthesis] = useState(false)
   const safeName = fileSafeName(name)
 
@@ -137,14 +141,15 @@ export function ClassDocumentsSection({ classId, name, academicYearId }: ClassDo
     >
       <div className="space-y-3">
         {/* Liste de classe (roster) */}
+        <RosterFilterControls value={rosterFilters} onChange={setRosterFilters} />
         <DocRow
           title="Liste de classe"
           description="Les élèves inscrits, avec matricule et coordonnées."
-          fetchBlob={() => fetchClassRoster(classId)}
+          fetchBlob={() => fetchClassRoster(classId, rosterFilters)}
           filename={`liste-classe-${safeName}.pdf`}
           label={`la liste de la classe ${name}`}
           accent
-          extra={<ClassRosterExcelButton classId={classId} className={name} />}
+          extra={<ClassRosterExcelButton classId={classId} className={name} filters={rosterFilters} />}
         />
 
         <InformationSheetDocRow classId={classId} className={name} />
