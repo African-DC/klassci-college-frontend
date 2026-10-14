@@ -2,22 +2,25 @@
 
 import type { Control, FieldValues, Path } from "react-hook-form"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { ComboboxCreate } from "@/components/shared/ComboboxCreate"
+import { NATIONALITIES, NATIONALITY_ALIASES } from "@/lib/constants/nationalities"
 
 interface NationalityFieldProps<T extends FieldValues> {
   control: Control<T>
   name: Path<T>
+  disabled?: boolean
 }
 
 /**
  * La nationalité, en toutes lettres (« Ivoirienne », « Burkinabè »).
  *
- * Un champ libre plutôt qu'une liste : l'école l'écrit comme sur l'extrait de
- * naissance, et une liste de deux cents pays se parcourt mal au pouce.
+ * Recherche rapide parmi les nationalités usuelles, y compris par nom de pays.
+ * Les libellés historiques ou moins courants restent acceptés par saisie libre.
  */
 export function NationalityField<T extends FieldValues>({
   control,
   name,
+  disabled,
 }: NationalityFieldProps<T>) {
   return (
     <FormField
@@ -27,15 +30,16 @@ export function NationalityField<T extends FieldValues>({
         <FormItem>
           <FormLabel>Nationalité</FormLabel>
           <FormControl>
-            <Input
-              placeholder="Ex : Ivoirienne"
-              className="h-11"
-              maxLength={60}
-              {...field}
+            <ComboboxCreate
+              options={[...NATIONALITIES]}
               value={field.value ?? ""}
-              // Vidé, le champ part à `null` : le serveur efface la nationalité.
-              // Une chaîne vide enregistrerait une valeur « vide » à la place.
-              onChange={(e) => field.onChange(e.target.value.trim() ? e.target.value : null)}
+              onChange={(value) => field.onChange(value || null)}
+              placeholder="Choisir une nationalité"
+              searchPlaceholder="Rechercher une nationalité ou un pays…"
+              searchAliases={NATIONALITY_ALIASES}
+              customActionLabel="Utiliser"
+              allowClear
+              disabled={disabled}
             />
           </FormControl>
           <FormMessage />
