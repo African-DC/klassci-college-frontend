@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Skeleton } from "@/components/ui/skeleton"
+import { DataError } from "@/components/shared/DataError"
 import {
   Form,
   FormControl,
@@ -33,7 +34,7 @@ function EditFormSkeleton() {
 }
 
 function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }) {
-  const { data: levelData, isLoading } = useLevel(levelId)
+  const { data: levelData, isLoading, isError, error: loadError, refetch } = useLevel(levelId)
   const { mutate, isPending, error } = useUpdateLevel(levelId)
 
   const form = useForm<LevelUpdate>({
@@ -47,7 +48,9 @@ function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }
       : undefined,
   })
 
-  if (isLoading || !levelData) return <EditFormSkeleton />
+  if (isLoading) return <EditFormSkeleton />
+  if (isError) return <DataError message="Impossible de charger le niveau." error={loadError} onRetry={refetch} />
+  if (!levelData) return <p role="status" className="text-sm text-muted-foreground">Niveau introuvable.</p>
 
   function onSubmit(data: LevelUpdate) {
     mutate(data, { onSuccess: onClose })
