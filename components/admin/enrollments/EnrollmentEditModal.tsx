@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { EnrollmentUpdateSchema, type EnrollmentUpdate } from "@/lib/contracts/enrollment"
-import { profileOf } from "@/lib/contracts/enrollment-profile"
+import { profileOf, lv2AllowedForClass } from "@/lib/contracts/enrollment-profile"
 import { useEnrollment, useUpdateEnrollment } from "@/lib/hooks/useEnrollments"
 import { useUpdateEnrollmentProfile } from "@/lib/hooks/useEnrollmentProfile"
 import { useClasses } from "@/lib/hooks/useClasses"
@@ -74,7 +74,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
   // changer les recalcule. On le dit dès qu'il change, pas après l'envoi.
   const profil = form.watch("is_new_student")
   const profilChange = enrollment !== undefined && (profil ?? null) !== (enrollment.is_new_student ?? null)
-  const levelName = classes.find((c) => c.id === form.watch("class_id"))?.level_name ?? null
+  const lv2Enabled = classes.find((c) => c.id === form.watch("class_id"))?.lv2_enabled
 
   if (isLoading || !enrollment) return <EditFormSkeleton />
 
@@ -166,7 +166,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
           value={correction.value}
           onChange={correction.onChange}
           qualityHint={correction.qualityHint}
-          levelName={levelName}
+          lv2Enabled={lv2Enabled}
           disabled={pending}
         />
 
