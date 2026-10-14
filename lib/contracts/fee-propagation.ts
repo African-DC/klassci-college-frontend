@@ -21,6 +21,7 @@ const feePropagationShape = {
   enrollments_concerned: z.number(),
   fees_already_up_to_date: z.number(),
   fees_kept_with_payments: z.number(),
+  fees_kept_with_discounts: z.number().default(0),
   fees_waived: z.number(),
   /** Écart total de dette en francs, négatif quand le tarif baisse. */
   debt_delta: z.coerce.number(),
@@ -112,6 +113,12 @@ export function propagationBuckets(
       label: "Conservées, un versement y est imputé",
       detail: "Le reçu déjà remis à la famille reste vrai.",
       count: compteurs.fees_kept_with_payments,
+    },
+    {
+      key: "discounted",
+      label: "Conservées, une réduction individuelle est appliquée",
+      detail: "Le tarif accordé à cette famille reste inchangé.",
+      count: compteurs.fees_kept_with_discounts,
     },
     { key: "up-to-date", label: "Déjà au bon montant", count: compteurs.fees_already_up_to_date },
     { key: "waived", label: "Exonérées", count: compteurs.fees_waived },
