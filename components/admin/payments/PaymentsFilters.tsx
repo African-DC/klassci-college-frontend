@@ -21,6 +21,7 @@ interface PaymentsFiltersProps extends Pick<PaymentFiltersControls, "filters" | 
   cashiers?: { id: number; name: string }[]
   /** Un guichet unique n'a personne à distinguer : le filtre disparaît. */
   showCashier: boolean
+  showDateRange?: boolean
 }
 
 /**
@@ -39,6 +40,7 @@ export function PaymentsFilters({
   feeCategories,
   cashiers,
   showCashier,
+  showDateRange = true,
 }: PaymentsFiltersProps) {
   return (
       <Card className="border-0 shadow-sm ring-1 ring-border">
@@ -148,6 +150,7 @@ export function PaymentsFilters({
           </div>
 
           {/* Date range filter */}
+          {showDateRange && (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="text-xs text-muted-foreground shrink-0">Période :</span>
@@ -175,6 +178,7 @@ export function PaymentsFilters({
               </button>
             )}
           </div>
+          )}
         </CardContent>
       </Card>
   )
