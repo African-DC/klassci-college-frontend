@@ -18,6 +18,7 @@ interface ComboboxCreateProps {
   allowClear?: boolean
   disabled?: boolean
   customActionLabel?: string
+  maxLength?: number
 }
 
 /** Combobox « sélectionner ou créer » (Popover shadcn + recherche + création inline). */
@@ -32,6 +33,7 @@ export function ComboboxCreate({
   allowClear = false,
   disabled = false,
   customActionLabel = "Créer",
+  maxLength,
 }: ComboboxCreateProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
@@ -71,6 +73,7 @@ export function ComboboxCreate({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={searchPlaceholder}
+            maxLength={maxLength}
             className="h-9"
             autoFocus
           />
