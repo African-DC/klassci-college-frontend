@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- La fiche d’inscription propose des réductions en francs ou pourcentage, une prévisualisation du nouveau solde, le motif et une annulation sécurisée *(direction, comptable)*
 - Le journal des paiements propose des périmètres explicites : année scolaire, bordereau du jour, date précise, semaine et historique complet, avec les encaissements d'arriérés conservés dans le jour de leur paiement et des exports cohérents avec l'écran *(comptable, direction, caisse)*
 - La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable *(direction, secrétariat)*
 - Workflow GitHub de préparation des images Next.js dans GHCR et vérification de connexion Dokploy en lecture seule, sans déploiement automatique activé *(technique, déploiement)*
