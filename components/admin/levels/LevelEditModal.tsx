@@ -7,6 +7,7 @@ import { useLevel, useUpdateLevel } from "@/lib/hooks/useLevels"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Form,
@@ -41,6 +42,7 @@ function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }
       ? {
           name: levelData.name,
           order: levelData.order,
+          lv2_enabled: levelData.lv2_enabled,
         }
       : undefined,
   })
@@ -84,6 +86,24 @@ function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }
                 />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="lv2_enabled"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between gap-3 rounded-lg border bg-muted/20 px-4 py-3">
+              <div className="min-w-0 space-y-1">
+                <FormLabel>LV2 autorisée</FormLabel>
+                <p className="text-xs text-muted-foreground">
+                  Autoriser la deuxième langue vivante dans les inscriptions de ce niveau.
+                </p>
+              </div>
+              <FormControl>
+                <Switch checked={field.value ?? false} onCheckedChange={field.onChange} />
+              </FormControl>
             </FormItem>
           )}
         />
