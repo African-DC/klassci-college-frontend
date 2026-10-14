@@ -1,6 +1,5 @@
 {
   "product": "klassci-college-frontend",
-  "source": "CHANGELOG.md",
   "generated_at": "2026-10-01T23:27:49Z",
   "current_version": "0.1.0-alpha",
   "versions": [
@@ -10,6 +9,13 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "Réductions par élève depuis les paiements d'inscription, avec motif, aperçu du montant et droits distincts",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Le journal des paiements propose des périmètres explicites : année scolaire, bordereau du jour, date précise, semaine et historique complet, avec les encaissements d'arriérés conservés dans le jour de leur paiement et des exports cohérents avec l'écran",
             "audience": [
@@ -3311,5 +3317,6 @@
         ]
       }
     }
-  ]
+  ],
+  "source": "CHANGELOG.md"
 }
