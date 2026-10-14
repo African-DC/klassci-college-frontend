@@ -127,15 +127,21 @@ export function ProfileBatchTable({
                   <QualityHintText compact hint={qualityHintOf(row)} profile={value} />
                 </TableCell>
                 <TableCell>
-                  <OptionSelect
-                    id={`${id}-lv2`}
-                    ariaLabel={`LV2 de ${name}`}
-                    value={lv2Allowed ? value.lv2 : null}
-                    options={LV2_OPTIONS}
-                    onChange={(v) => set("lv2", v)}
-                    disabled={disabled || !lv2Allowed}
-                    emptyLabel={lv2Allowed ? "Non renseigné" : "Non concerné"}
-                  />
+                  {lv2Allowed ? (
+                    <OptionSelect
+                      id={`${id}-lv2`}
+                      ariaLabel={`LV2 de ${name}`}
+                      value={value.lv2}
+                      options={LV2_OPTIONS}
+                      onChange={(v) => set("lv2", v)}
+                      disabled={disabled}
+                      emptyLabel="Non renseigné"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      LV2 non disponible{value.lv2 ? " · valeur historique conservée" : ""}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <OptionSelect
