@@ -11,6 +11,16 @@
       "sections": {
         "Added": [
           {
+            "text": "L'administration autorise ou désactive la LV2 pour chaque niveau dans Niveaux & Séries ; les formulaires utilisent ce choix de l'établissement",
+            "audience": [
+              "admin",
+              "direction",
+              "secrétariat",
+              "éducateur"
+            ],
+            "pull_request": null
+          },
+          {
             "text": "Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel",
             "audience": [
               "direction",
