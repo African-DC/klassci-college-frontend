@@ -130,7 +130,7 @@ export function ProfileBatchTable({
                   <OptionSelect
                     id={`${id}-lv2`}
                     ariaLabel={`LV2 de ${name}`}
-                    value={lv2Allowed ? value.lv2 : null}
+                    value={value.lv2}
                     options={LV2_OPTIONS}
                     onChange={(v) => set("lv2", v)}
                     disabled={disabled || !lv2Allowed}
