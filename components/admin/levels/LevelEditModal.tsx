@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import { DataError } from "@/components/shared/DataError"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Form,
@@ -33,7 +35,9 @@ function EditFormSkeleton() {
 }
 
 function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }) {
-  const { data: levelData, isLoading } = useLevel(levelId)
+  const { data: levelData, isLoading, isError, error: loadError, refetch } = useLevel(levelId)
+  const { has } = usePermissions()
+  const canEdit = has("admin:levels:update")
   const { mutate, isPending, error } = useUpdateLevel(levelId)
 
   const form = useForm<LevelUpdate>({
@@ -47,7 +51,9 @@ function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }
       : undefined,
   })
 
-  if (isLoading || !levelData) return <EditFormSkeleton />
+  if (isLoading) return <EditFormSkeleton />
+  if (isError) return <DataError message="Impossible de charger ce niveau." error={loadError} onRetry={() => refetch()} />
+  if (!levelData) return <p className="text-sm text-muted-foreground">Niveau introuvable.</p>
 
   function onSubmit(data: LevelUpdate) {
     mutate(data, { onSuccess: onClose })
@@ -102,7 +108,7 @@ function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }
                 </p>
               </div>
               <FormControl>
-                <Switch checked={field.value ?? false} onCheckedChange={field.onChange} />
+                <Switch checked={field.value ?? false} onCheckedChange={field.onChange} disabled={!canEdit || isPending} />
               </FormControl>
             </FormItem>
           )}
@@ -114,7 +120,7 @@ function EditForm({ levelId, onClose }: { levelId: number; onClose: () => void }
           </div>
         )}
 
-        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
+        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending || !canEdit}>
           {isPending ? "Enregistrement..." : "Mettre a jour"}
         </Button>
       </form>
