@@ -11,9 +11,8 @@
       "sections": {
         "Added": [
           {
-            "text": "L'administration autorise ou désactive la LV2 pour chaque niveau dans Niveaux & Séries ; les formulaires utilisent ce choix de l'établissement",
+            "text": "La disponibilité de la LV2 se règle par niveau, propre à chaque établissement, dans « Niveaux & Séries ». Les inscriptions et la saisie par classe respectent cette configuration sans se baser sur le nom du niveau",
             "audience": [
-              "admin",
               "direction",
               "secrétariat",
               "éducateur"
