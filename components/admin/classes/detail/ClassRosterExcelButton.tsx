@@ -5,7 +5,8 @@ import { FileSpreadsheet, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { loadStudentsExportPayload } from "@/components/admin/students/students-export"
+import { fetchClassRosterData } from "@/lib/api/class-roster"
+import { buildClassRosterExcel } from "./class-roster-excel"
 import { exportToExcel } from "@/lib/export/excel"
 import { useSettings } from "@/lib/hooks/useSettings"
 import { fileSafeName } from "./class-downloads"
@@ -37,13 +38,9 @@ export function ClassRosterExcelButton({
     setEnCours(true)
     const toastId = toast.loading("Préparation de la liste…")
     try {
-      const payload = await loadStudentsExportPayload({
-        params: { class_id: classId },
-        settings,
-        filters: `Classe ${className}`,
-      })
+      const payload = buildClassRosterExcel(await fetchClassRosterData(classId), settings)
       await exportToExcel(
-        { ...payload, meta: { ...payload.meta, title: `Liste de classe · ${className}` } },
+        payload,
         `liste-classe-${fileSafeName(className)}`,
       )
       const n = payload.rows.length

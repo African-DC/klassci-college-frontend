@@ -3,9 +3,17 @@
   "generated_at": "2026-10-01T23:27:49Z",
   "version": "Unreleased",
   "released": false,
-  "total": 362,
+  "total": 363,
   "sections": {
     "Added": [
+      {
+        "text": "Listes de classe personnalisées : filtres cumulables sur sexe, âge, nationalité, affectation, redoublement et profil, puis exports PDF, Word et Excel cohérents sur mobile et bureau",
+        "audience": [
+          "scolarité",
+          "direction"
+        ],
+        "pull_request": null
+      },
       {
         "text": "La nationalité se choisit dans une liste recherchable par nationalité ou pays, conservant les valeurs existantes et les variantes saisies. Les fiches Excel incluent la nationalité et le rapport DEEP indique où corriger les données manquantes",
         "audience": [
@@ -46,14 +54,6 @@
           "déploiement"
         ],
         "pull_request": null
-      },
-      {
-        "text": "Gestion des enseignants : nouveau constructeur d'exports avec aperçu PDF et téléchargement PDF, Word ou Excel, filtres scolaires, colonnes et mise en page personnalisables",
-        "audience": [
-          "direction",
-          "secrétariat"
-        ],
-        "pull_request": 514
       }
     ],
     "Changed": [
