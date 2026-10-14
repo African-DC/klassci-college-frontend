@@ -7,9 +7,8 @@
   "sections": {
     "Added": [
       {
-        "text": "Votre établissement peut choisir, niveau par niveau, où la LV2 est proposée : ce réglage s'applique aux inscriptions et à la saisie de classe",
+        "text": "La disponibilité de la LV2 se règle par niveau, propre à chaque établissement, dans « Niveaux & Séries ». Les inscriptions et la saisie par classe respectent cette configuration sans se baser sur le nom du niveau",
         "audience": [
-          "admin",
           "direction",
           "secrétariat",
           "éducateur"
@@ -54,14 +53,6 @@
         "audience": [
           "direction",
           "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Workflow GitHub de préparation des images Next.js dans GHCR et vérification de connexion Dokploy en lecture seule, sans déploiement automatique activé",
-        "audience": [
-          "technique",
-          "déploiement"
         ],
         "pull_request": null
       }
