@@ -22,7 +22,7 @@ export const FeeDiscountUpsertSchema = z.object({
   if (data.kind === "percent" && data.value > 100) {
     ctx.addIssue({ code: "custom", path: ["value"], message: "100 % maximum" })
   }
-  if (!Number.isFinite(data.value) || Math.round(data.value * 100) !== data.value * 100) {
+  if (!Number.isFinite(data.value) || Math.abs(Math.round(data.value * 100) - data.value * 100) > 1e-7) {
     ctx.addIssue({ code: "custom", path: ["value"], message: "Deux décimales maximum" })
   }
 })
