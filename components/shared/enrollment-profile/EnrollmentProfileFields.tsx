@@ -6,7 +6,6 @@ import {
   ARTISTIC_DISCIPLINES,
   LV2_OPTIONS,
   PREVIOUS_LEVELS,
-  lv2AllowedForLevel,
   type EnrollmentProfile,
 } from "@/lib/contracts/enrollment-profile"
 import { OptionSelect, RepeaterChoice } from "./ProfileInputs"
@@ -16,8 +15,8 @@ interface EnrollmentProfileFieldsProps {
   value: EnrollmentProfile
   /** `field` nomme le champ touché : les écrans de correction suivent la qualité. */
   onChange: (next: EnrollmentProfile, field: keyof EnrollmentProfile) => void
-  /** Niveau de la classe choisie : en 6ème et en 5ème, pas de LV2. */
-  levelName?: string | null
+  /** Politique LV2 retournée par le backend du tenant, jamais déduite du nom. */
+  lv2Enabled: boolean
   disabled?: boolean
   /** Distinct par écran : deux formulaires ouverts ne partagent pas leurs `id`. */
   idPrefix: string
@@ -45,14 +44,13 @@ interface EnrollmentProfileFieldsProps {
 export function EnrollmentProfileFields({
   value,
   onChange,
-  levelName,
+  lv2Enabled,
   disabled,
   idPrefix,
   reEnrollment,
   qualityHint = null,
   studentName,
 }: EnrollmentProfileFieldsProps) {
-  const lv2Allowed = lv2AllowedForLevel(levelName)
   const set = <K extends keyof EnrollmentProfile>(key: K, next: EnrollmentProfile[K]) =>
     onChange({ ...value, [key]: next }, key)
 
@@ -110,15 +108,15 @@ export function EnrollmentProfileFields({
           <Label htmlFor={`${idPrefix}-lv2`}>LV2</Label>
           <OptionSelect
             id={`${idPrefix}-lv2`}
-            value={lv2Allowed ? value.lv2 : null}
+            value={value.lv2}
             options={LV2_OPTIONS}
             onChange={(v) => set("lv2", v)}
-            disabled={disabled || !lv2Allowed}
-            emptyLabel={lv2Allowed ? "Non renseigné" : "Non concerné"}
+            disabled={disabled || !lv2Enabled}
+            emptyLabel={lv2Enabled ? "Non renseigné" : "Non autorisée pour ce niveau"}
           />
-          {!lv2Allowed ? (
+          {!lv2Enabled ? (
             <p className="text-xs text-muted-foreground">
-              La LV2 commence en 4ème : rien à saisir en 6ème ni en 5ème.
+              La LV2 est désactivée pour ce niveau dans les paramètres de l’établissement. Toute valeur historique reste conservée.
             </p>
           ) : null}
         </div>
