@@ -50,8 +50,11 @@ export function FeeDiscountsPanel({
   }
 
   const discounts = new Map((data ?? []).map((discount) => [discount.enrollment_fee_id, discount]))
+  // Les options facultatives sont des StudentOption, pas des EnrollmentFee.
+  // Leur identifiant peut coïncider avec un frais obligatoire : ne jamais les
+  // soumettre au endpoint des réductions, qui cible uniquement EnrollmentFee.
   const eligible = fees.filter((fee) =>
-    fee.status !== "in_kind" && (fee.status !== "waived" || discounts.has(fee.id)),
+    !fee.is_optional && fee.status !== "in_kind" && (fee.status !== "waived" || discounts.has(fee.id)),
   )
 
   return (
