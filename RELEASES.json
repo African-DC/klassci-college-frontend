@@ -11,7 +11,7 @@
       "sections": {
         "Added": [
           {
-            "text": "Filtrage combiné des listes de classe pour les exports PDF, Word et Excel, avec prise en charge de plusieurs nationalités et statuts d'affectation",
+            "text": "Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel",
             "audience": [
               "direction",
               "secrétariat"
