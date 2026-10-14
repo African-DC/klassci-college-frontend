@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { forwardRef, useState } from "react"
 import { Check, ChevronsUpDown, Plus } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
@@ -19,10 +19,13 @@ interface ComboboxCreateProps {
   disabled?: boolean
   customActionLabel?: string
   maxLength?: number
+  id?: string
+  "aria-describedby"?: string
+  "aria-invalid"?: boolean
 }
 
 /** Combobox « sélectionner ou créer » (Popover shadcn + recherche + création inline). */
-export function ComboboxCreate({
+export const ComboboxCreate = forwardRef<HTMLButtonElement, ComboboxCreateProps>(function ComboboxCreate({
   options,
   value,
   onChange,
@@ -34,7 +37,10 @@ export function ComboboxCreate({
   disabled = false,
   customActionLabel = "Créer",
   maxLength,
-}: ComboboxCreateProps) {
+  id,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
+}, ref) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const q = query.trim()
@@ -55,6 +61,10 @@ export function ComboboxCreate({
           type="button"
           variant="outline"
           role="combobox"
+          id={id}
+          ref={ref}
+          aria-describedby={ariaDescribedBy}
+          aria-invalid={ariaInvalid}
           aria-expanded={open}
           disabled={disabled}
           className={cn(
@@ -113,4 +123,5 @@ export function ComboboxCreate({
       </PopoverContent>
     </Popover>
   )
-}
+})
+ComboboxCreate.displayName = "ComboboxCreate"
