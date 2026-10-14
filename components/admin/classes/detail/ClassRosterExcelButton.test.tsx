@@ -4,7 +4,7 @@ const download = vi.hoisted(() => vi.fn(async () => new Blob(["excel"])))
 const trigger = vi.hoisted(() => vi.fn())
 vi.mock("./class-downloads", () => ({
   fetchClassRosterExcel: download, triggerBlobDownload: trigger,
-  fileSafeName: (name: string) => name.toLowerCase().replace(/\\s+/g, "-"),
+  fileSafeName: (name: string) => name.toLowerCase().split(" ").join("-"),
 }))
 import { ClassRosterExcelButton } from "./ClassRosterExcelButton"
 describe("export Excel de classe", () => {
