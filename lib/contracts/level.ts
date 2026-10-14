@@ -4,6 +4,7 @@ export const LevelSchema = z.object({
   id: z.number(),
   name: z.string(),
   order: z.number(),
+  lv2_enabled: z.boolean(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 }).passthrough()
@@ -11,6 +12,7 @@ export const LevelSchema = z.object({
 export const LevelCreateSchema = z.object({
   name: z.string({ required_error: "Le nom est requis" }).min(1, "Le nom est requis"),
   order: z.number({ required_error: "L'ordre est requis" }).int().positive("L'ordre doit être positif"),
+  lv2_enabled: z.boolean().default(true),
 })
 
 export const LevelUpdateSchema = LevelCreateSchema.partial()
