@@ -11,6 +11,13 @@
       "sections": {
         "Added": [
           {
+            "text": "Réductions par élève depuis les paiements d'inscription, avec motif, aperçu du montant et droits distincts",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
             "text": "Le journal des paiements propose des périmètres explicites : année scolaire, bordereau du jour, date précise, semaine et historique complet, avec les encaissements d'arriérés conservés dans le jour de leur paiement et des exports cohérents avec l'écran",
             "audience": [
               "comptable",

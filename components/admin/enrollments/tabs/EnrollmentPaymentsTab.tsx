@@ -21,6 +21,7 @@ import { EnrollmentCheckoutDialog } from "@/components/admin/payments/checkout/E
 import { checkoutTarget } from "@/components/admin/payments/checkout/checkout-target";
 import { EnrollmentScheduleCard } from "@/components/admin/installments/EnrollmentScheduleCard";
 import { NoPaymentAccessNotice } from "@/components/admin/enrollments/tabs/NoPaymentAccessNotice";
+import { EnrollmentFeeDiscounts } from "./EnrollmentFeeDiscounts";
 import { InKindDepositPanel } from "@/components/admin/enrollments/in-kind/InKindDepositPanel";
 import { InKindDepositDialogs } from "@/components/admin/enrollments/in-kind/InKindDepositDialogs";
 import { useInKindDepositActions } from "@/components/admin/enrollments/in-kind/useInKindDepositActions";
@@ -140,6 +141,8 @@ export function EnrollmentPaymentsTab({
           </Button>
         ) : null}
       </div>
+
+      {studentId ? <EnrollmentFeeDiscounts enrollmentId={enrollmentId} studentId={studentId} /> : null}
 
       <EnrollmentFeesBreakdown
         fees={feeList}
