@@ -1,5 +1,6 @@
 {
   "product": "klassci-college-frontend",
+  "source": "CHANGELOG.md",
   "generated_at": "2026-10-01T23:27:49Z",
   "current_version": "0.1.0-alpha",
   "versions": [
@@ -3317,6 +3318,5 @@
         ]
       }
     }
-  ],
-  "source": "CHANGELOG.md"
+  ]
 }
