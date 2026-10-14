@@ -82,9 +82,12 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
 
   function onSubmit(data: EnrollmentUpdate) {
     // Rien ne part tant que la secrétaire n'a pas touché aux renseignements.
-    // Pas de nettoyage silencieux de la LV2 au changement de classe : le
-    // serveur la retire lui-même quand la nouvelle classe est une 6ème ou 5ème.
-    const changes = correction.changes
+    // Lors du changement de classe, le serveur retire et journalise une LV2
+    // incompatible : ne pas la réintroduire avec le PATCH profil ultérieur.
+    const changes = { ...correction.changes }
+    if (!lv2AllowedForClass(classes.find((c) => c.id === data.class_id)?.lv2_enabled)) {
+      delete changes.lv2
+    }
     mutate(data, {
       onSuccess: () => {
         if (Object.keys(changes).length === 0) return onClose()
