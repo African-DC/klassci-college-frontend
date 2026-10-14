@@ -1,5 +1,5 @@
 /**
- * La fiche de renseignements : seize colonnes dans l'ordre de la comptabilité,
+ * La fiche de renseignements : dix-sept colonnes dans l'ordre de la comptabilité,
  * et une cellule vide partout où l'école n'a encore rien saisi.
  */
 import { describe, expect, it } from "vitest"
@@ -57,7 +57,7 @@ function cells(row: InformationSheetRow): string[] {
 }
 
 describe("la fiche de renseignements en Excel", () => {
-  it("garde exactement les seize colonnes, dans l'ordre demandé", () => {
+  it("garde exactement les dix-sept colonnes, dans l'ordre demandé", () => {
     expect(INFORMATION_SHEET_COLUMNS.map((c) => c.header)).toEqual([
       "MATRICULE",
       "NOM",
@@ -68,6 +68,7 @@ describe("la fiche de renseignements en Excel", () => {
       "MOIS DE NAIS.",
       "ANNÉE DE NAIS.",
       "LIEU DE NAIS.",
+      "NATIONALITÉ",
       "STATUT",
       "RÉGIME",
       "QUALITÉ",
@@ -89,6 +90,7 @@ describe("la fiche de renseignements en Excel", () => {
       "04",
       "2012",
       "Bouaké",
+      "Ivoirienne",
       "Réaffecté",
       "Boursier",
       "Redoublant",
@@ -104,6 +106,7 @@ describe("la fiche de renseignements en Excel", () => {
       "",
       "KONÉ",
       "Awa Mariam",
+      "",
       "",
       "",
       "",
