@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { forwardRef, useState } from "react"
 import { Check, ChevronsUpDown, Plus } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
@@ -14,22 +14,39 @@ interface ComboboxCreateProps {
   placeholder?: string
   searchPlaceholder?: string
   className?: string
+  searchAliases?: Readonly<Record<string, string>>
+  allowClear?: boolean
+  disabled?: boolean
+  customActionLabel?: string
+  maxLength?: number
+  id?: string
+  "aria-describedby"?: string
+  "aria-invalid"?: boolean
 }
 
 /** Combobox « sélectionner ou créer » (Popover shadcn + recherche + création inline). */
-export function ComboboxCreate({
+export const ComboboxCreate = forwardRef<HTMLButtonElement, ComboboxCreateProps>(function ComboboxCreate({
   options,
   value,
   onChange,
   placeholder = "Sélectionner…",
   searchPlaceholder = "Rechercher ou créer…",
   className,
-}: ComboboxCreateProps) {
+  searchAliases,
+  allowClear = false,
+  disabled = false,
+  customActionLabel = "Créer",
+  maxLength,
+  id,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
+}, ref) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const q = query.trim()
-  const filtered = options.filter((o) => o.toLowerCase().includes(q.toLowerCase()))
-  const exact = options.some((o) => o.toLowerCase() === q.toLowerCase())
+  const normalise = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+  const filtered = options.filter((o) => normalise(`${o} ${searchAliases?.[o] ?? ""}`).includes(normalise(q)))
+  const exact = options.some((o) => normalise(o) === normalise(q))
 
   const select = (v: string) => {
     onChange(v)
@@ -44,7 +61,12 @@ export function ComboboxCreate({
           type="button"
           variant="outline"
           role="combobox"
+          id={id}
+          ref={ref}
+          aria-describedby={ariaDescribedBy}
+          aria-invalid={ariaInvalid}
           aria-expanded={open}
+          disabled={disabled}
           className={cn(
             "h-11 w-full justify-between font-normal",
             !value && "text-muted-foreground",
@@ -61,11 +83,18 @@ export function ComboboxCreate({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={searchPlaceholder}
+            maxLength={maxLength}
             className="h-9"
             autoFocus
           />
         </div>
         <div className="max-h-56 overflow-y-auto p-1">
+          {allowClear && value && (
+            <button type="button" onClick={() => select("")}
+              className="w-full rounded-md px-2 py-2 text-left text-sm text-muted-foreground hover:bg-muted">
+              Effacer la sélection
+            </button>
+          )}
           {filtered.map((o) => (
             <button
               key={o}
@@ -84,7 +113,7 @@ export function ComboboxCreate({
               className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-primary hover:bg-primary/10"
             >
               <Plus className="h-4 w-4 shrink-0" />
-              Créer «&nbsp;{q}&nbsp;»
+              {customActionLabel} «&nbsp;{q}&nbsp;»
             </button>
           )}
           {filtered.length === 0 && !q && (
@@ -94,4 +123,5 @@ export function ComboboxCreate({
       </PopoverContent>
     </Popover>
   )
-}
+})
+ComboboxCreate.displayName = "ComboboxCreate"

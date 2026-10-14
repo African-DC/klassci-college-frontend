@@ -33,12 +33,21 @@ import { StudentEditModal } from "./StudentEditModal"
 describe("la nationalité sur la fiche élève", () => {
   it("part à null quand on la vide", async () => {
     render(<StudentEditModal studentId={5} open onClose={() => {}} />)
-    const champ = screen.getByLabelText("Nationalité")
-    expect(champ).toHaveValue("Ivoirienne")
-    fireEvent.change(champ, { target: { value: "" } })
+    const champ = screen.getByRole("combobox", { name: "Nationalité" })
+    expect(champ).toHaveTextContent("Ivoirienne")
+    fireEvent.click(champ)
+    fireEvent.click(await screen.findByRole("button", { name: "Effacer la sélection" }))
     fireEvent.click(screen.getByRole("button", { name: "Mettre à jour" }))
 
     await waitFor(() => expect(envoyer).toHaveBeenCalledOnce())
     expect(envoyer.mock.calls[0][0]).toMatchObject({ nationality: null })
+  })
+
+  it("retrouve une nationalité en recherchant le nom du pays", async () => {
+    render(<StudentEditModal studentId={5} open onClose={() => {}} />)
+    fireEvent.click(screen.getByRole("combobox", { name: "Nationalité" }))
+    const search = await screen.findByPlaceholderText("Rechercher une nationalité ou un pays…")
+    fireEvent.change(search, { target: { value: "cote d ivoire" } })
+    expect(screen.getByRole("button", { name: "Ivoirienne" })).toBeInTheDocument()
   })
 })

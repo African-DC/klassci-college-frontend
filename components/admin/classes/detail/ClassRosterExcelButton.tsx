@@ -5,14 +5,13 @@ import { FileSpreadsheet, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { loadStudentsExportPayload } from "@/components/admin/students/students-export"
-import { exportToExcel } from "@/lib/export/excel"
-import { useSettings } from "@/lib/hooks/useSettings"
-import { fileSafeName } from "./class-downloads"
+import { fileSafeName, fetchClassRosterExcel, triggerBlobDownload } from "./class-downloads"
+import type { RosterFilters } from "./roster-filters"
 
 interface ClassRosterExcelButtonProps {
   classId: number
   className: string
+  filters?: RosterFilters
   /** Classes du bouton, pour s'aligner sur les boutons PDF voisins. */
   buttonClassName?: string
 }
@@ -28,26 +27,18 @@ interface ClassRosterExcelButtonProps {
 export function ClassRosterExcelButton({
   classId,
   className,
+  filters = {},
   buttonClassName,
 }: ClassRosterExcelButtonProps) {
-  const { data: settings } = useSettings()
   const [enCours, setEnCours] = useState(false)
 
   async function exporter() {
     setEnCours(true)
     const toastId = toast.loading("Préparation de la liste…")
     try {
-      const payload = await loadStudentsExportPayload({
-        params: { class_id: classId },
-        settings,
-        filters: `Classe ${className}`,
-      })
-      await exportToExcel(
-        { ...payload, meta: { ...payload.meta, title: `Liste de classe · ${className}` } },
-        `liste-classe-${fileSafeName(className)}`,
-      )
-      const n = payload.rows.length
-      toast.success(`Liste Excel prête : ${n} élève${n > 1 ? "s" : ""}`, { id: toastId })
+      const blob = await fetchClassRosterExcel(classId, filters)
+      triggerBlobDownload(blob, `liste-classe-${fileSafeName(className)}.xlsx`)
+      toast.success("Liste Excel téléchargée", { id: toastId })
     } catch (err) {
       toast.error("Impossible de générer la liste Excel", {
         id: toastId,

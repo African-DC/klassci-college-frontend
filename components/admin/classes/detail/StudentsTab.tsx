@@ -24,6 +24,8 @@ import { getUploadUrl } from "@/lib/utils"
 import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { fetchClassRoster, fetchClassRosterWord, fileSafeName, triggerBlobDownload } from "./class-downloads"
 import { ClassRosterExcelButton } from "./ClassRosterExcelButton"
+import { RosterFilterControls } from "./RosterFilterControls"
+import type { RosterFilters } from "./roster-filters"
 import { InformationSheetExcelButton } from "../information-sheet/InformationSheetExcelButton"
 
 interface StudentsTabProps {
@@ -67,6 +69,7 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
     page: 1,
     size: 100,
   })
+  const [filters, setFilters] = useState<RosterFilters>({})
   const [downloading, setDownloading] = useState(false)
   const [downloadingWord, setDownloadingWord] = useState(false)
 
@@ -75,7 +78,7 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
   async function handleRoster() {
     setDownloading(true)
     try {
-      const blob = await fetchClassRoster(classId)
+      const blob = await fetchClassRoster(classId, filters)
       triggerBlobDownload(blob, `liste-classe-${fileSafeName(className)}.pdf`)
     } catch (err) {
       toast.error("Téléchargement impossible", {
@@ -89,7 +92,7 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
   async function handleWordRoster() {
     setDownloadingWord(true)
     try {
-      const blob = await fetchClassRosterWord(classId)
+      const blob = await fetchClassRosterWord(classId, filters)
       triggerBlobDownload(blob, `liste-classe-${fileSafeName(className)}.docx`)
       toast.success("Liste Word téléchargée")
     } catch (err) {
@@ -104,7 +107,7 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
   const downloadBtn = (
     <div className="flex flex-wrap items-center gap-2">
       <PdfPreviewButton
-        fetchBlob={() => fetchClassRoster(classId)}
+        fetchBlob={() => fetchClassRoster(classId, filters)}
         label={`la liste de la classe ${className}`}
         disabled={students.length === 0}
         size="sm"
@@ -140,6 +143,7 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
           <ClassRosterExcelButton
             classId={classId}
             className={className}
+            filters={filters}
             buttonClassName="h-11 w-auto sm:h-9"
           />
           <InformationSheetExcelButton
@@ -161,6 +165,7 @@ export function StudentsTab({ classId, className }: StudentsTabProps) {
       }
       action={downloadBtn}
     >
+      <div className="mb-4"><RosterFilterControls value={filters} onChange={setFilters} /></div>
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (

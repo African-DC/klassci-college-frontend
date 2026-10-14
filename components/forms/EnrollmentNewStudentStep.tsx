@@ -159,7 +159,7 @@ export function EnrollmentNewStudentStep({
               </FormItem>
             )}
           />
-          <NationalityField control={form.control} name="nationality" />
+          <NationalityField control={form.control} name="nationality" disabled={disabled} />
         </div>
 
         <FormField

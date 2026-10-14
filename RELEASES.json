@@ -11,12 +11,37 @@
       "sections": {
         "Added": [
           {
-            "text": "Gestion des enseignants : nouveau constructeur d'exports avec aperçu PDF et téléchargement PDF, Word ou Excel, filtres scolaires, colonnes et mise en page personnalisables",
+            "text": "Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel",
             "audience": [
               "direction",
               "secrétariat"
             ],
-            "pull_request": 514
+            "pull_request": 535
+          },
+          {
+            "text": "La nationalité se choisit dans une liste recherchable par nationalité ou pays, conservant les valeurs existantes et les variantes saisies. Les fiches Excel incluent la nationalité et le rapport DEEP indique où corriger les données manquantes",
+            "audience": [
+              "secrétariat",
+              "direction"
+            ],
+            "pull_request": 530
+          },
+          {
+            "text": "La fiche d’inscription propose des réductions en francs ou pourcentage, une prévisualisation du nouveau solde, le motif et une annulation sécurisée",
+            "audience": [
+              "direction",
+              "comptable"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Le journal des paiements propose des périmètres explicites : année scolaire, bordereau du jour, date précise, semaine et historique complet, avec les encaissements d'arriérés conservés dans le jour de leur paiement et des exports cohérents avec l'écran",
+            "audience": [
+              "comptable",
+              "direction",
+              "caisse"
+            ],
+            "pull_request": null
           },
           {
             "text": "La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable",
@@ -25,6 +50,22 @@
               "secrétariat"
             ],
             "pull_request": null
+          },
+          {
+            "text": "Workflow GitHub de préparation des images Next.js dans GHCR et vérification de connexion Dokploy en lecture seule, sans déploiement automatique activé",
+            "audience": [
+              "technique",
+              "déploiement"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Gestion des enseignants : nouveau constructeur d'exports avec aperçu PDF et téléchargement PDF, Word ou Excel, filtres scolaires, colonnes et mise en page personnalisables",
+            "audience": [
+              "direction",
+              "secrétariat"
+            ],
+            "pull_request": 514
           },
           {
             "text": "La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune",
