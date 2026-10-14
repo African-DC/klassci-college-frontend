@@ -74,7 +74,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
   // changer les recalcule. On le dit dès qu'il change, pas après l'envoi.
   const profil = form.watch("is_new_student")
   const profilChange = enrollment !== undefined && (profil ?? null) !== (enrollment.is_new_student ?? null)
-  const levelName = classes.find((c) => c.id === form.watch("class_id"))?.level_name ?? null
+  const lv2Enabled = classes.find((c) => c.id === form.watch("class_id"))?.level_lv2_enabled === true
 
   if (isLoading || !enrollment) return <EditFormSkeleton />
 
@@ -82,9 +82,11 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
 
   function onSubmit(data: EnrollmentUpdate) {
     // Rien ne part tant que la secrétaire n'a pas touché aux renseignements.
-    // Pas de nettoyage silencieux de la LV2 au changement de classe : le
-    // serveur la retire lui-même quand la nouvelle classe est une 6ème ou 5ème.
-    const changes = correction.changes
+    // Le changement de classe est journalisé côté serveur : ne pas effacer
+    // silencieusement l'ancienne LV2 dans le formulaire.
+    const changes = { ...correction.changes }
+    // Une saisie LV2 non autorisée ne doit pas être rejouée après le déplacement.
+    if (!lv2Enabled && changes.lv2 != null) delete changes.lv2
     mutate(data, {
       onSuccess: () => {
         if (Object.keys(changes).length === 0) return onClose()
@@ -166,7 +168,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
           value={correction.value}
           onChange={correction.onChange}
           qualityHint={correction.qualityHint}
-          levelName={levelName}
+          lv2Enabled={lv2Enabled}
           disabled={pending}
         />
 

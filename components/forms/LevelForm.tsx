@@ -6,6 +6,7 @@ import { LevelCreateSchema, type LevelCreate } from "@/lib/contracts/level"
 import { useCreateLevel } from "@/lib/hooks/useLevels"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import {
   Form,
   FormControl,
@@ -25,6 +26,7 @@ export function LevelForm({ onSuccess }: LevelFormProps) {
     defaultValues: {
       name: "",
       order: undefined,
+      lv2_enabled: true,
     },
   })
 
@@ -73,6 +75,24 @@ export function LevelForm({ onSuccess }: LevelFormProps) {
                 />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="lv2_enabled"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between gap-3 rounded-lg border bg-muted/20 px-4 py-3">
+              <div className="min-w-0 space-y-1">
+                <FormLabel>LV2 autorisée</FormLabel>
+                <p className="text-xs text-muted-foreground">
+                  Autoriser la deuxième langue vivante dans les inscriptions de ce niveau.
+                </p>
+              </div>
+              <FormControl>
+                <Switch checked={field.value ?? false} onCheckedChange={field.onChange} />
+              </FormControl>
             </FormItem>
           )}
         />

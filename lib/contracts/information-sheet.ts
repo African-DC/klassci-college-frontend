@@ -34,6 +34,7 @@ export const InformationSheetClassSchema = z.object({
   id: z.number(),
   name: z.string(),
   level_name: z.string().nullable(),
+  level_lv2_enabled: z.boolean().optional(),
   rows: z.array(InformationSheetRowSchema),
 })
 

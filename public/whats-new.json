@@ -3,9 +3,17 @@
   "generated_at": "2026-10-01T23:27:49Z",
   "version": "Unreleased",
   "released": false,
-  "total": 363,
+  "total": 364,
   "sections": {
     "Added": [
+      {
+        "text": "La LV2 se règle niveau par niveau ; les formulaires d'inscription et les saisies par classe respectent ce choix",
+        "audience": [
+          "admin",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel",
         "audience": [
@@ -44,14 +52,6 @@
         "audience": [
           "direction",
           "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Workflow GitHub de préparation des images Next.js dans GHCR et vérification de connexion Dokploy en lecture seule, sans déploiement automatique activé",
-        "audience": [
-          "technique",
-          "déploiement"
         ],
         "pull_request": null
       }

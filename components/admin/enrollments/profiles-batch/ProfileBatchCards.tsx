@@ -17,8 +17,8 @@ export function ProfileBatchCards({
   qualityHintOf,
   onChange,
   disabled,
-  levelName,
-}: Omit<ProfileBatchViewProps, "lv2Allowed"> & { levelName: string | null }) {
+  lv2Enabled,
+}: Omit<ProfileBatchViewProps, "lv2Allowed"> & { lv2Enabled: boolean }) {
   return (
     <ul className="space-y-3">
       {rows.map((row) => (
@@ -41,7 +41,7 @@ export function ProfileBatchCards({
             value={valueOf(row)}
             onChange={(next, field) => onChange(row, next, field)}
             qualityHint={qualityHintOf(row)}
-            levelName={levelName}
+            lv2Enabled={lv2Enabled}
             disabled={disabled}
           />
         </li>
