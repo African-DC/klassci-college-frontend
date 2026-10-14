@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useState } from "react"
+import Link from "next/link"
 import { Download, Eye, FileCheck2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -86,7 +87,7 @@ export function DeepReportPageClient() {
       <PageHero
         icon={FileCheck2}
         title="Rapport de fin de trimestre"
-        subtitle="Le canevas officiel de la DEEP, ses vingt-sept tableaux remplis depuis vos données. Les tableaux qu'aucun écran ne permet encore de renseigner portent la mention « à compléter manuellement » plutôt qu'une grille de zéros."
+        subtitle="Le canevas officiel de la DEEP. Nationalités et renseignements connus sont repris des fiches élèves ; les données sensibles non collectées restent à compléter hors plateforme."
         actions={
           <div className="flex flex-wrap gap-2">
             <button
@@ -120,6 +121,18 @@ export function DeepReportPageClient() {
       />
 
       <ReportsNav current="deep" />
+
+      <p className="text-sm text-muted-foreground">
+        Une nationalité manque au rapport ? Corrigez-la dans la{" "}
+        <Link href="/admin/students" className="font-medium text-primary underline-offset-4 hover:underline">
+          fiche élève
+        </Link>.
+        Pour la qualité, la LV2 et le niveau antérieur, utilisez la{" "}
+        <Link href="/admin/enrollments/renseignements" className="font-medium text-primary underline-offset-4 hover:underline">
+          saisie des renseignements par classe
+        </Link>.
+        Le chapitre des cas sociaux reste volontairement manuel, ces données sensibles n’étant pas collectées.
+      </p>
 
       <Card>
         <CardContent className="grid gap-4 py-6 sm:grid-cols-2">

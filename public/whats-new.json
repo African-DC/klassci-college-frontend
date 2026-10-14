@@ -3,9 +3,25 @@
   "generated_at": "2026-10-01T23:27:49Z",
   "version": "Unreleased",
   "released": false,
-  "total": 360,
+  "total": 362,
   "sections": {
     "Added": [
+      {
+        "text": "La nationalité se choisit dans une liste recherchable par nationalité ou pays, conservant les valeurs existantes et les variantes saisies. Les fiches Excel incluent la nationalité et le rapport DEEP indique où corriger les données manquantes",
+        "audience": [
+          "secrétariat",
+          "direction"
+        ],
+        "pull_request": 530
+      },
+      {
+        "text": "La fiche d’inscription propose des réductions en francs ou pourcentage, une prévisualisation du nouveau solde, le motif et une annulation sécurisée",
+        "audience": [
+          "direction",
+          "comptable"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Le journal des paiements propose des périmètres explicites : année scolaire, bordereau du jour, date précise, semaine et historique complet, avec les encaissements d'arriérés conservés dans le jour de leur paiement et des exports cohérents avec l'écran",
         "audience": [
@@ -38,22 +54,6 @@
           "secrétariat"
         ],
         "pull_request": 514
-      },
-      {
-        "text": "La fiche de renseignements de chaque classe se télécharge en Excel, aux seize colonnes de la comptabilité, avec un classeur de toutes les classes, une feuille chacune",
-        "audience": [
-          "comptable",
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Niveau antérieur, qualité, LV2 et discipline artistique se saisissent à l'inscription, sur la fiche de l'inscription et pour toute une classe d'un coup",
-        "audience": [
-          "secrétariat",
-          "éducateur"
-        ],
-        "pull_request": null
       }
     ],
     "Changed": [
