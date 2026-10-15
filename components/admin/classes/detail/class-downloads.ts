@@ -35,9 +35,15 @@ export function fetchClassAttendanceSheet(classId: number): Promise<Blob> {
   return apiFetchBlob(`/admin/classes/${classId}/attendance-sheet`)
 }
 
-/** Feuille de notes (grille de saisie vierge) de la classe — PDF. */
-export function fetchClassGradeSheet(classId: number): Promise<Blob> {
-  return apiFetchBlob(`/admin/classes/${classId}/grade-sheet`)
+/** Orientation du document A4 (indépendante de la taille de l\'écran). */
+export type GradeSheetOrientation = "landscape" | "portrait"
+
+/** Feuille de notes vierge : l\'aperçu et le téléchargement utilisent le même format. */
+export function fetchClassGradeSheet(
+  classId: number,
+  orientation: GradeSheetOrientation = "landscape",
+): Promise<Blob> {
+  return apiFetchBlob(`/admin/classes/${classId}/grade-sheet?orientation=${orientation}`)
 }
 
 /** Cahier de texte de la classe (semaine en cours par défaut) — PDF. */
