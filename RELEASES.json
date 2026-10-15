@@ -11,6 +11,14 @@
       "sections": {
         "Added": [
           {
+            "text": "La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile",
+            "audience": [
+              "enseignants",
+              "direction"
+            ],
+            "pull_request": 541
+          },
+          {
             "text": "La disponibilité de la LV2 se règle par niveau, propre à chaque établissement, dans « Niveaux & Séries ». Les inscriptions et la saisie par classe respectent cette configuration sans se baser sur le nom du niveau",
             "audience": [
               "direction",
