@@ -6,7 +6,7 @@ import {
   ARTISTIC_DISCIPLINES,
   LV2_OPTIONS,
   PREVIOUS_LEVELS,
-  lv2AllowedForLevel,
+  lv2AllowedForClass,
   type EnrollmentProfile,
 } from "@/lib/contracts/enrollment-profile"
 import { OptionSelect, RepeaterChoice } from "./ProfileInputs"
@@ -16,8 +16,8 @@ interface EnrollmentProfileFieldsProps {
   value: EnrollmentProfile
   /** `field` nomme le champ touché : les écrans de correction suivent la qualité. */
   onChange: (next: EnrollmentProfile, field: keyof EnrollmentProfile) => void
-  /** Niveau de la classe choisie : en 6ème et en 5ème, pas de LV2. */
-  levelName?: string | null
+  /** Donnée du serveur attachée au niveau du tenant. */
+  lv2Enabled?: boolean
   disabled?: boolean
   /** Distinct par écran : deux formulaires ouverts ne partagent pas leurs `id`. */
   idPrefix: string
@@ -45,14 +45,14 @@ interface EnrollmentProfileFieldsProps {
 export function EnrollmentProfileFields({
   value,
   onChange,
-  levelName,
+  lv2Enabled,
   disabled,
   idPrefix,
   reEnrollment,
   qualityHint = null,
   studentName,
 }: EnrollmentProfileFieldsProps) {
-  const lv2Allowed = lv2AllowedForLevel(levelName)
+  const lv2Allowed = lv2AllowedForClass(lv2Enabled)
   const set = <K extends keyof EnrollmentProfile>(key: K, next: EnrollmentProfile[K]) =>
     onChange({ ...value, [key]: next }, key)
 
@@ -108,19 +108,20 @@ export function EnrollmentProfileFields({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor={`${idPrefix}-lv2`}>LV2</Label>
-          <OptionSelect
-            id={`${idPrefix}-lv2`}
-            value={lv2Allowed ? value.lv2 : null}
-            options={LV2_OPTIONS}
-            onChange={(v) => set("lv2", v)}
-            disabled={disabled || !lv2Allowed}
-            emptyLabel={lv2Allowed ? "Non renseigné" : "Non concerné"}
-          />
-          {!lv2Allowed ? (
-            <p className="text-xs text-muted-foreground">
-              La LV2 commence en 4ème : rien à saisir en 6ème ni en 5ème.
+          {lv2Allowed ? (
+            <OptionSelect
+              id={`${idPrefix}-lv2`}
+              value={value.lv2}
+              options={LV2_OPTIONS}
+              onChange={(v) => set("lv2", v)}
+              disabled={disabled}
+              emptyLabel="Non renseigné"
+            />
+          ) : (
+            <p className="rounded-lg border border-border/50 bg-muted px-3 py-2 text-xs text-muted-foreground">
+              LV2 non disponible pour ce niveau. Les données déjà enregistrées restent conservées.
             </p>
-          ) : null}
+          )}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`${idPrefix}-art`}>Discipline artistique</Label>

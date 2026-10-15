@@ -11,6 +11,15 @@
       "sections": {
         "Added": [
           {
+            "text": "La disponibilité de la LV2 se règle par niveau, propre à chaque établissement, dans « Niveaux & Séries ». Les inscriptions et la saisie par classe respectent cette configuration sans se baser sur le nom du niveau",
+            "audience": [
+              "direction",
+              "secrétariat",
+              "éducateur"
+            ],
+            "pull_request": null
+          },
+          {
             "text": "Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel",
             "audience": [
               "direction",
