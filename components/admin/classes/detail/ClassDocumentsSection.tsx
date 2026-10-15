@@ -17,12 +17,12 @@ import { cn } from "@/lib/utils"
 import {
   fetchClassAttendanceSheet,
   fetchClassCahierTexte,
-  fetchClassGradeSheet,
   fetchClassRoster,
   fetchClassSynthesis,
   fileSafeName,
   triggerBlobDownload,
 } from "./class-downloads"
+import { GradeSheetDocRow } from "./GradeSheetDocRow"
 import { ClassRosterExcelButton } from "./ClassRosterExcelButton"
 import { RosterFilterControls } from "./RosterFilterControls"
 import type { RosterFilters } from "./roster-filters"
@@ -164,13 +164,7 @@ export function ClassDocumentsSection({ classId, name, academicYearId }: ClassDo
         />
 
         {/* Feuille de notes (grille de saisie vierge) */}
-        <DocRow
-          title="Feuille de notes"
-          description="Grille de saisie des notes vierge pour les enseignants."
-          fetchBlob={() => fetchClassGradeSheet(classId)}
-          filename={`feuille-notes-${safeName}.pdf`}
-          label={`la feuille de notes de la classe ${name}`}
-        />
+        <GradeSheetDocRow classId={classId} className={name} />
 
         {/* Cahier de texte (semaine en cours) */}
         <DocRow
