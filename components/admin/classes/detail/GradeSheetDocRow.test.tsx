@@ -44,4 +44,15 @@ describe("feuille de notes : choix d'orientation", () => {
       "feuille-notes-4e-a-portrait.pdf",
     ))
   })
+
+  it("peut revenir au paysage après avoir choisi le portrait", async () => {
+    render(<GradeSheetDocRow classId={2} className="4e A" />)
+    fireEvent.click(screen.getByRole("button", { name: "Portrait" }))
+    fireEvent.click(screen.getByRole("button", { name: "Paysage" }))
+
+    expect(screen.getByRole("button", { name: "Paysage" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByText(/A4 horizontal/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Aperçu" }))
+    await waitFor(() => expect(fetchGradeSheet).toHaveBeenCalledWith(2, "landscape"))
+  })
 })
