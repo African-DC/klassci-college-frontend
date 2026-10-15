@@ -11,6 +11,14 @@
       "sections": {
         "Added": [
           {
+            "text": "La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile",
+            "audience": [
+              "enseignants",
+              "direction"
+            ],
+            "pull_request": 540
+          },
+          {
             "text": "Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel",
             "audience": [
               "direction",
