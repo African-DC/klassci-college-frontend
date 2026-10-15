@@ -3,9 +3,17 @@
   "generated_at": "2026-10-01T23:27:49Z",
   "version": "Unreleased",
   "released": false,
-  "total": 364,
+  "total": 365,
   "sections": {
     "Added": [
+      {
+        "text": "La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile",
+        "audience": [
+          "enseignants",
+          "direction"
+        ],
+        "pull_request": 541
+      },
       {
         "text": "La disponibilité de la LV2 se règle par niveau, propre à chaque établissement, dans « Niveaux & Séries ». Les inscriptions et la saisie par classe respectent cette configuration sans se baser sur le nom du niveau",
         "audience": [
@@ -45,14 +53,6 @@
           "comptable",
           "direction",
           "caisse"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable",
-        "audience": [
-          "direction",
-          "secrétariat"
         ],
         "pull_request": null
       }
