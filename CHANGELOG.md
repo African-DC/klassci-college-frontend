@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile *(enseignants, direction)* (#540)
 - Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel *(direction, secrétariat)* (#535)
 - La nationalité se choisit dans une liste recherchable par nationalité ou pays, conservant les valeurs existantes et les variantes saisies. Les fiches Excel incluent la nationalité et le rapport DEEP indique où corriger les données manquantes *(secrétariat, direction)* (#530)
 - La fiche d’inscription propose des réductions en francs ou pourcentage, une prévisualisation du nouveau solde, le motif et une annulation sécurisée *(direction, comptable)*
