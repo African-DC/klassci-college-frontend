@@ -6,6 +6,7 @@ import { LevelCreateSchema, type LevelCreate } from "@/lib/contracts/level"
 import { useCreateLevel } from "@/lib/hooks/useLevels"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import {
   Form,
   FormControl,
@@ -25,6 +26,7 @@ export function LevelForm({ onSuccess }: LevelFormProps) {
     defaultValues: {
       name: "",
       order: undefined,
+      lv2_enabled: true,
     },
   })
 
@@ -71,6 +73,23 @@ export function LevelForm({ onSuccess }: LevelFormProps) {
                   onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                   value={field.value ?? ""}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="lv2_enabled"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-muted/30 p-4">
+              <div className="space-y-1">
+                <FormLabel className="text-sm font-semibold">LV2 disponible</FormLabel>
+                <p className="text-xs text-muted-foreground">Ce réglage concerne uniquement les classes rattachées à ce niveau.</p>
+              </div>
+              <FormControl>
+                <Switch checked={field.value === true} onCheckedChange={field.onChange} aria-label="Autoriser la LV2 pour ce niveau" />
               </FormControl>
               <FormMessage />
             </FormItem>

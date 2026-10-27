@@ -1,11 +1,28 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-10-27T20:27:41Z",
+  "generated_at": "2026-10-27T20:56:28Z",
   "version": "Unreleased",
   "released": false,
-  "total": 364,
+  "total": 366,
   "sections": {
     "Added": [
+      {
+        "text": "La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile",
+        "audience": [
+          "enseignants",
+          "direction"
+        ],
+        "pull_request": 541
+      },
+      {
+        "text": "La disponibilité de la LV2 se règle par niveau, propre à chaque établissement, dans « Niveaux & Séries ». Les inscriptions et la saisie par classe respectent cette configuration sans se baser sur le nom du niveau",
+        "audience": [
+          "direction",
+          "secrétariat",
+          "éducateur"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel",
         "audience": [
@@ -36,22 +53,6 @@
           "comptable",
           "direction",
           "caisse"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "La fiche de classe propose un bouton Word à côté des téléchargements PDF et Excel pour obtenir la liste nominative détaillée au format modifiable",
-        "audience": [
-          "direction",
-          "secrétariat"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Workflow GitHub de préparation des images Next.js dans GHCR et vérification de connexion Dokploy en lecture seule, sans déploiement automatique activé",
-        "audience": [
-          "technique",
-          "déploiement"
         ],
         "pull_request": null
       }

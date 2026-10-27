@@ -9,7 +9,7 @@ import { ClassAndFeesFields } from "@/components/forms/EnrollmentClassFields"
 import { NewStudentField } from "@/components/forms/NewStudentField"
 import { PriorArrearsNotice } from "@/components/forms/PriorArrearsNotice"
 import { EnrollmentProfileStepFields } from "@/components/forms/EnrollmentProfileStepFields"
-import { lv2AllowedForLevel } from "@/lib/contracts/enrollment-profile"
+import { lv2AllowedForClass } from "@/lib/contracts/enrollment-profile"
 
 interface EnrollmentClassStepProps {
   enrollmentType: "new" | "re-enrollment"
@@ -47,9 +47,8 @@ export function EnrollmentClassStep({
   onClassSelected,
   academicYearId,
 }: EnrollmentClassStepProps) {
-  // Changer pour une 6ème ou une 5ème efface une LV2 déjà choisie : le serveur
-  // la refuserait (422) au moment d'enregistrer.
-  const levelOf = (id: number) => classes.find((c) => c.id === id)?.level_name
+  // Le changement de classe utilise la règle tenant reçue de l'API, jamais le nom.
+  const lv2Of = (id: number) => classes.find((c) => c.id === id)?.lv2_enabled
   const shared = {
     classes,
     classesLoading,
@@ -72,7 +71,7 @@ export function EnrollmentClassStep({
             notes={newForm.watch("notes")}
             onClassChange={(id) => {
               newForm.setValue("class_id", id, { shouldValidate: true })
-              if (!lv2AllowedForLevel(levelOf(id))) newForm.setValue("lv2", null)
+              if (!lv2AllowedForClass(lv2Of(id))) newForm.setValue("lv2", null)
               onClassSelected()
             }}
             onFeeVariantChange={(id) => newForm.setValue("fee_variant_id", id)}
@@ -116,7 +115,7 @@ export function EnrollmentClassStep({
             notes={reForm.watch("notes")}
             onClassChange={(id) => {
               reForm.setValue("class_id", id, { shouldValidate: true })
-              if (!lv2AllowedForLevel(levelOf(id))) reForm.setValue("lv2", null)
+              if (!lv2AllowedForClass(lv2Of(id))) reForm.setValue("lv2", null)
               onClassSelected()
             }}
             onFeeVariantChange={(id) => reForm.setValue("fee_variant_id", id)}

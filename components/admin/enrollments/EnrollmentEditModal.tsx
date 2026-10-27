@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { EnrollmentUpdateSchema, type EnrollmentUpdate } from "@/lib/contracts/enrollment"
-import { profileOf } from "@/lib/contracts/enrollment-profile"
+import { profileOf, lv2AllowedForClass } from "@/lib/contracts/enrollment-profile"
 import { useEnrollment, useUpdateEnrollment } from "@/lib/hooks/useEnrollments"
 import { useUpdateEnrollmentProfile } from "@/lib/hooks/useEnrollmentProfile"
 import { useClasses } from "@/lib/hooks/useClasses"
@@ -74,7 +74,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
   // changer les recalcule. On le dit dès qu'il change, pas après l'envoi.
   const profil = form.watch("is_new_student")
   const profilChange = enrollment !== undefined && (profil ?? null) !== (enrollment.is_new_student ?? null)
-  const levelName = classes.find((c) => c.id === form.watch("class_id"))?.level_name ?? null
+  const lv2Enabled = classes.find((c) => c.id === form.watch("class_id"))?.lv2_enabled
 
   if (isLoading || !enrollment) return <EditFormSkeleton />
 
@@ -82,9 +82,12 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
 
   function onSubmit(data: EnrollmentUpdate) {
     // Rien ne part tant que la secrétaire n'a pas touché aux renseignements.
-    // Pas de nettoyage silencieux de la LV2 au changement de classe : le
-    // serveur la retire lui-même quand la nouvelle classe est une 6ème ou 5ème.
-    const changes = correction.changes
+    // Lors du changement de classe, le serveur retire et journalise une LV2
+    // incompatible : ne pas la réintroduire avec le PATCH profil ultérieur.
+    const changes = { ...correction.changes }
+    if (!lv2AllowedForClass(classes.find((c) => c.id === data.class_id)?.lv2_enabled)) {
+      delete changes.lv2
+    }
     mutate(data, {
       onSuccess: () => {
         if (Object.keys(changes).length === 0) return onClose()
@@ -166,7 +169,7 @@ function EditForm({ enrollmentId, onClose }: { enrollmentId: number; onClose: ()
           value={correction.value}
           onChange={correction.onChange}
           qualityHint={correction.qualityHint}
-          levelName={levelName}
+          lv2Enabled={lv2Enabled}
           disabled={pending}
         />
 
