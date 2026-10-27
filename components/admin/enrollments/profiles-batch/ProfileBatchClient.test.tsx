@@ -55,6 +55,7 @@ vi.mock("@/lib/hooks/useInformationSheet", () => ({
           id: 3,
           name: "6ème 1",
           level_name: "6ème",
+          lv2_enabled: false,
           rows: [row(1, "BAMBA"), row(2, "KONÉ", { previous_level: "CM2" }), row(3, "OUATTARA")],
         },
       ],
@@ -104,9 +105,10 @@ describe("la saisie des renseignements par classe", () => {
     expect(screen.getByRole("button", { name: /Enregistrer/ })).toBeDisabled()
   })
 
-  it("ferme la LV2 de toute la classe en 6ème", () => {
+  it("ferme la LV2 de toute la classe si le niveau la desactive", () => {
     render(<ProfileBatchClient />)
-    expect(screen.getAllByRole("combobox", { name: "LV2 de KONÉ Awa" })[0]).toBeDisabled()
+    expect(screen.queryByRole("combobox", { name: "LV2 de KONÉ Awa" })).toBeNull()
+    expect(screen.getAllByText(/LV2 non disponible/).length).toBeGreaterThan(0)
   })
 
   it("surligne l'élève que le serveur a refusé, nommé et non numéroté", () => {

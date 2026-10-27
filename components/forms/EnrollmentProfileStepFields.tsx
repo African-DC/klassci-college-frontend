@@ -33,18 +33,17 @@ function writeProfile(props: StepProps, p: EnrollmentProfile) {
 /**
  * Les renseignements de la fiche, à l'étape « Classe » de l'inscription.
  *
- * Ils vivent à côté de la classe parce que la LV2 en dépend : pas de LV2 en
- * 6ème ni en 5ème.
+ * Ils vivent à côté de la classe car la disponibilité LV2 dépend de son niveau.
  */
 export function EnrollmentProfileStepFields(props: StepProps) {
   const values = props.form.watch()
-  const levelName = props.classes.find((c) => c.id === values.class_id)?.level_name ?? null
+  const lv2Enabled = props.classes.find((c) => c.id === values.class_id)?.lv2_enabled
   return (
     <EnrollmentProfileFields
       idPrefix={`enrollment-${props.enrollmentType}`}
       value={profileOf(values)}
       onChange={(p) => writeProfile(props, p)}
-      levelName={levelName}
+      lv2Enabled={lv2Enabled}
       reEnrollment={props.enrollmentType === "re-enrollment"}
       qualityHint="creation"
     />

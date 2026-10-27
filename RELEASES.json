@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-10-27T20:27:41Z",
+  "generated_at": "2026-10-27T20:56:28Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,23 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile",
+            "audience": [
+              "enseignants",
+              "direction"
+            ],
+            "pull_request": 541
+          },
+          {
+            "text": "La disponibilité de la LV2 se règle par niveau, propre à chaque établissement, dans « Niveaux & Séries ». Les inscriptions et la saisie par classe respectent cette configuration sans se baser sur le nom du niveau",
+            "audience": [
+              "direction",
+              "secrétariat",
+              "éducateur"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel",
             "audience": [

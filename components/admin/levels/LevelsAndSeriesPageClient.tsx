@@ -32,6 +32,7 @@ import { PageHero, heroGlassBtn, heroAccentBtn, type HeroKpi } from "@/component
 import { ListSearchBar } from "@/components/shared/list/ListSearchBar"
 import { matchesSearch } from "@/lib/utils/list-search"
 import { useLevels, useDeleteLevel } from "@/lib/hooks/useLevels"
+import { usePermissions } from "@/lib/hooks/usePermissions"
 import { useSeriesList, useDeleteSeries, seriesKeys } from "@/lib/hooks/useSeries"
 import { seriesApi } from "@/lib/api/series"
 import { LevelCreateModal } from "./LevelCreateModal"
@@ -42,6 +43,7 @@ import type { Level } from "@/lib/contracts/level"
 import type { Series, SeriesUpdate } from "@/lib/contracts/series"
 
 export function LevelsAndSeriesPageClient() {
+  const { has } = usePermissions()
   const { data: levelsData, isLoading: levelsLoading, isError: levelsError, error: levelsErr, refetch: refetchLevels } = useLevels()
   const { data: seriesData, isLoading: seriesLoading } = useSeriesList()
   const { mutate: deleteLevel } = useDeleteLevel()
@@ -181,10 +183,10 @@ export function LevelsAndSeriesPageClient() {
             >
               Tout replier
             </button>
-            <button type="button" className={heroAccentBtn} onClick={() => setLevelCreateOpen(true)}>
+            {has("admin:levels:create") && <button type="button" className={heroAccentBtn} onClick={() => setLevelCreateOpen(true)}>
               <Plus className="h-4 w-4" />
               Nouveau niveau
-            </button>
+            </button>}
           </>
         }
         kpis={kpis}
@@ -202,10 +204,10 @@ export function LevelsAndSeriesPageClient() {
         <div className="rounded-lg border bg-card flex flex-col items-center justify-center py-16 text-center">
           <Layers className="h-8 w-8 text-muted-foreground/40 mb-3" />
           <p className="text-sm text-muted-foreground">Aucun niveau configuré.</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => setLevelCreateOpen(true)}>
+          {has("admin:levels:create") && <Button variant="outline" size="sm" className="mt-3" onClick={() => setLevelCreateOpen(true)}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             Créer le premier niveau
-          </Button>
+          </Button>}
         </div>
       ) : (
         <div className="rounded-lg border bg-card overflow-hidden select-none p-3 space-y-1">
@@ -268,6 +270,10 @@ export function LevelsAndSeriesPageClient() {
                     {level.name}
                   </span>
 
+                  <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${level.lv2_enabled ? "border-primary/20 bg-primary/5 text-primary" : "border-border bg-muted text-muted-foreground"}`}>
+                    LV2 {level.lv2_enabled ? "autorisée" : "désactivée"}
+                  </span>
+
                   {/* Series count badge */}
                   {levelSeries.length > 0 && (
                     <span className="text-xs text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">
@@ -284,22 +290,22 @@ export function LevelsAndSeriesPageClient() {
                   >
                     <Plus className="h-4 w-4 text-primary/60 hover:text-primary" />
                   </button>
-                  <button
+                  {has("admin:levels:update") && <button
                     type="button"
                     className="p-1.5 rounded hover:bg-muted transition-colors"
                     onClick={() => setEditLevelId(level.id)}
                     title="Modifier le niveau"
                   >
                     <Pencil className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                  </button>
-                  <button
+                  </button>}
+                  {has("admin:levels:delete") && <button
                     type="button"
                     className="p-1.5 rounded hover:bg-destructive/10 transition-colors"
                     onClick={() => setDeleteTarget({ type: "level", id: level.id, name: level.name })}
                     title="Supprimer le niveau"
                   >
                     <Trash2 className="h-4 w-4 text-muted-foreground/60 hover:text-destructive" />
-                  </button>
+                  </button>}
                 </div>
 
                 {/* Series children */}
