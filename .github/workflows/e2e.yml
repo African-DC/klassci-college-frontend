@@ -20,7 +20,10 @@ concurrency:
 jobs:
   e2e:
     timeout-minutes: 25
-    runs-on: ubuntu-latest
+    # Fixé et non `ubuntu-latest` : quand l'image est passée en 26.04, Playwright
+    # a refusé d'y installer Chromium et le job tombait avant le premier test.
+    # Relever cette version quand Playwright supportera la suivante.
+    runs-on: ubuntu-24.04
 
     services:
       mysql:
