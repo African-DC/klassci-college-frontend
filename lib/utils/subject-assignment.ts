@@ -3,8 +3,23 @@ export interface AssignableSeries {
 }
 
 export interface AssignableInstance {
+  name: string
   level_id: number | null
   series_id: number | null
+}
+
+/**
+ * Les instances de LA matière qu'on assigne, et d'elle seule.
+ *
+ * Une instance s'identifie par le nom de sa matière du catalogue. Comparer
+ * toutes les matières d'un niveau refusait d'y ajouter une deuxième matière
+ * dès qu'une première y était posée.
+ */
+export function instancesOfSubject(
+  instances: AssignableInstance[],
+  subjectName: string,
+): AssignableInstance[] {
+  return instances.filter((instance) => instance.name === subjectName)
 }
 
 export function instancesForLevel(

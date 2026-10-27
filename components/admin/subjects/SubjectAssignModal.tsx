@@ -9,6 +9,7 @@ import type { Level } from "@/lib/contracts/level"
 import {
   firstFreeSeriesSlot,
   instancesForLevel,
+  instancesOfSubject,
   isLevelAssignable,
   isSeriesSlotTaken,
   type AssignableInstance,
@@ -73,19 +74,23 @@ export function SubjectAssignModal({
     setIsPending(false)
   }, [open, target])
 
+  const subjectInstances = useMemo(
+    () => (target ? instancesOfSubject(instances, target.subjectName) : []),
+    [instances, target],
+  )
   const selectedLevel = levels.find((level) => level.id === levelId) ?? null
   const levelSeries = useMemo(
     () => series.filter((item) => item.level_id === levelId),
     [series, levelId],
   )
   const levelInstances = useMemo(
-    () => (levelId == null ? [] : instancesForLevel(instances, levelId)),
-    [instances, levelId],
+    () => (levelId == null ? [] : instancesForLevel(subjectInstances, levelId)),
+    [subjectInstances, levelId],
   )
 
   function chooseLevel(nextLevelId: number) {
     const nextSeries = series.filter((item) => item.level_id === nextLevelId)
-    const nextInstances = instancesForLevel(instances, nextLevelId)
+    const nextInstances = instancesForLevel(subjectInstances, nextLevelId)
     if (!isLevelAssignable(nextInstances, nextSeries)) return
     const free = firstFreeSeriesSlot(nextInstances, nextSeries)
     setLevelId(nextLevelId)
@@ -145,7 +150,7 @@ export function SubjectAssignModal({
           <SubjectAssignLevelPicker
             levels={levels}
             series={series}
-            instances={instances}
+            instances={subjectInstances}
             onChoose={chooseLevel}
           />
         ) : (
