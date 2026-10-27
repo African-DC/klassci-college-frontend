@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-10-01T23:27:49Z",
+  "generated_at": "2026-10-27T20:27:41Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -1928,6 +1928,14 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Glisser une matière du catalogue vers un niveau qui en portait déjà une autre ne répond plus à tort « existe déjà »",
+            "audience": [
+              "direction",
+              "secrétariat"
+            ],
+            "pull_request": 543
+          },
           {
             "text": "L'export Excel ou PDF d'une liste de classe contient tous les élèves, et plus seulement les vingt premiers affichés à l'écran",
             "audience": [
