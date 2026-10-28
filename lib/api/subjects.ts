@@ -1,7 +1,7 @@
-import { SubjectSchema } from "@/lib/contracts/subject"
+import { SubjectSchema, SubjectSlotCountsSchema, type SubjectSlotCounts } from "@/lib/contracts/subject"
 import type { Subject, SubjectCreate, SubjectUpdate } from "@/lib/contracts/subject"
 import { createCrudApi } from "./createCrudApi"
-import { apiFetch } from "./client"
+import { apiFetch, safeValidate } from "./client"
 
 export const subjectsApi = createCrudApi<Subject, SubjectCreate, SubjectUpdate>(
   "/admin/subjects",
@@ -14,11 +14,17 @@ export async function duplicateSubject(data: {
   series_id?: number | null
   coefficient?: number
   hours_per_week?: number
-  teacher_id?: number | null
+  teacher_ids?: number[]
 }): Promise<Subject> {
-  const res = await apiFetch<unknown>("/admin/subjects/duplicate", {
+  const json = await apiFetch<unknown>("/admin/subjects/duplicate", {
     method: "POST",
     body: JSON.stringify(data),
   })
-  return SubjectSchema.parse(res)
+  return safeValidate(SubjectSchema, json, "POST /admin/subjects/duplicate")
+}
+
+/** Créneaux de l'emploi du temps par enseignant pour une matière. */
+export async function getSubjectSlotCounts(id: number): Promise<SubjectSlotCounts> {
+  const json = await apiFetch<unknown>(`/admin/subjects/${id}/slot-counts`)
+  return safeValidate(SubjectSlotCountsSchema, json, `GET /admin/subjects/${id}/slot-counts`)
 }

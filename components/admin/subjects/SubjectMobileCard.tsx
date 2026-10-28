@@ -1,10 +1,12 @@
 "use client"
 
-import { ChevronRight, GraduationCap, UserX } from "lucide-react"
+import { ChevronRight, GraduationCap } from "lucide-react"
 import type { Subject } from "@/lib/contracts/subject"
 import { Badge } from "@/components/ui/badge"
-import { getSubjectColor, teacherInitials } from "@/lib/utils/subject-colors"
+import { getSubjectColor } from "@/lib/utils/subject-colors"
+import { subjectTeacherNames } from "@/lib/utils/subject-teachers"
 import { SubjectRowActions } from "./SubjectRowActions"
+import { SubjectTeacherStack } from "./SubjectTeacherStack"
 import type { SubjectGroup } from "@/lib/contracts/subject-group"
 
 interface Props {
@@ -84,19 +86,7 @@ export function SubjectMobileCard({ group, expanded, onToggle, onEdit, onAssign,
                 Coef. {inst.coefficient} · {inst.hours_per_week}h/sem
               </p>
               <div className="mt-2">
-                {inst.teacher_name ? (
-                  <div className="flex items-center gap-2">
-                    <div className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-semibold text-white ${color.badge}`}>
-                      {teacherInitials(inst.teacher_name)}
-                    </div>
-                    <span className="truncate text-sm">{inst.teacher_name}</span>
-                  </div>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800">
-                    <UserX className="h-3 w-3" />
-                    Non assigné
-                  </span>
-                )}
+                <SubjectTeacherStack names={subjectTeacherNames(inst)} accentClass={color.badge} />
               </div>
               <div className="mt-2">
                 <SubjectRowActions

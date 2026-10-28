@@ -1,12 +1,16 @@
 "use client"
 
-import { useEffect } from "react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from "sonner"
 import { SubjectUpdateSchema, type SubjectUpdate, SUBJECT_COLOR_PALETTE } from "@/lib/contracts/subject"
+import { getSubjectSlotCounts } from "@/lib/api/subjects"
 import { useSubject, useUpdateSubject } from "@/lib/hooks/useSubjects"
 import { useSeriesList } from "@/lib/hooks/useSeries"
-import { useTeachers } from "@/lib/hooks/useTeachers"
+import { subjectTeacherIds, subjectTeachers } from "@/lib/utils/subject-teachers"
+import { TeacherMultiSelect } from "./TeacherMultiSelect"
+import { SubjectTeacherRemovalDialog } from "./SubjectTeacherRemovalDialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +49,8 @@ function EditFormSkeleton() {
 function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => void }) {
   const { data: subject, isLoading } = useSubject(subjectId)
   const { mutate, isPending, error } = useUpdateSubject(subjectId)
+  const [pendingRemoval, setPendingRemoval] = useState<{ payload: SubjectUpdate; slots: number } | null>(null)
+  const [isChecking, setIsChecking] = useState(false)
 
   const isCatalogue = !subject?.level_id
   const isAssigned = !!subject?.level_id
@@ -54,8 +60,7 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
   )
   const seriesForLevel = subject?.level_id ? (seriesData?.items ?? []) : []
 
-  const { data: teachersData } = useTeachers({ size: 100 })
-  const allTeachers = teachersData?.items ?? []
+  const initialTeacherIds = subject ? subjectTeacherIds(subject) : []
 
   const form = useForm<SubjectUpdate>({
     resolver: zodResolver(SubjectUpdateSchema),
@@ -66,14 +71,14 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
           hours_per_week: subject.hours_per_week,
           color: subject.color ?? "blue",
           series_id: subject.series_id ?? undefined,
-          teacher_id: subject.teacher_id ?? undefined,
+          teacher_ids: initialTeacherIds,
         }
       : undefined,
   })
 
   if (isLoading || !subject) return <EditFormSkeleton />
 
-  function onSubmit(data: SubjectUpdate) {
+  async function onSubmit(data: SubjectUpdate) {
     const payload = { ...data }
     if (isCatalogue) {
       // Catalogue: only update name + color
@@ -81,8 +86,38 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
       delete payload.hours_per_week
       delete payload.level_id
       delete payload.series_id
+      delete payload.teacher_ids
+      mutate(payload, { onSuccess: onClose })
+      return
     }
-    mutate(payload, { onSuccess: onClose })
+    const keptIds = data.teacher_ids ?? []
+    const removedIds = initialTeacherIds.filter((id) => !keptIds.includes(id))
+    if (removedIds.length === 0) {
+      mutate(payload, { onSuccess: onClose })
+      return
+    }
+    setIsChecking(true)
+    try {
+      const { counts } = await getSubjectSlotCounts(subject.id)
+      const slots = counts
+        .filter((c) => removedIds.includes(c.teacher_id))
+        .reduce((total, c) => total + c.slots, 0)
+      if (slots > 0) {
+        setPendingRemoval({ payload, slots })
+      } else {
+        mutate(payload, { onSuccess: onClose })
+      }
+    } catch {
+      toast.error("Impossible de vérifier l’emploi du temps. Réessayez.")
+    } finally {
+      setIsChecking(false)
+    }
+  }
+
+  function confirmRemoval() {
+    if (!pendingRemoval) return
+    mutate(pendingRemoval.payload, { onSuccess: onClose })
+    setPendingRemoval(null)
   }
 
   return (
@@ -209,31 +244,20 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
               />
             </div>
 
-            {/* Teacher select */}
             <FormField
               control={form.control}
-              name="teacher_id"
+              name="teacher_ids"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Enseignant assigné</FormLabel>
-                  <Select
-                    onValueChange={(v) => field.onChange(v === "none" ? null : Number(v))}
-                    value={field.value?.toString() ?? "none"}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Aucun enseignant" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">Aucun enseignant</SelectItem>
-                      {allTeachers.map((t) => (
-                        <SelectItem key={t.id} value={t.id.toString()}>
-                          {t.first_name} {t.last_name} {t.speciality ? `(${t.speciality})` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Enseignants assignés</FormLabel>
+                  <FormControl>
+                    <TeacherMultiSelect
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      knownTeachers={subjectTeachers(subject)}
+                      modal
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -247,10 +271,16 @@ function EditForm({ subjectId, onClose }: { subjectId: number; onClose: () => vo
           </div>
         )}
 
-        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending}>
-          {isPending ? "Enregistrement..." : "Mettre à jour"}
+        <Button type="submit" size="lg" className="w-full h-11 font-semibold" disabled={isPending || isChecking}>
+          {isPending ? "Enregistrement..." : isChecking ? "Vérification..." : "Mettre à jour"}
         </Button>
       </form>
+      <SubjectTeacherRemovalDialog
+        open={pendingRemoval !== null}
+        slots={pendingRemoval?.slots ?? 0}
+        onCancel={() => setPendingRemoval(null)}
+        onConfirm={confirmRemoval}
+      />
     </Form>
   )
 }

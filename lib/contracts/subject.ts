@@ -10,6 +10,7 @@ export const SubjectSchema = z.object({
   color: z.string().nullable().optional(),
   teacher_id: z.number().nullable().optional(),
   teacher_name: z.string().nullable().optional(),
+  teachers: z.array(z.object({ id: z.number(), full_name: z.string() })).optional(),
   level_name: z.string().nullable().optional(),
   series_name: z.string().nullable().optional(),
   created_at: z.string().optional(),
@@ -24,9 +25,16 @@ export const SubjectCreateSchema = z.object({
   series_id: z.number().nullable().optional(),
   color: z.string().nullable().optional(),
   teacher_id: z.number().nullable().optional(),
+  teacher_ids: z.array(z.number()).optional(),
 })
 
 export const SubjectUpdateSchema = SubjectCreateSchema.partial()
+
+export const SubjectSlotCountsSchema = z.object({
+  counts: z.array(z.object({ teacher_id: z.number(), slots: z.number() })),
+})
+
+export type SubjectSlotCounts = z.infer<typeof SubjectSlotCountsSchema>
 
 export type Subject = z.infer<typeof SubjectSchema>
 export type SubjectCreate = z.infer<typeof SubjectCreateSchema>
