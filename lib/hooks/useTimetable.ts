@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { skipToken, useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { timetableApi } from "@/lib/api/timetable"
 import type {
@@ -21,6 +21,23 @@ export const timetableKeys = {
   myAvailabilities: () => ["timetable", "availabilities", "mine"] as const,
   teacherWeek: (teacherId: number) => ["timetable", "week", teacherId] as const,
   myWeek: () => ["timetable", "week", "mine"] as const,
+  diagnostic: (classId: number | null) => ["timetable", "diagnostic", classId] as const,
+}
+
+/** Diagnostic de génération d'une classe, relu à chaque ouverture (pas de cache périmé). */
+export function diagnosticQueryOptions(classId: number) {
+  return {
+    queryKey: timetableKeys.diagnostic(classId),
+    queryFn: () => timetableApi.diagnostic(classId),
+    staleTime: 0,
+  }
+}
+
+export function useTimetableDiagnostic(classId: number | null) {
+  return useQuery({
+    queryKey: timetableKeys.diagnostic(classId),
+    queryFn: classId === null ? skipToken : () => timetableApi.diagnostic(classId),
+  })
 }
 
 /**

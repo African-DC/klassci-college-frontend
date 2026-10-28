@@ -1,11 +1,18 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-10-28T19:30:31Z",
+  "generated_at": "2026-10-28T20:04:21Z",
   "version": "Unreleased",
   "released": false,
-  "total": 367,
+  "total": 368,
   "sections": {
     "Added": [
+      {
+        "text": "Emploi du temps : écran « Enseignants de la classe » pour choisir, matière par matière, l'enseignant de chaque classe avant la génération ; la saisie manuelle propose cet enseignant",
+        "audience": [
+          "admin"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Une matière peut être confiée à plusieurs enseignants, affichés sur chaque fiche ; retirer un enseignant qui a déjà des créneaux demande une confirmation, sans supprimer ces créneaux",
         "audience": [
@@ -46,14 +53,6 @@
           "direction"
         ],
         "pull_request": 530
-      },
-      {
-        "text": "La fiche d’inscription propose des réductions en francs ou pourcentage, une prévisualisation du nouveau solde, le motif et une annulation sécurisée",
-        "audience": [
-          "direction",
-          "comptable"
-        ],
-        "pull_request": null
       }
     ],
     "Changed": [

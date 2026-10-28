@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Emploi du temps : écran « Enseignants de la classe » pour choisir, matière par matière, l'enseignant de chaque classe avant la génération ; la saisie manuelle propose cet enseignant *(admin)*
 - Une matière peut être confiée à plusieurs enseignants, affichés sur chaque fiche ; retirer un enseignant qui a déjà des créneaux demande une confirmation, sans supprimer ces créneaux *(direction, secrétariat)*
 - La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile *(enseignants, direction)* (#541)
 - La disponibilité de la LV2 se règle par niveau, propre à chaque établissement, dans « Niveaux & Séries ». Les inscriptions et la saisie par classe respectent cette configuration sans se baser sur le nom du niveau *(direction, secrétariat, éducateur)*
