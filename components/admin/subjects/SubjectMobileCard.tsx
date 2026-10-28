@@ -4,7 +4,7 @@ import { ChevronRight, GraduationCap } from "lucide-react"
 import type { Subject } from "@/lib/contracts/subject"
 import { Badge } from "@/components/ui/badge"
 import { getSubjectColor } from "@/lib/utils/subject-colors"
-import { subjectTeacherNames } from "@/lib/utils/subject-teachers"
+import { subjectTeachers } from "@/lib/utils/subject-teachers"
 import { SubjectRowActions } from "./SubjectRowActions"
 import { SubjectTeacherStack } from "./SubjectTeacherStack"
 import type { SubjectGroup } from "@/lib/contracts/subject-group"
@@ -86,7 +86,7 @@ export function SubjectMobileCard({ group, expanded, onToggle, onEdit, onAssign,
                 Coef. {inst.coefficient} · {inst.hours_per_week}h/sem
               </p>
               <div className="mt-2">
-                <SubjectTeacherStack names={subjectTeacherNames(inst)} accentClass={color.badge} />
+                <SubjectTeacherStack teachers={subjectTeachers(inst)} accentClass={color.badge} />
               </div>
               <div className="mt-2">
                 <SubjectRowActions

@@ -27,8 +27,8 @@ export function SubjectTeacherRemovalDialog({ open, slots, onCancel, onConfirm }
         <AlertDialogHeader>
           <AlertDialogTitle>Retirer des enseignants ?</AlertDialogTitle>
           <AlertDialogDescription>
-            Ces enseignants ont déjà {slots} {unit} dans l’emploi du temps pour cette matière.
-            Les créneaux existants ne seront pas supprimés.
+            Les enseignants retirés ont déjà {slots} {unit} dans l’emploi du temps pour cette matière.
+            Ces créneaux ne seront pas supprimés.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

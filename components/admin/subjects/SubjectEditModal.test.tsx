@@ -1,10 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   mutate: vi.fn(),
   getSubjectSlotCounts: vi.fn(),
+  subjectState: { data: null as unknown, isLoading: false },
 }))
 
 vi.mock("@/lib/api/subjects", () => ({
@@ -31,7 +33,7 @@ const SUBJECT = {
 }
 
 vi.mock("@/lib/hooks/useSubjects", () => ({
-  useSubject: () => ({ data: SUBJECT, isLoading: false }),
+  useSubject: () => mocks.subjectState,
   useUpdateSubject: () => ({ mutate: mocks.mutate, isPending: false, error: null }),
 }))
 
@@ -71,18 +73,25 @@ beforeAll(() => {
   proto.releasePointerCapture ??= () => {}
 })
 
-function renderModal() {
-  return render(
+function modal() {
+  return (
     <QueryClientProvider client={new QueryClient()}>
       <SubjectEditModal subjectId={5} open onClose={() => {}} />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   )
+}
+
+function renderModal() {
+  return render(modal())
 }
 
 describe("Modifier une matière : enseignants", () => {
   beforeEach(() => {
     mocks.mutate.mockReset()
     mocks.getSubjectSlotCounts.mockReset()
+    vi.mocked(toast.error).mockReset()
+    mocks.subjectState.data = SUBJECT
+    mocks.subjectState.isLoading = false
   })
 
   it("affiche les enseignants déjà assignés en pastilles à l'ouverture", async () => {
@@ -90,6 +99,37 @@ describe("Modifier une matière : enseignants", () => {
 
     expect(await screen.findByRole("button", { name: "Retirer Mariam Koné" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Retirer Éloïse Martin" })).toBeInTheDocument()
+  })
+
+  it("affiche le squelette tant que la matière charge, puis le formulaire rempli", async () => {
+    mocks.subjectState.data = undefined
+    mocks.subjectState.isLoading = true
+    const { rerender } = renderModal()
+
+    expect(screen.queryByRole("button", { name: "Mettre à jour" })).not.toBeInTheDocument()
+
+    mocks.subjectState.data = SUBJECT
+    mocks.subjectState.isLoading = false
+    rerender(modal())
+
+    expect(await screen.findByRole("button", { name: "Mettre à jour" })).toBeInTheDocument()
+    expect(screen.getByDisplayValue("Mathématiques")).toBeInTheDocument()
+  })
+
+  it("enregistre sans demander de confirmation quand aucun enseignant n'est retiré", async () => {
+    mocks.subjectState.data = undefined
+    mocks.subjectState.isLoading = true
+    const { rerender } = renderModal()
+    mocks.subjectState.data = SUBJECT
+    mocks.subjectState.isLoading = false
+    rerender(modal())
+
+    fireEvent.click(await screen.findByRole("button", { name: "Mettre à jour" }))
+
+    await waitFor(() => expect(mocks.mutate).toHaveBeenCalledOnce())
+    expect(mocks.mutate.mock.calls[0][0]).toMatchObject({ teacher_ids: [10, 11] })
+    expect(mocks.getSubjectSlotCounts).not.toHaveBeenCalled()
+    expect(screen.queryByText("Retirer des enseignants ?")).not.toBeInTheDocument()
   })
 
   it("demande confirmation avant de retirer un enseignant qui a des créneaux", async () => {
@@ -116,6 +156,18 @@ describe("Modifier une matière : enseignants", () => {
 
     await waitFor(() => expect(mocks.mutate).toHaveBeenCalledOnce())
     expect(mocks.mutate.mock.calls[0][0]).toMatchObject({ teacher_ids: [10] })
+    expect(screen.queryByText("Retirer des enseignants ?")).not.toBeInTheDocument()
+  })
+
+  it("affiche une erreur et n'enregistre pas si la vérification des créneaux échoue", async () => {
+    mocks.getSubjectSlotCounts.mockRejectedValue(new Error("réseau"))
+    renderModal()
+
+    fireEvent.click(await screen.findByRole("button", { name: "Retirer Éloïse Martin" }))
+    fireEvent.click(screen.getByRole("button", { name: "Mettre à jour" }))
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Impossible de vérifier l’emploi du temps. Réessayez."))
+    expect(mocks.mutate).not.toHaveBeenCalled()
     expect(screen.queryByText("Retirer des enseignants ?")).not.toBeInTheDocument()
   })
 })

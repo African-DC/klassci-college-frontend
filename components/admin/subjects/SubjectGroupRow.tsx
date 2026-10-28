@@ -5,7 +5,7 @@ import type { Subject } from "@/lib/contracts/subject"
 import type { SubjectGroup } from "@/lib/contracts/subject-group"
 import { Badge } from "@/components/ui/badge"
 import { getSubjectColor } from "@/lib/utils/subject-colors"
-import { subjectTeacherNames } from "@/lib/utils/subject-teachers"
+import { subjectTeachers } from "@/lib/utils/subject-teachers"
 import { SubjectRowActions } from "./SubjectRowActions"
 import { SubjectTeacherStack } from "./SubjectTeacherStack"
 
@@ -147,7 +147,7 @@ export function SubjectGroupRow({ group, expanded, onToggle, onEdit, onAssign, o
               </div>
 
               <div className="min-w-0">
-                <SubjectTeacherStack names={subjectTeacherNames(inst)} accentClass={color.badge} />
+                <SubjectTeacherStack teachers={subjectTeachers(inst)} accentClass={color.badge} />
               </div>
 
               <div className="flex justify-end gap-1">

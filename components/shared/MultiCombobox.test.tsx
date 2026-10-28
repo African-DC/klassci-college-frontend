@@ -23,9 +23,9 @@ const OPTIONS = [
   { value: 3, label: "Jean Kouassi" },
 ]
 
-function renderCombobox(overrides: Partial<MultiComboboxProps> = {}) {
+function renderCombobox(overrides: Partial<MultiComboboxProps<number>> = {}) {
   const onChange = vi.fn()
-  const props: MultiComboboxProps = {
+  const props: MultiComboboxProps<number> = {
     options: OPTIONS,
     value: [],
     onChange,
@@ -43,12 +43,13 @@ function openList() {
 }
 
 /** Version contrôlée pour vérifier une sélection successive. */
-function Controlled({ onChange }: { onChange: (ids: (number | string)[]) => void }) {
-  const [value, setValue] = useState<(number | string)[]>([])
+function Controlled({ onChange, modal }: { onChange: (ids: number[]) => void; modal?: boolean }) {
+  const [value, setValue] = useState<number[]>([])
   return (
     <MultiCombobox
       options={OPTIONS}
       value={value}
+      modal={modal}
       onChange={(next) => {
         setValue(next)
         onChange(next)
@@ -71,6 +72,18 @@ describe("MultiCombobox", () => {
     expect(screen.getByRole("option", { name: /Mariam Koné/ })).toBeInTheDocument()
   })
 
+  it("s'ouvre au clavier avec Entrée et avec la flèche bas", () => {
+    renderCombobox()
+    fireEvent.keyDown(screen.getByRole("combobox"), { key: "Enter" })
+    expect(screen.getByRole("option", { name: /Éloïse Martin/ })).toBeInTheDocument()
+  })
+
+  it("s'ouvre au clavier avec la flèche bas", () => {
+    renderCombobox()
+    fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" })
+    expect(screen.getByRole("option", { name: /Mariam Koné/ })).toBeInTheDocument()
+  })
+
   it("trouve « Éloïse » quand on tape « eloise » sans accents", () => {
     renderCombobox()
     openList()
@@ -83,7 +96,7 @@ describe("MultiCombobox", () => {
 
   it("sélectionne deux enseignants et garde la liste ouverte", () => {
     const onChange = vi.fn()
-    render(<Controlled onChange={onChange} />)
+    render(<Controlled onChange={onChange} modal={false} />)
     openList()
 
     fireEvent.click(screen.getByRole("option", { name: /Éloïse Martin/ }))
@@ -91,6 +104,7 @@ describe("MultiCombobox", () => {
 
     expect(onChange).toHaveBeenLastCalledWith([1, 2])
     expect(screen.getByRole("option", { name: /Mariam Koné/ })).toBeInTheDocument()
+    expect(screen.getByText("2 enseignants sélectionnés")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Retirer Éloïse Martin" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Retirer Mariam Koné" })).toBeInTheDocument()
   })
@@ -102,6 +116,23 @@ describe("MultiCombobox", () => {
 
     expect(onChange).toHaveBeenCalledWith([2])
     expect(screen.queryByRole("option")).not.toBeInTheDocument()
+  })
+
+  it("ne retire rien quand le combobox est désactivé", () => {
+    const { onChange } = renderCombobox({ value: [1], disabled: true })
+
+    const chip = screen.getByRole("button", { name: "Retirer Éloïse Martin" })
+    expect(chip).toBeDisabled()
+    fireEvent.click(chip)
+
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it("affiche « Enseignant introuvable » pour un identifiant inconnu", () => {
+    renderCombobox({ value: [99] })
+
+    expect(screen.getByText("Enseignant introuvable")).toBeInTheDocument()
+    expect(screen.queryByText("99")).not.toBeInTheDocument()
   })
 
   it("affiche l'état vide quand aucun enseignant n'existe", () => {
@@ -138,5 +169,15 @@ describe("MultiCombobox", () => {
     fireEvent.click(screen.getByRole("button", { name: /Tout retirer/ }))
 
     expect(onChange).toHaveBeenCalledWith([])
+  })
+
+  it("relie le déclencheur à son libellé et à son aide", () => {
+    renderCombobox({ id: "teachers", "aria-labelledby": "teachers-label", "aria-describedby": "teachers-hint", "aria-invalid": true })
+
+    const trigger = screen.getByRole("combobox")
+    expect(trigger).toHaveAttribute("id", "teachers")
+    expect(trigger).toHaveAttribute("aria-labelledby", "teachers-label")
+    expect(trigger).toHaveAttribute("aria-describedby", "teachers-hint")
+    expect(trigger).toHaveAttribute("aria-invalid", "true")
   })
 })

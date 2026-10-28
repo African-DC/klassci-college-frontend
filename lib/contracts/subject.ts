@@ -1,5 +1,12 @@
 import { z } from "zod"
 
+export const SubjectTeacherSchema = z.object({
+  id: z.number(),
+  full_name: z.string(),
+})
+
+export type SubjectTeacher = z.infer<typeof SubjectTeacherSchema>
+
 export const SubjectSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -10,7 +17,7 @@ export const SubjectSchema = z.object({
   color: z.string().nullable().optional(),
   teacher_id: z.number().nullable().optional(),
   teacher_name: z.string().nullable().optional(),
-  teachers: z.array(z.object({ id: z.number(), full_name: z.string() })).optional(),
+  teachers: z.array(SubjectTeacherSchema).optional(),
   level_name: z.string().nullable().optional(),
   series_name: z.string().nullable().optional(),
   created_at: z.string().optional(),

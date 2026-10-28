@@ -18,6 +18,16 @@ interface CrudLabels {
   deleted: string
 }
 
+interface CrudOptions<T, TUpdate> {
+  /**
+   * Ce qui se voit tout de suite dans le cache pendant une mise à jour.
+   * Par défaut, le patch est fusionné tel quel. Une ressource dont certains
+   * champs sont calculés côté serveur (ex. les enseignants d'une matière)
+   * retire ces champs ici et laisse l'invalidation les remplacer.
+   */
+  toOptimistic?: (patch: TUpdate) => Partial<T>
+}
+
 export function createCrudHooks<
   T extends { id: number },
   TCreate,
@@ -26,6 +36,7 @@ export function createCrudHooks<
   resourceKey: string,
   api: CrudApi<T, TCreate, TUpdate>,
   labels: CrudLabels,
+  options: CrudOptions<T, TUpdate> = {},
 ) {
   const keys = {
     all: [resourceKey] as const,
@@ -147,14 +158,17 @@ export function createCrudHooks<
           queryKey: keys.all,
         })
         const previousList = new Map(queries)
+        const patch: Partial<T> = options.toOptimistic
+          ? options.toOptimistic(newData)
+          : (newData as unknown as Partial<T>)
         if (previousDetail) {
-          queryClient.setQueryData(keys.detail(id), { ...previousDetail, ...newData })
+          queryClient.setQueryData(keys.detail(id), { ...previousDetail, ...patch })
         }
         for (const [key, old] of queries) {
           if (!old?.items) continue
           queryClient.setQueryData(key, {
             ...old,
-            items: old.items.map((s) => (s.id === id ? { ...s, ...newData } : s)),
+            items: old.items.map((s) => (s.id === id ? { ...s, ...patch } : s)),
           })
         }
         return { previousDetail, previousList }

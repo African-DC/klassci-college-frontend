@@ -1,5 +1,6 @@
 "use client"
 
+import { useId } from "react"
 import { isSeriesSlotTaken, type AssignableInstance } from "@/lib/utils/subject-assignment"
 import { Input } from "@/components/ui/input"
 import {
@@ -41,6 +42,9 @@ export function SubjectAssignDetailsForm({
   error,
   handlers,
 }: Props) {
+  const teachersLabelId = useId()
+  const teachersHintId = useId()
+
   return (
     <div className="space-y-4 py-2">
       {series.length > 0 && (
@@ -72,13 +76,14 @@ export function SubjectAssignDetailsForm({
       )}
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Enseignants</label>
+        <label id={teachersLabelId} className="text-sm font-medium">Enseignants</label>
         <TeacherMultiSelect
           value={value.teacherIds}
           onChange={handlers.onTeacherIdsChange}
-          modal
+          aria-labelledby={teachersLabelId}
+          aria-describedby={teachersHintId}
         />
-        <p className="text-xs text-muted-foreground">Facultatif, à compléter plus tard.</p>
+        <p id={teachersHintId} className="text-xs text-muted-foreground">Facultatif, à compléter plus tard.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

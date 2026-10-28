@@ -1,5 +1,5 @@
-export interface MultiComboboxOption {
-  value: number | string
+export interface MultiComboboxOption<T extends number | string = number | string> {
+  value: T
   label: string
   hint?: string
 }

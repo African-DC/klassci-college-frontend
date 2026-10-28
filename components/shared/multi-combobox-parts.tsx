@@ -6,22 +6,24 @@ import { Button } from "@/components/ui/button"
 
 interface ChipProps {
   label: string
+  disabled?: boolean
   onRemove: () => void
 }
 
-/** Pastille retirable. Le clic sur la croix ne doit pas ouvrir la liste parente. */
-export function MultiComboboxChip({ label, onRemove }: ChipProps) {
+/**
+ * Pastille retirable, placée hors du combobox. La croix garde un visuel de 24px,
+ * mais sa zone cliquable fait 44px grâce au pseudo-élément (tactile, Itel S661).
+ */
+export function MultiComboboxChip({ label, disabled = false, onRemove }: ChipProps) {
   return (
-    <Badge variant="secondary" className="max-w-full gap-1 py-0.5 pl-2.5 pr-0.5 text-sm font-medium">
+    <Badge variant="secondary" className="max-w-full gap-1 py-0.5 pl-2.5 pr-1 text-sm font-medium">
       <span className="truncate">{label}</span>
       <button
         type="button"
         aria-label={`Retirer ${label}`}
-        onClick={(event) => {
-          event.stopPropagation()
-          onRemove()
-        }}
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-muted-foreground/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        disabled={disabled}
+        onClick={onRemove}
+        className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full hover:bg-muted-foreground/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 after:absolute after:-inset-2.5 after:content-['']"
       >
         <X className="h-3.5 w-3.5" aria-hidden />
       </button>

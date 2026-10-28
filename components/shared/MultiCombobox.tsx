@@ -19,10 +19,10 @@ import {
 } from "./multi-combobox-parts"
 import { matchesSearch, type MultiComboboxOption } from "./multi-combobox-utils"
 
-export interface MultiComboboxProps {
-  options: MultiComboboxOption[]
-  value: (number | string)[]
-  onChange: (value: (number | string)[]) => void
+export interface MultiComboboxProps<T extends number | string = number | string> {
+  options: MultiComboboxOption<T>[]
+  value: T[]
+  onChange: (value: T[]) => void
   placeholder: string
   searchPlaceholder: string
   emptyText: string
@@ -31,16 +31,23 @@ export interface MultiComboboxProps {
   error?: string | null
   onRetry?: () => void
   disabled?: boolean
-  /** Passer `true` quand le combobox est dans un Dialog, pour que la liste défile proprement. */
+  /** Vrai par défaut : le combobox vit dans un Dialog, la liste reste modale. */
   modal?: boolean
   id?: string
-  "aria-label"?: string
+  "aria-labelledby"?: string
+  "aria-describedby"?: string
+  "aria-invalid"?: boolean | "true" | "false"
 }
 
 const filterOption = (_value: string, search: string, keywords?: string[]) =>
   matchesSearch(keywords?.join(" ") ?? "", search) ? 1 : 0
 
-export function MultiCombobox({
+const summary = (count: number, placeholder: string) => {
+  if (count === 0) return placeholder
+  return `${count} enseignant${count > 1 ? "s" : ""} sélectionné${count > 1 ? "s" : ""}`
+}
+
+export function MultiCombobox<T extends number | string = number | string>({
   options,
   value,
   onChange,
@@ -52,28 +59,32 @@ export function MultiCombobox({
   error = null,
   onRetry,
   disabled = false,
-  modal = false,
+  modal = true,
   id,
-  "aria-label": ariaLabel,
-}: MultiComboboxProps) {
+  "aria-labelledby": ariaLabelledBy,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
+}: MultiComboboxProps<T>) {
   const [open, setOpen] = useState(false)
   const listId = useId()
   const selected = value.map((v) => {
     const option = options.find((item) => item.value === v)
-    return { value: v, label: option?.label ?? String(v) }
+    const label = option?.label ?? (loading ? "…" : "Enseignant introuvable")
+    return { value: v, label }
   })
 
-  function toggle(option: MultiComboboxOption) {
+  function toggle(option: MultiComboboxOption<T>) {
     const isSelected = value.includes(option.value)
     onChange(isSelected ? value.filter((v) => v !== option.value) : [...value, option.value])
   }
 
-  function remove(optionValue: number | string) {
+  function remove(optionValue: T) {
+    if (disabled) return
     onChange(value.filter((v) => v !== optionValue))
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.target !== event.currentTarget || disabled) return
+    if (disabled) return
     if (event.key === "Enter" || event.key === " " || event.key === "ArrowDown") {
       event.preventDefault()
       setOpen(true)
@@ -114,58 +125,65 @@ export function MultiCombobox({
   }
 
   return (
-    <Popover open={open} onOpenChange={(next) => setOpen(disabled ? false : next)} modal={modal}>
-      <PopoverTrigger asChild>
-        <div
-          id={id}
-          role="combobox"
-          tabIndex={disabled ? -1 : 0}
-          aria-expanded={open}
-          aria-controls={listId}
-          aria-haspopup="listbox"
-          aria-label={ariaLabel}
-          aria-disabled={disabled || undefined}
-          onKeyDown={handleKeyDown}
-          className={cn(
-            "flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-            disabled && "cursor-not-allowed opacity-50",
-          )}
-        >
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-            {selected.length === 0 && (
-              <span className="text-muted-foreground">{placeholder}</span>
+    <div className="w-full space-y-2">
+      <Popover open={open} onOpenChange={(next) => setOpen(disabled ? false : next)} modal={modal}>
+        <PopoverTrigger asChild>
+          <div
+            id={id}
+            role="combobox"
+            tabIndex={disabled ? -1 : 0}
+            aria-expanded={open}
+            aria-controls={listId}
+            aria-haspopup="listbox"
+            aria-labelledby={ariaLabelledBy}
+            aria-describedby={ariaDescribedBy}
+            aria-invalid={ariaInvalid}
+            aria-disabled={disabled || undefined}
+            onKeyDown={handleKeyDown}
+            className={cn(
+              "flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+              disabled && "cursor-not-allowed opacity-50",
             )}
-            {selected.map((item) => (
-              <MultiComboboxChip
-                key={String(item.value)}
-                label={item.label}
-                onRemove={() => remove(item.value)}
-              />
-            ))}
+          >
+            <span className={cn("min-w-0 truncate", value.length === 0 && "text-muted-foreground")}>
+              {summary(value.length, placeholder)}
+            </span>
+            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" aria-hidden />
           </div>
-          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" aria-hidden />
+        </PopoverTrigger>
+        <PopoverContent id={listId} className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <Command filter={filterOption}>
+            <CommandInput placeholder={searchPlaceholder} />
+            <CommandList className="max-h-[min(50dvh,320px)] overflow-y-auto overscroll-contain">
+              {renderList()}
+            </CommandList>
+          </Command>
+          {value.length > 0 && (
+            <div className="border-t p-1">
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-11 w-full justify-center text-muted-foreground"
+                onClick={() => onChange([])}
+              >
+                Tout retirer ({value.length})
+              </Button>
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selected.map((item) => (
+            <MultiComboboxChip
+              key={String(item.value)}
+              label={item.label}
+              disabled={disabled}
+              onRemove={() => remove(item.value)}
+            />
+          ))}
         </div>
-      </PopoverTrigger>
-      <PopoverContent id={listId} className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command filter={filterOption}>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandList className="max-h-[min(50dvh,320px)] overflow-y-auto overscroll-contain">
-            {renderList()}
-          </CommandList>
-        </Command>
-        {value.length > 0 && (
-          <div className="border-t p-1">
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-11 w-full justify-center text-muted-foreground"
-              onClick={() => onChange([])}
-            >
-              Tout retirer ({value.length})
-            </Button>
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
+      )}
+    </div>
   )
 }

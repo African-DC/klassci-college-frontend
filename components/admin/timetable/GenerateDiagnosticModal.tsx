@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { AlertTriangle, CheckCircle2, BookOpen, User } from "lucide-react"
 import { toast } from "sonner"
+import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -20,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useTeachers } from "@/lib/hooks/useTeachers"
-import { useUpdateSubject } from "@/lib/hooks/useSubjects"
+import { subjectKeys } from "@/lib/hooks/useSubjects"
 import type { TimetableDiagnostic } from "@/lib/contracts/timetable"
 
 interface GenerateDiagnosticModalProps {
@@ -40,7 +41,7 @@ export function GenerateDiagnosticModal({
   const [assigning, setAssigning] = useState(false)
   const { data: teachersData } = useTeachers({ size: 100 })
   const allTeachers = teachersData?.items ?? []
-  const updateSubject = useUpdateSubject(0)
+  const queryClient = useQueryClient()
 
   if (!diagnostic) return null
 
@@ -64,7 +65,7 @@ export function GenerateDiagnosticModal({
       for (const subject of diagnostic.subjects_without_teacher) {
         const teacherId = teacherAssignments[subject.id]
         if (teacherId) {
-          await subjectsApi.update(subject.id, { teacher_id: teacherId })
+          await subjectsApi.update(subject.id, { teacher_ids: [teacherId] })
         }
       }
       toast.success("Enseignants assignes")
@@ -74,6 +75,8 @@ export function GenerateDiagnosticModal({
         description: err instanceof Error ? err.message : "Erreur inconnue",
       })
     } finally {
+      // Dans finally : une écriture déjà passée reste visible même si une suivante échoue.
+      void queryClient.invalidateQueries({ queryKey: subjectKeys.all })
       setAssigning(false)
     }
   }
