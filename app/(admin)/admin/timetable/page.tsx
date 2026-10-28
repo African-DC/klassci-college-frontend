@@ -26,6 +26,7 @@ import { PdfPreviewButton } from "@/components/shared/PdfPreviewButton"
 import { TimetableGrid } from "@/components/admin/timetable/TimetableGrid"
 import { TimetableHoursSidebar } from "@/components/admin/timetable/TimetableHoursSidebar"
 import { GenerateDiagnosticModal } from "@/components/admin/timetable/GenerateDiagnosticModal"
+import { ClassTeachersDialog } from "@/components/admin/timetable/class-teachers/ClassTeachersDialog"
 import type { TimetableDiagnostic } from "@/lib/contracts/timetable"
 
 export default function TimetablePage() {
@@ -118,6 +119,11 @@ export default function TimetablePage() {
     } finally {
       setLoadingDiagnostic(false)
     }
+  }
+
+  async function refreshDiagnostic() {
+    if (!selectedClassId) return
+    setDiagnostic(await timetableApi.diagnostic(selectedClassId))
   }
 
   // Step 2: Launch generation (after diagnostic passes or after inline assignment)
@@ -218,6 +224,7 @@ export default function TimetablePage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {selectedClassId && <ClassTeachersDialog classId={selectedClassId} />}
               <PdfPreviewButton
                 fetchBlob={() => timetableApi.exportPdf(selectedClassId as number)}
                 label="l'emploi du temps"
@@ -285,6 +292,7 @@ export default function TimetablePage() {
         diagnostic={diagnostic}
         onClose={() => setDiagnosticOpen(false)}
         onGenerate={launchGeneration}
+        onRefreshDiagnostic={refreshDiagnostic}
       />
     </div>
   )

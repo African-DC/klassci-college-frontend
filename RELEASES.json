@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-10-28T19:30:31Z",
+  "generated_at": "2026-10-28T20:04:21Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,13 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "Emploi du temps : écran « Enseignants de la classe » pour choisir, matière par matière, l'enseignant de chaque classe avant la génération ; la saisie manuelle propose cet enseignant",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Une matière peut être confiée à plusieurs enseignants, affichés sur chaque fiche ; retirer un enseignant qui a déjà des créneaux demande une confirmation, sans supprimer ces créneaux",
             "audience": [

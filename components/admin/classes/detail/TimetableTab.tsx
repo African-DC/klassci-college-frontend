@@ -7,6 +7,7 @@ import { DataError } from "@/components/shared/DataError"
 import { useTimetable } from "@/lib/hooks/useTimetable"
 import { SectionCard, EmptyState } from "@/components/admin/students/tabs/_primitives"
 import { dayLabel, formatTime, groupSlotsByDay } from "./class-helpers"
+import { ClassTeachersDialog } from "@/components/admin/timetable/class-teachers/ClassTeachersDialog"
 
 interface TimetableTabProps {
   classId: number
@@ -57,6 +58,9 @@ export function TimetableTab({ classId }: TimetableTabProps) {
       title="Emploi du temps"
       description={isLoading ? undefined : `${slots.length} créneau${slots.length > 1 ? "x" : ""} programmé${slots.length > 1 ? "s" : ""}`}
     >
+      <div className="mb-4 flex justify-end">
+        <ClassTeachersDialog classId={classId} />
+      </div>
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (

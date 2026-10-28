@@ -8,11 +8,11 @@ import { TimetableSlotCreateSchema, type TimetableSlotCreate } from "@/lib/contr
 import { useCreateSlot, useTeacherWeek, useUpdateSlot } from "@/lib/hooks/useTimetable"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { useSubjects } from "@/lib/hooks/useSubjects"
-import { useTeachers } from "@/lib/hooks/useTeachers"
 import { useClass } from "@/lib/hooks/useClasses"
 import { useRooms } from "@/lib/hooks/useRooms"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { ChampsDuCreneau } from "@/components/forms/timetable-slot/ChampsDuCreneau"
+import { TeacherField } from "@/components/forms/timetable-slot/TeacherField"
 import { TeacherWeekPanel } from "@/components/timetable/TeacherWeekPanel"
 import type { PlageChoisie } from "@/components/timetable/week-grid/use-selection-glissee"
 import { trouverEmpechement } from "@/lib/timetable/week-overlap"
@@ -73,10 +73,6 @@ export function TimetableSlotForm({
   )
   const subjects = subjectsData?.items ?? []
 
-  // Teachers — only show the teacher assigned to the selected subject
-  const { data: teachersData } = useTeachers({ size: 100 })
-  const allTeachers = teachersData?.items ?? []
-
   // Rooms — only show: 1) the class's assigned room, 2) non-classroom rooms (labos, etc.)
   const { data: roomsData } = useRooms({ size: 100 })
   const allRooms = roomsData?.items ?? []
@@ -119,16 +115,6 @@ export function TimetableSlotForm({
           room: "",
         },
   })
-
-  const selectedSubjectId = form.watch("subject_id")
-  const selectedSubject = subjects.find((s) => s.id === selectedSubjectId)
-
-  // Auto-select teacher when subject changes (if subject has assigned teacher)
-  const prevSubjectRef = useMemo(() => ({ id: 0 }), [])
-  if (selectedSubject?.teacher_id && selectedSubjectId !== prevSubjectRef.id) {
-    prevSubjectRef.id = selectedSubjectId ?? 0
-    form.setValue("teacher_id", selectedSubject.teacher_id)
-  }
 
   // La semaine de l'enseignant choisi, chargee des qu'il est choisi : elle
   // sert a montrer l'empechement pendant la saisie, au lieu de le decouvrir en
@@ -263,53 +249,10 @@ export function TimetableSlotForm({
                 )}
               />
 
-              {/* Teacher select */}
-              <FormField
-                control={form.control}
-                name="teacher_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Enseignant *</FormLabel>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        onValueChange={(v) => field.onChange(Number(v))}
-                        value={field.value?.toString() ?? ""}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-11 min-w-0 flex-1">
-                            <SelectValue placeholder="Sélectionner un enseignant" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {selectedSubject?.teacher_id && selectedSubject?.teacher_name ? (
-                            /* Subject has an assigned teacher: show only that teacher */
-                            <SelectItem value={selectedSubject.teacher_id.toString()}>
-                              {selectedSubject.teacher_name}
-                            </SelectItem>
-                          ) : (
-                            /* No assigned teacher: show all teachers */
-                            allTeachers.map((t) => (
-                              <SelectItem key={t.id} value={t.id.toString()}>
-                                {t.first_name} {t.last_name} {t.speciality ? `(${t.speciality})` : ""}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="h-11 w-11 shrink-0"
-                        onClick={() => setShowCreateTeacher(true)}
-                        title="Créer un enseignant"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <TeacherField
+                form={form}
+                classId={effectiveClassId}
+                onCreateTeacher={() => setShowCreateTeacher(true)}
               />
 
               <ChampsDuCreneau
