@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { useQueryClient } from "@tanstack/react-query"
 import { duplicateSubject } from "@/lib/api/subjects"
-import { useTeachers } from "@/lib/hooks/useTeachers"
 import type { Level } from "@/lib/contracts/level"
 import {
   firstFreeSeriesSlot,
   instancesForLevel,
+  instancesOfSubject,
   isLevelAssignable,
   isSeriesSlotTaken,
   type AssignableInstance,
@@ -53,13 +53,11 @@ export function SubjectAssignModal({
   const [seriesId, setSeriesId] = useState<number | null>(target?.seriesId ?? null)
   const [coef, setCoef] = useState(target?.defaultCoef ?? 1)
   const [hours, setHours] = useState(target?.defaultHours ?? 2)
-  const [teacherId, setTeacherId] = useState<number | null>(null)
+  const [teacherIds, setTeacherIds] = useState<number[]>([])
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const queryClient = useQueryClient()
-  const { data: teachersData } = useTeachers({ size: 100 })
-  const teachers = teachersData?.items ?? []
 
   useEffect(() => {
     if (!open || !target) return
@@ -68,24 +66,28 @@ export function SubjectAssignModal({
     setSeriesId(target.seriesId ?? null)
     setCoef(target.defaultCoef)
     setHours(target.defaultHours)
-    setTeacherId(null)
+    setTeacherIds([])
     setError(null)
     setIsPending(false)
   }, [open, target])
 
+  const subjectInstances = useMemo(
+    () => (target ? instancesOfSubject(instances, target.subjectName) : []),
+    [instances, target],
+  )
   const selectedLevel = levels.find((level) => level.id === levelId) ?? null
   const levelSeries = useMemo(
     () => series.filter((item) => item.level_id === levelId),
     [series, levelId],
   )
   const levelInstances = useMemo(
-    () => (levelId == null ? [] : instancesForLevel(instances, levelId)),
-    [instances, levelId],
+    () => (levelId == null ? [] : instancesForLevel(subjectInstances, levelId)),
+    [subjectInstances, levelId],
   )
 
   function chooseLevel(nextLevelId: number) {
     const nextSeries = series.filter((item) => item.level_id === nextLevelId)
-    const nextInstances = instancesForLevel(instances, nextLevelId)
+    const nextInstances = instancesForLevel(subjectInstances, nextLevelId)
     if (!isLevelAssignable(nextInstances, nextSeries)) return
     const free = firstFreeSeriesSlot(nextInstances, nextSeries)
     setLevelId(nextLevelId)
@@ -107,9 +109,9 @@ export function SubjectAssignModal({
       level_id: levelId,
       coefficient: coef,
       hours_per_week: hours,
+      teacher_ids: teacherIds,
     }
     if (seriesId !== null) payload.series_id = seriesId
-    if (teacherId !== null) payload.teacher_id = teacherId
 
     duplicateSubject(payload)
       .then(() => {
@@ -145,21 +147,20 @@ export function SubjectAssignModal({
           <SubjectAssignLevelPicker
             levels={levels}
             series={series}
-            instances={instances}
+            instances={subjectInstances}
             onChoose={chooseLevel}
           />
         ) : (
           <SubjectAssignDetailsForm
             series={levelSeries}
             levelInstances={levelInstances}
-            value={{ seriesId, coef, hours, teacherId }}
-            teachers={teachers}
+            value={{ seriesId, coef, hours, teacherIds }}
             error={error}
             handlers={{
               onSeriesChange: setSeriesId,
               onCoefChange: setCoef,
               onHoursChange: setHours,
-              onTeacherChange: setTeacherId,
+              onTeacherIdsChange: setTeacherIds,
             }}
           />
         )}

@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-10-01T23:27:49Z",
+  "generated_at": "2026-10-28T20:04:21Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,21 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "Emploi du temps : écran « Enseignants de la classe » pour choisir, matière par matière, l'enseignant de chaque classe avant la génération ; la saisie manuelle propose cet enseignant",
+            "audience": [
+              "admin"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Une matière peut être confiée à plusieurs enseignants, affichés sur chaque fiche ; retirer un enseignant qui a déjà des créneaux demande une confirmation, sans supprimer ces créneaux",
+            "audience": [
+              "direction",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
           {
             "text": "La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile",
             "audience": [
@@ -1945,6 +1960,14 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Glisser une matière du catalogue vers un niveau qui en portait déjà une autre ne répond plus à tort « existe déjà »",
+            "audience": [
+              "direction",
+              "secrétariat"
+            ],
+            "pull_request": 543
+          },
           {
             "text": "L'export Excel ou PDF d'une liste de classe contient tous les élèves, et plus seulement les vingt premiers affichés à l'écran",
             "audience": [

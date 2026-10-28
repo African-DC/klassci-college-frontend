@@ -1,5 +1,6 @@
 import type { Subject } from "@/lib/contracts/subject"
 import type { SubjectGroup } from "@/lib/contracts/subject-group"
+import { subjectTeachers } from "@/lib/utils/subject-teachers"
 
 interface LevelOrder {
   id: number
@@ -49,7 +50,7 @@ export function filterSubjectGroups(
     if (needle) {
       const matchName = group.name.toLowerCase().includes(needle)
       const matchTeacher = group.instances.some((inst) =>
-        inst.teacher_name?.toLowerCase().includes(needle),
+        subjectTeachers(inst).some((t) => t.full_name.toLowerCase().includes(needle)),
       )
       if (!matchName && !matchTeacher) return false
     }
@@ -62,12 +63,10 @@ export function filterSubjectGroups(
     }
 
     if (teacherFilter === "with") {
-      if (!group.instances.some((inst) => inst.teacher_id !== null && inst.teacher_id !== undefined)) {
-        return false
-      }
+      if (!group.instances.some((inst) => subjectTeachers(inst).length > 0)) return false
     } else if (teacherFilter === "without") {
       if (group.instances.length === 0) return false
-      if (!group.instances.some((inst) => !inst.teacher_id)) return false
+      if (!group.instances.some((inst) => subjectTeachers(inst).length === 0)) return false
     }
 
     return true

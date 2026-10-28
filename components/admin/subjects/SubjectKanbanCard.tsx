@@ -4,6 +4,7 @@ import type { DragEvent } from "react"
 import { Award, Clock, GripVertical, Pencil, Trash2 } from "lucide-react"
 import type { Subject } from "@/lib/contracts/subject"
 import { getSubjectColor } from "@/lib/utils/subject-colors"
+import { subjectTeachers } from "@/lib/utils/subject-teachers"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
@@ -23,6 +24,7 @@ interface Props {
 
 export function SubjectKanbanCard({ subject, isDraggable, isCatalogue, actions }: Props) {
   const color = getSubjectColor(subject.color)
+  const teacherNames = subjectTeachers(subject).map((t) => t.full_name)
 
   return (
     <div
@@ -66,9 +68,10 @@ export function SubjectKanbanCard({ subject, isDraggable, isCatalogue, actions }
           </div>
         </div>
       )}
-      {!isCatalogue && subject.teacher_name && (
-        <p className="mt-1 truncate text-[10px] text-muted-foreground">
-          Prof. {subject.teacher_name}
+      {!isCatalogue && teacherNames.length > 0 && (
+        <p className="mt-1 truncate text-[10px] text-muted-foreground" title={teacherNames.join(", ")}>
+          Prof. {teacherNames.slice(0, 2).join(", ")}
+          {teacherNames.length > 2 ? ` +${teacherNames.length - 2}` : ""}
         </p>
       )}
 

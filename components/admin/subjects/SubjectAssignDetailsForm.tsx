@@ -1,5 +1,6 @@
 "use client"
 
+import { useId } from "react"
 import { isSeriesSlotTaken, type AssignableInstance } from "@/lib/utils/subject-assignment"
 import { Input } from "@/components/ui/input"
 import {
@@ -9,34 +10,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { TeacherMultiSelect } from "./TeacherMultiSelect"
 import type { AssignSeriesOption } from "./subject-assign-types"
-
-interface TeacherOption {
-  id: number
-  first_name: string
-  last_name: string
-  speciality: string | null
-}
 
 interface DetailsValue {
   seriesId: number | null
   coef: number
   hours: number
-  teacherId: number | null
+  teacherIds: number[]
 }
 
 interface DetailsHandlers {
   onSeriesChange: (value: number | null) => void
   onCoefChange: (value: number) => void
   onHoursChange: (value: number) => void
-  onTeacherChange: (value: number | null) => void
+  onTeacherIdsChange: (value: number[]) => void
 }
 
 interface Props {
   series: AssignSeriesOption[]
   levelInstances: AssignableInstance[]
   value: DetailsValue
-  teachers: TeacherOption[]
   error: string | null
   handlers: DetailsHandlers
 }
@@ -45,10 +39,12 @@ export function SubjectAssignDetailsForm({
   series,
   levelInstances,
   value,
-  teachers,
   error,
   handlers,
 }: Props) {
+  const teachersLabelId = useId()
+  const teachersHintId = useId()
+
   return (
     <div className="space-y-4 py-2">
       {series.length > 0 && (
@@ -80,24 +76,14 @@ export function SubjectAssignDetailsForm({
       )}
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Enseignant</label>
-        <Select
-          value={value.teacherId?.toString() ?? "none"}
-          onValueChange={(v) => handlers.onTeacherChange(v === "none" ? null : Number(v))}
-        >
-          <SelectTrigger className="h-11">
-            <SelectValue placeholder="Sélectionner un enseignant" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Aucun (à assigner plus tard)</SelectItem>
-            {teachers.map((teacher) => (
-              <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                {teacher.first_name} {teacher.last_name}
-                {teacher.speciality ? ` (${teacher.speciality})` : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <label id={teachersLabelId} className="text-sm font-medium">Enseignants</label>
+        <TeacherMultiSelect
+          value={value.teacherIds}
+          onChange={handlers.onTeacherIdsChange}
+          aria-labelledby={teachersLabelId}
+          aria-describedby={teachersHintId}
+        />
+        <p id={teachersHintId} className="text-xs text-muted-foreground">Facultatif, à compléter plus tard.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

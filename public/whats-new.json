@@ -1,11 +1,26 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-10-01T23:27:49Z",
+  "generated_at": "2026-10-28T20:04:21Z",
   "version": "Unreleased",
   "released": false,
-  "total": 365,
+  "total": 368,
   "sections": {
     "Added": [
+      {
+        "text": "Emploi du temps : écran « Enseignants de la classe » pour choisir, matière par matière, l'enseignant de chaque classe avant la génération ; la saisie manuelle propose cet enseignant",
+        "audience": [
+          "admin"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Une matière peut être confiée à plusieurs enseignants, affichés sur chaque fiche ; retirer un enseignant qui a déjà des créneaux demande une confirmation, sans supprimer ces créneaux",
+        "audience": [
+          "direction",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
       {
         "text": "La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile",
         "audience": [
@@ -38,23 +53,6 @@
           "direction"
         ],
         "pull_request": 530
-      },
-      {
-        "text": "La fiche d’inscription propose des réductions en francs ou pourcentage, une prévisualisation du nouveau solde, le motif et une annulation sécurisée",
-        "audience": [
-          "direction",
-          "comptable"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Le journal des paiements propose des périmètres explicites : année scolaire, bordereau du jour, date précise, semaine et historique complet, avec les encaissements d'arriérés conservés dans le jour de leur paiement et des exports cohérents avec l'écran",
-        "audience": [
-          "comptable",
-          "direction",
-          "caisse"
-        ],
-        "pull_request": null
       }
     ],
     "Changed": [
@@ -108,6 +106,14 @@
     ],
     "Fixed": [
       {
+        "text": "Glisser une matière du catalogue vers un niveau qui en portait déjà une autre ne répond plus à tort « existe déjà »",
+        "audience": [
+          "direction",
+          "secrétariat"
+        ],
+        "pull_request": 543
+      },
+      {
         "text": "L'export Excel ou PDF d'une liste de classe contient tous les élèves, et plus seulement les vingt premiers affichés à l'écran",
         "audience": [
           "admin",
@@ -146,14 +152,6 @@
         "audience": [
           "admin",
           "directeur"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Un article déjà réglé à la caisse ne propose plus de le marquer déposé : le bouton échouait à tous les coups, sur la fiche comme en saisie par classe",
-        "audience": [
-          "éducateur",
-          "secrétariat"
         ],
         "pull_request": null
       }
