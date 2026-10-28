@@ -15,7 +15,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useTimetableStore } from "@/lib/stores/useTimetableStore"
-import { useGenerateTimetable } from "@/lib/hooks/useTimetable"
+import {
+  diagnosticQueryOptions,
+  useGenerateTimetable,
+  useTimetableDiagnostic,
+} from "@/lib/hooks/useTimetable"
 import { useClasses } from "@/lib/hooks/useClasses"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { timetableApi } from "@/lib/api/timetable"
@@ -27,8 +31,6 @@ import { TimetableGrid } from "@/components/admin/timetable/TimetableGrid"
 import { TimetableHoursSidebar } from "@/components/admin/timetable/TimetableHoursSidebar"
 import { GenerateDiagnosticModal } from "@/components/admin/timetable/GenerateDiagnosticModal"
 import { ClassTeachersDialog } from "@/components/admin/timetable/class-teachers/ClassTeachersDialog"
-import type { TimetableDiagnostic } from "@/lib/contracts/timetable"
-
 export default function TimetablePage() {
   const { selectedClassId, setSelectedClassId } = useTimetableStore()
   const generateMutation = useGenerateTimetable()
@@ -39,7 +41,9 @@ export default function TimetablePage() {
   const MAX_POLL_ATTEMPTS = 100
 
   const [diagnosticOpen, setDiagnosticOpen] = useState(false)
-  const [diagnostic, setDiagnostic] = useState<TimetableDiagnostic | null>(null)
+  // Observé seulement pendant que la fenêtre est ouverte : l'invalidation après
+  // enregistrement des enseignants la relit aussitôt.
+  const { data: diagnostic } = useTimetableDiagnostic(diagnosticOpen ? selectedClassId : null)
   const [loadingDiagnostic, setLoadingDiagnostic] = useState(false)
   const [isPolling, setIsPolling] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
@@ -103,8 +107,7 @@ export default function TimetablePage() {
     if (!selectedClassId || pollingRef.current) return
     setLoadingDiagnostic(true)
     try {
-      const diag = await timetableApi.diagnostic(selectedClassId)
-      setDiagnostic(diag)
+      const diag = await queryClient.fetchQuery(diagnosticQueryOptions(selectedClassId))
       if (diag.ready) {
         // All subjects have teachers — generate directly
         launchGeneration()
@@ -119,11 +122,6 @@ export default function TimetablePage() {
     } finally {
       setLoadingDiagnostic(false)
     }
-  }
-
-  async function refreshDiagnostic() {
-    if (!selectedClassId) return
-    setDiagnostic(await timetableApi.diagnostic(selectedClassId))
   }
 
   // Step 2: Launch generation (after diagnostic passes or after inline assignment)
@@ -289,10 +287,9 @@ export default function TimetablePage() {
       {/* Diagnostic Modal */}
       <GenerateDiagnosticModal
         open={diagnosticOpen}
-        diagnostic={diagnostic}
+        diagnostic={diagnostic ?? null}
         onClose={() => setDiagnosticOpen(false)}
         onGenerate={launchGeneration}
-        onRefreshDiagnostic={refreshDiagnostic}
       />
     </div>
   )

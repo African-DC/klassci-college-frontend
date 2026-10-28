@@ -1,7 +1,6 @@
 import { apiFetch, safeValidate } from "./client"
 import {
   ClassSubjectTeachersSchema,
-  ClassSubjectTeachersSaveSchema,
   type ClassSubjectTeacherAssignment,
   type ClassSubjectTeachers,
 } from "@/lib/contracts/class-subject-teachers"
@@ -17,10 +16,9 @@ export const classSubjectTeachersApi = {
     classId: number,
     assignments: ClassSubjectTeacherAssignment[],
   ): Promise<ClassSubjectTeachers> => {
-    const body = ClassSubjectTeachersSaveSchema.parse({ assignments })
     const json = await apiFetch<unknown>(`/timetable/classes/${classId}/subject-teachers`, {
       method: "PUT",
-      body: JSON.stringify(body),
+      body: JSON.stringify({ assignments }),
     })
     return safeValidate(ClassSubjectTeachersSchema, json, `PUT /timetable/classes/${classId}/subject-teachers`)
   },

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import type { ClassSubjectTeacherItem } from "@/lib/contracts/class-subject-teachers"
+import { SUBJECT_GRID_COLUMNS } from "./class-teachers-styles"
 
 const NONE = "none"
 
@@ -68,7 +69,8 @@ export function ClassSubjectTeacherRow({ item, value, disabled, onChange }: Clas
     <article
       className={cn(
         "rounded-xl border bg-card p-4 shadow-sm",
-        "lg:grid lg:grid-cols-[minmax(0,1fr)_6rem_minmax(0,16rem)_7.5rem] lg:items-center lg:gap-4 lg:rounded-none lg:border-x-0 lg:border-t-0 lg:bg-transparent lg:px-3 lg:py-3 lg:shadow-none",
+        "lg:items-center lg:rounded-none lg:border-x-0 lg:border-t-0 lg:bg-transparent lg:px-3 lg:py-3 lg:shadow-none",
+        SUBJECT_GRID_COLUMNS,
       )}
     >
       <div className="min-w-0 space-y-1.5">
@@ -100,7 +102,8 @@ export function ClassSubjectTeacherRow({ item, value, disabled, onChange }: Clas
             <SelectValue placeholder="Choisir un enseignant" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={NONE}>Aucun enseignant</SelectItem>
+            {/* Avec un seul choix possible, le serveur retient ce choix : « Aucun » ne tiendrait pas. */}
+            {eligibleCount !== 1 && <SelectItem value={NONE}>Aucun enseignant</SelectItem>}
             {item.eligible_teachers.map((t) => (
               <SelectItem key={t.id} value={t.id.toString()}>
                 {t.full_name}

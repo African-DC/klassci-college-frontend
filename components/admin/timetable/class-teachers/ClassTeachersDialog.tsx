@@ -13,15 +13,18 @@ import {
 } from "@/components/ui/dialog"
 import { useClassSubjectTeachers } from "@/lib/hooks/useClassSubjectTeachers"
 import { ClassSubjectTeachersPanel } from "./ClassSubjectTeachersPanel"
+import { DiscardChangesDialog } from "./DiscardChangesDialog"
+import { useDiscardGuard } from "./use-discard-guard"
+import { TEACHERS_DIALOG_CONTENT } from "./class-teachers-styles"
 
 interface ClassTeachersDialogProps {
   classId: number
-  className?: string
 }
 
 /** Bouton « Enseignants de la classe » qui ouvre le panneau dans une fenêtre. */
-export function ClassTeachersDialog({ classId, className }: ClassTeachersDialogProps) {
+export function ClassTeachersDialog({ classId }: ClassTeachersDialogProps) {
   const [open, setOpen] = useState(false)
+  const guard = useDiscardGuard()
   const { data } = useClassSubjectTeachers(classId)
   const missing = data?.missing_count ?? 0
 
@@ -30,7 +33,7 @@ export function ClassTeachersDialog({ classId, className }: ClassTeachersDialogP
       <Button
         type="button"
         variant="outline"
-        className={className ?? "h-11 sm:h-10"}
+        className="h-11 sm:h-10"
         onClick={() => setOpen(true)}
       >
         <Users aria-hidden="true" className="mr-2 h-4 w-4" />
@@ -41,17 +44,32 @@ export function ClassTeachersDialog({ classId, className }: ClassTeachersDialogP
           </Badge>
         )}
       </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+      <Dialog
+        open={open}
+        onOpenChange={(v) => {
+          if (v) setOpen(true)
+          else guard.guard(() => setOpen(false))
+        }}
+      >
+        <DialogContent className={TEACHERS_DIALOG_CONTENT}>
           <DialogHeader>
             <DialogTitle>Enseignants de la classe</DialogTitle>
             <DialogDescription>
               Choisissez, matière par matière, l&apos;enseignant qui fera cours dans cette classe.
             </DialogDescription>
           </DialogHeader>
-          <ClassSubjectTeachersPanel classId={classId} />
+          <ClassSubjectTeachersPanel
+            key={classId}
+            classId={classId}
+            onDirtyChange={guard.setDirty}
+          />
         </DialogContent>
       </Dialog>
+      <DiscardChangesDialog
+        open={guard.discardOpen}
+        onConfirm={guard.confirmDiscard}
+        onCancel={guard.cancelDiscard}
+      />
     </>
   )
 }

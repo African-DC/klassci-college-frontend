@@ -7,20 +7,31 @@ import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
+import { cn } from "@/lib/utils"
 import {
   useClassSubjectTeachers,
   useSaveClassSubjectTeachers,
 } from "@/lib/hooks/useClassSubjectTeachers"
+import type { ClassSubjectTeachers } from "@/lib/contracts/class-subject-teachers"
 import { ClassSubjectTeacherRow } from "./ClassSubjectTeacherRow"
 import {
   buildDraft,
   changedAssignments,
-  messageFromError,
+  countMissing,
+  type TeacherDraft,
 } from "./class-teachers-helpers"
+import { SUBJECT_GRID_COLUMNS } from "./class-teachers-styles"
 
 interface ClassSubjectTeachersPanelProps {
   classId: number
   onSaved?: () => void
+  onDirtyChange?: (dirty: boolean) => void
+}
+
+/** Choix faits à la main, rattachés à la réponse serveur dont ils partent. */
+interface PanelEdits {
+  source: ClassSubjectTeachers
+  values: TeacherDraft
 }
 
 function PanelHeader({ missing }: { missing: number }) {
@@ -38,11 +49,14 @@ function PanelHeader({ missing }: { missing: number }) {
   )
 }
 
-export function ClassSubjectTeachersPanel({ classId, onSaved }: ClassSubjectTeachersPanelProps) {
+export function ClassSubjectTeachersPanel({
+  classId,
+  onSaved,
+  onDirtyChange,
+}: ClassSubjectTeachersPanelProps) {
   const { data, isLoading, isError, error, refetch } = useClassSubjectTeachers(classId)
   const saveMutation = useSaveClassSubjectTeachers(classId)
-  // Seules les modifications faites à la main sont gardées ; le reste suit le serveur.
-  const [overrides, setOverrides] = useState<Record<number, number | null>>({})
+  const [edits, setEdits] = useState<PanelEdits | null>(null)
 
   if (isLoading) {
     return (
@@ -80,18 +94,31 @@ export function ClassSubjectTeachersPanel({ classId, onSaved }: ClassSubjectTeac
     )
   }
 
-  const draft = { ...buildDraft(data.items), ...overrides }
-  const changes = changedAssignments(data.items, draft)
+  const source: ClassSubjectTeachers = data
+  const values = edits?.source === source ? edits.values : {}
+  const draft: TeacherDraft = { ...buildDraft(source.items), ...values }
+  const changes = changedAssignments(source.items, draft)
+  const missing = countMissing(source.items, draft)
+
+  function handleChange(subjectId: number, teacherId: number | null) {
+    const nextValues = { ...values, [subjectId]: teacherId }
+    setEdits({ source, values: nextValues })
+    const nextDraft = { ...buildDraft(source.items), ...nextValues }
+    onDirtyChange?.(changedAssignments(source.items, nextDraft).length > 0)
+  }
 
   function handleSave() {
     saveMutation.mutate(changes, {
       onSuccess: () => {
-        setOverrides({})
+        setEdits(null)
+        onDirtyChange?.(false)
         toast.success("Enseignants de la classe enregistrés")
         onSaved?.()
       },
       onError: (err) => {
-        toast.error("Enregistrement impossible", { description: messageFromError(err) })
+        toast.error("Enregistrement impossible", {
+          description: err instanceof Error && err.message ? err.message : "Erreur inconnue",
+        })
       },
     })
   }
@@ -100,9 +127,14 @@ export function ClassSubjectTeachersPanel({ classId, onSaved }: ClassSubjectTeac
 
   return (
     <div className="space-y-4">
-      <PanelHeader missing={data.missing_count} />
+      <PanelHeader missing={missing} />
 
-      <div className="hidden grid-cols-[minmax(0,1fr)_6rem_minmax(0,16rem)_7.5rem] gap-4 border-b px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:grid">
+      <div
+        className={cn(
+          "hidden gap-4 border-b px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:grid",
+          SUBJECT_GRID_COLUMNS,
+        )}
+      >
         <span>Matière</span>
         <span>Volume</span>
         <span>Enseignant</span>
@@ -116,9 +148,7 @@ export function ClassSubjectTeachersPanel({ classId, onSaved }: ClassSubjectTeac
             item={item}
             value={draft[item.subject_id] ?? null}
             disabled={saving}
-            onChange={(teacherId) =>
-              setOverrides((prev) => ({ ...prev, [item.subject_id]: teacherId }))
-            }
+            onChange={(teacherId) => handleChange(item.subject_id, teacherId)}
           />
         ))}
       </div>

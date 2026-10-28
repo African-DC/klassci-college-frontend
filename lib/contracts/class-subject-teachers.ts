@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const EligibleTeacherSchema = z.object({
+const EligibleTeacherSchema = z.object({
   id: z.number(),
   full_name: z.string(),
 })
@@ -28,12 +28,6 @@ export const ClassSubjectTeacherAssignmentSchema = z.object({
   teacher_id: z.number().nullable(),
 })
 
-export const ClassSubjectTeachersSaveSchema = z.object({
-  assignments: z.array(ClassSubjectTeacherAssignmentSchema).max(60),
-})
-
-export type EligibleTeacher = z.infer<typeof EligibleTeacherSchema>
 export type ClassSubjectTeacherItem = z.infer<typeof ClassSubjectTeacherItemSchema>
 export type ClassSubjectTeachers = z.infer<typeof ClassSubjectTeachersSchema>
 export type ClassSubjectTeacherAssignment = z.infer<typeof ClassSubjectTeacherAssignmentSchema>
-export type ClassSubjectTeachersSave = z.infer<typeof ClassSubjectTeachersSaveSchema>

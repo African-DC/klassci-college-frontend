@@ -3,8 +3,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { ClassSubjectTeachers } from "@/lib/contracts/class-subject-teachers"
+import { ApiError } from "@/lib/api/client"
 import { ClassSubjectTeachersPanel } from "./ClassSubjectTeachersPanel"
-import { pickSelectOption } from "@/tests/radix-select"
+import { openSelect, pickSelectOption } from "@/tests/radix-select"
 
 const getMock = vi.fn()
 const saveMock = vi.fn()
@@ -61,11 +62,11 @@ const DONNEES: ClassSubjectTeachers = {
   ],
 }
 
-function renderPanel() {
+function renderPanel(onDirtyChange?: (dirty: boolean) => void) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
-      <ClassSubjectTeachersPanel classId={5} />
+      <ClassSubjectTeachersPanel classId={5} onDirtyChange={onDirtyChange} />
     </QueryClientProvider>,
   )
 }
@@ -87,6 +88,17 @@ describe("Panneau « Enseignants de la classe »", () => {
     expect(screen.getByText("Seul enseignant retenu pour ce niveau")).toBeInTheDocument()
   })
 
+  it("n'affiche pas « Aucun enseignant » pour une matière qui n'a qu'un choix", async () => {
+    getMock.mockResolvedValue(DONNEES)
+    renderPanel()
+
+    const trigger = await screen.findByRole("combobox", { name: "Enseignant de Mathématiques" })
+    await waitFor(() => expect(trigger).toHaveTextContent("Aïssatou Diallo"))
+    openSelect(trigger)
+    expect(screen.getByRole("option", { name: "Aïssatou Diallo" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "Aucun enseignant" })).not.toBeInTheDocument()
+  })
+
   it("marque « À compléter » les matières sans enseignant et annonce le compte", async () => {
     getMock.mockResolvedValue(DONNEES)
     renderPanel()
@@ -96,22 +108,16 @@ describe("Panneau « Enseignants de la classe »", () => {
     expect(screen.getByText("Prêt")).toBeInTheDocument()
   })
 
-  it("envoie seulement les lignes modifiées et confirme l'enregistrement", async () => {
+  it("garde Enregistrer désactivé tant que rien n'a été modifié", async () => {
     getMock.mockResolvedValue(DONNEES)
-    saveMock.mockResolvedValue(DONNEES)
     renderPanel()
 
     const enregistrer = await screen.findByRole("button", { name: "Enregistrer" })
-    await waitFor(() => expect(enregistrer).toBeEnabled())
-    fireEvent.click(enregistrer)
-
-    await waitFor(() => {
-      expect(saveMock).toHaveBeenCalledWith(5, [{ subject_id: 1, teacher_id: 7 }])
-    })
-    expect(toast.success).toHaveBeenCalledWith("Enseignants de la classe enregistrés")
+    expect(enregistrer).toBeDisabled()
+    expect(screen.getByText("Aucune modification")).toBeInTheDocument()
   })
 
-  it("envoie le choix fait à la main pour une matière à plusieurs enseignants", async () => {
+  it("envoie seulement le choix fait à la main et confirme l'enregistrement", async () => {
     getMock.mockResolvedValue(DONNEES)
     saveMock.mockResolvedValue(DONNEES)
     renderPanel()
@@ -122,21 +128,45 @@ describe("Panneau « Enseignants de la classe »", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
     await waitFor(() => {
-      expect(saveMock).toHaveBeenCalledWith(5, [
-        { subject_id: 1, teacher_id: 7 },
-        { subject_id: 3, teacher_id: 9 },
-      ])
+      expect(saveMock).toHaveBeenCalledWith(5, [{ subject_id: 3, teacher_id: 9 }])
     })
+    expect(toast.success).toHaveBeenCalledWith("Enseignants de la classe enregistrés")
+  })
+
+  it("remet le brouillon à zéro après l'enregistrement", async () => {
+    const enregistre: ClassSubjectTeachers = {
+      ...DONNEES,
+      missing_count: 1,
+      items: DONNEES.items.map((i) =>
+        i.subject_id === 3 ? { ...i, assigned_teacher_id: 9, resolved_teacher_id: 9, source: "explicit" as const } : i,
+      ),
+    }
+    getMock.mockResolvedValue(DONNEES)
+    saveMock.mockResolvedValue(enregistre)
+    const onDirtyChange = vi.fn()
+    renderPanel(onDirtyChange)
+
+    const trigger = await screen.findByRole("combobox", { name: "Enseignant de Anglais" })
+    pickSelectOption(trigger, "Awa Kouamé")
+    await waitFor(() => expect(trigger).toHaveTextContent("Awa Kouamé"))
+    fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
+
+    await screen.findByText("Aucune modification")
+    expect(screen.getByRole("button", { name: "Enregistrer" })).toBeDisabled()
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false)
   })
 
   it("affiche le détail refusé par le backend dans une alerte", async () => {
     getMock.mockResolvedValue(DONNEES)
     saveMock.mockRejectedValue(
-      Object.assign(new Error("HTTP 422"), { detail: "Enseignant non retenu pour cette matière" }),
+      new ApiError("Enseignant non retenu pour cette matière", 422, "Enseignant non retenu pour cette matière"),
     )
     renderPanel()
 
-    fireEvent.click(await screen.findByRole("button", { name: "Enregistrer" }))
+    const trigger = await screen.findByRole("combobox", { name: "Enseignant de Anglais" })
+    pickSelectOption(trigger, "Awa Kouamé")
+    await waitFor(() => expect(trigger).toHaveTextContent("Awa Kouamé"))
+    fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Enregistrement impossible", {

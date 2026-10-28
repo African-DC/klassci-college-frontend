@@ -1,63 +1,60 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { fireEvent, render, screen } from "@testing-library/react"
 import { useForm } from "react-hook-form"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import type { TimetableSlotCreate } from "@/lib/contracts/timetable"
-import type { ClassSubjectTeachers } from "@/lib/contracts/class-subject-teachers"
+import type { ClassSubjectTeacherItem } from "@/lib/contracts/class-subject-teachers"
+import type { Subject } from "@/lib/contracts/subject"
 import { Form } from "@/components/ui/form"
-import { TeacherField } from "./TeacherField"
+import { pickSelectOption } from "@/tests/radix-select"
+import { SubjectField } from "./SubjectField"
+import { TeacherField, type TeacherFieldStatus } from "./TeacherField"
 
-const getMock = vi.fn()
-
-vi.mock("@/lib/api/class-subject-teachers", () => ({
-  classSubjectTeachersApi: {
-    get: (...args: unknown[]) => getMock(...args),
-    save: vi.fn(),
+const ITEMS: ClassSubjectTeacherItem[] = [
+  {
+    subject_id: 1,
+    subject_name: "Mathématiques",
+    hours_per_week: 4,
+    series_name: null,
+    eligible_teachers: [
+      { id: 7, full_name: "Aïssatou Diallo" },
+      { id: 6, full_name: "Yao Bamba" },
+    ],
+    assigned_teacher_id: 6,
+    resolved_teacher_id: 6,
+    source: "explicit",
   },
-}))
+  {
+    subject_id: 3,
+    subject_name: "Anglais",
+    hours_per_week: 2,
+    series_name: null,
+    eligible_teachers: [{ id: 8, full_name: "Koffi Traoré" }],
+    assigned_teacher_id: null,
+    resolved_teacher_id: 8,
+    source: "single",
+  },
+]
 
-const DONNEES: ClassSubjectTeachers = {
-  class_id: 5,
-  class_name: "6e A",
-  missing_count: 1,
-  items: [
-    {
-      subject_id: 1,
-      subject_name: "Mathématiques",
-      hours_per_week: 4,
-      series_name: null,
-      eligible_teachers: [
-        { id: 7, full_name: "Aïssatou Diallo" },
-        { id: 6, full_name: "Yao Bamba" },
-      ],
-      assigned_teacher_id: 6,
-      resolved_teacher_id: 6,
-      source: "explicit",
-    },
-    {
-      subject_id: 3,
-      subject_name: "Anglais",
-      hours_per_week: 2,
-      series_name: null,
-      eligible_teachers: [{ id: 8, full_name: "Koffi Traoré" }],
-      assigned_teacher_id: null,
-      resolved_teacher_id: 8,
-      source: "single",
-    },
-    {
-      subject_id: 2,
-      subject_name: "Physique",
-      hours_per_week: 3,
-      series_name: null,
-      eligible_teachers: [],
-      assigned_teacher_id: null,
-      resolved_teacher_id: null,
-      source: "none",
-    },
-  ],
+const SUBJECTS = [
+  { id: 1, name: "Mathématiques", coefficient: 3, hours_per_week: 4 },
+  { id: 3, name: "Anglais", coefficient: 2, hours_per_week: 2 },
+] as unknown as Subject[]
+
+interface HarnessProps {
+  subjectId?: number
+  teacherId?: number
+  status?: TeacherFieldStatus
+  currentTeacher?: { id: number; name: string }
+  onRetry?: () => void
 }
 
-function Harness() {
+function Harness({
+  subjectId = 1,
+  teacherId = 6,
+  status = "ready",
+  currentTeacher,
+  onRetry = () => {},
+}: HarnessProps) {
   const form = useForm<TimetableSlotCreate>({
     defaultValues: {
       day: "lundi",
@@ -66,59 +63,66 @@ function Harness() {
       class_id: 5,
       academic_year_id: 1,
       room: "",
+      subject_id: subjectId,
+      teacher_id: teacherId,
     } as TimetableSlotCreate,
   })
   return (
     <Form {...form}>
-      <button type="button" onClick={() => form.setValue("subject_id", 1, { shouldDirty: true })}>
-        Choisir Mathématiques
-      </button>
-      <button type="button" onClick={() => form.setValue("subject_id", 3, { shouldDirty: true })}>
-        Choisir Anglais
-      </button>
-      <button type="button" onClick={() => form.setValue("subject_id", 2, { shouldDirty: true })}>
-        Choisir Physique
-      </button>
-      <TeacherField form={form} classId={5} onCreateTeacher={() => {}} />
+      <SubjectField
+        form={form}
+        subjects={SUBJECTS}
+        items={status === "ready" ? ITEMS : undefined}
+        onCreateSubject={() => {}}
+      />
+      <TeacherField
+        form={form}
+        items={status === "ready" ? ITEMS : undefined}
+        status={status}
+        currentTeacher={currentTeacher}
+        onRetry={onRetry}
+        onCreateTeacher={() => {}}
+      />
     </Form>
   )
 }
 
-function renderField() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(
-    <QueryClientProvider client={client}>
-      <Harness />
-    </QueryClientProvider>,
-  )
-}
+describe("Matière et enseignant du créneau", () => {
+  it("choisir une matière prend l'enseignant qu'elle a retenu", () => {
+    render(<Harness subjectId={undefined} teacherId={undefined} />)
 
-describe("Champ enseignant du créneau", () => {
-  beforeEach(() => {
-    getMock.mockReset()
-    getMock.mockResolvedValue(DONNEES)
+    pickSelectOption(screen.getByRole("combobox", { name: /Matière/ }), "Anglais (Coef. 2, 2h/sem)")
+    expect(screen.getByRole("combobox", { name: /Enseignant/ })).toHaveTextContent("Koffi Traoré")
+
+    pickSelectOption(screen.getByRole("combobox", { name: /Matière/ }), "Mathématiques (Coef. 3, 4h/sem)")
+    expect(screen.getByRole("combobox", { name: /Enseignant/ })).toHaveTextContent("Yao Bamba")
   })
 
-  it("prend l'enseignant retenu de la matière choisie à chaque changement", async () => {
-    renderField()
+  it("en modification, garde l'enseignant existant au montage", () => {
+    render(<Harness subjectId={1} teacherId={7} />)
 
-    fireEvent.click(screen.getByRole("button", { name: "Choisir Mathématiques" }))
-    await waitFor(() => {
-      expect(screen.getByRole("combobox")).toHaveTextContent("Yao Bamba")
-    })
-
-    fireEvent.click(screen.getByRole("button", { name: "Choisir Anglais" }))
-    await waitFor(() => {
-      expect(screen.getByRole("combobox")).toHaveTextContent("Koffi Traoré")
-    })
+    expect(screen.getByRole("combobox", { name: /Enseignant/ })).toHaveTextContent("Aïssatou Diallo")
   })
 
-  it("explique qu'aucun enseignant n'est retenu pour une matière sans choix", async () => {
-    renderField()
+  it("affiche l'enseignant du créneau même s'il n'est plus retenu, avec un avertissement", () => {
+    render(
+      <Harness subjectId={1} teacherId={99} currentTeacher={{ id: 99, name: "Marc Ouattara" }} />,
+    )
 
-    fireEvent.click(screen.getByRole("button", { name: "Choisir Physique" }))
+    expect(screen.getByRole("combobox", { name: /Enseignant/ })).toHaveTextContent(
+      "Marc Ouattara (non retenu pour cette matière)",
+    )
     expect(
-      await screen.findByText(/Aucun enseignant retenu pour cette matière dans cette classe/),
+      screen.getByText(/assigné à un enseignant non retenu pour cette matière/),
     ).toBeInTheDocument()
+  })
+
+  it("affiche une erreur avec Réessayer quand les enseignants de la classe ne chargent pas", () => {
+    const onRetry = vi.fn()
+    render(<Harness status="error" onRetry={onRetry} />)
+
+    expect(screen.getByText("Impossible de charger les enseignants de la classe.")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Réessayer" }))
+    expect(onRetry).toHaveBeenCalledTimes(1)
   })
 })

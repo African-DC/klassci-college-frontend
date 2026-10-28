@@ -3,15 +3,17 @@
 import { useCallback, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertTriangle, Plus } from "lucide-react"
+import { AlertTriangle } from "lucide-react"
 import { TimetableSlotCreateSchema, type TimetableSlotCreate } from "@/lib/contracts/timetable"
 import { useCreateSlot, useTeacherWeek, useUpdateSlot } from "@/lib/hooks/useTimetable"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { useSubjects } from "@/lib/hooks/useSubjects"
 import { useClass } from "@/lib/hooks/useClasses"
+import { useClassSubjectTeachers } from "@/lib/hooks/useClassSubjectTeachers"
 import { useRooms } from "@/lib/hooks/useRooms"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { ChampsDuCreneau } from "@/components/forms/timetable-slot/ChampsDuCreneau"
+import { SubjectField } from "@/components/forms/timetable-slot/SubjectField"
 import { TeacherField } from "@/components/forms/timetable-slot/TeacherField"
 import { TeacherWeekPanel } from "@/components/timetable/TeacherWeekPanel"
 import type { PlageChoisie } from "@/components/timetable/week-grid/use-selection-glissee"
@@ -72,6 +74,10 @@ export function TimetableSlotForm({
     classData?.level_id ? { level_id: classData.level_id, size: 100 } : { size: 100 },
   )
   const subjects = subjectsData?.items ?? []
+
+  // Enseignants retenus par matière dans cette classe : ils fixent le choix du créneau.
+  const classTeachers = useClassSubjectTeachers(effectiveClassId)
+  const teacherStatus = classTeachers.isError ? "error" : classTeachers.data ? "ready" : "loading"
 
   // Rooms — only show: 1) the class's assigned room, 2) non-classroom rooms (labos, etc.)
   const { data: roomsData } = useRooms({ size: 100 })
@@ -208,50 +214,21 @@ export function TimetableSlotForm({
           <div className="min-w-0 lg:grid lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
             <div className="min-w-0 space-y-4">
               {/* Subject select — filtered by class level */}
-              <FormField
-                control={form.control}
-                name="subject_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Matière *</FormLabel>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        onValueChange={(v) => field.onChange(Number(v))}
-                        value={field.value?.toString() ?? ""}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-11 min-w-0 flex-1">
-                            <SelectValue placeholder="Sélectionner une matière" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {subjects.map((s) => (
-                            <SelectItem key={s.id} value={s.id.toString()}>
-                              {s.name} (Coef. {s.coefficient}, {s.hours_per_week}h/sem)
-                              {s.teacher_name ? ` — ${s.teacher_name}` : ""}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="h-11 w-11 shrink-0"
-                        onClick={() => setShowCreateSubject(true)}
-                        title="Créer une matière"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <SubjectField
+                form={form}
+                subjects={subjects}
+                items={classTeachers.data?.items}
+                onCreateSubject={() => setShowCreateSubject(true)}
               />
 
               <TeacherField
                 form={form}
-                classId={effectiveClassId}
+                items={classTeachers.data?.items}
+                status={teacherStatus}
+                currentTeacher={
+                  isEdit && slot ? { id: slot.teacher_id, name: slot.teacher_name } : undefined
+                }
+                onRetry={() => void classTeachers.refetch()}
                 onCreateTeacher={() => setShowCreateTeacher(true)}
               />
 
