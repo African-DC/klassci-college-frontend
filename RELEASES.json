@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-10-27T20:56:28Z",
+  "generated_at": "2026-10-28T19:30:31Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,14 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "Une matière peut être confiée à plusieurs enseignants, affichés sur chaque fiche ; retirer un enseignant qui a déjà des créneaux demande une confirmation, sans supprimer ces créneaux",
+            "audience": [
+              "direction",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
           {
             "text": "La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile",
             "audience": [

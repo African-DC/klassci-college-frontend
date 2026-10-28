@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { useQueryClient } from "@tanstack/react-query"
 import { duplicateSubject } from "@/lib/api/subjects"
-import { useTeachers } from "@/lib/hooks/useTeachers"
 import type { Level } from "@/lib/contracts/level"
 import {
   firstFreeSeriesSlot,
@@ -54,13 +53,11 @@ export function SubjectAssignModal({
   const [seriesId, setSeriesId] = useState<number | null>(target?.seriesId ?? null)
   const [coef, setCoef] = useState(target?.defaultCoef ?? 1)
   const [hours, setHours] = useState(target?.defaultHours ?? 2)
-  const [teacherId, setTeacherId] = useState<number | null>(null)
+  const [teacherIds, setTeacherIds] = useState<number[]>([])
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const queryClient = useQueryClient()
-  const { data: teachersData } = useTeachers({ size: 100 })
-  const teachers = teachersData?.items ?? []
 
   useEffect(() => {
     if (!open || !target) return
@@ -69,7 +66,7 @@ export function SubjectAssignModal({
     setSeriesId(target.seriesId ?? null)
     setCoef(target.defaultCoef)
     setHours(target.defaultHours)
-    setTeacherId(null)
+    setTeacherIds([])
     setError(null)
     setIsPending(false)
   }, [open, target])
@@ -112,9 +109,9 @@ export function SubjectAssignModal({
       level_id: levelId,
       coefficient: coef,
       hours_per_week: hours,
+      teacher_ids: teacherIds,
     }
     if (seriesId !== null) payload.series_id = seriesId
-    if (teacherId !== null) payload.teacher_id = teacherId
 
     duplicateSubject(payload)
       .then(() => {
@@ -157,14 +154,13 @@ export function SubjectAssignModal({
           <SubjectAssignDetailsForm
             series={levelSeries}
             levelInstances={levelInstances}
-            value={{ seriesId, coef, hours, teacherId }}
-            teachers={teachers}
+            value={{ seriesId, coef, hours, teacherIds }}
             error={error}
             handlers={{
               onSeriesChange: setSeriesId,
               onCoefChange: setCoef,
               onHoursChange: setHours,
-              onTeacherChange: setTeacherId,
+              onTeacherIdsChange: setTeacherIds,
             }}
           />
         )}

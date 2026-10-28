@@ -1,11 +1,19 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-10-27T20:56:28Z",
+  "generated_at": "2026-10-28T19:30:31Z",
   "version": "Unreleased",
   "released": false,
-  "total": 366,
+  "total": 367,
   "sections": {
     "Added": [
+      {
+        "text": "Une matière peut être confiée à plusieurs enseignants, affichés sur chaque fiche ; retirer un enseignant qui a déjà des créneaux demande une confirmation, sans supprimer ces créneaux",
+        "audience": [
+          "direction",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
       {
         "text": "La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile",
         "audience": [
@@ -44,15 +52,6 @@
         "audience": [
           "direction",
           "comptable"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Le journal des paiements propose des périmètres explicites : année scolaire, bordereau du jour, date précise, semaine et historique complet, avec les encaissements d'arriérés conservés dans le jour de leur paiement et des exports cohérents avec l'écran",
-        "audience": [
-          "comptable",
-          "direction",
-          "caisse"
         ],
         "pull_request": null
       }
