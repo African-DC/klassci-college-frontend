@@ -49,8 +49,13 @@ export function IncidentDetail({ incidentId, tenant }: { incidentId: string; ten
         <CardTitle className="break-words text-lg sm:text-xl">{data.title}</CardTitle>
         <div className="flex flex-wrap items-center gap-2">
           {data.reference && <Button variant="outline" size="sm" className="max-w-full font-mono" onClick={async () => {
-            await navigator.clipboard.writeText(data.reference!)
-            setCopied(true); toast.success("Référence copiée")
+            try {
+              await navigator.clipboard.writeText(data.reference!)
+              setCopied(true)
+              toast.success("Référence copiée")
+            } catch {
+              toast.error("Copie impossible", { description: "Sélectionnez le code pour le copier manuellement." })
+            }
           }}>{copied ? <Check className="mr-1 h-4 w-4" /> : <ClipboardCopy className="mr-1 h-4 w-4" />}{data.reference}</Button>}
           <span className="text-xs text-muted-foreground">Dossier {data.id.slice(0, 10)}</span>
         </div>

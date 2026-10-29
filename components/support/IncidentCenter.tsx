@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { AlertCircle, ClipboardList, Search, LifeBuoy, Inbox, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react"
 import { PageHero } from "@/components/shared/PageHero"
@@ -24,6 +24,8 @@ export function IncidentCenter({ scope }: { scope: "school" | "platform" }) {
   const [status, setStatus] = useState<IncidentStatus | "all">("all")
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<string | null>(null)
+  const detailRef = useRef<HTMLDivElement>(null)
+  const validReference = !reference || /^[0-9A-Fa-f]{6,16}$/.test(reference)
   useEffect(() => {
     if (platform) return
     const params = new URLSearchParams(window.location.search)
@@ -36,9 +38,14 @@ export function IncidentCenter({ scope }: { scope: "school" | "platform" }) {
   const { data, isPending, isError, refetch, isFetching } = useQuery({
     queryKey: ["support-incidents", scope, tenant, reference, status, page],
     queryFn: () => supportIncidentApi.list({ tenant: platform ? tenant : undefined, reference: reference || undefined, status, page }),
-    enabled: !platform || Boolean(tenant),
+    enabled: (!platform || Boolean(tenant)) && validReference,
   })
   const choose = (id: string) => setSelected(id)
+  useEffect(() => {
+    if (selected && window.matchMedia("(max-width: 1023px)").matches) {
+      detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [selected])
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / 20))
   return <div className="mx-auto max-w-7xl space-y-5 pb-8">
     <PageHero icon={LifeBuoy} title={platform ? "Centre des incidents" : "Assistance KLASSCI"}
@@ -58,8 +65,10 @@ export function IncidentCenter({ scope }: { scope: "school" | "platform" }) {
       <div className="space-y-2 md:col-span-2"><Label htmlFor="search-incident">Code de référence</Label>
         <div className="relative"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input id="search-incident" value={reference} maxLength={16} onChange={(e) => { setReference(e.target.value.toUpperCase()); setPage(1); setSelected(null) }}
-            className="pl-10 font-mono uppercase" placeholder="Saisir le code affiché dans le message d'erreur" />
-        </div></div>
+            className="pl-10 font-mono uppercase" aria-invalid={!validReference} placeholder="Saisir le code affiché dans le message d'erreur" />
+        </div>
+        {!validReference && <p role="alert" className="text-xs text-destructive">Saisissez un code hexadécimal de 6 à 16 caractères.</p>}
+      </div>
       <div className="space-y-2"><Label>Statut</Label>
         <Select value={status} onValueChange={(v) => { setStatus(v as IncidentStatus | "all"); setPage(1); setSelected(null) }}>
           <SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
@@ -68,7 +77,7 @@ export function IncidentCenter({ scope }: { scope: "school" | "platform" }) {
               <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
           </SelectContent></Select></div>
     </CardContent></Card>
-    {platform && !tenant ? <Card><CardContent className="flex flex-col items-center gap-3 p-10 text-center">
+    {!validReference ? <Card><CardContent className="p-8 text-sm text-muted-foreground">Complétez ou effacez le code de référence pour lancer la recherche.</CardContent></Card> : platform && !tenant ? <Card><CardContent className="flex flex-col items-center gap-3 p-10 text-center">
       <Search className="h-8 w-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">Sélectionnez un établissement pour accéder à ses incidents.</p>
     </CardContent></Card> :
     <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.35fr)]">
@@ -104,7 +113,7 @@ export function IncidentCenter({ scope }: { scope: "school" | "platform" }) {
             Suivant<ChevronRight className="ml-1 h-4 w-4" /></Button>
         </div>}
       </div>
-      <div className="min-w-0">
+      <div ref={detailRef} className="min-w-0 scroll-mt-20">
         {selected ? <IncidentDetail key={selected + tenant} incidentId={selected} tenant={platform ? tenant : undefined} /> :
           <Card className="hidden min-h-64 place-items-center border-dashed lg:grid"><CardContent className="space-y-2 text-center">
             <ClipboardList className="mx-auto h-9 w-9 text-muted-foreground/50" />
