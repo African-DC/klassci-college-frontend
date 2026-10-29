@@ -1,9 +1,10 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, CheckCircle2 } from "lucide-react"
 import { TimetableSlotCreateSchema, type TimetableSlotCreate } from "@/lib/contracts/timetable"
 import { useCreateSlot, useTeacherWeek, useUpdateSlot } from "@/lib/hooks/useTimetable"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
@@ -15,6 +16,8 @@ import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { ChampsDuCreneau } from "@/components/forms/timetable-slot/ChampsDuCreneau"
 import { SubjectField } from "@/components/forms/timetable-slot/SubjectField"
 import { TeacherField } from "@/components/forms/timetable-slot/TeacherField"
+import { ClassTeachersDialog } from "@/components/admin/timetable/class-teachers/ClassTeachersDialog"
+import { Badge } from "@/components/ui/badge"
 import { TeacherWeekPanel } from "@/components/timetable/TeacherWeekPanel"
 import type { PlageChoisie } from "@/components/timetable/week-grid/use-selection-glissee"
 import { trouverEmpechement } from "@/lib/timetable/week-overlap"
@@ -125,6 +128,43 @@ export function TimetableSlotForm({
   // La semaine de l'enseignant choisi, chargee des qu'il est choisi : elle
   // sert a montrer l'empechement pendant la saisie, au lieu de le decouvrir en
   // validant. Le backend refait la verification, celle-ci ne fait qu'avertir.
+  const selectedSubjectId = form.watch("subject_id")
+  const assignedSubject = classTeachers.data?.items.find((item) => item.subject_id === selectedSubjectId)
+  const prefilledRoomClass = useRef<number | null>(null)
+
+  // Resolve the teacher even if the subject was selected before the server
+  // finished loading the class assignments. Never rewrite an existing slot.
+  useEffect(() => {
+    if (isEdit || !assignedSubject?.resolved_teacher_id) return
+    if (!form.getValues("teacher_id")) {
+      form.setValue("teacher_id", assignedSubject.resolved_teacher_id, {
+        shouldValidate: true,
+      })
+    }
+  }, [assignedSubject, form, isEdit])
+
+  // Suggest the classroom only once. Subsequent manual changes remain intact.
+  useEffect(() => {
+    if (isEdit || !effectiveClassId || !classData?.room_id) return
+    if (prefilledRoomClass.current === effectiveClassId) return
+    const classroom = allRooms.find((room) => room.id === classData.room_id)
+    if (!classroom) return
+    prefilledRoomClass.current = effectiveClassId
+    if (!form.getValues("room")) form.setValue("room", classroom.name)
+  }, [allRooms, classData?.room_id, effectiveClassId, form, isEdit])
+
+  async function refreshClassAssignment() {
+    const refreshed = await classTeachers.refetch()
+    const subjectId = form.getValues("subject_id")
+    if (!isEdit && subjectId) {
+      const resolved = refreshed.data?.items.find((item) => item.subject_id === subjectId)?.resolved_teacher_id
+      form.setValue("teacher_id", (resolved ?? undefined) as number, {
+        shouldValidate: true,
+        shouldDirty: true,
+      })
+    }
+  }
+
   const selectedTeacherId = form.watch("teacher_id")
   const watchedDay = form.watch("day")
   const watchedStart = form.watch("start_time")
@@ -183,7 +223,11 @@ export function TimetableSlotForm({
     // Auto-set academic_year_id if not set
     const payload = {
       ...data,
-      academic_year_id: data.academic_year_id || currentYear?.id || 1,
+      academic_year_id: data.academic_year_id || currentYear?.id,
+    }
+    if (!payload.academic_year_id) {
+      toast.error("Aucune année scolaire active : configurez-la avant d’ajouter un créneau.")
+      return
     }
     if (isEdit) {
       updateMutation.mutate(
@@ -231,6 +275,31 @@ export function TimetableSlotForm({
                 onRetry={() => void classTeachers.refetch()}
                 onCreateTeacher={() => setShowCreateTeacher(true)}
               />
+
+              {effectiveClassId && selectedSubjectId && (
+                <div className="space-y-2 rounded-xl border bg-muted/20 p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {assignedSubject?.resolved_teacher_id ? (
+                      <Badge variant="secondary" className="gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Affectation de la classe
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">Affectation à compléter</Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {assignedSubject?.resolved_teacher_id
+                        ? "L’enseignant retenu est proposé automatiquement."
+                        : "Définissez l’enseignant de cette matière pour cette classe."}
+                    </span>
+                  </div>
+                  <ClassTeachersDialog
+                    classId={effectiveClassId}
+                    compact
+                    onSaved={() => void refreshClassAssignment()}
+                  />
+                </div>
+              )}
 
               <ChampsDuCreneau
                 form={form}
