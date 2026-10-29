@@ -13,8 +13,7 @@
           {
             "text": "Assistance : pages premium responsive pour déclarer un incident avec son code, suivre les dossiers et traiter les signalements dans la console technique",
             "audience": [
-              "admin",
-              "support KLASSCI"
+              "admin et support KLASSCI"
             ],
             "pull_request": null
           },
