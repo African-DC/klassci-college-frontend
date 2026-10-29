@@ -19,22 +19,27 @@ import { TEACHERS_DIALOG_CONTENT } from "./class-teachers-styles"
 
 interface ClassTeachersDialogProps {
   classId: number
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  trigger?: boolean
 }
 
 /** Bouton « Enseignants de la classe » qui ouvre le panneau dans une fenêtre. */
-export function ClassTeachersDialog({ classId }: ClassTeachersDialogProps) {
+export function ClassTeachersDialog({ classId, open: externalOpen, onOpenChange, trigger = true }: ClassTeachersDialogProps) {
   const [open, setOpen] = useState(false)
   const guard = useDiscardGuard()
+  const isOpen = externalOpen ?? open
+  const close = () => { setOpen(false); onOpenChange?.(false) }
   const { data } = useClassSubjectTeachers(classId)
   const missing = data?.missing_count ?? 0
 
   return (
     <>
-      <Button
+      {trigger && <Button
         type="button"
         variant="outline"
         className="h-11 sm:h-10"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); onOpenChange?.(true) }}
       >
         <Users aria-hidden="true" className="mr-2 h-4 w-4" />
         Enseignants de la classe
@@ -43,12 +48,12 @@ export function ClassTeachersDialog({ classId }: ClassTeachersDialogProps) {
             {missing}
           </Badge>
         )}
-      </Button>
+      </Button>}
       <Dialog
-        open={open}
+        open={isOpen}
         onOpenChange={(v) => {
-          if (v) setOpen(true)
-          else guard.guard(() => setOpen(false))
+          if (v) { setOpen(true); onOpenChange?.(true) }
+          else guard.guard(close)
         }}
       >
         <DialogContent className={TEACHERS_DIALOG_CONTENT}>
@@ -62,6 +67,7 @@ export function ClassTeachersDialog({ classId }: ClassTeachersDialogProps) {
             key={classId}
             classId={classId}
             onDirtyChange={guard.setDirty}
+            onSaved={close}
           />
         </DialogContent>
       </Dialog>
