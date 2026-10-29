@@ -10,6 +10,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 - Assistance : pages premium responsive pour déclarer un incident avec son code, suivre les dossiers et traiter les signalements dans la console technique *(admin et support KLASSCI)*
+- Paramètres : horaires scolaires et durée des créneaux personnalisables par établissement dans l'onglet Emploi du temps *(direction, administration)*
 - Recherche des enseignants : noms dans tous les ordres, accents, espaces et petites erreurs de frappe, avec recherche sur l'ensemble des enseignants du tenant *(direction, secrétariat)*
 - Emploi du temps : enseignant et salle de la classe proposés dès la saisie, raccourci de modification de l'affectation, fermeture automatique du dialogue, heures configurées et détection des dépassements par matière *(direction, secrétariat)*
 - Emploi du temps : écran « Enseignants de la classe » pour choisir, matière par matière, l'enseignant de chaque classe avant la génération ; la saisie manuelle propose cet enseignant *(admin)*
