@@ -220,15 +220,12 @@ export function TimetableSlotForm({
   const error = mutation.error
 
   function onSubmit(data: TimetableSlotCreate) {
-    // Auto-set academic_year_id if not set
-    const payload = {
-      ...data,
-      academic_year_id: data.academic_year_id || currentYear?.id,
-    }
-    if (!payload.academic_year_id) {
+    const academicYearId = data.academic_year_id || currentYear?.id
+    if (!academicYearId) {
       toast.error("Aucune année scolaire active : configurez-la avant d’ajouter un créneau.")
       return
     }
+    const payload = { ...data, academic_year_id: academicYearId }
     if (isEdit) {
       updateMutation.mutate(
         {
