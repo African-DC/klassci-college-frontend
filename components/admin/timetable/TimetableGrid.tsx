@@ -5,7 +5,6 @@ import { CalendarDays, Clock, MapPin, Pencil, Plus, Trash2, UserRound } from "lu
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { apiFetch } from "@/lib/api/client"
 import { useTimetable, useDeleteSlot } from "@/lib/hooks/useTimetable"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -95,7 +94,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
   const { data: slots, isLoading } = useTimetable(classId)
   const { data: config } = useQuery({
     queryKey: ["timetable", "configuration"],
-    queryFn: () => apiFetch<{ day_start_hour: number; day_end_hour: number }>("/timetable/configuration"),
+    queryFn: async () => (await import("@/lib/api/timetable")).timetableApi.getConfiguration(),
     staleTime: 300000,
   })
   const dayStart = Math.min(

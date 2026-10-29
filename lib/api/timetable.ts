@@ -45,7 +45,21 @@ function slotsToFr<T extends { day: string }>(slots: T[]): T[] {
   return slots.map((s) => ({ ...s, day: dayToFr(s.day) }))
 }
 
+const TimetableConfigurationSchema = z.object({
+  slot_duration_minutes: z.number().default(60),
+  day_start_hour: z.number().default(7),
+  day_end_hour: z.number().default(17),
+})
+
+export type TimetableConfiguration = z.infer<typeof TimetableConfigurationSchema>
+
 export const timetableApi = {
+  /** Échelle horaire de l'établissement (source de vérité de la grille). */
+  getConfiguration: async (): Promise<TimetableConfiguration> => {
+    const json = await apiFetch<unknown>("/timetable/configuration")
+    return safeValidate(TimetableConfigurationSchema, json, "GET /timetable/configuration")
+  },
+
   listByClass: async (classId: number): Promise<TimetableSlot[]> => {
     const params = new URLSearchParams({ class_id: String(classId) })
     const json = await apiFetch<{ data?: TimetableSlot[] } | TimetableSlot[]>(

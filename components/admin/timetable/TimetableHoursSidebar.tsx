@@ -35,21 +35,32 @@ const DOT_COLORS: Record<string, string> = {
   pink: "bg-pink-500",
 }
 
+// Comparaison en minutes entières : les heures décimales (0,75 + 0,75 …) ne
+// doivent pas faire basculer une matière équilibrée en « dépassement ».
+function volumeState(assigned: number, required: number): "empty" | "over" | "exact" | "partial" {
+  if (required === 0) return "empty"
+  const assignedMin = Math.round(assigned * 60)
+  const requiredMin = Math.round(required * 60)
+  if (assignedMin > requiredMin) return "over"
+  if (assignedMin === requiredMin) return "exact"
+  return "partial"
+}
+
 function getProgressColor(assigned: number, required: number): string {
-  if (required === 0) return "bg-muted-foreground"
-  const ratio = assigned / required
-  if (ratio > 1) return "bg-destructive"
-  if (ratio === 1) return "bg-emerald-500"
-  if (ratio >= 0.5) return "bg-amber-500"
+  const state = volumeState(assigned, required)
+  if (state === "empty") return "bg-muted-foreground"
+  if (state === "over") return "bg-destructive"
+  if (state === "exact") return "bg-emerald-500"
+  if (assigned / required >= 0.5) return "bg-amber-500"
   return "bg-red-500"
 }
 
 function getStatusColor(assigned: number, required: number): string {
-  if (required === 0) return "text-muted-foreground"
-  const ratio = assigned / required
-  if (ratio > 1) return "text-destructive"
-  if (ratio === 1) return "text-emerald-600"
-  if (ratio >= 0.5) return "text-amber-600"
+  const state = volumeState(assigned, required)
+  if (state === "empty") return "text-muted-foreground"
+  if (state === "over") return "text-destructive"
+  if (state === "exact") return "text-emerald-600"
+  if (assigned / required >= 0.5) return "text-amber-600"
   return "text-red-600"
 }
 
