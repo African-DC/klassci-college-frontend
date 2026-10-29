@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { settingsApi } from "@/lib/api/settings"
 import type {
   SchoolInfoUpdate,
+  TimetableSettingsUpdate,
   TrimesterUpdate,
   HolidaysUpdate,
   NotificationUpdate,
@@ -89,6 +90,21 @@ export function useUpdateNotifications() {
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Erreur lors de la mise à jour")
+    },
+  })
+}
+
+export function useUpdateTimetableSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: TimetableSettingsUpdate) => settingsApi.updateTimetable(data),
+    onSuccess: (settings) => {
+      queryClient.setQueryData(settingsKeys.all, settings)
+      void queryClient.invalidateQueries({ queryKey: ["timetable"] })
+      toast.success("Horaires de l’établissement enregistrés")
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Enregistrement impossible")
     },
   })
 }
