@@ -126,16 +126,23 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
     return map
   }, [slots])
 
-  // Collect special time labels (non-hour boundaries where slots start/end)
+  // Keep minute-precise positions, but don't stack unreadable labels
+  // around 09:50 / 10:00 / 10:10. Each card still shows exact times.
   const specialTimes = useMemo(() => {
-    const times = new Set<number>()
-    slots?.forEach((s) => {
-      const startMin = enMinutesStrict(s.start_time)
-      const endMin = enMinutesStrict(s.end_time)
-      if (startMin % 60 !== 0) times.add(startMin)
-      if (endMin % 60 !== 0) times.add(endMin)
+    const marks = new Set<number>()
+    slots?.forEach((slot) => {
+      const start = enMinutesStrict(slot.start_time)
+      const end = enMinutesStrict(slot.end_time)
+      if (start % 60) marks.add(start)
+      if (end % 60) marks.add(end)
     })
-    return times
+    const accepted: number[] = []
+    for (const minute of [...marks].sort((a, b) => a - b)) {
+      if (Math.min(minute % 60, 60 - (minute % 60)) < 16) continue
+      if (accepted.some((previous) => Math.abs(minute - previous) < 16)) continue
+      accepted.push(minute)
+    }
+    return accepted
   }, [slots])
 
   function handleDrop(targetDay: string, targetHour: string, slotId: number) {
