@@ -3,6 +3,7 @@
 import { WifiOff, RefreshCw, ShieldOff, SearchX, ServerCrash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import type { Route } from "next"
 import { ApiError } from "@/lib/api/client"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -92,7 +93,7 @@ export function DataError({
             ? "text-amber-800 dark:text-amber-300"
             : "text-destructive/80"
         }`}>{displayMessage}</p>
-        {reference && <Link href={"/admin/support?reference=" + encodeURIComponent(reference)} className="ml-auto text-xs font-medium underline underline-offset-4">Signaler · {reference}</Link>}
+        {reference && <Link href={("/admin/support?reference=" + encodeURIComponent(reference)) as Route} className="ml-auto text-xs font-medium underline underline-offset-4">Signaler · {reference}</Link>}
         {onRetry && (
           <Button
             variant="ghost"
@@ -126,7 +127,7 @@ export function DataError({
         <p className="text-xs text-muted-foreground mb-4 max-w-xs">
           {displayMessage}
         </p>
-        {reference && <div className="mb-3 space-y-2 text-center"><p className="font-mono text-xs text-muted-foreground">Code : {reference}</p><Button variant="secondary" asChild><Link href={"/admin/support?reference=" + encodeURIComponent(reference)}>Signaler ce problème</Link></Button></div>}
+        {reference && <div className="mb-3 space-y-2 text-center"><p className="font-mono text-xs text-muted-foreground">Code : {reference}</p><Button variant="secondary" asChild><Link href={("/admin/support?reference=" + encodeURIComponent(reference)) as Route}>Signaler ce problème</Link></Button></div>}
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry}>
             <RefreshCw className="mr-2 h-3.5 w-3.5" />
