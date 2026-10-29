@@ -141,6 +141,7 @@ export class ApiError extends Error {
     message: string,
     readonly status: number,
     readonly detail: unknown,
+    readonly reference?: string,
   ) {
     super(message)
     this.name = "ApiError"
@@ -193,8 +194,10 @@ function throwIfSessionExpired(res: Response, hadToken: boolean): void {
  * numéro, et le module qui savait quoi en faire n'avait plus rien à lire.
  */
 async function readApiError(res: Response, fallback: string): Promise<ApiError> {
-  const body = (await res.json().catch(() => null)) as { detail?: unknown } | null
-  return apiErrorFrom(res.status, body?.detail, fallback)
+  const body = (await res.json().catch(() => null)) as { detail?: unknown; reference?: unknown } | null
+  const error = apiErrorFrom(res.status, body?.detail, fallback)
+  const reference = typeof body?.reference === "string" && /^[0-9A-Fa-f]{6,16}$/.test(body.reference) ? body.reference.toUpperCase() : undefined
+  return new ApiError(error.message, error.status, error.detail, reference)
 }
 
 interface BlobRequestOptions {
