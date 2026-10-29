@@ -2,6 +2,7 @@
 
 import { AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 interface AdminErrorProps {
   error: Error & { digest?: string }
@@ -18,9 +19,10 @@ export default function AdminError({ error, reset }: AdminErrorProps) {
       <div className="text-center space-y-1">
         <h2 className="text-lg font-semibold">Une erreur est survenue</h2>
         <p className="text-sm text-muted-foreground max-w-md">
-          {error.message || "Une erreur inattendue s'est produite. Veuillez réessayer."}
+          Une erreur inattendue est survenue. Vous pouvez réessayer ou créer un signalement.
         </p>
       </div>
+      <Button variant="secondary" asChild><Link href="/admin/support">Signaler ce problème</Link></Button>
       <Button onClick={reset} variant="outline">
         Réessayer
       </Button>

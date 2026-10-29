@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import { Activity, Building2, KeyRound, ScrollText } from "lucide-react"
+import { Activity, Building2, KeyRound, ScrollText, LifeBuoy } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -17,6 +17,7 @@ const NAV = [
   { href: "/super-admin/pats" as Route, label: "Tokens", icon: KeyRound },
   { href: "/super-admin/diagnose" as Route, label: "Diagnostic", icon: Activity },
   { href: "/super-admin/logs" as Route, label: "Journaux", icon: ScrollText },
+  { href: "/super-admin/incidents" as Route, label: "Incidents", icon: LifeBuoy },
 ]
 
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
