@@ -51,7 +51,7 @@ export function IncidentCenter({ scope }: { scope: "school" | "platform" }) {
         <Select value={tenant} onValueChange={(v) => { setTenant(v); setPage(1); setSelected(null) }}>
           <SelectTrigger className="w-full"><SelectValue placeholder="Choisir un établissement pour rechercher ses incidents" /></SelectTrigger>
           <SelectContent>{tenants?.items.map((t) =>
-            <SelectItem key={t.tenant_slug} value={t.tenant_slug}>{t.school_name || t.tenant_slug}</SelectItem>)}</SelectContent>
+            <SelectItem key={t.slug} value={t.slug}>{t.slug}</SelectItem>)}</SelectContent>
         </Select>
         {tenantsError && <p role="alert" className="text-sm text-destructive">Impossible de charger les établissements.</p>}
       </div>}
