@@ -5,6 +5,7 @@ import { BookOpen, CheckCircle2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTimetable } from "@/lib/hooks/useTimetable"
 import { useClassSubjectTeachers } from "@/lib/hooks/useClassSubjectTeachers"
+import { useSubjects } from "@/lib/hooks/useSubjects"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface TimetableHoursSidebarProps {
@@ -70,6 +71,8 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
   // Exact list of subjects in THIS class, including series restrictions.
   const { data: classAssignments, isLoading: subjectsLoading } = useClassSubjectTeachers(classId)
   const subjects = useMemo(() => classAssignments?.items ?? [], [classAssignments])
+  const { data: subjectCatalog } = useSubjects({ size: 100 })
+  const subjectColors = useMemo(() => new Map(subjectCatalog?.items.map((subject) => [subject.id, subject.color]) ?? []), [subjectCatalog])
 
   const subjectHours = useMemo<SubjectHours[]>(() => {
     if (!subjects.length) return []
@@ -87,7 +90,7 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
       .map((s) => ({
         id: s.subject_id,
         name: s.subject_name,
-        color: null,
+        color: subjectColors.get(s.subject_id),
         required: s.hours_per_week,
         assigned: assignedMap.get(s.subject_id) ?? 0,
       }))
@@ -98,7 +101,7 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
         if (aDeficit !== bDeficit) return bDeficit - aDeficit
         return a.name.localeCompare(b.name, "fr")
       })
-  }, [subjects, slots])
+  }, [subjects, slots, subjectColors])
 
   const totals = useMemo(() => {
     return subjectHours.reduce(
