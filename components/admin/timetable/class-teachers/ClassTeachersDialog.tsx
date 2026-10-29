@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Users } from "lucide-react"
+import { Users, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -19,10 +19,12 @@ import { TEACHERS_DIALOG_CONTENT } from "./class-teachers-styles"
 
 interface ClassTeachersDialogProps {
   classId: number
+  compact?: boolean
+  onSaved?: () => void
 }
 
 /** Bouton « Enseignants de la classe » qui ouvre le panneau dans une fenêtre. */
-export function ClassTeachersDialog({ classId }: ClassTeachersDialogProps) {
+export function ClassTeachersDialog({ classId, compact = false, onSaved }: ClassTeachersDialogProps) {
   const [open, setOpen] = useState(false)
   const guard = useDiscardGuard()
   const { data } = useClassSubjectTeachers(classId)
@@ -36,8 +38,8 @@ export function ClassTeachersDialog({ classId }: ClassTeachersDialogProps) {
         className="h-11 sm:h-10"
         onClick={() => setOpen(true)}
       >
-        <Users aria-hidden="true" className="mr-2 h-4 w-4" />
-        Enseignants de la classe
+        {compact ? <Pencil aria-hidden="true" className="mr-2 h-4 w-4" /> : <Users aria-hidden="true" className="mr-2 h-4 w-4" />}
+        {compact ? "Modifier l’affectation" : "Enseignants de la classe"}
         {missing > 0 && (
           <Badge className="ml-2 bg-amber-100 px-1.5 text-amber-900 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-200">
             {missing}
@@ -62,6 +64,11 @@ export function ClassTeachersDialog({ classId }: ClassTeachersDialogProps) {
             key={classId}
             classId={classId}
             onDirtyChange={guard.setDirty}
+            onSaved={() => {
+              guard.setDirty(false)
+              setOpen(false)
+              onSaved?.()
+            }}
           />
         </DialogContent>
       </Dialog>
