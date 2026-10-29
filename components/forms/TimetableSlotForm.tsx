@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertTriangle, CheckCircle2 } from "lucide-react"
 import { TimetableSlotCreateSchema, type TimetableSlotCreate } from "@/lib/contracts/timetable"
-import { useCreateSlot, useTeacherWeek, useUpdateSlot } from "@/lib/hooks/useTimetable"
+import { useCreateSlot, useTeacherWeek, useTimetable, useUpdateSlot } from "@/lib/hooks/useTimetable"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { useSubjects } from "@/lib/hooks/useSubjects"
 import { useClass } from "@/lib/hooks/useClasses"
@@ -20,6 +20,7 @@ import { ClassTeachersDialog } from "@/components/admin/timetable/class-teachers
 import { Badge } from "@/components/ui/badge"
 import { TeacherWeekPanel } from "@/components/timetable/TeacherWeekPanel"
 import type { PlageChoisie } from "@/components/timetable/week-grid/use-selection-glissee"
+import { projectedSubjectMinutes, formatWeeklyMinutes } from "@/lib/timetable/hour-balance"
 import { trouverEmpechement } from "@/lib/timetable/week-overlap"
 import { JOURS_FR } from "@/lib/timetable/semaine"
 import {
@@ -28,6 +29,16 @@ import {
   addHour,
 } from "@/components/forms/timetable-slot/inline-create-dialogs"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   Select,
   SelectContent,
@@ -68,6 +79,7 @@ export function TimetableSlotForm({
   // Inline create dialogs
   const [showCreateSubject, setShowCreateSubject] = useState(false)
   const [showCreateTeacher, setShowCreateTeacher] = useState(false)
+  const [overrun, setOverrun] = useState<{ payload: TimetableSlotCreate; excess: number; target: number } | null>(null)
 
   // Fetch class to get level_id/series_id for subject filtering
   const { data: classData } = useClass(effectiveClassId ?? 0)
@@ -80,6 +92,7 @@ export function TimetableSlotForm({
 
   // Enseignants retenus par matière dans cette classe : ils fixent le choix du créneau.
   const classTeachers = useClassSubjectTeachers(effectiveClassId)
+  const { data: existingSlots } = useTimetable(effectiveClassId ?? 0)
   const teacherStatus = classTeachers.isError ? "error" : classTeachers.data ? "ready" : "loading"
 
   // Rooms — only show: 1) the class's assigned room, 2) non-classroom rooms (labos, etc.)
@@ -219,13 +232,7 @@ export function TimetableSlotForm({
   const isPending = mutation.isPending
   const error = mutation.error
 
-  function onSubmit(data: TimetableSlotCreate) {
-    const academicYearId = data.academic_year_id || currentYear?.id
-    if (!academicYearId) {
-      toast.error("Aucune année scolaire active : configurez-la avant d’ajouter un créneau.")
-      return
-    }
-    const payload = { ...data, academic_year_id: academicYearId }
+  function persist(payload: TimetableSlotCreate) {
     if (isEdit) {
       updateMutation.mutate(
         {
@@ -246,6 +253,25 @@ export function TimetableSlotForm({
         },
       })
     }
+  }
+
+  function onSubmit(data: TimetableSlotCreate) {
+    const academicYearId = data.academic_year_id || currentYear?.id
+    if (!academicYearId) {
+      toast.error("Aucune année scolaire active : configurez-la avant d’ajouter un créneau.")
+      return
+    }
+    const payload = { ...data, academic_year_id: academicYearId }
+    const target = classTeachers.data?.items.find((item) => item.subject_id === data.subject_id)?.hours_per_week
+    if (existingSlots && target !== undefined) {
+      const minutes = projectedSubjectMinutes(existingSlots, payload, slot?.id)
+      const maximum = Math.round(target * 60)
+      if (minutes > maximum) {
+        setOverrun({ payload, excess: minutes - maximum, target: maximum })
+        return
+      }
+    }
+    persist(payload)
   }
 
   return (
@@ -383,6 +409,28 @@ export function TimetableSlotForm({
           </Button>
         </form>
       </Form>
+
+      <AlertDialog open={Boolean(overrun)} onOpenChange={(open) => { if (!open) setOverrun(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Volume horaire dépassé</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette opération dépasse le volume prévu de {overrun ? formatWeeklyMinutes(overrun.target) : ""} pour la matière.
+              Excédent : {overrun ? formatWeeklyMinutes(overrun.excess) : ""}.
+              Vérifiez la maquette de la classe avant de confirmer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Revoir le créneau</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (overrun) persist(overrun.payload)
+              setOverrun(null)
+            }}>
+              Confirmer le dépassement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Inline create subject dialog */}
       <InlineCreateSubjectDialog
