@@ -30,6 +30,7 @@ export interface MultiComboboxProps<T extends number | string = number | string>
   loading?: boolean
   error?: string | null
   onRetry?: () => void
+  onSearchChange?: (query: string) => void
   disabled?: boolean
   /** Vrai par défaut : le combobox vit dans un Dialog, la liste reste modale. */
   modal?: boolean
@@ -58,6 +59,7 @@ export function MultiCombobox<T extends number | string = number | string>({
   loading = false,
   error = null,
   onRetry,
+  onSearchChange,
   disabled = false,
   modal = true,
   id,
@@ -153,7 +155,7 @@ export function MultiCombobox<T extends number | string = number | string>({
         </PopoverTrigger>
         <PopoverContent id={listId} className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command filter={filterOption}>
-            <CommandInput placeholder={searchPlaceholder} />
+            <CommandInput placeholder={searchPlaceholder} onValueChange={onSearchChange} />
             <CommandList className="max-h-[min(50dvh,320px)] overflow-y-auto overscroll-contain">
               {renderList()}
             </CommandList>
