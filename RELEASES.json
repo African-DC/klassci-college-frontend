@@ -11,6 +11,22 @@
       "sections": {
         "Added": [
           {
+            "text": "Recherche des enseignants : noms dans tous les ordres, accents, espaces et petites erreurs de frappe, avec recherche sur l'ensemble des enseignants du tenant",
+            "audience": [
+              "direction",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Emploi du temps : enseignant et salle de la classe proposés dès la saisie, raccourci de modification de l'affectation, fermeture automatique du dialogue, heures configurées et détection des dépassements par matière",
+            "audience": [
+              "direction",
+              "secrétariat"
+            ],
+            "pull_request": null
+          },
+          {
             "text": "Emploi du temps : écran « Enseignants de la classe » pour choisir, matière par matière, l'enseignant de chaque classe avant la génération ; la saisie manuelle propose cet enseignant",
             "audience": [
               "admin"
