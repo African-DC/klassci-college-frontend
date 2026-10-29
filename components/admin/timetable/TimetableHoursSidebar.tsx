@@ -4,10 +4,8 @@ import { useMemo } from "react"
 import { BookOpen, CheckCircle2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTimetable } from "@/lib/hooks/useTimetable"
-import { useSubjects } from "@/lib/hooks/useSubjects"
-import { useClass } from "@/lib/hooks/useClasses"
+import { useClassSubjectTeachers } from "@/lib/hooks/useClassSubjectTeachers"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { Subject } from "@/lib/contracts/subject"
 
 interface TimetableHoursSidebarProps {
   classId: number
@@ -39,7 +37,8 @@ const DOT_COLORS: Record<string, string> = {
 function getProgressColor(assigned: number, required: number): string {
   if (required === 0) return "bg-muted-foreground"
   const ratio = assigned / required
-  if (ratio >= 1) return "bg-emerald-500"
+  if (ratio > 1) return "bg-destructive"
+  if (ratio === 1) return "bg-emerald-500"
   if (ratio >= 0.5) return "bg-amber-500"
   return "bg-red-500"
 }
@@ -47,7 +46,8 @@ function getProgressColor(assigned: number, required: number): string {
 function getStatusColor(assigned: number, required: number): string {
   if (required === 0) return "text-muted-foreground"
   const ratio = assigned / required
-  if (ratio >= 1) return "text-emerald-600"
+  if (ratio > 1) return "text-destructive"
+  if (ratio === 1) return "text-emerald-600"
   if (ratio >= 0.5) return "text-amber-600"
   return "text-red-600"
 }
@@ -67,13 +67,9 @@ function formatHours(h: number): string {
 
 export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
   const { data: slots, isLoading: slotsLoading } = useTimetable(classId)
-  const { data: classDetail } = useClass(classId)
-  const levelId = classDetail?.level_id
-  const { data: subjectsData, isLoading: subjectsLoading } = useSubjects(
-    levelId ? { level_id: levelId, size: 100 } : { size: 100 },
-  )
-
-  const subjects = useMemo(() => subjectsData?.items ?? [], [subjectsData])
+  // Exact list of subjects in THIS class, including series restrictions.
+  const { data: classAssignments, isLoading: subjectsLoading } = useClassSubjectTeachers(classId)
+  const subjects = useMemo(() => classAssignments?.items ?? [], [classAssignments])
 
   const subjectHours = useMemo<SubjectHours[]>(() => {
     if (!subjects.length) return []
@@ -88,12 +84,12 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
     }
 
     return subjects
-      .map((s: Subject) => ({
-        id: s.id,
-        name: s.name,
-        color: s.color,
+      .map((s) => ({
+        id: s.subject_id,
+        name: s.subject_name,
+        color: null,
         required: s.hours_per_week,
-        assigned: assignedMap.get(s.id) ?? 0,
+        assigned: assignedMap.get(s.subject_id) ?? 0,
       }))
       .sort((a, b) => {
         // Subjects with deficit first, then alphabetical
@@ -144,7 +140,7 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
     )
   }
 
-  const allComplete = totals.assigned >= totals.required && totals.required > 0
+  const allComplete = subjectHours.every((s) => Math.round(s.assigned * 60) === Math.round(s.required * 60)) && totals.required > 0
 
   return (
     <div className="w-full shrink-0 rounded-lg border bg-card overflow-hidden lg:w-[260px]">
@@ -224,10 +220,16 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
             />
           </div>
         )}
+        {subjectHours.some((s) => s.assigned > s.required) && (
+          <p className="mt-2 text-xs font-medium text-destructive" role="status">
+            Dépassement : {subjectHours.filter((s) => s.assigned > s.required)
+              .map((s) => `${s.name} (+${formatHours(s.assigned - s.required)})`).join(", ")}
+          </p>
+        )}
         {totals.required > 0 && (
           <p className="text-[10px] text-muted-foreground mt-1">
             {totals.assigned >= totals.required
-              ? "Toutes les heures sont couvertes"
+              ? allComplete ? "Chaque matière atteint son volume prévu" : "Volume total atteint, mais des matières sont déséquilibrées"
               : `${formatHours(totals.required - totals.assigned)} restante${totals.required - totals.assigned > 1 ? "s" : ""} a assigner`}
           </p>
         )}
