@@ -1,11 +1,42 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-10-28T20:04:21Z",
+  "generated_at": "2026-10-29T22:23:54Z",
   "version": "Unreleased",
   "released": false,
-  "total": 368,
+  "total": 372,
   "sections": {
     "Added": [
+      {
+        "text": "Assistance : pages premium responsive pour déclarer un incident avec son code, suivre les dossiers et traiter les signalements dans la console technique",
+        "audience": [
+          "admin et support KLASSCI"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Paramètres : horaires scolaires et durée des créneaux personnalisables par établissement dans l'onglet Emploi du temps",
+        "audience": [
+          "direction",
+          "administration"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Recherche des enseignants : noms dans tous les ordres, accents, espaces et petites erreurs de frappe, avec recherche sur l'ensemble des enseignants du tenant",
+        "audience": [
+          "direction",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Emploi du temps : enseignant et salle de la classe proposés dès la saisie, raccourci de modification de l'affectation, fermeture automatique du dialogue, heures configurées et détection des dépassements par matière",
+        "audience": [
+          "direction",
+          "secrétariat"
+        ],
+        "pull_request": null
+      },
       {
         "text": "Emploi du temps : écran « Enseignants de la classe » pour choisir, matière par matière, l'enseignant de chaque classe avant la génération ; la saisie manuelle propose cet enseignant",
         "audience": [
@@ -20,39 +51,6 @@
           "secrétariat"
         ],
         "pull_request": null
-      },
-      {
-        "text": "La feuille de notes d'une classe propose un choix visuel portrait ou paysage avant l'aperçu et le téléchargement PDF, confortable sur ordinateur et mobile",
-        "audience": [
-          "enseignants",
-          "direction"
-        ],
-        "pull_request": 541
-      },
-      {
-        "text": "La disponibilité de la LV2 se règle par niveau, propre à chaque établissement, dans « Niveaux & Séries ». Les inscriptions et la saisie par classe respectent cette configuration sans se baser sur le nom du niveau",
-        "audience": [
-          "direction",
-          "secrétariat",
-          "éducateur"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Les listes de classe acceptent des critères combinés (sexe, tranche d'âge, nationalités multiples, affectation, redoublement) et les transmettent de manière identique aux exports PDF, Word et Excel",
-        "audience": [
-          "direction",
-          "secrétariat"
-        ],
-        "pull_request": 535
-      },
-      {
-        "text": "La nationalité se choisit dans une liste recherchable par nationalité ou pays, conservant les valeurs existantes et les variantes saisies. Les fiches Excel incluent la nationalité et le rapport DEEP indique où corriger les données manquantes",
-        "audience": [
-          "secrétariat",
-          "direction"
-        ],
-        "pull_request": 530
       }
     ],
     "Changed": [

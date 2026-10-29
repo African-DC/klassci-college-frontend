@@ -19,6 +19,9 @@ export const SchoolHolidaySchema = z.object({
 export const SchoolSettingsSchema = z.object({
   id: z.number().optional(),
   // --- Fields from backend ---
+  slot_duration_minutes: z.number().default(60),
+  day_start_hour: z.number().default(7),
+  day_end_hour: z.number().default(17),
   school_name: z.string(),
   address: z.string().nullable(),
   phone: z.string().nullable(),
@@ -55,6 +58,15 @@ export const SchoolSettingsSchema = z.object({
   notify_payments: z.boolean().optional().default(false),
   notify_enrollment: z.boolean().optional().default(false),
   notify_reenrollment: z.boolean().optional().default(false),
+})
+
+export const TimetableSettingsUpdateSchema = z.object({
+  day_start_hour: z.number().int().min(0).max(23),
+  day_end_hour: z.number().int().min(1).max(24),
+  slot_duration_minutes: z.number().int().min(5).max(180),
+}).refine((data) => data.day_end_hour > data.day_start_hour, {
+  path: ["day_end_hour"],
+  message: "L’heure de fin doit être après l’heure de début.",
 })
 
 export const SchoolInfoUpdateSchema = z.object({
@@ -104,6 +116,7 @@ export const NotificationUpdateSchema = z.object({
 export type TrimesterConfig = z.infer<typeof TrimesterConfigSchema>
 export type SchoolHoliday = z.infer<typeof SchoolHolidaySchema>
 export type SchoolSettings = z.infer<typeof SchoolSettingsSchema>
+export type TimetableSettingsUpdate = z.infer<typeof TimetableSettingsUpdateSchema>
 export type SchoolInfoUpdate = z.infer<typeof SchoolInfoUpdateSchema>
 export type TrimesterUpdate = z.infer<typeof TrimesterUpdateSchema>
 export type HolidaysUpdate = z.infer<typeof HolidaysUpdateSchema>

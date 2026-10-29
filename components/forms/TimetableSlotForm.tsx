@@ -1,11 +1,11 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, CheckCircle2 } from "lucide-react"
 import { TimetableSlotCreateSchema, type TimetableSlotCreate } from "@/lib/contracts/timetable"
-import { useCreateSlot, useTeacherWeek, useUpdateSlot } from "@/lib/hooks/useTimetable"
+import { useCreateSlot, useTeacherWeek, useTimetable, useUpdateSlot } from "@/lib/hooks/useTimetable"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { useSubjects } from "@/lib/hooks/useSubjects"
 import { useClass } from "@/lib/hooks/useClasses"
@@ -15,8 +15,11 @@ import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
 import { ChampsDuCreneau } from "@/components/forms/timetable-slot/ChampsDuCreneau"
 import { SubjectField } from "@/components/forms/timetable-slot/SubjectField"
 import { TeacherField } from "@/components/forms/timetable-slot/TeacherField"
+import { ClassTeachersDialog } from "@/components/admin/timetable/class-teachers/ClassTeachersDialog"
+import { Badge } from "@/components/ui/badge"
 import { TeacherWeekPanel } from "@/components/timetable/TeacherWeekPanel"
 import type { PlageChoisie } from "@/components/timetable/week-grid/use-selection-glissee"
+import { projectedSubjectMinutes, formatWeeklyMinutes } from "@/lib/timetable/hour-balance"
 import { trouverEmpechement } from "@/lib/timetable/week-overlap"
 import { JOURS_FR } from "@/lib/timetable/semaine"
 import {
@@ -25,6 +28,16 @@ import {
   addHour,
 } from "@/components/forms/timetable-slot/inline-create-dialogs"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   Select,
   SelectContent,
@@ -65,6 +78,8 @@ export function TimetableSlotForm({
   // Inline create dialogs
   const [showCreateSubject, setShowCreateSubject] = useState(false)
   const [showCreateTeacher, setShowCreateTeacher] = useState(false)
+  const [overrun, setOverrun] = useState<{ payload: TimetableSlotCreate; excess: number; target: number } | null>(null)
+  const [showClassTeachers, setShowClassTeachers] = useState(false)
 
   // Fetch class to get level_id/series_id for subject filtering
   const { data: classData } = useClass(effectiveClassId ?? 0)
@@ -77,11 +92,12 @@ export function TimetableSlotForm({
 
   // Enseignants retenus par matière dans cette classe : ils fixent le choix du créneau.
   const classTeachers = useClassSubjectTeachers(effectiveClassId)
+  const { data: existingSlots } = useTimetable(effectiveClassId ?? 0)
   const teacherStatus = classTeachers.isError ? "error" : classTeachers.data ? "ready" : "loading"
 
   // Rooms — only show: 1) the class's assigned room, 2) non-classroom rooms (labos, etc.)
   const { data: roomsData } = useRooms({ size: 100 })
-  const allRooms = roomsData?.items ?? []
+  const allRooms = useMemo(() => roomsData?.items ?? [], [roomsData])
   const filteredRooms = useMemo(() => {
     return allRooms.filter((r) => {
       // Show the room assigned to this class (room.id matches class.room_id)
@@ -125,6 +141,39 @@ export function TimetableSlotForm({
   // La semaine de l'enseignant choisi, chargee des qu'il est choisi : elle
   // sert a montrer l'empechement pendant la saisie, au lieu de le decouvrir en
   // validant. Le backend refait la verification, celle-ci ne fait qu'avertir.
+  const selectedSubjectId = form.watch("subject_id")
+  const assignedSubject = classTeachers.data?.items.find((item) => item.subject_id === selectedSubjectId)
+  const resolvedTeacher = assignedSubject?.resolved_teacher_id
+  const lastResolution = useRef<{ subjectId: number; teacherId: number } | null>(null)
+  const prefilledRoomClass = useRef<number | null>(null)
+
+  // L'affectation est chargée de façon asynchrone : choisir la matière avant la réponse
+  // ne doit jamais laisser un enseignant vide si l'établissement en a déjà affecté un.
+  // Un enseignant hors des retenus pour la matière est remplacé ; une saisie valide est gardée.
+  useEffect(() => {
+    if (isEdit || !selectedSubjectId || !resolvedTeacher) return
+    const current = form.getValues("teacher_id")
+    const eligible = assignedSubject?.eligible_teachers ?? []
+    const changedAssignment =
+      lastResolution.current?.subjectId === selectedSubjectId &&
+      lastResolution.current.teacherId !== resolvedTeacher
+    if (!current || changedAssignment || !eligible.some((t) => t.id === current)) {
+      form.setValue("teacher_id", resolvedTeacher, { shouldValidate: true })
+    }
+    lastResolution.current = { subjectId: selectedSubjectId, teacherId: resolvedTeacher }
+  }, [isEdit, selectedSubjectId, resolvedTeacher, assignedSubject, form])
+
+  // Suggest the classroom only once. Subsequent manual changes remain intact.
+  useEffect(() => {
+    if (isEdit || !effectiveClassId || !classData?.room_id) return
+    if (prefilledRoomClass.current === effectiveClassId) return
+    const classroom = allRooms.find((room) => room.id === classData.room_id)
+    if (!classroom) return
+    prefilledRoomClass.current = effectiveClassId
+    if (!form.getValues("room")) form.setValue("room", classroom.name)
+  }, [allRooms, classData?.room_id, effectiveClassId, form, isEdit])
+
+
   const selectedTeacherId = form.watch("teacher_id")
   const watchedDay = form.watch("day")
   const watchedStart = form.watch("start_time")
@@ -179,12 +228,7 @@ export function TimetableSlotForm({
   const isPending = mutation.isPending
   const error = mutation.error
 
-  function onSubmit(data: TimetableSlotCreate) {
-    // Auto-set academic_year_id if not set
-    const payload = {
-      ...data,
-      academic_year_id: data.academic_year_id || currentYear?.id || 1,
-    }
+  function persist(payload: TimetableSlotCreate) {
     if (isEdit) {
       updateMutation.mutate(
         {
@@ -205,6 +249,25 @@ export function TimetableSlotForm({
         },
       })
     }
+  }
+
+  function onSubmit(data: TimetableSlotCreate) {
+    const academicYearId = data.academic_year_id || currentYear?.id
+    if (!academicYearId) {
+      form.setError("academic_year_id", { message: "Sélectionnez une année scolaire active." })
+      return
+    }
+    const payload = { ...data, academic_year_id: academicYearId }
+    const target = classTeachers.data?.items.find((item) => item.subject_id === data.subject_id)?.hours_per_week
+    if (existingSlots && target !== undefined) {
+      const minutes = projectedSubjectMinutes(existingSlots, payload, slot?.id)
+      const maximum = Math.round(target * 60)
+      if (minutes > maximum) {
+        setOverrun({ payload, excess: minutes - maximum, target: maximum })
+        return
+      }
+    }
+    persist(payload)
   }
 
   return (
@@ -230,7 +293,28 @@ export function TimetableSlotForm({
                 }
                 onRetry={() => void classTeachers.refetch()}
                 onCreateTeacher={() => setShowCreateTeacher(true)}
+                onManageAssignment={() => setShowClassTeachers(true)}
               />
+
+              {effectiveClassId && selectedSubjectId && (
+                <div className="space-y-2 rounded-xl border bg-muted/20 p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {assignedSubject?.resolved_teacher_id ? (
+                      <Badge variant="secondary" className="gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Affectation de la classe
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">Affectation à compléter</Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {assignedSubject?.resolved_teacher_id
+                        ? "L’enseignant retenu est proposé automatiquement."
+                        : "Définissez l’enseignant de cette matière pour cette classe."}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               <ChampsDuCreneau
                 form={form}
@@ -318,6 +402,36 @@ export function TimetableSlotForm({
         </form>
       </Form>
 
+      <AlertDialog open={Boolean(overrun)} onOpenChange={(open) => { if (!open) setOverrun(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Volume horaire dépassé</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette opération dépasse le volume prévu de {overrun ? formatWeeklyMinutes(overrun.target) : ""} pour la matière.
+              Excédent : {overrun ? formatWeeklyMinutes(overrun.excess) : ""}.
+              Vérifiez la maquette de la classe avant de confirmer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Revoir le créneau</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (overrun) persist(overrun.payload)
+              setOverrun(null)
+            }}>
+              Confirmer le dépassement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {effectiveClassId && (
+        <ClassTeachersDialog
+          classId={effectiveClassId}
+          open={showClassTeachers}
+          onOpenChange={setShowClassTeachers}
+          trigger={false}
+        />
+      )}
       {/* Inline create subject dialog */}
       <InlineCreateSubjectDialog
         open={showCreateSubject}

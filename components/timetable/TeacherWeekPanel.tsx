@@ -117,11 +117,11 @@ export function TeacherWeekPanel({
         </p>
       )}
 
-      <div className="hidden sm:block">
+      <div className="hidden md:block">
         <SemaineGrille week={week} vise={vise} onChoisir={onChoisir} />
       </div>
 
-      <div className="sm:hidden">
+      <div className="md:hidden">
         <SemaineListe week={week} jourVise={jourVise as DayOfWeek | undefined} />
       </div>
     </div>

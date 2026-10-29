@@ -4,10 +4,9 @@ import { useMemo } from "react"
 import { BookOpen, CheckCircle2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTimetable } from "@/lib/hooks/useTimetable"
+import { useClassSubjectTeachers } from "@/lib/hooks/useClassSubjectTeachers"
 import { useSubjects } from "@/lib/hooks/useSubjects"
-import { useClass } from "@/lib/hooks/useClasses"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { Subject } from "@/lib/contracts/subject"
 
 interface TimetableHoursSidebarProps {
   classId: number
@@ -36,19 +35,32 @@ const DOT_COLORS: Record<string, string> = {
   pink: "bg-pink-500",
 }
 
+// Comparaison en minutes entières : les heures décimales (0,75 + 0,75 …) ne
+// doivent pas faire basculer une matière équilibrée en « dépassement ».
+function volumeState(assigned: number, required: number): "empty" | "over" | "exact" | "partial" {
+  if (required === 0) return "empty"
+  const assignedMin = Math.round(assigned * 60)
+  const requiredMin = Math.round(required * 60)
+  if (assignedMin > requiredMin) return "over"
+  if (assignedMin === requiredMin) return "exact"
+  return "partial"
+}
+
 function getProgressColor(assigned: number, required: number): string {
-  if (required === 0) return "bg-muted-foreground"
-  const ratio = assigned / required
-  if (ratio >= 1) return "bg-emerald-500"
-  if (ratio >= 0.5) return "bg-amber-500"
+  const state = volumeState(assigned, required)
+  if (state === "empty") return "bg-muted-foreground"
+  if (state === "over") return "bg-destructive"
+  if (state === "exact") return "bg-emerald-500"
+  if (assigned / required >= 0.5) return "bg-amber-500"
   return "bg-red-500"
 }
 
 function getStatusColor(assigned: number, required: number): string {
-  if (required === 0) return "text-muted-foreground"
-  const ratio = assigned / required
-  if (ratio >= 1) return "text-emerald-600"
-  if (ratio >= 0.5) return "text-amber-600"
+  const state = volumeState(assigned, required)
+  if (state === "empty") return "text-muted-foreground"
+  if (state === "over") return "text-destructive"
+  if (state === "exact") return "text-emerald-600"
+  if (assigned / required >= 0.5) return "text-amber-600"
   return "text-red-600"
 }
 
@@ -67,13 +79,11 @@ function formatHours(h: number): string {
 
 export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
   const { data: slots, isLoading: slotsLoading } = useTimetable(classId)
-  const { data: classDetail } = useClass(classId)
-  const levelId = classDetail?.level_id
-  const { data: subjectsData, isLoading: subjectsLoading } = useSubjects(
-    levelId ? { level_id: levelId, size: 100 } : { size: 100 },
-  )
-
-  const subjects = useMemo(() => subjectsData?.items ?? [], [subjectsData])
+  // Exact list of subjects in THIS class, including series restrictions.
+  const { data: classAssignments, isLoading: subjectsLoading } = useClassSubjectTeachers(classId)
+  const subjects = useMemo(() => classAssignments?.items ?? [], [classAssignments])
+  const { data: subjectCatalog } = useSubjects({ size: 100 })
+  const subjectColors = useMemo(() => new Map(subjectCatalog?.items.map((subject) => [subject.id, subject.color]) ?? []), [subjectCatalog])
 
   const subjectHours = useMemo<SubjectHours[]>(() => {
     if (!subjects.length) return []
@@ -88,12 +98,12 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
     }
 
     return subjects
-      .map((s: Subject) => ({
-        id: s.id,
-        name: s.name,
-        color: s.color,
+      .map((s) => ({
+        id: s.subject_id,
+        name: s.subject_name,
+        color: subjectColors.get(s.subject_id),
         required: s.hours_per_week,
-        assigned: assignedMap.get(s.id) ?? 0,
+        assigned: assignedMap.get(s.subject_id) ?? 0,
       }))
       .sort((a, b) => {
         // Subjects with deficit first, then alphabetical
@@ -102,7 +112,7 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
         if (aDeficit !== bDeficit) return bDeficit - aDeficit
         return a.name.localeCompare(b.name, "fr")
       })
-  }, [subjects, slots])
+  }, [subjects, slots, subjectColors])
 
   const totals = useMemo(() => {
     return subjectHours.reduce(
@@ -144,7 +154,8 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
     )
   }
 
-  const allComplete = totals.assigned >= totals.required && totals.required > 0
+  const allComplete = totals.required > 0 && subjectHours.every((s) => volumeState(s.assigned, s.required) === "exact")
+  const overSubjects = subjectHours.filter((s) => volumeState(s.assigned, s.required) === "over")
 
   return (
     <div className="w-full shrink-0 rounded-lg border bg-card overflow-hidden lg:w-[260px]">
@@ -165,9 +176,10 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
           const pct = s.required > 0 ? Math.min((s.assigned / s.required) * 100, 100) : 0
           const progressColor = getProgressColor(s.assigned, s.required)
           const statusColor = getStatusColor(s.assigned, s.required)
+          const excess = volumeState(s.assigned, s.required) === "over"
 
           return (
-            <div key={s.id} className="space-y-1">
+            <div key={s.id} className="space-y-1" title={excess ? `Dépassement de ${formatHours(s.assigned - s.required)}` : undefined}>
               <div className="flex items-center gap-1.5">
                 <span
                   className={cn(
@@ -177,7 +189,7 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
                 />
                 <span className="text-xs font-medium truncate flex-1">{s.name}</span>
                 <span className={cn("text-xs font-semibold tabular-nums", statusColor)}>
-                  {formatHours(s.assigned)} / {formatHours(s.required)}
+                  {formatHours(s.assigned)} / {formatHours(s.required)}{excess ? " ⚠" : ""}
                 </span>
               </div>
               <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -205,7 +217,7 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
           <span
             className={cn(
               "text-xs font-bold tabular-nums",
-              getStatusColor(totals.assigned, totals.required),
+              allComplete ? "text-emerald-600" : "text-amber-600",
             )}
           >
             {formatHours(totals.assigned)} / {formatHours(totals.required)}
@@ -216,7 +228,7 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
             <div
               className={cn(
                 "h-full rounded-full transition-all",
-                getProgressColor(totals.assigned, totals.required),
+                allComplete ? "bg-emerald-500" : "bg-amber-500",
               )}
               style={{
                 width: `${Math.min((totals.assigned / totals.required) * 100, 100)}%`,
@@ -224,11 +236,17 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
             />
           </div>
         )}
+        {overSubjects.length > 0 && (
+          <p className="mt-2 text-xs font-medium text-destructive" role="status">
+            Dépassement : {overSubjects
+              .map((s) => `${s.name} (+${formatHours(s.assigned - s.required)})`).join(", ")}
+          </p>
+        )}
         {totals.required > 0 && (
           <p className="text-[10px] text-muted-foreground mt-1">
-            {totals.assigned >= totals.required
-              ? "Toutes les heures sont couvertes"
-              : `${formatHours(totals.required - totals.assigned)} restante${totals.required - totals.assigned > 1 ? "s" : ""} a assigner`}
+            {allComplete
+              ? "Tous les volumes par matière sont conformes"
+              : `${formatHours(subjectHours.reduce((sum, s) => sum + Math.max(0, s.required - s.assigned), 0))} à compléter par matière${overSubjects.length > 0 ? " · Dépassement à corriger" : ""}`}
           </p>
         )}
       </div>

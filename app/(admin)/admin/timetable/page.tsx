@@ -197,7 +197,7 @@ export default function TimetablePage() {
       <Card className="border-0 shadow-sm ring-1 ring-border">
         <CardContent className="space-y-3 p-4 sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
+            <div className="grid min-w-0 w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-[auto_minmax(0,14rem)] sm:items-center">
               <label className="whitespace-nowrap text-sm font-medium text-muted-foreground">
                 Classe :
               </label>
@@ -207,7 +207,7 @@ export default function TimetablePage() {
               >
                 <SelectTrigger
                   aria-label="Sélectionner une classe"
-                  className="h-11 w-full sm:h-10 sm:w-56"
+                  className="h-11 min-w-0 w-full sm:h-10"
                 >
                   <SelectValue placeholder="Sélectionner une classe" />
                 </SelectTrigger>
@@ -221,7 +221,7 @@ export default function TimetablePage() {
               </Select>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               {selectedClassId && <ClassTeachersDialog classId={selectedClassId} />}
               <PdfPreviewButton
                 fetchBlob={() => timetableApi.exportPdf(selectedClassId as number)}

@@ -26,6 +26,8 @@ import { SubjectCatalogueColumn } from "./SubjectCatalogueColumn"
 import { SubjectLevelColumn } from "./SubjectLevelColumn"
 import { firstFreeSeriesSlot, isSeriesSlotTaken } from "@/lib/utils/subject-assignment"
 import { cn } from "@/lib/utils"
+import { matchesSearch } from "@/components/shared/multi-combobox-utils"
+import { subjectTeachers } from "@/lib/utils/subject-teachers"
 
 export function SubjectsKanbanView() {
   const { data: subjectsData, isLoading: subjectsLoading } = useSubjects({ size: 100 })
@@ -48,10 +50,10 @@ export function SubjectsKanbanView() {
 
   const filteredSubjects = useMemo(() => {
     if (!debouncedSearch) return subjects
-    const q = debouncedSearch.toLowerCase()
     return subjects.filter((s) =>
-      s.name.toLowerCase().includes(q) ||
-      s.level_name?.toLowerCase().includes(q),
+      matchesSearch(s.name, debouncedSearch) ||
+      matchesSearch(s.level_name ?? "", debouncedSearch) ||
+      subjectTeachers(s).some((t) => matchesSearch(t.full_name, debouncedSearch)),
     )
   }, [subjects, debouncedSearch])
 

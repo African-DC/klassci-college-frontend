@@ -17,7 +17,7 @@ import {
   MultiComboboxError,
   MultiComboboxLoading,
 } from "./multi-combobox-parts"
-import { matchesSearch, type MultiComboboxOption } from "./multi-combobox-utils"
+import { searchScore, type MultiComboboxOption } from "./multi-combobox-utils"
 
 export interface MultiComboboxProps<T extends number | string = number | string> {
   options: MultiComboboxOption<T>[]
@@ -30,6 +30,7 @@ export interface MultiComboboxProps<T extends number | string = number | string>
   loading?: boolean
   error?: string | null
   onRetry?: () => void
+  onSearchChange?: (query: string) => void
   disabled?: boolean
   /** Vrai par défaut : le combobox vit dans un Dialog, la liste reste modale. */
   modal?: boolean
@@ -40,7 +41,7 @@ export interface MultiComboboxProps<T extends number | string = number | string>
 }
 
 const filterOption = (_value: string, search: string, keywords?: string[]) =>
-  matchesSearch(keywords?.join(" ") ?? "", search) ? 1 : 0
+  searchScore(keywords?.join(" ") ?? "", search)
 
 const summary = (count: number, placeholder: string) => {
   if (count === 0) return placeholder
@@ -58,6 +59,7 @@ export function MultiCombobox<T extends number | string = number | string>({
   loading = false,
   error = null,
   onRetry,
+  onSearchChange,
   disabled = false,
   modal = true,
   id,
@@ -108,7 +110,7 @@ export function MultiCombobox<T extends number | string = number | string>({
             <CommandItem
               key={String(option.value)}
               value={String(option.value)}
-              keywords={[option.label, option.hint ?? ""]}
+              keywords={[option.label, option.hint ?? "", option.searchText ?? ""]}
               onSelect={() => toggle(option)}
               className="min-h-11 gap-2"
             >
@@ -153,7 +155,7 @@ export function MultiCombobox<T extends number | string = number | string>({
         </PopoverTrigger>
         <PopoverContent id={listId} className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command filter={filterOption}>
-            <CommandInput placeholder={searchPlaceholder} />
+            <CommandInput placeholder={searchPlaceholder} onValueChange={onSearchChange} />
             <CommandList className="max-h-[min(50dvh,320px)] overflow-y-auto overscroll-contain">
               {renderList()}
             </CommandList>
