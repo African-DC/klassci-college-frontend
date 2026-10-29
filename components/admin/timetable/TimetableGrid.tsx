@@ -4,7 +4,8 @@ import { useState, useMemo } from "react"
 import { CalendarDays, Clock, MapPin, Pencil, Plus, Trash2, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { apiFetch } from "@/lib/api/client"
 import { useTimetable, useDeleteSlot } from "@/lib/hooks/useTimetable"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -27,7 +28,6 @@ import {
   JOURS_NOMS,
   PX_PAR_HEURE,
   enMinutes,
-  minutesEnPx,
 } from "@/lib/timetable/semaine"
 import { complement } from "@/lib/timetable/occupation"
 
@@ -49,7 +49,6 @@ const DAY_LABELS: Record<string, string> = Object.fromEntries(
 
 // Geometrie partagee avec la semaine de l'enseignant : les deux grilles se
 // lisent cote a cote, elles doivent avoir la meme echelle.
-const TOTAL_HOURS = HEURE_FIN - HEURE_DEBUT
 
 const COLOR_MAP: Record<string, string> = {
   blue: "bg-blue-100 border-blue-300 text-blue-800",
@@ -94,6 +93,20 @@ interface TimetableGridProps {
 export function TimetableGrid({ classId }: TimetableGridProps) {
   const queryClient = useQueryClient()
   const { data: slots, isLoading } = useTimetable(classId)
+  const { data: config } = useQuery({
+    queryKey: ["timetable", "configuration"],
+    queryFn: () => apiFetch<{ day_start_hour: number; day_end_hour: number }>("/timetable/configuration"),
+    staleTime: 300000,
+  })
+  const dayStart = Math.min(
+    config?.day_start_hour ?? HEURE_DEBUT,
+    ...(slots ?? []).map((slot) => Math.floor(enMinutesStrict(slot.start_time) / 60)),
+  )
+  const dayEnd = Math.max(
+    config?.day_end_hour ?? HEURE_FIN,
+    ...(slots ?? []).map((slot) => Math.ceil(enMinutesStrict(slot.end_time) / 60)),
+  )
+  const gridMinutesEnPx = (minute: number) => (minute - dayStart * 60) * PX_PAR_HEURE / 60
   const deleteMutation = useDeleteSlot()
   const [createModal, setCreateModal] = useState<{ day: string; time: string; endTime?: string } | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<TimetableSlot | null>(null)
@@ -136,7 +149,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
     })
   }
 
-  const gridHeight = TOTAL_HOURS * PX_PAR_HEURE
+  const gridHeight = (dayEnd - dayStart) * PX_PAR_HEURE
 
   if (isLoading) {
     return (
@@ -174,7 +187,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
 
   // Build hour lines
   const hourLines: { hour: number; label: string }[] = []
-  for (let h = HEURE_DEBUT; h <= HEURE_FIN; h++) {
+  for (let h = dayStart; h <= dayEnd; h++) {
     hourLines.push({ hour: h, label: `${String(h).padStart(2, "0")}:00` })
   }
 
@@ -289,7 +302,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                 <div
                   key={hour}
                   className="absolute right-0 left-0 flex items-center"
-                  style={{ top: (hour - HEURE_DEBUT) * PX_PAR_HEURE - 7 }}
+                  style={{ top: (hour - dayStart) * PX_PAR_HEURE - 7 }}
                 >
                   <span className="text-[10px] font-mono text-muted-foreground pl-1 pr-2 bg-card relative z-10">
                     {label}
@@ -304,7 +317,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                   <div
                     key={min}
                     className="absolute right-0 left-0 flex items-center"
-                    style={{ top: minutesEnPx(min) - 5 }}
+                    style={{ top: gridMinutesEnPx(min) - 5 }}
                   >
                     <span className="text-[9px] font-mono text-muted-foreground/60 pl-1 pr-2 bg-card relative z-10">
                       {hh}:{mm}
@@ -328,7 +341,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                     <div
                       key={hour}
                       className="absolute left-0 right-0 border-t border-border/40"
-                      style={{ top: (hour - HEURE_DEBUT) * PX_PAR_HEURE }}
+                      style={{ top: (hour - dayStart) * PX_PAR_HEURE }}
                     />
                   ))}
 
@@ -337,7 +350,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                     <div
                       key={`${hour}-30`}
                       className="absolute left-0 right-0 border-t border-border/15 border-dashed"
-                      style={{ top: (hour - HEURE_DEBUT) * PX_PAR_HEURE + PX_PAR_HEURE / 2 }}
+                      style={{ top: (hour - dayStart) * PX_PAR_HEURE + PX_PAR_HEURE / 2 }}
                     />
                   ))}
 
@@ -348,7 +361,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                       .sort((a, b) => a.start - b.start)
 
                     const buttons: React.ReactNode[] = []
-                    for (let hour = HEURE_DEBUT; hour < HEURE_FIN; hour++) {
+                    for (let hour = dayStart; hour < dayEnd; hour++) {
                       const hourStart = hour * 60
                       const hourEnd = (hour + 1) * 60
 
@@ -365,7 +378,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                         const freeHeight = ((seg.end - seg.start) / 60) * PX_PAR_HEURE
                         if (freeHeight < 12) continue
 
-                        const freeTop = minutesEnPx(seg.start)
+                        const freeTop = gridMinutesEnPx(seg.start)
                         const startStr = `${String(Math.floor(seg.start / 60)).padStart(2, "0")}:${String(seg.start % 60).padStart(2, "0")}`
                         const endStr = `${String(Math.floor(seg.end / 60)).padStart(2, "0")}:${String(seg.end % 60).padStart(2, "0")}`
 
@@ -401,7 +414,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                   {daySlots.map((slot) => {
                     const startMin = enMinutesStrict(slot.start_time)
                     const endMin = enMinutesStrict(slot.end_time)
-                    const top = minutesEnPx(startMin)
+                    const top = gridMinutesEnPx(startMin)
                     const height = ((endMin - startMin) / 60) * PX_PAR_HEURE
                     const showTeacher = height >= 40
                     const showRoom = height >= 55
