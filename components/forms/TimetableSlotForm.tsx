@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertTriangle } from "lucide-react"
@@ -25,6 +25,7 @@ import {
   addHour,
 } from "@/components/forms/timetable-slot/inline-create-dialogs"
 import { Button } from "@/components/ui/button"
+import { ClassTeachersDialog } from "@/components/admin/timetable/class-teachers/ClassTeachersDialog"
 import {
   Select,
   SelectContent,
@@ -65,6 +66,7 @@ export function TimetableSlotForm({
   // Inline create dialogs
   const [showCreateSubject, setShowCreateSubject] = useState(false)
   const [showCreateTeacher, setShowCreateTeacher] = useState(false)
+  const [showClassTeachers, setShowClassTeachers] = useState(false)
 
   // Fetch class to get level_id/series_id for subject filtering
   const { data: classData } = useClass(effectiveClassId ?? 0)
@@ -125,6 +127,19 @@ export function TimetableSlotForm({
   // La semaine de l'enseignant choisi, chargee des qu'il est choisi : elle
   // sert a montrer l'empechement pendant la saisie, au lieu de le decouvrir en
   // validant. Le backend refait la verification, celle-ci ne fait qu'avertir.
+  const subjectId = form.watch("subject_id")
+  // L'affectation est chargée de façon asynchrone : choisir la matière avant la réponse
+  // ne doit jamais laisser un enseignant vide si l'établissement en a déjà affecté un.
+  const resolvedTeacher = classTeachers.data?.items.find((i) => i.subject_id === subjectId)?.resolved_teacher_id
+  useEffect(() => {
+    if (isEdit || !subjectId || !resolvedTeacher) return
+    const current = form.getValues("teacher_id")
+    const eligible = classTeachers.data?.items.find((i) => i.subject_id === subjectId)?.eligible_teachers ?? []
+    if (!current || !eligible.some((t) => t.id === current)) {
+      form.setValue("teacher_id", resolvedTeacher, { shouldValidate: true })
+    }
+  }, [isEdit, subjectId, resolvedTeacher, classTeachers.data, form])
+
   const selectedTeacherId = form.watch("teacher_id")
   const watchedDay = form.watch("day")
   const watchedStart = form.watch("start_time")
@@ -183,7 +198,7 @@ export function TimetableSlotForm({
     // Auto-set academic_year_id if not set
     const payload = {
       ...data,
-      academic_year_id: data.academic_year_id || currentYear?.id || 1,
+      academic_year_id: data.academic_year_id || currentYear?.id,
     }
     if (isEdit) {
       updateMutation.mutate(
@@ -230,6 +245,7 @@ export function TimetableSlotForm({
                 }
                 onRetry={() => void classTeachers.refetch()}
                 onCreateTeacher={() => setShowCreateTeacher(true)}
+                onManageAssignment={() => setShowClassTeachers(true)}
               />
 
               <ChampsDuCreneau
@@ -318,6 +334,14 @@ export function TimetableSlotForm({
         </form>
       </Form>
 
+      {effectiveClassId && (
+        <ClassTeachersDialog
+          classId={effectiveClassId}
+          open={showClassTeachers}
+          onOpenChange={setShowClassTeachers}
+          trigger={false}
+        />
+      )}
       {/* Inline create subject dialog */}
       <InlineCreateSubjectDialog
         open={showCreateSubject}

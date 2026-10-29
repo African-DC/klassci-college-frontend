@@ -1,7 +1,7 @@
 "use client"
 
 import { useWatch, type UseFormReturn } from "react-hook-form"
-import { Plus } from "lucide-react"
+import { Plus, Pencil } from "lucide-react"
 import type { TimetableSlotCreate } from "@/lib/contracts/timetable"
 import type { ClassSubjectTeacherItem } from "@/lib/contracts/class-subject-teachers"
 import { Button } from "@/components/ui/button"
@@ -31,6 +31,7 @@ interface TeacherFieldProps {
   currentTeacher?: { id: number; name: string }
   onRetry: () => void
   onCreateTeacher: () => void
+  onManageAssignment: () => void
 }
 
 interface Choice {
@@ -62,6 +63,7 @@ export function TeacherField({
   currentTeacher,
   onRetry,
   onCreateTeacher,
+  onManageAssignment,
 }: TeacherFieldProps) {
   const subjectId = useWatch({ control: form.control, name: "subject_id" })
   const item = items?.find((i) => i.subject_id === subjectId)
@@ -118,6 +120,18 @@ export function TeacherField({
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
+            {subjectId && status === "ready" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onManageAssignment}
+                className="h-9 gap-2 text-primary"
+              >
+                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                Modifier l'enseignant de cette classe
+              </Button>
+            )}
             {status === "error" && (
               <div className="flex items-center justify-between gap-3 rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2">
                 <p className="text-xs text-destructive">
