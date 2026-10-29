@@ -6,6 +6,7 @@ import {
   type EnrollmentHistoryCoverage,
   type SchoolSettings,
   type SchoolInfoUpdate,
+  type TimetableSettingsUpdate,
   type TrimesterUpdate,
   type HolidaysUpdate,
   type NotificationUpdate,
@@ -49,6 +50,14 @@ export const settingsApi = {
       json,
       "GET /admin/settings/enrollment-history-coverage",
     )
+  },
+
+  updateTimetable: async (data: TimetableSettingsUpdate): Promise<SchoolSettings> => {
+    const json = await apiFetch<unknown>("/admin/settings/timetable", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+    return parseSettings(json, "PUT /admin/settings/timetable")
   },
 
   updateSchoolInfo: async (data: SchoolInfoUpdate): Promise<SchoolSettings> => {
