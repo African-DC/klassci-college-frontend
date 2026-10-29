@@ -56,7 +56,7 @@ export function IncidentCenter({ scope }: { scope: "school" | "platform" }) {
     <Card className="border-border/80 shadow-sm"><CardContent className="grid gap-4 p-4 md:grid-cols-3 md:p-5">
       {platform && <div className="space-y-2 md:col-span-3"><Label>Établissement</Label>
         <Select value={tenant} onValueChange={(v) => { setTenant(v); setPage(1); setSelected(null) }}>
-          <SelectTrigger className="w-full"><SelectValue placeholder="Choisir un établissement pour rechercher ses incidents" /></SelectTrigger>
+          <SelectTrigger className="h-11 w-full"><SelectValue placeholder="Choisir un établissement pour rechercher ses incidents" /></SelectTrigger>
           <SelectContent>{tenants?.items.map((t) =>
             <SelectItem key={t.slug} value={t.slug}>{t.slug}</SelectItem>)}</SelectContent>
         </Select>
@@ -71,7 +71,7 @@ export function IncidentCenter({ scope }: { scope: "school" | "platform" }) {
       </div>
       <div className="space-y-2"><Label>Statut</Label>
         <Select value={status} onValueChange={(v) => { setStatus(v as IncidentStatus | "all"); setPage(1); setSelected(null) }}>
-          <SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
+          <SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>
             <SelectItem value="all">Tous les statuts</SelectItem>
             {(Object.keys(STATUS_LABELS) as IncidentStatus[]).map((s) =>
               <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
@@ -84,7 +84,7 @@ export function IncidentCenter({ scope }: { scope: "school" | "platform" }) {
       <div className="min-w-0 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold">Signalements</h2>
-          <Button size="sm" variant="ghost" disabled={isFetching} onClick={() => void refetch()}><RefreshCw className="mr-2 h-4 w-4" />Actualiser</Button>
+          <Button size="sm" variant="ghost" className="h-11" disabled={isFetching} onClick={() => void refetch()}><RefreshCw className="mr-2 h-4 w-4" />Actualiser</Button>
         </div>
         {isPending ? <Card><CardContent className="p-8 text-sm text-muted-foreground">Chargement des incidents…</CardContent></Card> :
         isError ? <Card><CardContent className="flex items-center gap-2 p-6 text-sm text-destructive"><AlertCircle className="h-4 w-4 shrink-0" />Impossible de charger les incidents.</CardContent></Card> :
@@ -106,10 +106,10 @@ export function IncidentCenter({ scope }: { scope: "school" | "platform" }) {
           {item.reference && <span className="mt-2 inline-block font-mono text-xs text-muted-foreground">Réf. {item.reference}</span>}
         </button>)}</div>}
         {data && data.total > 20 && <div className="flex items-center justify-between gap-3 pt-2">
-          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => { setPage((v) => v - 1); setSelected(null) }}>
+          <Button variant="outline" className="h-11" disabled={page === 1} onClick={() => { setPage((v) => v - 1); setSelected(null) }}>
             <ChevronLeft className="mr-1 h-4 w-4" />Précédent</Button>
           <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => { setPage((v) => v + 1); setSelected(null) }}>
+          <Button variant="outline" className="h-11" disabled={page >= totalPages} onClick={() => { setPage((v) => v + 1); setSelected(null) }}>
             Suivant<ChevronRight className="ml-1 h-4 w-4" /></Button>
         </div>}
       </div>

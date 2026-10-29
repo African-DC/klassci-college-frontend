@@ -20,7 +20,7 @@ export const incidentSchema = z.object({
   created_at: z.string(),
   updated_at: z.string(),
   resolved_at: z.string().nullable(),
-  events: z.array(incidentEventSchema).default([]),
+  events: z.array(incidentEventSchema),
 })
 export const incidentPageSchema = z.object({
   items: z.array(incidentSchema),

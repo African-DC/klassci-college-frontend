@@ -38,7 +38,7 @@ export function IncidentDetail({ incidentId, tenant }: { incidentId: string; ten
     onError: () => toast.error("Modification impossible"),
   })
   if (isLoading) return <Card><CardContent className="p-8 text-sm text-muted-foreground">Chargement du dossier…</CardContent></Card>
-  if (isError || !data) return <Card><CardContent className="space-y-3 p-6"><p role="alert">Impossible d'ouvrir cet incident.</p><Button variant="outline" onClick={() => void refetch()}>Réessayer</Button></CardContent></Card>
+  if (isError || !data) return <Card><CardContent className="space-y-3 p-6"><p role="alert">Impossible d'ouvrir cet incident.</p><Button variant="outline" className="h-11" onClick={() => void refetch()}>Réessayer</Button></CardContent></Card>
   return (
     <Card className="min-w-0 overflow-hidden border-border/80 shadow-sm">
       <CardHeader className="space-y-3 border-b bg-muted/30 p-4 sm:p-6">
@@ -48,7 +48,7 @@ export function IncidentDetail({ incidentId, tenant }: { incidentId: string; ten
         </div>
         <CardTitle className="break-words text-lg sm:text-xl">{data.title}</CardTitle>
         <div className="flex flex-wrap items-center gap-2">
-          {data.reference && <Button variant="outline" size="sm" className="max-w-full font-mono" onClick={async () => {
+          {data.reference && <Button variant="outline" className="h-11 max-w-full font-mono" onClick={async () => {
             try {
               await navigator.clipboard.writeText(data.reference!)
               setCopied(true)
@@ -65,13 +65,13 @@ export function IncidentDetail({ incidentId, tenant }: { incidentId: string; ten
         {tenant && <section className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2"><Label>Statut</Label><Select value={data.status} disabled={update.isPending}
             onValueChange={(status) => update.mutate({ status: status as IncidentStatus })}>
-            <SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
+            <SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>
               {(Object.keys(STATUS_LABELS) as IncidentStatus[]).map((s) => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
             </SelectContent>
           </Select></div>
           <div className="space-y-2"><Label>Priorité</Label><Select value={data.priority} disabled={update.isPending}
             onValueChange={(priority) => update.mutate({ status: data.status, priority: priority as IncidentPriority })}>
-            <SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
+            <SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>
               {(Object.keys(PRIORITY_LABELS) as IncidentPriority[]).map((p) => <SelectItem key={p} value={p}>{PRIORITY_LABELS[p]}</SelectItem>)}
             </SelectContent>
           </Select></div>
@@ -99,7 +99,7 @@ export function IncidentDetail({ incidentId, tenant }: { incidentId: string; ten
             Envoyer
           </Button>
         </form>}
-        <Button variant="ghost" size="sm" onClick={() => void refetch()}><RefreshCw className="mr-2 h-4 w-4" />Actualiser le dossier</Button>
+        <Button variant="ghost" className="h-11" onClick={() => void refetch()}><RefreshCw className="mr-2 h-4 w-4" />Actualiser le dossier</Button>
       </CardContent>
     </Card>
   )

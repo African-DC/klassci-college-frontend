@@ -10,7 +10,7 @@ interface AdminErrorProps {
 }
 
 /** Composant partagé pour les error.tsx Next.js sous (admin) */
-export default function AdminError({ error, reset }: AdminErrorProps) {
+export default function AdminError({ reset }: AdminErrorProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-20">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">

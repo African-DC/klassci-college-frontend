@@ -40,7 +40,7 @@ export function IncidentCreateDialog({ initialReference, onCreated }: {
   const validReference = !reference.trim() || /^[0-9A-Fa-f]{6,16}$/.test(reference.trim())
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button className="w-full sm:w-auto"><Plus className="mr-2 h-4 w-4" />Signaler un problème</Button></DialogTrigger>
+      <DialogTrigger asChild><Button className="h-11 w-full sm:w-auto"><Plus className="mr-2 h-4 w-4" />Signaler un problème</Button></DialogTrigger>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Nouveau signalement</DialogTitle>
@@ -49,14 +49,14 @@ export function IncidentCreateDialog({ initialReference, onCreated }: {
         <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (!create.isPending) create.mutate() }}>
           <div className="space-y-2">
             <Label htmlFor="incident-title">Que s'est-il passé ?</Label>
-            <Input id="incident-title" required minLength={5} maxLength={160} value={title} onChange={(e) => setTitle(e.target.value)}
+            <Input id="incident-title" className="h-11" required minLength={5} maxLength={160} value={title} onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex. Impossible de valider une inscription" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="incident-reference">Code de référence (facultatif)</Label>
             <Input id="incident-reference" autoCapitalize="characters" spellCheck={false}
-              maxLength={16} value={reference} onChange={(e) => setReference(e.target.value.toUpperCase())}
-              aria-invalid={!validReference} placeholder="Ex. A1B2C3D4E5F6" className="font-mono uppercase" />
+              maxLength={16} className="h-11 font-mono uppercase" value={reference} onChange={(e) => setReference(e.target.value.toUpperCase())}
+              aria-invalid={!validReference} placeholder="Ex. A1B2C3D4E5F6" />
             {!validReference && <p role="alert" className="text-xs text-destructive">Code hexadécimal de 6 à 16 caractères attendu.</p>}
             <p className="text-xs text-muted-foreground">Ne confondez pas avec le code établissement utilisé pour vous connecter.</p>
           </div>
@@ -67,8 +67,8 @@ export function IncidentCreateDialog({ initialReference, onCreated }: {
               placeholder="Indiquez la page concernée, l'action réalisée et ce qui s'affiche. N'incluez aucun mot de passe ou donnée sensible." />
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button type="submit" disabled={create.isPending || !validReference || title.trim().length < 5 || description.trim().length < 10}>
+            <Button type="button" variant="outline" className="h-11" onClick={() => setOpen(false)}>Annuler</Button>
+            <Button type="submit" className="h-11" disabled={create.isPending || !validReference || title.trim().length < 5 || description.trim().length < 10}>
               {create.isPending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}Envoyer le signalement
             </Button>
           </DialogFooter>
