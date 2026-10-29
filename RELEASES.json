@@ -11,6 +11,14 @@
       "sections": {
         "Added": [
           {
+            "text": "Assistance : pages premium responsive pour déclarer un incident avec son code, suivre les dossiers et traiter les signalements dans la console technique",
+            "audience": [
+              "admin",
+              "support KLASSCI"
+            ],
+            "pull_request": null
+          },
+          {
             "text": "Emploi du temps : écran « Enseignants de la classe » pour choisir, matière par matière, l'enseignant de chaque classe avant la génération ; la saisie manuelle propose cet enseignant",
             "audience": [
               "admin"
