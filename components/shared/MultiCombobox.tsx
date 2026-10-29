@@ -17,7 +17,7 @@ import {
   MultiComboboxError,
   MultiComboboxLoading,
 } from "./multi-combobox-parts"
-import { matchesSearch, type MultiComboboxOption } from "./multi-combobox-utils"
+import { searchScore, type MultiComboboxOption } from "./multi-combobox-utils"
 
 export interface MultiComboboxProps<T extends number | string = number | string> {
   options: MultiComboboxOption<T>[]
@@ -40,7 +40,7 @@ export interface MultiComboboxProps<T extends number | string = number | string>
 }
 
 const filterOption = (_value: string, search: string, keywords?: string[]) =>
-  matchesSearch(keywords?.join(" ") ?? "", search) ? 1 : 0
+  searchScore(keywords?.join(" ") ?? "", search)
 
 const summary = (count: number, placeholder: string) => {
   if (count === 0) return placeholder
@@ -108,7 +108,7 @@ export function MultiCombobox<T extends number | string = number | string>({
             <CommandItem
               key={String(option.value)}
               value={String(option.value)}
-              keywords={[option.label, option.hint ?? ""]}
+              keywords={[option.label, option.hint ?? "", option.searchText ?? ""]}
               onSelect={() => toggle(option)}
               className="min-h-11 gap-2"
             >
