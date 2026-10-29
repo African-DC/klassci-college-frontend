@@ -1,5 +1,6 @@
 import type { Subject } from "@/lib/contracts/subject"
 import type { SubjectGroup } from "@/lib/contracts/subject-group"
+import { matchesSearch } from "@/components/shared/multi-combobox-utils"
 import { subjectTeachers } from "@/lib/utils/subject-teachers"
 
 interface LevelOrder {
@@ -45,12 +46,12 @@ export function filterSubjectGroups(
   levelFilter: string,
   teacherFilter: string,
 ): SubjectGroup[] {
-  const needle = query.trim().toLowerCase()
+  const needle = query.trim()
   return groups.filter((group) => {
     if (needle) {
-      const matchName = group.name.toLowerCase().includes(needle)
+      const matchName = matchesSearch(group.name, needle)
       const matchTeacher = group.instances.some((inst) =>
-        subjectTeachers(inst).some((t) => t.full_name.toLowerCase().includes(needle)),
+        subjectTeachers(inst).some((t) => matchesSearch(t.full_name, needle)),
       )
       if (!matchName && !matchTeacher) return false
     }

@@ -12,6 +12,7 @@ import {
   ArrearsPolicySection,
   ARREARS_POLICY_PERMISSION,
 } from "@/components/admin/settings/ArrearsPolicySection"
+import { TimetableSettingsSection } from "./TimetableSettingsSection"
 import { SchoolInfoSection } from "./SchoolInfoSection"
 import { TrimesterSection } from "./TrimesterSection"
 import { EnrollmentHistorySection } from "@/components/admin/settings/EnrollmentHistorySection"
@@ -27,6 +28,7 @@ export function SettingsPageClient() {
   // économe lui ouvre cet onglet sans qu'on touche au code.
   const { has } = usePermissions()
   const peutReglerLesDettes = has(ARREARS_POLICY_PERMISSION)
+  const peutModifierHoraires = has("admin:academic-years:update")
 
   return (
     <div className="space-y-6">
@@ -44,15 +46,18 @@ export function SettingsPageClient() {
         <DataError message="Impossible de charger les paramètres." onRetry={() => refetch()} />
       ) : settings ? (
         <Tabs defaultValue="school" className="space-y-6">
-          <TabsList>
+          <div className="-mx-2 overflow-x-auto px-2 pb-2">
+          <TabsList className="w-max max-w-none">
             <TabsTrigger value="school">Établissement</TabsTrigger>
             <TabsTrigger value="identity">Identité visuelle</TabsTrigger>
             <TabsTrigger value="trimesters">Calendrier</TabsTrigger>
+            <TabsTrigger value="timetable">Emploi du temps</TabsTrigger>
             <TabsTrigger value="payment-methods">Moyens de paiement</TabsTrigger>
             {peutReglerLesDettes ? <TabsTrigger value="arrears">Réinscriptions</TabsTrigger> : null}
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="mailpulse">MailPulse</TabsTrigger>
           </TabsList>
+          </div>
 
           <TabsContent value="school">
             <SchoolInfoSection settings={settings} />
@@ -66,6 +71,10 @@ export function SettingsPageClient() {
             <TrimesterSection settings={settings} />
             <HolidaySection settings={settings} />
             <EnrollmentHistorySection settings={settings} />
+          </TabsContent>
+
+          <TabsContent value="timetable">
+            <TimetableSettingsSection settings={settings} canEdit={peutModifierHoraires} />
           </TabsContent>
 
           <TabsContent value="payment-methods">

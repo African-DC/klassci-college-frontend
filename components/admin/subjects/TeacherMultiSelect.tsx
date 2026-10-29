@@ -1,7 +1,8 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useTeachers } from "@/lib/hooks/useTeachers"
+import { useDebounce } from "@/lib/hooks/useDebounce"
 import { MultiCombobox } from "@/components/shared/MultiCombobox"
 import type { MultiComboboxOption } from "@/components/shared/multi-combobox-utils"
 import type { SubjectTeacher } from "@/lib/contracts/subject"
@@ -35,7 +36,9 @@ function buildOptions(
 }
 
 export function TeacherMultiSelect({ value, onChange, knownTeachers = [], disabled, ...aria }: Props) {
-  const { data, isLoading, isError, refetch } = useTeachers({ size: 100 })
+  const [search, setSearch] = useState("")
+  const debounced = useDebounce(search)
+  const { data, isLoading, isError, refetch } = useTeachers({ size: 100, search: debounced })
   const options = useMemo(
     () => buildOptions(data?.items ?? [], knownTeachers),
     [data, knownTeachers],
@@ -53,6 +56,7 @@ export function TeacherMultiSelect({ value, onChange, knownTeachers = [], disabl
       loading={isLoading}
       error={isError ? "Impossible de charger les enseignants." : null}
       onRetry={() => void refetch()}
+      onSearchChange={setSearch}
       disabled={disabled}
       {...aria}
     />
