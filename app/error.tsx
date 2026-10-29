@@ -7,6 +7,8 @@
 import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { canReportFrom } from '@/lib/utils/support-link'
 
 export default function Error({
   error,
@@ -15,6 +17,7 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const pathname = usePathname()
   useEffect(() => {
     Sentry.captureException(error)
   }, [error])
@@ -25,7 +28,9 @@ export default function Error({
       <p className="text-muted-foreground max-w-md">
         Désolé, quelque chose s&apos;est mal passé. Vous pouvez réessayer ou signaler le problème au support KLASSCI.
       </p>
-      <Link href="/admin/support" className="text-sm underline underline-offset-4">Signaler ce problème</Link>
+      {canReportFrom(pathname) && (
+        <Link href="/admin/support" className="text-sm underline underline-offset-4">Signaler ce problème</Link>
+      )}
       <button
         onClick={reset}
         className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"

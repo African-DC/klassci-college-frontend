@@ -3,6 +3,8 @@
 import { WifiOff, RefreshCw, ShieldOff, SearchX, ServerCrash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { canReportFrom } from "@/lib/utils/support-link"
 import type { Route } from "next"
 import { ApiError } from "@/lib/api/client"
 import { Card, CardContent } from "@/components/ui/card"
@@ -72,6 +74,7 @@ export function DataError({
 }: DataErrorProps) {
   const errorType = detectErrorType(error, message)
   const reference = error instanceof ApiError ? error.reference : undefined
+  const canReport = canReportFrom(usePathname())
   const config = ERROR_CONFIG[errorType]
   const Icon = config.icon
 
@@ -93,7 +96,9 @@ export function DataError({
             ? "text-amber-800 dark:text-amber-300"
             : "text-destructive/80"
         }`}>{displayMessage}</p>
-        {reference && <Link href={("/admin/support?reference=" + encodeURIComponent(reference)) as Route} className="ml-auto text-xs font-medium underline underline-offset-4">Signaler · {reference}</Link>}
+        {reference && (canReport
+          ? <Link href={("/admin/support?reference=" + encodeURIComponent(reference)) as Route} className="ml-auto text-xs font-medium underline underline-offset-4">Signaler · {reference}</Link>
+          : <span className="ml-auto font-mono text-xs text-muted-foreground">Code : {reference}</span>)}
         {onRetry && (
           <Button
             variant="ghost"
@@ -127,7 +132,9 @@ export function DataError({
         <p className="text-xs text-muted-foreground mb-4 max-w-xs">
           {displayMessage}
         </p>
-        {reference && <div className="mb-3 space-y-2 text-center"><p className="font-mono text-xs text-muted-foreground">Code : {reference}</p><Button variant="secondary" asChild><Link href={("/admin/support?reference=" + encodeURIComponent(reference)) as Route}>Signaler ce problème</Link></Button></div>}
+        {reference && <div className="mb-3 space-y-2 text-center"><p className="font-mono text-xs text-muted-foreground">Code : {reference}</p>{canReport
+          ? <Button variant="secondary" asChild><Link href={("/admin/support?reference=" + encodeURIComponent(reference)) as Route}>Signaler ce problème</Link></Button>
+          : <p className="text-xs text-muted-foreground">Communiquez ce code à l&apos;administration de l&apos;établissement.</p>}</div>}
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry}>
             <RefreshCw className="mr-2 h-3.5 w-3.5" />
