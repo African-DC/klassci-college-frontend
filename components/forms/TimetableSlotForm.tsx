@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertTriangle, CheckCircle2 } from "lucide-react"
@@ -80,6 +79,7 @@ export function TimetableSlotForm({
   const [showCreateSubject, setShowCreateSubject] = useState(false)
   const [showCreateTeacher, setShowCreateTeacher] = useState(false)
   const [overrun, setOverrun] = useState<{ payload: TimetableSlotCreate; excess: number; target: number } | null>(null)
+  const [showClassTeachers, setShowClassTeachers] = useState(false)
 
   // Fetch class to get level_id/series_id for subject filtering
   const { data: classData } = useClass(effectiveClassId ?? 0)
@@ -97,7 +97,7 @@ export function TimetableSlotForm({
 
   // Rooms — only show: 1) the class's assigned room, 2) non-classroom rooms (labos, etc.)
   const { data: roomsData } = useRooms({ size: 100 })
-  const allRooms = roomsData?.items ?? []
+  const allRooms = useMemo(() => roomsData?.items ?? [], [roomsData])
   const filteredRooms = useMemo(() => {
     return allRooms.filter((r) => {
       // Show the room assigned to this class (room.id matches class.room_id)
@@ -143,18 +143,25 @@ export function TimetableSlotForm({
   // validant. Le backend refait la verification, celle-ci ne fait qu'avertir.
   const selectedSubjectId = form.watch("subject_id")
   const assignedSubject = classTeachers.data?.items.find((item) => item.subject_id === selectedSubjectId)
+  const resolvedTeacher = assignedSubject?.resolved_teacher_id
+  const lastResolution = useRef<{ subjectId: number; teacherId: number } | null>(null)
   const prefilledRoomClass = useRef<number | null>(null)
 
-  // Resolve the teacher even if the subject was selected before the server
-  // finished loading the class assignments. Never rewrite an existing slot.
+  // L'affectation est chargée de façon asynchrone : choisir la matière avant la réponse
+  // ne doit jamais laisser un enseignant vide si l'établissement en a déjà affecté un.
+  // Un enseignant hors des retenus pour la matière est remplacé ; une saisie valide est gardée.
   useEffect(() => {
-    if (isEdit || !assignedSubject?.resolved_teacher_id) return
-    if (!form.getValues("teacher_id")) {
-      form.setValue("teacher_id", assignedSubject.resolved_teacher_id, {
-        shouldValidate: true,
-      })
+    if (isEdit || !selectedSubjectId || !resolvedTeacher) return
+    const current = form.getValues("teacher_id")
+    const eligible = assignedSubject?.eligible_teachers ?? []
+    const changedAssignment =
+      lastResolution.current?.subjectId === selectedSubjectId &&
+      lastResolution.current.teacherId !== resolvedTeacher
+    if (!current || changedAssignment || !eligible.some((t) => t.id === current)) {
+      form.setValue("teacher_id", resolvedTeacher, { shouldValidate: true })
     }
-  }, [assignedSubject, form, isEdit])
+    lastResolution.current = { subjectId: selectedSubjectId, teacherId: resolvedTeacher }
+  }, [isEdit, selectedSubjectId, resolvedTeacher, assignedSubject, form])
 
   // Suggest the classroom only once. Subsequent manual changes remain intact.
   useEffect(() => {
@@ -166,17 +173,6 @@ export function TimetableSlotForm({
     if (!form.getValues("room")) form.setValue("room", classroom.name)
   }, [allRooms, classData?.room_id, effectiveClassId, form, isEdit])
 
-  async function refreshClassAssignment() {
-    const refreshed = await classTeachers.refetch()
-    const subjectId = form.getValues("subject_id")
-    if (!isEdit && subjectId) {
-      const resolved = refreshed.data?.items.find((item) => item.subject_id === subjectId)?.resolved_teacher_id
-      form.setValue("teacher_id", (resolved ?? undefined) as number, {
-        shouldValidate: true,
-        shouldDirty: true,
-      })
-    }
-  }
 
   const selectedTeacherId = form.watch("teacher_id")
   const watchedDay = form.watch("day")
@@ -258,7 +254,7 @@ export function TimetableSlotForm({
   function onSubmit(data: TimetableSlotCreate) {
     const academicYearId = data.academic_year_id || currentYear?.id
     if (!academicYearId) {
-      toast.error("Aucune année scolaire active : configurez-la avant d’ajouter un créneau.")
+      form.setError("academic_year_id", { message: "Sélectionnez une année scolaire active." })
       return
     }
     const payload = { ...data, academic_year_id: academicYearId }
@@ -297,6 +293,7 @@ export function TimetableSlotForm({
                 }
                 onRetry={() => void classTeachers.refetch()}
                 onCreateTeacher={() => setShowCreateTeacher(true)}
+                onManageAssignment={() => setShowClassTeachers(true)}
               />
 
               {effectiveClassId && selectedSubjectId && (
@@ -316,11 +313,6 @@ export function TimetableSlotForm({
                         : "Définissez l’enseignant de cette matière pour cette classe."}
                     </span>
                   </div>
-                  <ClassTeachersDialog
-                    classId={effectiveClassId}
-                    compact
-                    onSaved={() => void refreshClassAssignment()}
-                  />
                 </div>
               )}
 
@@ -432,6 +424,14 @@ export function TimetableSlotForm({
         </AlertDialogContent>
       </AlertDialog>
 
+      {effectiveClassId && (
+        <ClassTeachersDialog
+          classId={effectiveClassId}
+          open={showClassTeachers}
+          onOpenChange={setShowClassTeachers}
+          trigger={false}
+        />
+      )}
       {/* Inline create subject dialog */}
       <InlineCreateSubjectDialog
         open={showCreateSubject}

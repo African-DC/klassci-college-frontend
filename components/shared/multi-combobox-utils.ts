@@ -6,12 +6,13 @@ export interface MultiComboboxOption<T extends number | string = number | string
   searchText?: string
 }
 
-/** A stable comparison form: case, accents, punctuation and whitespace independent. */
+/** A stable comparison form: case, accents, apostrophes, punctuation and whitespace independent. */
 export function normaliseSearch(text: string): string {
   return text
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("fr")
+    .replace(/['\u2019\u02bc]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .replace(/\s+/g, " ")
@@ -66,6 +67,7 @@ export function searchScore(haystack: string, search: string): number {
   return score
 }
 
+/** Recherche multi-mots indépendante de l'ordre, insensible aux accents et à la ponctuation. */
 export function matchesSearch(haystack: string, search: string): boolean {
   return searchScore(haystack, search) > 0
 }

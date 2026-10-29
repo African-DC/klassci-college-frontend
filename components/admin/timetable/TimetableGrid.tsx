@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TimetableSlotForm } from "@/components/forms/TimetableSlotForm"
-import { EcranTropPetit } from "@/components/forms/timetable-slot/EcranTropPetit"
 import {
   HEURE_DEBUT,
   HEURE_FIN,
@@ -29,6 +28,7 @@ import {
   enMinutes,
 } from "@/lib/timetable/semaine"
 import { complement } from "@/lib/timetable/occupation"
+import { visibleTimeLabels } from "@/lib/timetable/time-labels"
 
 /** Une heure illisible ne doit pas se dessiner a minuit : on la saute. */
 const enMinutesStrict = (t: string): number => {
@@ -107,7 +107,8 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
   )
   const gridMinutesEnPx = (minute: number) => (minute - dayStart * 60) * PX_PAR_HEURE / 60
   const deleteMutation = useDeleteSlot()
-  const [createModal, setCreateModal] = useState<{ day: string; time: string; endTime?: string } | null>(null)
+  const [createModal, setCreateModal] = useState<{ day: string; time?: string; endTime?: string } | null>(null)
+  const [mobileDay, setMobileDay] = useState<string>(DAYS[0])
   const [selectedSlot, setSelectedSlot] = useState<TimetableSlot | null>(null)
   const [editSlot, setEditSlot] = useState<TimetableSlot | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -174,7 +175,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
             </div>
           ))}
         </div>
-        <div className="hidden rounded-lg border bg-card overflow-x-auto lg:block">
+        <div className="hidden min-w-0 rounded-lg border bg-card overflow-x-auto lg:block">
           <div className="min-w-[900px]">
             <div className="flex border-b bg-muted/30">
               <div className="w-[55px] p-2" />
@@ -253,23 +254,32 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
 
   return (
     <>
-      <div className="space-y-3 lg:hidden">
-        <div className="rounded-lg border bg-card p-4">
-          <div className="flex items-start gap-3">
+      <div className="min-w-0 space-y-3 lg:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-sm sm:p-4">
+          <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <CalendarDays className="h-5 w-5" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold">Vue mobile de consultation</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {totalSlots} créneau{totalSlots > 1 ? "x" : ""} cette semaine. Ajouter ou modifier un créneau demande une tablette ou un ordinateur : il faut voir la semaine de l&apos;enseignant pendant qu&apos;on choisit l&apos;heure.
+              <p className="text-sm font-semibold">Planning de la classe</p>
+              <p className="text-xs text-muted-foreground">
+                {totalSlots} créneau{totalSlots > 1 ? "x" : ""} cette semaine
               </p>
             </div>
           </div>
+          <Button
+            type="button"
+            size="sm"
+            className="h-11 w-full gap-2 sm:w-auto"
+            onClick={() => setCreateModal({ day: mobileDay })}
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Ajouter un créneau
+          </Button>
         </div>
 
-        <Tabs defaultValue="lundi" className="space-y-3">
-          <div className="-mx-1 overflow-x-auto px-1 pb-1">
+        <Tabs value={mobileDay} onValueChange={setMobileDay} className="min-w-0 space-y-3">
+          <div className="min-w-0 overflow-x-auto pb-1">
             <TabsList className="h-11 w-max max-w-none">
               {DAYS.map((day) => (
                 <TabsTrigger key={day} value={day} className="h-9 min-w-20">
@@ -316,7 +326,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                 </div>
               ))}
               {/* Special time labels (e.g., 10:30) */}
-              {Array.from(specialTimes).map((min) => {
+              {visibleTimeLabels(specialTimes, dayStart, dayEnd, PX_PAR_HEURE).map((min) => {
                 const hh = String(Math.floor(min / 60)).padStart(2, "0")
                 const mm = String(min % 60).padStart(2, "0")
                 return (
@@ -392,6 +402,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                           <button
                             key={`free-${seg.start}`}
                             type="button"
+                            aria-label={`Ajouter un créneau ${DAY_LABELS[day]} de ${startStr} à ${endStr}`}
                             className="absolute left-1 right-1 z-0 flex items-center justify-center rounded-lg border border-dashed border-muted-foreground/20 text-muted-foreground/30 transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary/50"
                             style={{ top: freeTop + 1, height: freeHeight - 2 }}
                             onClick={() => setCreateModal({ day, time: startStr, endTime: endStr })}
@@ -456,41 +467,40 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
       </div>
 
       {/* Create modal */}
-      <Dialog open={createModal !== null} onOpenChange={() => setCreateModal(null)}>
-        <DialogContent className="sm:max-w-2xl lg:max-w-6xl xl:max-w-7xl">
-          <DialogHeader>
+      <Dialog open={createModal !== null} onOpenChange={(open) => { if (!open) setCreateModal(null) }}>
+        <DialogContent className="w-[calc(100vw-1rem)] max-h-[calc(100dvh-1rem)] max-w-none gap-3 overflow-y-auto rounded-xl p-4 sm:max-w-2xl sm:p-6 lg:max-w-6xl xl:max-w-7xl">
+          <DialogHeader className="pr-8 text-left">
             <DialogTitle>Ajouter un créneau</DialogTitle>
+            <DialogDescription>
+              Choisissez la matière, vérifiez la semaine de l'enseignant puis définissez l'horaire.
+            </DialogDescription>
           </DialogHeader>
-          {/* En dessous de md, on ne pose pas de creneau : on ne verrait pas
-              la semaine de l'enseignant pendant qu'on choisit l'heure. */}
-          <div className="md:hidden">
-            <EcranTropPetit />
-          </div>
-          <div className="hidden md:block">
+          {createModal && (
             <TimetableSlotForm
-              defaultDay={createModal?.day}
-              defaultStartTime={createModal?.time}
-              defaultEndTime={createModal?.endTime}
+              key={`new-${classId}-${createModal.day}-${createModal.time ?? ""}`}
+              defaultDay={createModal.day}
+              defaultStartTime={createModal.time}
+              defaultEndTime={createModal.endTime}
               classId={classId}
               onSuccess={() => setCreateModal(null)}
             />
-          </div>
+          )}
         </DialogContent>
       </Dialog>
 
       {/* Edit modal */}
-      <Dialog open={editSlot !== null} onOpenChange={() => setEditSlot(null)}>
-        <DialogContent className="sm:max-w-2xl lg:max-w-6xl xl:max-w-7xl">
-          <DialogHeader>
+      <Dialog open={editSlot !== null} onOpenChange={(open) => { if (!open) setEditSlot(null) }}>
+        <DialogContent className="w-[calc(100vw-1rem)] max-h-[calc(100dvh-1rem)] max-w-none gap-3 overflow-y-auto rounded-xl p-4 sm:max-w-2xl sm:p-6 lg:max-w-6xl xl:max-w-7xl">
+          <DialogHeader className="pr-8 text-left">
             <DialogTitle>Modifier le créneau</DialogTitle>
+            <DialogDescription>Les disponibilités de l'enseignant restent visibles pendant la modification.</DialogDescription>
           </DialogHeader>
-          <div className="md:hidden">
-            <EcranTropPetit />
-          </div>
           {editSlot && (
-            <div className="hidden md:block">
-              <TimetableSlotForm slot={editSlot} onSuccess={() => setEditSlot(null)} />
-            </div>
+            <TimetableSlotForm
+              key={editSlot.id}
+              slot={editSlot}
+              onSuccess={() => setEditSlot(null)}
+            />
           )}
         </DialogContent>
       </Dialog>
@@ -525,7 +535,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
               )}
             </div>
           )}
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2 sm:gap-2 [&>button]:min-h-11 [&>button]:w-full sm:[&>button]:w-auto">
             <Button
               variant="outline"
               size="sm"
@@ -561,7 +571,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
               Cette action est irréversible. Voulez-vous continuer ?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2 sm:gap-2 [&>button]:min-h-11 [&>button]:w-full sm:[&>button]:w-auto">
             <Button variant="outline" onClick={() => setDeleteId(null)}>Annuler</Button>
             <Button
               variant="destructive"

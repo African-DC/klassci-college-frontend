@@ -154,7 +154,8 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
     )
   }
 
-  const allComplete = subjectHours.every((s) => Math.round(s.assigned * 60) === Math.round(s.required * 60)) && totals.required > 0
+  const allComplete = totals.required > 0 && subjectHours.every((s) => volumeState(s.assigned, s.required) === "exact")
+  const overSubjects = subjectHours.filter((s) => volumeState(s.assigned, s.required) === "over")
 
   return (
     <div className="w-full shrink-0 rounded-lg border bg-card overflow-hidden lg:w-[260px]">
@@ -175,9 +176,10 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
           const pct = s.required > 0 ? Math.min((s.assigned / s.required) * 100, 100) : 0
           const progressColor = getProgressColor(s.assigned, s.required)
           const statusColor = getStatusColor(s.assigned, s.required)
+          const excess = volumeState(s.assigned, s.required) === "over"
 
           return (
-            <div key={s.id} className="space-y-1">
+            <div key={s.id} className="space-y-1" title={excess ? `Dépassement de ${formatHours(s.assigned - s.required)}` : undefined}>
               <div className="flex items-center gap-1.5">
                 <span
                   className={cn(
@@ -187,7 +189,7 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
                 />
                 <span className="text-xs font-medium truncate flex-1">{s.name}</span>
                 <span className={cn("text-xs font-semibold tabular-nums", statusColor)}>
-                  {formatHours(s.assigned)} / {formatHours(s.required)}
+                  {formatHours(s.assigned)} / {formatHours(s.required)}{excess ? " ⚠" : ""}
                 </span>
               </div>
               <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -215,7 +217,7 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
           <span
             className={cn(
               "text-xs font-bold tabular-nums",
-              getStatusColor(totals.assigned, totals.required),
+              allComplete ? "text-emerald-600" : "text-amber-600",
             )}
           >
             {formatHours(totals.assigned)} / {formatHours(totals.required)}
@@ -226,7 +228,7 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
             <div
               className={cn(
                 "h-full rounded-full transition-all",
-                getProgressColor(totals.assigned, totals.required),
+                allComplete ? "bg-emerald-500" : "bg-amber-500",
               )}
               style={{
                 width: `${Math.min((totals.assigned / totals.required) * 100, 100)}%`,
@@ -234,17 +236,17 @@ export function TimetableHoursSidebar({ classId }: TimetableHoursSidebarProps) {
             />
           </div>
         )}
-        {subjectHours.some((s) => s.assigned > s.required) && (
+        {overSubjects.length > 0 && (
           <p className="mt-2 text-xs font-medium text-destructive" role="status">
-            Dépassement : {subjectHours.filter((s) => s.assigned > s.required)
+            Dépassement : {overSubjects
               .map((s) => `${s.name} (+${formatHours(s.assigned - s.required)})`).join(", ")}
           </p>
         )}
         {totals.required > 0 && (
           <p className="text-[10px] text-muted-foreground mt-1">
-            {totals.assigned >= totals.required
-              ? allComplete ? "Chaque matière atteint son volume prévu" : "Volume total atteint, mais des matières sont déséquilibrées"
-              : `${formatHours(totals.required - totals.assigned)} restante${totals.required - totals.assigned > 1 ? "s" : ""} a assigner`}
+            {allComplete
+              ? "Tous les volumes par matière sont conformes"
+              : `${formatHours(subjectHours.reduce((sum, s) => sum + Math.max(0, s.required - s.assigned), 0))} à compléter par matière${overSubjects.length > 0 ? " · Dépassement à corriger" : ""}`}
           </p>
         )}
       </div>

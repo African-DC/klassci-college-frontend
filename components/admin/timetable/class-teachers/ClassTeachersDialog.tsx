@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Users, Pencil } from "lucide-react"
+import { Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -19,38 +19,50 @@ import { TEACHERS_DIALOG_CONTENT } from "./class-teachers-styles"
 
 interface ClassTeachersDialogProps {
   classId: number
-  compact?: boolean
+  /** Ouverture pilotée de l'extérieur (ex. depuis le formulaire de créneau). */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  /** Faux quand le déclencheur est rendu ailleurs. */
+  trigger?: boolean
   onSaved?: () => void
 }
 
 /** Bouton « Enseignants de la classe » qui ouvre le panneau dans une fenêtre. */
-export function ClassTeachersDialog({ classId, compact = false, onSaved }: ClassTeachersDialogProps) {
+export function ClassTeachersDialog({
+  classId,
+  open: externalOpen,
+  onOpenChange,
+  trigger = true,
+  onSaved,
+}: ClassTeachersDialogProps) {
   const [open, setOpen] = useState(false)
   const guard = useDiscardGuard()
+  const isOpen = externalOpen ?? open
+  const close = () => { setOpen(false); onOpenChange?.(false) }
   const { data } = useClassSubjectTeachers(classId)
   const missing = data?.missing_count ?? 0
 
   return (
     <>
-      <Button
+      {trigger && <Button
         type="button"
         variant="outline"
         className="h-11 sm:h-10"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); onOpenChange?.(true) }}
       >
-        {compact ? <Pencil aria-hidden="true" className="mr-2 h-4 w-4" /> : <Users aria-hidden="true" className="mr-2 h-4 w-4" />}
-        {compact ? "Modifier l’affectation" : "Enseignants de la classe"}
+        <Users aria-hidden="true" className="mr-2 h-4 w-4" />
+        Enseignants de la classe
         {missing > 0 && (
           <Badge className="ml-2 bg-amber-100 px-1.5 text-amber-900 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-200">
             {missing}
           </Badge>
         )}
-      </Button>
+      </Button>}
       <Dialog
-        open={open}
+        open={isOpen}
         onOpenChange={(v) => {
-          if (v) setOpen(true)
-          else guard.guard(() => setOpen(false))
+          if (v) { setOpen(true); onOpenChange?.(true) }
+          else guard.guard(close)
         }}
       >
         <DialogContent className={TEACHERS_DIALOG_CONTENT}>
@@ -66,7 +78,7 @@ export function ClassTeachersDialog({ classId, compact = false, onSaved }: Class
             onDirtyChange={guard.setDirty}
             onSaved={() => {
               guard.setDirty(false)
-              setOpen(false)
+              close()
               onSaved?.()
             }}
           />
