@@ -69,7 +69,7 @@ export function ClassSubjectTeacherRow({ item, value, disabled, onChange }: Clas
     <article
       className={cn(
         "rounded-xl border bg-card p-4 shadow-sm",
-        "lg:items-center lg:rounded-none lg:border-x-0 lg:border-t-0 lg:bg-transparent lg:px-3 lg:py-3 lg:shadow-none",
+        "lg:grid lg:items-center lg:rounded-none lg:border-x-0 lg:border-t-0 lg:bg-transparent lg:px-3 lg:py-3 lg:shadow-none",
         SUBJECT_GRID_COLUMNS,
       )}
     >
