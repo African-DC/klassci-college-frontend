@@ -65,6 +65,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - En corrigeant le niveau antérieur d'un élève sans toucher à sa qualité, l'écran annonce que la qualité sera recalculée : Redoublant si ce niveau est celui de la classe *(secrétariat, éducateur)*
 
 ### Fixed
+- Matières et emploi du temps : les pastilles et avatars d'enseignants retrouvent leur couleur, et l'écran « Enseignants de la classe » s'aligne en colonnes sur ordinateur *(direction, secrétariat)*
 - Glisser une matière du catalogue vers un niveau qui en portait déjà une autre ne répond plus à tort « existe déjà » *(direction, secrétariat)* (#543)
 - L'export Excel ou PDF d'une liste de classe contient tous les élèves, et plus seulement les vingt premiers affichés à l'écran *(admin, secrétariat)* (#487)
 - Le journal montre ce qui a changé directement dans la liste, l'ancienne valeur à côté de la nouvelle, sans ouvrir le détail *(admin, directeur, comptable)*
