@@ -1,4 +1,3 @@
-import { z } from "zod"
 import { apiFetch, safeValidate } from "@/lib/api/client"
 import {
   ScheduleEventSchema, ScheduleEventCreateSchema,
@@ -14,7 +13,12 @@ const FR: Record<string, string> = Object.fromEntries(
 )
 function fromApi(value: unknown): ScheduleEvent {
   const event = value as Record<string, unknown>
-  return safeValidate(ScheduleEventSchema, { ...event, day: FR[String(event.day)] ?? event.day }, "schedule-event")
+  return safeValidate(ScheduleEventSchema, {
+    ...event,
+    day: FR[String(event.day)] ?? event.day,
+    start_time: String(event.start_time ?? "").slice(0, 5),
+    end_time: String(event.end_time ?? "").slice(0, 5),
+  }, "schedule-event")
 }
 function payload(data: ScheduleEventCreate) {
   const parsed = ScheduleEventCreateSchema.parse(data)
@@ -25,13 +29,14 @@ export const scheduleEventsApi = {
     const q = new URLSearchParams({ academic_year_id: String(yearId) })
     if (classId) q.set("class_id", String(classId))
     const data = await apiFetch<unknown>(`/timetable/events?${q}`)
-    return (data as unknown[]).map(fromApi)
+    const items = Array.isArray(data) ? data : (data as { data?: unknown[] }).data ?? []
+    return items.map(fromApi)
   },
   create: async (input: ScheduleEventCreate) => {
     const data = await apiFetch<unknown>("/timetable/events", {
       method: "POST", body: JSON.stringify(payload(input)),
     })
-    return fromApi(data)
+    return fromApi((data as { data?: unknown })?.data ?? data)
   },
   update: async (id: number, input: ScheduleEventCreate) => {
     const data = await apiFetch<unknown>(`/timetable/events/${id}`, {

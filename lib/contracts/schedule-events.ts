@@ -24,6 +24,6 @@ export const ScheduleEventCreateSchema = z.object({
   path: ["end_time"],
   message: "L'heure de fin doit être après l'heure de début",
 })
-export const ScheduleEventSchema = ScheduleEventCreateSchema.extend({ id: z.number() })
+export const ScheduleEventSchema = z.intersection(ScheduleEventCreateSchema, z.object({ id: z.number() }))
 export type ScheduleEvent = z.infer<typeof ScheduleEventSchema>
 export type ScheduleEventCreate = z.infer<typeof ScheduleEventCreateSchema>
