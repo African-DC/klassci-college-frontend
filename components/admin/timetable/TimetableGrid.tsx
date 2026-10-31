@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TimetableSlotForm } from "@/components/forms/TimetableSlotForm"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+import { useScheduleEvents } from "@/lib/hooks/useScheduleEvents"
 import {
   HEURE_DEBUT,
   HEURE_FIN,
@@ -29,6 +31,7 @@ import {
 } from "@/lib/timetable/semaine"
 import { complement } from "@/lib/timetable/occupation"
 import { visibleTimeLabels } from "@/lib/timetable/time-labels"
+import { durationLabel } from "@/lib/timetable/durations"
 
 /** Une heure illisible ne doit pas se dessiner a minuit : on la saute. */
 const enMinutesStrict = (t: string): number => {
@@ -92,6 +95,9 @@ interface TimetableGridProps {
 export function TimetableGrid({ classId }: TimetableGridProps) {
   const queryClient = useQueryClient()
   const { data: slots, isLoading } = useTimetable(classId)
+  const { data: years } = useAcademicYears()
+  const yearId = years?.items.find(y => y.is_current)?.id ?? null
+  const { data: events = [] } = useScheduleEvents(yearId, classId)
   const { data: config } = useQuery({
     queryKey: ["timetable", "configuration"],
     queryFn: async () => (await import("@/lib/api/timetable")).timetableApi.getConfiguration(),
@@ -100,10 +106,12 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
   const dayStart = Math.min(
     config?.day_start_hour ?? HEURE_DEBUT,
     ...(slots ?? []).map((slot) => Math.floor(enMinutesStrict(slot.start_time) / 60)),
+    ...events.map(event => Math.floor(enMinutesStrict(event.start_time) / 60)),
   )
   const dayEnd = Math.max(
     config?.day_end_hour ?? HEURE_FIN,
     ...(slots ?? []).map((slot) => Math.ceil(enMinutesStrict(slot.end_time) / 60)),
+    ...events.map(event => Math.ceil(enMinutesStrict(event.end_time) / 60)),
   )
   const gridMinutesEnPx = (minute: number) => (minute - dayStart * 60) * PX_PAR_HEURE / 60
   const deleteMutation = useDeleteSlot()
@@ -124,21 +132,20 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
       map.set(s.day, existing)
     })
     return map
-  }, [slots])
+  }, [slots, events])
 
   // Keep minute-precise positions, but don't stack unreadable labels
   // around 09:50 / 10:00 / 10:10. Each card still shows exact times.
   const specialTimes = useMemo(() => {
     const marks = new Set<number>()
-    slots?.forEach((slot) => {
+    for (const slot of [...(slots ?? []), ...events]) {
       const start = enMinutesStrict(slot.start_time)
       const end = enMinutesStrict(slot.end_time)
       if (start % 60) marks.add(start)
       if (end % 60) marks.add(end)
-    })
+    }
     const accepted: number[] = []
     for (const minute of [...marks].sort((a, b) => a - b)) {
-      if (Math.min(minute % 60, 60 - (minute % 60)) < 16) continue
       if (accepted.some((previous) => Math.abs(minute - previous) < 16)) continue
       accepted.push(minute)
     }
@@ -242,14 +249,20 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
 
   function renderMobileDay(day: string) {
     const daySlots = sortSlotsByTime(slotsByDay.get(day) ?? [])
-    if (daySlots.length === 0) {
+    if (daySlots.length === 0 && !events.some(event => event.day === day)) {
       return (
         <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground">
           Aucun cours planifié pour {DAY_LABELS[day].toLowerCase()}.
         </div>
       )
     }
-    return <div className="space-y-3">{daySlots.map(renderMobileSlot)}</div>
+    return <div className="space-y-3">
+      {events.filter(event => event.day === day).map(event => <div key={`event-${event.id}`} className="rounded-lg border border-dashed bg-muted/60 p-3 text-sm">
+        <p className="font-semibold">{event.title}</p>
+        <p className="text-xs text-muted-foreground">{event.start_time}–{event.end_time}</p>
+      </div>)}
+      {daySlots.map(renderMobileSlot)}
+    </div>
   }
 
   return (
@@ -372,8 +385,10 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
 
                   {/* Free slot "+" buttons — one per free sub-segment within each hour */}
                   {(() => {
-                    const occupied = daySlots
-                      .map((s) => ({ start: enMinutesStrict(s.start_time), end: enMinutesStrict(s.end_time) }))
+                    const occupied = [
+                      ...daySlots.map((s) => ({ start: enMinutesStrict(s.start_time), end: enMinutesStrict(s.end_time) })),
+                      ...events.filter(e => e.day === day && e.blocks_courses).map(e => ({ start: enMinutesStrict(e.start_time), end: enMinutesStrict(e.end_time) })),
+                    ]
                       .sort((a, b) => a.start - b.start)
 
                     const buttons: React.ReactNode[] = []
@@ -427,6 +442,20 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                     return buttons
                   })()}
 
+                  {/* Recurring non-teaching intervals, rendered to the same minute axis. */}
+                  {events.filter(event => event.day === day).map(event => {
+                    const start = enMinutesStrict(event.start_time)
+                    const end = enMinutesStrict(event.end_time)
+                    return <div key={`event-${event.id}`}
+                      title={`${event.title} · ${event.start_time}–${event.end_time}`}
+                      className="pointer-events-none absolute left-1 right-1 z-10 flex items-center justify-center overflow-hidden rounded-md border border-dashed bg-amber-100/90 px-1 text-center text-[10px] font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+                      style={{ top: gridMinutesEnPx(start) + 1, height: Math.max(4, (end - start) * PX_PAR_HEURE / 60 - 2) }}>
+                      <span className="truncate" aria-label={`${event.title} de ${event.start_time} à ${event.end_time} (${durationLabel(event.start_time, event.end_time)})`}>
+                        {end - start < 28 ? `${event.start_time}–${event.end_time}` : `${event.title} · ${event.start_time}–${event.end_time}`}
+                      </span>
+                    </div>
+                  })}
+
                   {/* Rendered slots */}
                   {daySlots.map((slot) => {
                     const startMin = enMinutesStrict(slot.start_time)
@@ -435,7 +464,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                     const height = ((endMin - startMin) / 60) * PX_PAR_HEURE
                     const showTeacher = height >= 40
                     const showRoom = height >= 55
-                    const showTime = height >= 70
+                    const showTime = true
 
                     return (
                       <button
@@ -452,10 +481,10 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                         )}
                         style={{ top: top + 1, height: height - 2 }}
                       >
-                        <p className="text-xs font-semibold truncate">{slot.subject_name}</p>
+                        {height >= 28 && <p className="text-xs font-semibold truncate">{slot.subject_name}</p>}
                         {showTeacher && <p className="text-[10px] opacity-75 truncate">{slot.teacher_name}</p>}
                         {showRoom && slot.room && <p className="text-[10px] opacity-60 truncate">{slot.room}</p>}
-                        {showTime && <p className="text-[10px] opacity-50">{slot.start_time} - {slot.end_time}</p>}
+                        {showTime && <p className="text-[10px] font-medium truncate">{slot.start_time}–{slot.end_time} ({durationLabel(slot.start_time, slot.end_time)})</p>}
                       </button>
                     )
                   })}

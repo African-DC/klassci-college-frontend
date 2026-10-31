@@ -2,9 +2,12 @@
 
 import { CalendarOff } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useMyTimetable, useTeacherTimetable } from "@/lib/hooks/useTimetable"
+import { useMyTimetable, useTeacherTimetable, useMySchoolEvents } from "@/lib/hooks/useTimetable"
+import { SchoolEventCard } from "@/components/timetable/SchoolEventCard"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { Skeleton } from "@/components/ui/skeleton"
+import { durationLabel, orderedTimetableEntries } from "@/lib/timetable/durations"
+import { visibleTimeLabels } from "@/lib/timetable/time-labels"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
 const DAY_LABELS: Record<string, string> = {
@@ -48,12 +51,14 @@ interface TeacherScheduleViewProps {
 }
 
 export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
-  const ownQuery = useMyTimetable()
-  const adminQuery = useTeacherTimetable(teacherId ?? 0)
   const useOwn = teacherId === undefined
+  const ownQuery = useMyTimetable()
+  const schoolEventsQuery = useMySchoolEvents(useOwn)
+  const adminQuery = useTeacherTimetable(teacherId ?? 0)
   const slots = useOwn ? ownQuery.data : adminQuery.data
   const isLoading = useOwn ? ownQuery.isLoading : adminQuery.isLoading
   const error = useOwn ? ownQuery.error : adminQuery.error
+  const events = useOwn ? (schoolEventsQuery.data ?? []) : []
 
   if (error) {
     return (
@@ -90,13 +95,23 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
     )
   }
 
-  const totalHeight = (END_HOUR - START_HOUR) * PX_PER_HOUR
+  const startHour = Math.min(
+    START_HOUR,
+    ...(slots ?? []).map(slot => Math.floor(timeToMinutes(slot.start_time) / 60)),
+    ...events.map(event => Math.floor(timeToMinutes(event.start_time) / 60)),
+  )
+  const endHour = Math.max(
+    END_HOUR,
+    ...(slots ?? []).map(slot => Math.ceil(timeToMinutes(slot.end_time) / 60)),
+    ...events.map(event => Math.ceil(timeToMinutes(event.end_time) / 60)),
+  )
+  const totalHeight = (endHour - startHour) * PX_PER_HOUR
 
   // Bug #37 : empty state explicite quand aucun créneau n'est encore
   // programmé pour cet enseignant. Sans ça, Mme Diallo voit une grille
   // hebdomadaire vide et pense que l'app est cassée. Tone informatif
   // (pas admin) — elle ne peut pas créer ses propres créneaux.
-  const hasSlots = (slots ?? []).length > 0
+  const hasSlots = (slots ?? []).length > 0 || events.length > 0
   if (!hasSlots) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card px-6 py-16 text-center">
@@ -123,7 +138,10 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
   }
 
   // Generate hour labels
-  const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
+  const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i)
+  const timeMarks = [...(slots ?? []), ...events].flatMap(item => [
+    timeToMinutes(item.start_time), timeToMinutes(item.end_time),
+  ]).filter(minute => minute % 60 !== 0)
 
   return (
     <>
@@ -132,30 +150,34 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
     <div className="space-y-4 md:hidden">
       {DAYS.map((day) => {
         const daySlots = slotsByDay[day]
-        if (!daySlots || daySlots.length === 0) return null
+        const dayEvents = events.filter(event => event.day === day)
+        if ((!daySlots || daySlots.length === 0) && dayEvents.length === 0) return null
         return (
           <div key={day}>
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {DAY_LABELS[day]}
             </h2>
             <div className="space-y-2">
-              {daySlots.map((slot) => (
+              {orderedTimetableEntries(daySlots, dayEvents).map(entry => entry.kind === "event"
+                ? <SchoolEventCard key={`event-${entry.item.id}`} event={entry.item} />
+                : (
                 <div
-                  key={slot.id}
+                  key={entry.item.id}
                   className={cn(
                     "flex items-center gap-3 rounded-lg border p-3",
-                    SLOT_COLORS[slot.subject_id % SLOT_COLORS.length],
+                    SLOT_COLORS[entry.item.subject_id % SLOT_COLORS.length],
                   )}
                 >
                   <div className="min-w-[58px] text-center">
-                    <p className="text-xs font-bold tabular-nums">{slot.start_time}</p>
-                    <p className="text-[10px] opacity-70 tabular-nums">{slot.end_time}</p>
+                    <p className="text-xs font-bold tabular-nums">{entry.item.start_time}</p>
+                    <p className="text-[10px] opacity-70 tabular-nums">{entry.item.end_time}</p>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{slot.subject_name}</p>
+                    <p className="truncate text-sm font-semibold">{entry.item.subject_name}</p>
+                    <p className="text-[10px] opacity-75">{durationLabel(entry.item.start_time, entry.item.end_time)}</p>
                     <p className="truncate text-[11px] opacity-75">
-                      {slot.class_name}
-                      {slot.room && ` • ${slot.room}`}
+                      {entry.item.class_name}
+                      {entry.item.room && ` • ${entry.item.room}`}
                     </p>
                   </div>
                 </div>
@@ -189,9 +211,17 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
               <div
                 key={h}
                 className="absolute left-0 right-0 flex items-start px-3 text-xs font-mono text-muted-foreground"
-                style={{ top: (h - START_HOUR) * PX_PER_HOUR }}
+                style={{ top: (h - startHour) * PX_PER_HOUR }}
               >
                 <span className="mt-[-7px]">{`${String(h).padStart(2, "0")}:00`}</span>
+              </div>
+            ))}
+            {/* Exact off-hour boundaries, when legible between hour labels. */}
+            {visibleTimeLabels(timeMarks, startHour, endHour, PX_PER_HOUR).map(minute => (
+              <div key={`minute-${minute}`}
+                className="absolute left-0 right-0 px-1 text-[9px] font-mono text-muted-foreground"
+                style={{ top: ((minute - startHour * 60) / 60) * PX_PER_HOUR - 5 }}>
+                {`${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`}
               </div>
             ))}
             {/* Hour lines */}
@@ -199,7 +229,7 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
               <div
                 key={`line-${h}`}
                 className="absolute left-0 right-0 border-t border-border/40"
-                style={{ top: (h - START_HOUR) * PX_PER_HOUR }}
+                style={{ top: (h - startHour) * PX_PER_HOUR }}
               />
             ))}
           </div>
@@ -212,13 +242,25 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
                 <div
                   key={h}
                   className="absolute left-0 right-0 border-t border-border/40"
-                  style={{ top: (h - START_HOUR) * PX_PER_HOUR }}
+                  style={{ top: (h - startHour) * PX_PER_HOUR }}
                 />
               ))}
+              {/* Recurring periods alongside the teacher's own course slots. */}
+              {events.filter(event => event.day === day).map(event => {
+                const start = timeToMinutes(event.start_time) - startHour * 60
+                const end = timeToMinutes(event.end_time) - startHour * 60
+                return (
+                  <div key={`event-${event.id}`} title={event.title}
+                    className="pointer-events-none absolute inset-x-1 z-10 overflow-hidden rounded-md border border-dashed bg-muted px-1 text-center text-xs font-semibold"
+                    style={{ top: (start / 60) * PX_PER_HOUR + 1, height: Math.max(8, ((end - start) / 60) * PX_PER_HOUR - 2) }}>
+                    {event.start_time}–{event.end_time} · {durationLabel(event.start_time, event.end_time)}
+                  </div>
+                )
+              })}
               {/* Slots */}
               {slotsByDay[day].map((slot) => {
-                const startMin = timeToMinutes(slot.start_time) - START_HOUR * 60
-                const endMin = timeToMinutes(slot.end_time) - START_HOUR * 60
+                const startMin = timeToMinutes(slot.start_time) - startHour * 60
+                const endMin = timeToMinutes(slot.end_time) - startHour * 60
                 const top = (startMin / 60) * PX_PER_HOUR
                 const height = ((endMin - startMin) / 60) * PX_PER_HOUR - 2
 
@@ -229,9 +271,10 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
                       "absolute left-1 right-1 rounded-md border px-2 py-1 overflow-hidden",
                       SLOT_COLORS[slot.subject_id % SLOT_COLORS.length]
                     )}
-                    style={{ top: top + 1, height: Math.max(height, 20) }}
+                    style={{ top: top + 1, height: Math.max(height, 10) }}
                   >
                     <p className="text-xs font-semibold truncate">{slot.subject_name}</p>
+                    <p className="text-[10px] opacity-80 truncate">{slot.start_time}–{slot.end_time} · {durationLabel(slot.start_time, slot.end_time)}</p>
                     {height > 30 && (
                       <p className="text-[10px] opacity-75 truncate">{slot.class_name}</p>
                     )}

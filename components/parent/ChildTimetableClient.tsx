@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { useParentChildTimetable } from "@/lib/hooks/useParentPortal"
+import { SchoolEventCard } from "@/components/timetable/SchoolEventCard"
+import { durationLabel, orderedTimetableEntries } from "@/lib/timetable/durations"
 import type { ChildTimetableSlot } from "@/lib/api/parent-portal"
 import { isEnrolledFromClassName } from "@/lib/utils/enrollment-status"
 
@@ -46,6 +48,7 @@ export function ChildTimetableClient({ childId }: ChildTimetableClientProps) {
   const { data, isLoading, isError, refetch } = useParentChildTimetable(childId)
 
   const slots = data?.slots ?? []
+  const events = data?.events ?? []
   const className = data?.class_name ?? ""
 
   const slotsByDay = DAYS.reduce((acc, day) => {
@@ -68,7 +71,7 @@ export function ChildTimetableClient({ childId }: ChildTimetableClientProps) {
         <DataError message="Impossible de charger l'emploi du temps" onRetry={() => refetch()} />
       ) : isLoading ? (
         <TimetableSkeleton />
-      ) : slots.length === 0 ? (
+      ) : slots.length === 0 && events.length === 0 ? (
         // Empty state désambigué : distinguer "enfant pas inscrit" vs
         // "inscrit mais aucun cours cette semaine" pour rassurer le parent.
         !isEnrolledFromClassName(className) ? (
@@ -102,28 +105,32 @@ export function ChildTimetableClient({ childId }: ChildTimetableClientProps) {
         <div className="space-y-4">
           {DAYS.map((day) => {
             const daySlots = slotsByDay[day]
-            if (!daySlots || daySlots.length === 0) return null
+            const dayEvents = events.filter(event => event.day === day)
+            if ((!daySlots || daySlots.length === 0) && dayEvents.length === 0) return null
             return (
               <div key={day}>
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                   {DAY_LABELS[day]}
                 </h2>
                 <div className="space-y-2">
-                  {daySlots.map((slot) => (
+                  {orderedTimetableEntries(daySlots, dayEvents).map(entry => entry.kind === "event"
+                    ? <SchoolEventCard key={`event-${entry.item.id}`} event={entry.item} />
+                    : (
                     <Card
-                      key={slot.id}
-                      className={`border ${SUBJECT_COLORS[hashCode(slot.subject_name) % SUBJECT_COLORS.length]} shadow-none`}
+                      key={entry.item.id}
+                      className={`border ${SUBJECT_COLORS[hashCode(entry.item.subject_name) % SUBJECT_COLORS.length]} shadow-none`}
                     >
                       <CardContent className="flex items-center gap-3 p-3">
                         <div className="text-center min-w-[50px]">
-                          <p className="text-xs font-bold">{slot.start_time}</p>
-                          <p className="text-[10px] text-muted-foreground">{slot.end_time}</p>
+                          <p className="text-xs font-bold">{entry.item.start_time}</p>
+                          <p className="text-[10px] text-muted-foreground">{entry.item.end_time}</p>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold truncate">{slot.subject_name}</p>
+                          <p className="text-sm font-semibold truncate">{entry.item.subject_name}</p>
+                          <p className="text-xs text-muted-foreground">{durationLabel(entry.item.start_time, entry.item.end_time)}</p>
                           <p className="text-xs opacity-75">
-                            {slot.teacher_name}
-                            {slot.room_name && ` \u2022 ${slot.room_name}`}
+                            {entry.item.teacher_name}
+                            {entry.item.room_name && ` \u2022 ${entry.item.room_name}`}
                           </p>
                         </div>
                       </CardContent>

@@ -3,9 +3,16 @@
   "generated_at": "2026-10-30T00:07:11Z",
   "version": "Unreleased",
   "released": false,
-  "total": 373,
+  "total": 374,
   "sections": {
     "Added": [
+      {
+        "text": "Emploi du temps : récréations, pauses et séances spéciales récurrentes, indépendantes des matières, configurables par établissement ou classe, avec contraintes de conflit et affichage dédié",
+        "audience": [
+          "administration"
+        ],
+        "pull_request": 568
+      },
       {
         "text": "Assistance : pages premium responsive pour déclarer un incident avec son code, suivre les dossiers et traiter les signalements dans la console technique",
         "audience": [
@@ -41,14 +48,6 @@
         "text": "Emploi du temps : écran « Enseignants de la classe » pour choisir, matière par matière, l'enseignant de chaque classe avant la génération ; la saisie manuelle propose cet enseignant",
         "audience": [
           "admin"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Une matière peut être confiée à plusieurs enseignants, affichés sur chaque fiche ; retirer un enseignant qui a déjà des créneaux demande une confirmation, sans supprimer ces créneaux",
-        "audience": [
-          "direction",
-          "secrétariat"
         ],
         "pull_request": null
       }

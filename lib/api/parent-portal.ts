@@ -1,4 +1,6 @@
 import { z } from "zod"
+import { normalizeScheduleEvent } from "@/lib/api/schedule-events"
+import type { ScheduleEvent } from "@/lib/contracts/schedule-events"
 import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import { cashRemaining } from "@/lib/contracts/payment"
 import { mapFeeStatus } from "./student-portal"
@@ -44,6 +46,7 @@ export interface ChildTimetableResponse {
   student_id: number
   class_name: string
   slots: ChildTimetableSlot[]
+  events?: ScheduleEvent[]
 }
 
 // Extrait l'item de la réponse API, qu'elle soit { data: T } ou T directement
@@ -117,6 +120,20 @@ export const parentPortalApi = {
   // Emploi du temps d'un enfant
   getChildTimetable: async (childId: number): Promise<ChildTimetableResponse> => {
     const res = await apiFetch<unknown>(`/parent/children/${childId}/timetable`)
-    return unwrapResponse(res) as ChildTimetableResponse
+    const raw = unwrapResponse<ChildTimetableResponse>(res)
+    const enToFr: Record<string, string> = {
+      monday: "lundi", tuesday: "mardi", wednesday: "mercredi",
+      thursday: "jeudi", friday: "vendredi", saturday: "samedi",
+    }
+    return {
+      ...raw,
+      slots: raw.slots.map(slot => ({
+        ...slot,
+        day: enToFr[slot.day] ?? slot.day,
+        start_time: slot.start_time.slice(0, 5),
+        end_time: slot.end_time.slice(0, 5),
+      })),
+      events: (raw.events ?? []).map(normalizeScheduleEvent),
+    }
   },
 }

@@ -1,4 +1,6 @@
 import { z } from "zod"
+import { normalizeScheduleEvent } from "@/lib/api/schedule-events"
+import type { ScheduleEvent } from "@/lib/contracts/schedule-events"
 import { getSession } from "next-auth/react"
 import { apiFetch, safeValidate } from "./client"
 import {
@@ -83,6 +85,11 @@ export const timetableApi = {
   // fields that TimetableSlotSchema requires (teacher_id / teacher_name /
   // class_id / academic_year_id / subject_id) — we map to a synthesized
   // record that satisfies the Zod contract used by the grid component.
+  mySchoolEvents: async (): Promise<ScheduleEvent[]> => {
+    const raw = await apiFetch<{ events?: unknown[] }>("/teacher/schedule")
+    return (raw.events ?? []).map(normalizeScheduleEvent)
+  },
+
   myTimetable: async (): Promise<TimetableSlot[]> => {
     const json = await apiFetch<{ items?: unknown[] } | unknown[]>(`/teacher/schedule`)
     const arr: unknown[] = Array.isArray(json) ? json : json.items ?? []
