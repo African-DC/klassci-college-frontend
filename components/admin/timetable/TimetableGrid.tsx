@@ -28,6 +28,7 @@ import {
   JOURS_NOMS,
   PX_PAR_HEURE,
   enMinutes,
+  versHHMM,
 } from "@/lib/timetable/semaine"
 import { complement } from "@/lib/timetable/occupation"
 import { visibleTimeLabels } from "@/lib/timetable/time-labels"
@@ -153,13 +154,26 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
   }, [slots])
 
   function handleDrop(targetDay: string, targetHour: string, slotId: number) {
+    const original = slots?.find(slot => slot.id === slotId)
+    if (!original) {
+      toast.error("Le cours n'est plus disponible.")
+      return
+    }
+    const duration = enMinutesStrict(original.end_time) - enMinutesStrict(original.start_time)
+    const endMinute = enMinutesStrict(targetHour) + duration
+    if (duration <= 0 || endMinute > 24 * 60) {
+      toast.error("Impossible de déplacer cette séance à cet horaire.")
+      return
+    }
     import("@/lib/api/timetable").then(({ timetableApi }) => {
-      timetableApi.update(slotId, { day: targetDay as never, start_time: targetHour, end_time: addHour(targetHour) })
-        .then(() => {
-          toast.success("Créneau déplacé")
-          queryClient.invalidateQueries({ queryKey: ["timetable"] })
-        })
-        .catch((err: Error) => toast.error("Erreur", { description: err.message }))
+      timetableApi.update(slotId, {
+        day: targetDay as never,
+        start_time: targetHour,
+        end_time: versHHMM(endMinute),
+      }).then(() => {
+        toast.success("Créneau déplacé")
+        queryClient.invalidateQueries({ queryKey: ["timetable"] })
+      }).catch((err: Error) => toast.error("Erreur", { description: err.message }))
     })
   }
 
