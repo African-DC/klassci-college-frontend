@@ -18,8 +18,8 @@ export const ScheduleEventCreateSchema = z.object({
   category: z.enum(EVENT_CATEGORIES),
   blocks_courses: z.boolean(),
   day: z.enum(DAYS),
-  start_time: z.string().regex(/^([01]\\d|2[0-3]):[0-5]\\d$/, "Heure invalide"),
-  end_time: z.string().regex(/^([01]\\d|2[0-3]):[0-5]\\d$/, "Heure invalide"),
+  start_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Heure invalide"),
+  end_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Heure invalide"),
 }).refine(v => v.start_time < v.end_time, {
   path: ["end_time"],
   message: "L'heure de fin doit être après l'heure de début",
