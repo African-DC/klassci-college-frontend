@@ -121,8 +121,18 @@ export const parentPortalApi = {
   getChildTimetable: async (childId: number): Promise<ChildTimetableResponse> => {
     const res = await apiFetch<unknown>(`/parent/children/${childId}/timetable`)
     const raw = unwrapResponse<ChildTimetableResponse>(res)
+    const enToFr: Record<string, string> = {
+      monday: "lundi", tuesday: "mardi", wednesday: "mercredi",
+      thursday: "jeudi", friday: "vendredi", saturday: "samedi",
+    }
     return {
       ...raw,
+      slots: raw.slots.map(slot => ({
+        ...slot,
+        day: enToFr[slot.day] ?? slot.day,
+        start_time: slot.start_time.slice(0, 5),
+        end_time: slot.end_time.slice(0, 5),
+      })),
       events: (raw.events ?? []).map(normalizeScheduleEvent),
     }
   },
