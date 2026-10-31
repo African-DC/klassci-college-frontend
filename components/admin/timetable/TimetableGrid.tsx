@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TimetableSlotForm } from "@/components/forms/TimetableSlotForm"
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
+import { useScheduleEvents } from "@/lib/hooks/useScheduleEvents"
 import {
   HEURE_DEBUT,
   HEURE_FIN,
@@ -92,6 +94,9 @@ interface TimetableGridProps {
 export function TimetableGrid({ classId }: TimetableGridProps) {
   const queryClient = useQueryClient()
   const { data: slots, isLoading } = useTimetable(classId)
+  const { data: years } = useAcademicYears()
+  const yearId = years?.items.find(y => y.is_current)?.id ?? null
+  const { data: events = [] } = useScheduleEvents(yearId, classId)
   const { data: config } = useQuery({
     queryKey: ["timetable", "configuration"],
     queryFn: async () => (await import("@/lib/api/timetable")).timetableApi.getConfiguration(),
@@ -100,10 +105,12 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
   const dayStart = Math.min(
     config?.day_start_hour ?? HEURE_DEBUT,
     ...(slots ?? []).map((slot) => Math.floor(enMinutesStrict(slot.start_time) / 60)),
+    ...events.map(event => Math.floor(enMinutesStrict(event.start_time) / 60)),
   )
   const dayEnd = Math.max(
     config?.day_end_hour ?? HEURE_FIN,
     ...(slots ?? []).map((slot) => Math.ceil(enMinutesStrict(slot.end_time) / 60)),
+    ...events.map(event => Math.ceil(enMinutesStrict(event.end_time) / 60)),
   )
   const gridMinutesEnPx = (minute: number) => (minute - dayStart * 60) * PX_PAR_HEURE / 60
   const deleteMutation = useDeleteSlot()
@@ -242,14 +249,20 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
 
   function renderMobileDay(day: string) {
     const daySlots = sortSlotsByTime(slotsByDay.get(day) ?? [])
-    if (daySlots.length === 0) {
+    if (daySlots.length === 0 && !events.some(event => event.day === day)) {
       return (
         <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground">
           Aucun cours planifié pour {DAY_LABELS[day].toLowerCase()}.
         </div>
       )
     }
-    return <div className="space-y-3">{daySlots.map(renderMobileSlot)}</div>
+    return <div className="space-y-3">
+      {events.filter(event => event.day === day).map(event => <div key={`event-${event.id}`} className="rounded-lg border border-dashed bg-muted/60 p-3 text-sm">
+        <p className="font-semibold">{event.title}</p>
+        <p className="text-xs text-muted-foreground">{event.start_time}–{event.end_time}</p>
+      </div>)}
+      {daySlots.map(renderMobileSlot)}
+    </div>
   }
 
   return (
@@ -372,8 +385,10 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
 
                   {/* Free slot "+" buttons — one per free sub-segment within each hour */}
                   {(() => {
-                    const occupied = daySlots
-                      .map((s) => ({ start: enMinutesStrict(s.start_time), end: enMinutesStrict(s.end_time) }))
+                    const occupied = [
+                      ...daySlots.map((s) => ({ start: enMinutesStrict(s.start_time), end: enMinutesStrict(s.end_time) })),
+                      ...events.filter(e => e.day === day && e.blocks_courses).map(e => ({ start: enMinutesStrict(e.start_time), end: enMinutesStrict(e.end_time) })),
+                    ]
                       .sort((a, b) => a.start - b.start)
 
                     const buttons: React.ReactNode[] = []
@@ -426,6 +441,18 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                     }
                     return buttons
                   })()}
+
+                  {/* Recurring non-teaching intervals, rendered to the same minute axis. */}
+                  {events.filter(event => event.day === day).map(event => {
+                    const start = enMinutesStrict(event.start_time)
+                    const end = enMinutesStrict(event.end_time)
+                    return <div key={`event-${event.id}`}
+                      title={`${event.title} · ${event.start_time}–${event.end_time}`}
+                      className="pointer-events-none absolute left-1 right-1 z-10 flex items-center justify-center overflow-hidden rounded-md border border-dashed bg-amber-100/90 px-1 text-center text-[10px] font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+                      style={{ top: gridMinutesEnPx(start) + 1, height: Math.max(4, (end - start) * PX_PAR_HEURE / 60 - 2) }}>
+                      {event.title}
+                    </div>
+                  })}
 
                   {/* Rendered slots */}
                   {daySlots.map((slot) => {

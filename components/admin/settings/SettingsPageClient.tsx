@@ -13,6 +13,7 @@ import {
   ARREARS_POLICY_PERMISSION,
 } from "@/components/admin/settings/ArrearsPolicySection"
 import { TimetableSettingsSection } from "./TimetableSettingsSection"
+import { ScheduleEventsManager } from "@/components/admin/timetable/ScheduleEventsManager"
 import { SchoolInfoSection } from "./SchoolInfoSection"
 import { TrimesterSection } from "./TrimesterSection"
 import { EnrollmentHistorySection } from "@/components/admin/settings/EnrollmentHistorySection"
@@ -73,8 +74,9 @@ export function SettingsPageClient() {
             <EnrollmentHistorySection settings={settings} />
           </TabsContent>
 
-          <TabsContent value="timetable">
+          <TabsContent value="timetable" className="space-y-4">
             <TimetableSettingsSection settings={settings} canEdit={peutModifierHoraires} />
+            <div className="flex justify-end"><ScheduleEventsManager /></div>
           </TabsContent>
 
           <TabsContent value="payment-methods">

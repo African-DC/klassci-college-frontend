@@ -31,6 +31,7 @@ import { TimetableGrid } from "@/components/admin/timetable/TimetableGrid"
 import { TimetableHoursSidebar } from "@/components/admin/timetable/TimetableHoursSidebar"
 import { GenerateDiagnosticModal } from "@/components/admin/timetable/GenerateDiagnosticModal"
 import { ClassTeachersDialog } from "@/components/admin/timetable/class-teachers/ClassTeachersDialog"
+import { ScheduleEventsManager } from "@/components/admin/timetable/ScheduleEventsManager"
 export default function TimetablePage() {
   const { selectedClassId, setSelectedClassId } = useTimetableStore()
   const generateMutation = useGenerateTimetable()
@@ -223,6 +224,7 @@ export default function TimetablePage() {
 
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               {selectedClassId && <ClassTeachersDialog classId={selectedClassId} />}
+              <ScheduleEventsManager classId={selectedClassId} />
               <PdfPreviewButton
                 fetchBlob={() => timetableApi.exportPdf(selectedClassId as number)}
                 label="l'emploi du temps"
