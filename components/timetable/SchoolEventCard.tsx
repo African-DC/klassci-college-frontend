@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import type { ScheduleEvent } from "@/lib/contracts/schedule-events"
+import { durationLabel } from "@/lib/timetable/durations"
 
 export function SchoolEventCard({ event }: { event: ScheduleEvent }) {
   return (
@@ -14,7 +15,7 @@ export function SchoolEventCard({ event }: { event: ScheduleEvent }) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{event.title}</p>
           <p className="text-xs text-muted-foreground">
-            {event.blocks_courses ? "Pause ou activité sans cours" : "Activité scolaire"}
+            {durationLabel(event.start_time, event.end_time)} · {event.blocks_courses ? "Sans cours" : "Activité scolaire"}
           </p>
         </div>
       </CardContent>

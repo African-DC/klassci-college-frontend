@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
-import { useClasses } from "@/lib/hooks/useClasses"
+import { useInfiniteClasses } from "@/lib/hooks/useClasses"
+import { durationLabel } from "@/lib/timetable/durations"
 import { usePermissions } from "@/lib/hooks/usePermissions"
 import { useScheduleEventMutations, useScheduleEvents } from "@/lib/hooks/useScheduleEvents"
 import {
@@ -42,7 +43,7 @@ export function ScheduleEventsManager({ classId }: { classId?: number | null }) 
   const [pendingDeletion, setPendingDeletion] = useState<number | null>(null)
   const { data: years } = useAcademicYears()
   const yearId = years?.items.find(y => y.is_current)?.id ?? null
-  const { data: classes } = useClasses({ size: 100 })
+  const { data: classes, scrollInfini } = useInfiniteClasses({ size: 50 })
   const { has } = usePermissions()
   const canRead = has("timetable:read")
   const canWrite = has("timetable:write")
@@ -121,7 +122,7 @@ export function ScheduleEventsManager({ classId }: { classId?: number | null }) 
                       <div className="min-w-0">
                         <p className="text-sm font-semibold">{event.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {DAY_NAMES[event.day]} · {event.start_time}–{event.end_time} · {event.class_id === null ? "Tout l'établissement" : classes?.items.find(c => c.id === event.class_id)?.name ?? "Classe"} · {event.blocks_courses ? "Bloque les cours" : "Activité informative"}
+                          {DAY_NAMES[event.day]} · {event.start_time}–{event.end_time} ({durationLabel(event.start_time, event.end_time)}) · {event.class_id === null ? "Tout l'établissement" : classes?.items.find(c => c.id === event.class_id)?.name ?? "Classe"} · {event.blocks_courses ? "Bloque les cours" : "Activité informative"}
                         </p>
                       </div>
                       {canWrite && <div className="flex items-center gap-1">
@@ -187,6 +188,13 @@ export function ScheduleEventsManager({ classId }: { classId?: number | null }) 
                     {(classes?.items ?? []).map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {scrollInfini.resteAcharger && (
+                  <Button type="button" size="sm" variant="ghost"
+                    disabled={scrollInfini.chargeEnCours}
+                    onClick={scrollInfini.chargerSuite}>
+                    {scrollInfini.chargeEnCours ? "Chargement…" : "Afficher les classes suivantes"}
+                  </Button>
+                )}
               </div>
             </div>
             <label className="flex items-center gap-3 rounded-lg border p-3 text-sm">

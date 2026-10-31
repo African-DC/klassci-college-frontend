@@ -31,6 +31,7 @@ import {
 } from "@/lib/timetable/semaine"
 import { complement } from "@/lib/timetable/occupation"
 import { visibleTimeLabels } from "@/lib/timetable/time-labels"
+import { durationLabel } from "@/lib/timetable/durations"
 
 /** Une heure illisible ne doit pas se dessiner a minuit : on la saute. */
 const enMinutesStrict = (t: string): number => {
@@ -131,21 +132,20 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
       map.set(s.day, existing)
     })
     return map
-  }, [slots])
+  }, [slots, events])
 
   // Keep minute-precise positions, but don't stack unreadable labels
   // around 09:50 / 10:00 / 10:10. Each card still shows exact times.
   const specialTimes = useMemo(() => {
     const marks = new Set<number>()
-    slots?.forEach((slot) => {
+    for (const slot of [...(slots ?? []), ...events]) {
       const start = enMinutesStrict(slot.start_time)
       const end = enMinutesStrict(slot.end_time)
       if (start % 60) marks.add(start)
       if (end % 60) marks.add(end)
-    })
+    }
     const accepted: number[] = []
     for (const minute of [...marks].sort((a, b) => a - b)) {
-      if (Math.min(minute % 60, 60 - (minute % 60)) < 16) continue
       if (accepted.some((previous) => Math.abs(minute - previous) < 16)) continue
       accepted.push(minute)
     }
@@ -450,7 +450,9 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                       title={`${event.title} · ${event.start_time}–${event.end_time}`}
                       className="pointer-events-none absolute left-1 right-1 z-10 flex items-center justify-center overflow-hidden rounded-md border border-dashed bg-amber-100/90 px-1 text-center text-[10px] font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-100"
                       style={{ top: gridMinutesEnPx(start) + 1, height: Math.max(4, (end - start) * PX_PAR_HEURE / 60 - 2) }}>
-                      {event.title}
+                      <span className="truncate" aria-label={`${event.title} de ${event.start_time} à ${event.end_time} (${durationLabel(event.start_time, event.end_time)})`}>
+                        {end - start < 28 ? `${event.start_time}–${event.end_time}` : `${event.title} · ${event.start_time}–${event.end_time}`}
+                      </span>
                     </div>
                   })}
 
@@ -462,7 +464,7 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                     const height = ((endMin - startMin) / 60) * PX_PAR_HEURE
                     const showTeacher = height >= 40
                     const showRoom = height >= 55
-                    const showTime = height >= 70
+                    const showTime = true
 
                     return (
                       <button
@@ -479,10 +481,10 @@ export function TimetableGrid({ classId }: TimetableGridProps) {
                         )}
                         style={{ top: top + 1, height: height - 2 }}
                       >
-                        <p className="text-xs font-semibold truncate">{slot.subject_name}</p>
+                        {height >= 28 && <p className="text-xs font-semibold truncate">{slot.subject_name}</p>}
                         {showTeacher && <p className="text-[10px] opacity-75 truncate">{slot.teacher_name}</p>}
                         {showRoom && slot.room && <p className="text-[10px] opacity-60 truncate">{slot.room}</p>}
-                        {showTime && <p className="text-[10px] opacity-50">{slot.start_time} - {slot.end_time}</p>}
+                        {showTime && <p className="text-[10px] font-medium truncate">{slot.start_time}–{slot.end_time} ({durationLabel(slot.start_time, slot.end_time)})</p>}
                       </button>
                     )
                   })}

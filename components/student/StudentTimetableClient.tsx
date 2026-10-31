@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { useStudentTimetable, useStudentTimetableEvents } from "@/lib/hooks/useStudentPortal"
 import { SchoolEventCard } from "@/components/timetable/SchoolEventCard"
+import { durationLabel, orderedTimetableEntries } from "@/lib/timetable/durations"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
@@ -72,22 +73,24 @@ export function StudentTimetableClient() {
                   {DAY_FULL[day]}
                 </h2>
                 <div className="space-y-2">
-                  {dayEvents.map(event => <SchoolEventCard key={`event-${event.id}`} event={event} />)}
-                  {daySlots.map((slot) => (
+                  {orderedTimetableEntries(daySlots, dayEvents).map(entry => entry.kind === "event"
+                    ? <SchoolEventCard key={`event-${entry.item.id}`} event={entry.item} />
+                    : (
                     <Card
-                      key={slot.id}
-                      className={`border ${getSubjectColor(slot.subject_id)} shadow-none`}
+                      key={entry.item.id}
+                      className={`border ${getSubjectColor(entry.item.subject_id)} shadow-none`}
                     >
                       <CardContent className="flex items-center gap-3 p-3">
                         <div className="text-center min-w-[50px]">
-                          <p className="text-xs font-bold">{slot.start_time}</p>
-                          <p className="text-[10px] text-muted-foreground">{slot.end_time}</p>
+                          <p className="text-xs font-bold">{entry.item.start_time}</p>
+                          <p className="text-[10px] text-muted-foreground">{entry.item.end_time}</p>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold truncate">{slot.subject_name}</p>
+                          <p className="text-sm font-semibold truncate">{entry.item.subject_name}</p>
+                          <p className="text-xs text-muted-foreground">{durationLabel(entry.item.start_time, entry.item.end_time)}</p>
                           <p className="text-xs opacity-75">
-                            {slot.teacher_name}
-                            {slot.room && ` • ${slot.room}`}
+                            {entry.item.teacher_name}
+                            {entry.item.room && ` • ${entry.item.room}`}
                           </p>
                         </div>
                       </CardContent>
