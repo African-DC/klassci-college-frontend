@@ -75,6 +75,14 @@ export function useTeacherTimetable(teacherId: number) {
   })
 }
 
+export function useMySchoolEvents() {
+  return useQuery({
+    queryKey: ["timetable", "my-school-events"] as const,
+    queryFn: () => timetableApi.mySchoolEvents(),
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
 export function useMyTimetable() {
   return useQuery({
     queryKey: timetableKeys.mine(),

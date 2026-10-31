@@ -2,7 +2,8 @@
 
 import { CalendarOff } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useMyTimetable, useTeacherTimetable } from "@/lib/hooks/useTimetable"
+import { useMyTimetable, useTeacherTimetable, useMySchoolEvents } from "@/lib/hooks/useTimetable"
+import { SchoolEventCard } from "@/components/timetable/SchoolEventCard"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -49,11 +50,13 @@ interface TeacherScheduleViewProps {
 
 export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
   const ownQuery = useMyTimetable()
+  const schoolEventsQuery = useMySchoolEvents()
   const adminQuery = useTeacherTimetable(teacherId ?? 0)
   const useOwn = teacherId === undefined
   const slots = useOwn ? ownQuery.data : adminQuery.data
   const isLoading = useOwn ? ownQuery.isLoading : adminQuery.isLoading
   const error = useOwn ? ownQuery.error : adminQuery.error
+  const events = useOwn ? (schoolEventsQuery.data ?? []) : []
 
   if (error) {
     return (
@@ -132,13 +135,15 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
     <div className="space-y-4 md:hidden">
       {DAYS.map((day) => {
         const daySlots = slotsByDay[day]
-        if (!daySlots || daySlots.length === 0) return null
+        const dayEvents = events.filter(event => event.day === day)
+        if ((!daySlots || daySlots.length === 0) && dayEvents.length === 0) return null
         return (
           <div key={day}>
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {DAY_LABELS[day]}
             </h2>
             <div className="space-y-2">
+              {dayEvents.map(event => <SchoolEventCard key={`event-${event.id}`} event={event} />)}
               {daySlots.map((slot) => (
                 <div
                   key={slot.id}
@@ -215,6 +220,18 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
                   style={{ top: (h - START_HOUR) * PX_PER_HOUR }}
                 />
               ))}
+              {/* Recurring periods alongside the teacher's own course slots. */}
+              {events.filter(event => event.day === day).map(event => {
+                const start = timeToMinutes(event.start_time) - START_HOUR * 60
+                const end = timeToMinutes(event.end_time) - START_HOUR * 60
+                return (
+                  <div key={`event-${event.id}`} title={event.title}
+                    className="pointer-events-none absolute inset-x-1 z-10 overflow-hidden rounded-md border border-dashed bg-muted px-1 text-center text-xs font-semibold"
+                    style={{ top: (start / 60) * PX_PER_HOUR + 1, height: Math.max(8, ((end - start) / 60) * PX_PER_HOUR - 2) }}>
+                    {event.title}
+                  </div>
+                )
+              })}
               {/* Slots */}
               {slotsByDay[day].map((slot) => {
                 const startMin = timeToMinutes(slot.start_time) - START_HOUR * 60

@@ -11,7 +11,7 @@ const EN: Record<string, string> = {
 const FR: Record<string, string> = Object.fromEntries(
   Object.entries(EN).map(([fr, en]) => [en, fr]),
 )
-function fromApi(value: unknown): ScheduleEvent {
+export function normalizeScheduleEvent(value: unknown): ScheduleEvent {
   const event = value as Record<string, unknown>
   return safeValidate(ScheduleEventSchema, {
     ...event,
@@ -30,19 +30,19 @@ export const scheduleEventsApi = {
     if (classId) q.set("class_id", String(classId))
     const data = await apiFetch<unknown>(`/timetable/events?${q}`)
     const items = Array.isArray(data) ? data : (data as { data?: unknown[] }).data ?? []
-    return items.map(fromApi)
+    return items.map(normalizeScheduleEvent)
   },
   create: async (input: ScheduleEventCreate) => {
     const data = await apiFetch<unknown>("/timetable/events", {
       method: "POST", body: JSON.stringify(payload(input)),
     })
-    return fromApi((data as { data?: unknown })?.data ?? data)
+    return normalizeScheduleEvent((data as { data?: unknown })?.data ?? data)
   },
   update: async (id: number, input: ScheduleEventCreate) => {
     const data = await apiFetch<unknown>(`/timetable/events/${id}`, {
       method: "PUT", body: JSON.stringify(payload(input)),
     })
-    return fromApi(data)
+    return normalizeScheduleEvent(data)
   },
   delete: async (id: number) =>
     apiFetch<void>(`/timetable/events/${id}`, { method: "DELETE" }),

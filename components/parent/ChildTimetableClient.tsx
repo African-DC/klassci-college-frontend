@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { useParentChildTimetable } from "@/lib/hooks/useParentPortal"
+import { SchoolEventCard } from "@/components/timetable/SchoolEventCard"
 import type { ChildTimetableSlot } from "@/lib/api/parent-portal"
 import { isEnrolledFromClassName } from "@/lib/utils/enrollment-status"
 
@@ -46,6 +47,7 @@ export function ChildTimetableClient({ childId }: ChildTimetableClientProps) {
   const { data, isLoading, isError, refetch } = useParentChildTimetable(childId)
 
   const slots = data?.slots ?? []
+  const events = data?.events ?? []
   const className = data?.class_name ?? ""
 
   const slotsByDay = DAYS.reduce((acc, day) => {
@@ -68,7 +70,7 @@ export function ChildTimetableClient({ childId }: ChildTimetableClientProps) {
         <DataError message="Impossible de charger l'emploi du temps" onRetry={() => refetch()} />
       ) : isLoading ? (
         <TimetableSkeleton />
-      ) : slots.length === 0 ? (
+      ) : slots.length === 0 && events.length === 0 ? (
         // Empty state désambigué : distinguer "enfant pas inscrit" vs
         // "inscrit mais aucun cours cette semaine" pour rassurer le parent.
         !isEnrolledFromClassName(className) ? (
@@ -102,13 +104,15 @@ export function ChildTimetableClient({ childId }: ChildTimetableClientProps) {
         <div className="space-y-4">
           {DAYS.map((day) => {
             const daySlots = slotsByDay[day]
-            if (!daySlots || daySlots.length === 0) return null
+            const dayEvents = events.filter(event => event.day === day)
+            if ((!daySlots || daySlots.length === 0) && dayEvents.length === 0) return null
             return (
               <div key={day}>
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                   {DAY_LABELS[day]}
                 </h2>
                 <div className="space-y-2">
+                  {dayEvents.map(event => <SchoolEventCard key={`event-${event.id}`} event={event} />)}
                   {daySlots.map((slot) => (
                     <Card
                       key={slot.id}

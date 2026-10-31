@@ -3,7 +3,8 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
-import { useStudentTimetable } from "@/lib/hooks/useStudentPortal"
+import { useStudentTimetable, useStudentTimetableEvents } from "@/lib/hooks/useStudentPortal"
+import { SchoolEventCard } from "@/components/timetable/SchoolEventCard"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
@@ -34,6 +35,7 @@ function getSubjectColor(subjectId: number): string {
 
 export function StudentTimetableClient() {
   const { data: slots, isLoading, isError, refetch } = useStudentTimetable()
+  const { data: events = [], isLoading: eventsLoading } = useStudentTimetableEvents()
 
   // Grouper les créneaux par jour
   const slotsByDay = DAYS.reduce((acc, day) => {
@@ -52,9 +54,9 @@ export function StudentTimetableClient() {
 
       {isError ? (
         <DataError message="Impossible de charger l'emploi du temps" onRetry={() => refetch()} />
-      ) : isLoading ? (
+      ) : isLoading || eventsLoading ? (
         <TimetableSkeleton />
-      ) : !slots || slots.length === 0 ? (
+      ) : (!slots || slots.length === 0) && events.length === 0 ? (
         <div className="py-12 text-center text-sm text-muted-foreground">
           Aucun emploi du temps disponible.
         </div>
@@ -62,13 +64,15 @@ export function StudentTimetableClient() {
         <div className="space-y-4">
           {DAYS.map((day) => {
             const daySlots = slotsByDay[day]
-            if (daySlots.length === 0) return null
+            const dayEvents = events.filter(event => event.day === day)
+            if (daySlots.length === 0 && dayEvents.length === 0) return null
             return (
               <div key={day}>
                 <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                   {DAY_FULL[day]}
                 </h2>
                 <div className="space-y-2">
+                  {dayEvents.map(event => <SchoolEventCard key={`event-${event.id}`} event={event} />)}
                   {daySlots.map((slot) => (
                     <Card
                       key={slot.id}

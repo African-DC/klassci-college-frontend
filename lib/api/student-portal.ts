@@ -1,5 +1,7 @@
 import { z } from "zod"
 import { cashRemaining } from "@/lib/contracts/payment"
+import { normalizeScheduleEvent } from "@/lib/api/schedule-events"
+import type { ScheduleEvent } from "@/lib/contracts/schedule-events"
 import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
   StudentDashboardSchema,
@@ -136,6 +138,15 @@ export const studentPortalApi = {
       }
     })
     return safeValidate(TimetableSlotArraySchema, mapped, "GET /student/timetable")
+  },
+
+  // The student's own timetable endpoint already enforces enrollment ownership.
+  getTimetableEvents: async (): Promise<ScheduleEvent[]> => {
+    const res = await apiFetch<unknown>("/student/timetable")
+    const payload = unwrapResponse<Record<string, unknown>>(res)
+    return Array.isArray(payload?.events)
+      ? payload.events.map(normalizeScheduleEvent)
+      : []
   },
 
   // Frais et paiements — normalise la réponse BE vers le contrat UI.
