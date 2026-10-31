@@ -1,7 +1,7 @@
 /** Exact timetable labels; never infer one hour from a rounded grid row. */
 export function durationMinutes(start: string, end: string): number {
   const toMinutes = (value: string) => {
-    const m = /^(\\d{1,2}):(\\d{2})/.exec(value)
+    const m = /^(\d{1,2}):(\d{2})/.exec(value)
     if (!m) return NaN
     return Number(m[1]) * 60 + Number(m[2])
   }
