@@ -32,6 +32,16 @@ export const scheduleEventsApi = {
     const items = Array.isArray(data) ? data : (data as { data?: unknown[] }).data ?? []
     return items.map(normalizeScheduleEvent)
   },
+  createMany: async (input: ScheduleEventCreate, days: ScheduleEventCreate["day"][]) => {
+    const data = await apiFetch<unknown>("/timetable/events/bulk", {
+      method: "POST",
+      body: JSON.stringify({
+        events: days.map(day => payload({ ...input, day })),
+      }),
+    })
+    const items = Array.isArray(data) ? data : (data as { data?: unknown[] }).data ?? []
+    return items.map(normalizeScheduleEvent)
+  },
   create: async (input: ScheduleEventCreate) => {
     const data = await apiFetch<unknown>("/timetable/events", {
       method: "POST", body: JSON.stringify(payload(input)),

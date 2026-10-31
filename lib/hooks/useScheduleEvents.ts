@@ -21,6 +21,12 @@ export function useScheduleEventMutations() {
     ])
   }
   return {
+    createMany: useMutation({
+      mutationFn: ({ data, days }: {
+        data: ScheduleEventCreate; days: ScheduleEventCreate["day"][]
+      }) => scheduleEventsApi.createMany(data, days),
+      onSuccess: refresh,
+    }),
     create: useMutation({
       mutationFn: (data: ScheduleEventCreate) => scheduleEventsApi.create(data),
       onSuccess: refresh,

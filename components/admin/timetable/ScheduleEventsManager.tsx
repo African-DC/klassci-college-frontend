@@ -41,6 +41,9 @@ export function ScheduleEventsManager({ classId }: { classId?: number | null }) 
   const [editing, setEditing] = useState<ScheduleEvent | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [pendingDeletion, setPendingDeletion] = useState<number | null>(null)
+  const [selectedDays, setSelectedDays] = useState<ScheduleEventCreate["day"][]>([
+    "lundi", "mardi", "mercredi", "jeudi", "vendredi",
+  ])
   const { data: years } = useAcademicYears()
   const yearId = years?.items.find(y => y.is_current)?.id ?? null
   const { data: classes, scrollInfini } = useInfiniteClasses({ size: 50 })
@@ -54,9 +57,12 @@ export function ScheduleEventsManager({ classId }: { classId?: number | null }) 
     resolver: zodResolver(ScheduleEventCreateSchema),
     defaultValues: initial(yearId ?? 0, classId ?? null),
   })
-  const isBusy = actions.create.isPending || actions.update.isPending || actions.remove.isPending
+  const isBusy =
+    actions.create.isPending || actions.createMany.isPending
+    || actions.update.isPending || actions.remove.isPending
   function begin(event?: ScheduleEvent) {
     setEditing(event ?? null)
+    setSelectedDays(event ? [event.day] : [...DAYS.slice(0, 5)])
     form.reset(event ? {
       academic_year_id: event.academic_year_id, class_id: event.class_id,
       title: event.title, category: event.category,
@@ -67,8 +73,15 @@ export function ScheduleEventsManager({ classId }: { classId?: number | null }) 
   }
   async function submit(values: ScheduleEventCreate) {
     try {
-      if (editing) await actions.update.mutateAsync({ id: editing.id, data: values })
-      else await actions.create.mutateAsync(values)
+      if (editing) {
+        await actions.update.mutateAsync({ id: editing.id, data: values })
+      } else {
+        if (!selectedDays.length) {
+          form.setError("day", { message: "Sélectionnez au moins un jour." })
+          return
+        }
+        await actions.createMany.mutateAsync({ data: values, days: selectedDays })
+      }
       toast.success(editing ? "Activité modifiée" : "Activité ajoutée")
       setShowForm(false)
       setEditing(null)
@@ -164,11 +177,34 @@ export function ScheduleEventsManager({ classId }: { classId?: number | null }) 
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Jour</Label>
-                <Select value={form.watch("day")} onValueChange={v => form.setValue("day", v as ScheduleEventCreate["day"], { shouldValidate: true })}>
-                  <SelectTrigger aria-label="Jour de la période"><SelectValue /></SelectTrigger>
-                  <SelectContent>{DAYS.map(day => <SelectItem key={day} value={day}>{DAY_NAMES[day]}</SelectItem>)}</SelectContent>
-                </Select>
+                <Label>{editing ? "Jour" : "Jours de récurrence"}</Label>
+                {editing ? (
+                  <Select value={form.watch("day")} onValueChange={v =>
+                    form.setValue("day", v as ScheduleEventCreate["day"], { shouldValidate: true })}>
+                    <SelectTrigger aria-label="Jour de la période"><SelectValue /></SelectTrigger>
+                    <SelectContent>{DAYS.map(day =>
+                      <SelectItem key={day} value={day}>{DAY_NAMES[day]}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex flex-wrap gap-x-3 gap-y-2 rounded-lg border p-3">
+                    {DAYS.map(day => (
+                      <label key={day} className="flex items-center gap-2 text-xs">
+                        <Checkbox
+                          checked={selectedDays.includes(day)}
+                          onCheckedChange={checked => {
+                            setSelectedDays(previous => checked
+                              ? [...previous, day].filter((value, index, values) => values.indexOf(value) === index)
+                              : previous.filter(value => value !== day))
+                          }}
+                        />
+                        {DAY_NAMES[day]}
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {!editing && selectedDays.length === 0 &&
+                  <p role="alert" className="text-xs text-destructive">Choisissez au moins un jour.</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="event-start">Début</Label>
