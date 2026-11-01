@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { UpcomingEnrollmentFeesSchema } from "@/lib/contracts/upcoming-enrollment"
 import { normalizeScheduleEvent } from "@/lib/api/schedule-events"
 import { dayToFr } from "@/lib/timetable/days"
 import type { ScheduleEvent } from "@/lib/contracts/schedule-events"
@@ -31,6 +32,7 @@ const ParentChildFeesRawSchema = z.object({
   total_due: z.coerce.number(),
   total_paid: z.coerce.number(),
   fees: z.array(ParentFeeRawSchema).default([]),
+  upcoming: z.array(UpcomingEnrollmentFeesSchema).default([]),
 })
 
 const ChildTimetableRawSchema = z.object({
@@ -111,6 +113,7 @@ export const parentPortalApi = {
       total_paid: raw.total_paid,
       total_remaining: fees.reduce((sum, f) => sum + f.remaining, 0),
       fees,
+      upcoming: raw.upcoming,
     }
   },
 

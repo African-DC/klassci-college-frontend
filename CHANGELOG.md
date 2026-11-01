@@ -66,6 +66,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - En corrigeant le niveau antérieur d'un élève sans toucher à sa qualité, l'écran annonce que la qualité sera recalculée : Redoublant si ce niveau est celui de la classe *(secrétariat, éducateur)*
 
 ### Fixed
+- Frais : une famille réinscrite voit à part ce qu'elle doit pour l'année suivante, sans le mêler à l'année en cours *(élève, parent)* (#572)
 - Génération de l'emploi du temps : les minutes trop courtes pour faire un cours sont signalées à la fin de la génération *(administration, direction des études)* (#568)
 - Matières et emploi du temps : les pastilles et avatars d'enseignants retrouvent leur couleur, et l'écran « Enseignants de la classe » s'aligne en colonnes sur ordinateur *(direction, secrétariat)*
 - Glisser une matière du catalogue vers un niveau qui en portait déjà une autre ne répond plus à tort « existe déjà » *(direction, secrétariat)* (#543)

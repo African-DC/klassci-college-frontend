@@ -1,9 +1,9 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-11-01T08:50:29Z",
+  "generated_at": "2026-11-01T19:26:29Z",
   "version": "Unreleased",
   "released": false,
-  "total": 375,
+  "total": 376,
   "sections": {
     "Added": [
       {
@@ -103,6 +103,14 @@
     ],
     "Fixed": [
       {
+        "text": "Frais : une famille réinscrite voit à part ce qu'elle doit pour l'année suivante, sans le mêler à l'année en cours",
+        "audience": [
+          "élève",
+          "parent"
+        ],
+        "pull_request": 572
+      },
+      {
         "text": "Génération de l'emploi du temps : les minutes trop courtes pour faire un cours sont signalées à la fin de la génération",
         "audience": [
           "administration",
@@ -136,15 +144,6 @@
       },
       {
         "text": "Le journal montre ce qui a changé directement dans la liste, l'ancienne valeur à côté de la nouvelle, sans ouvrir le détail",
-        "audience": [
-          "admin",
-          "directeur",
-          "comptable"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Chaque ligne affiche le nom de la fiche en premier, le numéro en petit, et signale une fiche archivée ou supprimée",
         "audience": [
           "admin",
           "directeur",

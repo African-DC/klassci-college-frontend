@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-11-01T08:50:29Z",
+  "generated_at": "2026-11-01T19:26:29Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -1998,6 +1998,14 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Frais : une famille réinscrite voit à part ce qu'elle doit pour l'année suivante, sans le mêler à l'année en cours",
+            "audience": [
+              "élève",
+              "parent"
+            ],
+            "pull_request": 572
+          },
           {
             "text": "Génération de l'emploi du temps : les minutes trop courtes pour faire un cours sont signalées à la fin de la génération",
             "audience": [

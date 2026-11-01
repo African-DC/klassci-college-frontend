@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { UpcomingEnrollmentFeesSchema } from "@/lib/contracts/upcoming-enrollment"
 import { cashRemaining } from "@/lib/contracts/payment"
 import { normalizeScheduleEvent } from "@/lib/api/schedule-events"
 import { dayToFr } from "@/lib/timetable/days"
@@ -64,6 +65,7 @@ const StudentFeesRawSchema = z.object({
   total_paid: z.coerce.number(),
   balance: z.coerce.number(),
   fees: z.array(StudentFeeRawSchema).default([]),
+  upcoming: z.array(UpcomingEnrollmentFeesSchema).default([]),
 })
 
 export function mapFeeStatus(
@@ -168,6 +170,7 @@ export const studentPortalApi = {
       total_paid: raw.total_paid,
       total_remaining: fees.reduce((sum, f) => sum + f.remaining, 0),
       fees,
+      upcoming: raw.upcoming,
     }
   },
 
