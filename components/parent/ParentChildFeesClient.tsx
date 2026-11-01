@@ -74,7 +74,9 @@ export function ParentChildFeesClient({ childId }: ParentChildFeesClientProps) {
             totalRemaining={data.total_remaining}
           />
 
-          {data.upcoming && <UpcomingEnrollmentCard upcoming={data.upcoming} />}
+          {data.upcoming.map((upcoming) => (
+            <UpcomingEnrollmentCard key={upcoming.academic_year_name} upcoming={upcoming} />
+          ))}
 
           {/* Détail par catégorie */}
           {data.fees.length === 0 ? (

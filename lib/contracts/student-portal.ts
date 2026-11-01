@@ -78,7 +78,7 @@ export const StudentFeesResponseSchema = z.object({
   total_paid: z.coerce.number(),
   total_remaining: z.coerce.number(),
   fees: z.array(StudentFeeItemSchema),
-  upcoming: UpcomingEnrollmentFeesSchema.nullish(),
+  upcoming: z.array(UpcomingEnrollmentFeesSchema).default([]),
 })
 
 // Bulletins publiés

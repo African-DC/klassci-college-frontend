@@ -29,7 +29,7 @@ const ParentChildFeesRawSchema = z.object({
   total_due: z.coerce.number(),
   total_paid: z.coerce.number(),
   fees: z.array(ParentFeeRawSchema).default([]),
-  upcoming: UpcomingEnrollmentFeesSchema.nullish(),
+  upcoming: z.array(UpcomingEnrollmentFeesSchema).default([]),
 })
 
 export interface ChildTimetableSlot {
@@ -94,7 +94,7 @@ export const parentPortalApi = {
       total_paid: raw.total_paid,
       total_remaining: fees.reduce((sum, f) => sum + f.remaining, 0),
       fees,
-      upcoming: raw.upcoming ?? null,
+      upcoming: raw.upcoming,
     }
   },
 

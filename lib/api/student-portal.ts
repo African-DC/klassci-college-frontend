@@ -62,7 +62,7 @@ const StudentFeesRawSchema = z.object({
   total_paid: z.coerce.number(),
   balance: z.coerce.number(),
   fees: z.array(StudentFeeRawSchema).default([]),
-  upcoming: UpcomingEnrollmentFeesSchema.nullish(),
+  upcoming: z.array(UpcomingEnrollmentFeesSchema).default([]),
 })
 
 export function mapFeeStatus(
@@ -162,7 +162,7 @@ export const studentPortalApi = {
       total_paid: raw.total_paid,
       total_remaining: fees.reduce((sum, f) => sum + f.remaining, 0),
       fees,
-      upcoming: raw.upcoming ?? null,
+      upcoming: raw.upcoming,
     }
   },
 

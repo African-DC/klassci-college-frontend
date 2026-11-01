@@ -73,7 +73,7 @@ export const ParentChildFeesResponseSchema = z.object({
   total_paid: z.coerce.number(),
   total_remaining: z.coerce.number(),
   fees: z.array(ParentChildFeeItemSchema),
-  upcoming: UpcomingEnrollmentFeesSchema.nullish(),
+  upcoming: z.array(UpcomingEnrollmentFeesSchema).default([]),
 })
 
 // Bulletins d'un enfant
