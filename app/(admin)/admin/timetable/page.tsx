@@ -31,6 +31,7 @@ import { TimetableGrid } from "@/components/admin/timetable/TimetableGrid"
 import { TimetableHoursSidebar } from "@/components/admin/timetable/TimetableHoursSidebar"
 import { GenerateDiagnosticModal } from "@/components/admin/timetable/GenerateDiagnosticModal"
 import { ClassTeachersDialog } from "@/components/admin/timetable/class-teachers/ClassTeachersDialog"
+import { ScheduleEventsManager } from "@/components/admin/timetable/ScheduleEventsManager"
 export default function TimetablePage() {
   const { selectedClassId, setSelectedClassId } = useTimetableStore()
   const generateMutation = useGenerateTimetable()
@@ -90,10 +91,13 @@ export default function TimetablePage() {
         if (status.status === "completed") {
           stopPolling()
           queryClient.invalidateQueries({ queryKey: timetableKeys.all })
-          toast.success("Emploi du temps généré avec succès")
+          toast.success(
+            "Emploi du temps généré avec succès",
+            status.message ? { description: status.message, duration: 12000 } : undefined,
+          )
         } else if (status.status === "failed") {
           stopPolling()
-          toast.error("Échec de la génération", { description: status.message ?? "Erreur inconnue" })
+          toast.error("Échec de la génération", { description: status.message ?? "Erreur inconnue", duration: 12000 })
         }
       } catch {
         stopPolling()
@@ -223,6 +227,7 @@ export default function TimetablePage() {
 
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               {selectedClassId && <ClassTeachersDialog classId={selectedClassId} />}
+              <ScheduleEventsManager classId={selectedClassId} />
               <PdfPreviewButton
                 fetchBlob={() => timetableApi.exportPdf(selectedClassId as number)}
                 label="l'emploi du temps"

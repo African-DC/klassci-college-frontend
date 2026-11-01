@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { FeeSummaryHero } from "@/components/shared/fees/FeeSummaryHero"
+import { UpcomingEnrollmentCard } from "@/components/shared/fees/UpcomingEnrollmentCard"
 import {
   Table,
   TableBody,
@@ -72,6 +73,10 @@ export function ParentChildFeesClient({ childId }: ParentChildFeesClientProps) {
             totalPaid={data.total_paid}
             totalRemaining={data.total_remaining}
           />
+
+          {data.upcoming.map((upcoming) => (
+            <UpcomingEnrollmentCard key={upcoming.academic_year_name} upcoming={upcoming} />
+          ))}
 
           {/* Détail par catégorie */}
           {data.fees.length === 0 ? (
