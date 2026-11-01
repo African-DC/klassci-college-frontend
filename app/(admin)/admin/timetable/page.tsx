@@ -91,7 +91,10 @@ export default function TimetablePage() {
         if (status.status === "completed") {
           stopPolling()
           queryClient.invalidateQueries({ queryKey: timetableKeys.all })
-          toast.success("Emploi du temps généré avec succès")
+          toast.success(
+            "Emploi du temps généré avec succès",
+            status.message ? { description: status.message, duration: 12000 } : undefined,
+          )
         } else if (status.status === "failed") {
           stopPolling()
           toast.error("Échec de la génération", { description: status.message ?? "Erreur inconnue" })
