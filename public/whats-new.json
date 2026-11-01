@@ -1,11 +1,18 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-10-30T00:07:11Z",
+  "generated_at": "2026-11-01T08:50:29Z",
   "version": "Unreleased",
   "released": false,
-  "total": 373,
+  "total": 375,
   "sections": {
     "Added": [
+      {
+        "text": "Emploi du temps : récréations, pauses et séances spéciales récurrentes, indépendantes des matières, configurables par établissement ou classe, avec contraintes de conflit et affichage dédié",
+        "audience": [
+          "administration"
+        ],
+        "pull_request": 568
+      },
       {
         "text": "Assistance : pages premium responsive pour déclarer un incident avec son code, suivre les dossiers et traiter les signalements dans la console technique",
         "audience": [
@@ -41,14 +48,6 @@
         "text": "Emploi du temps : écran « Enseignants de la classe » pour choisir, matière par matière, l'enseignant de chaque classe avant la génération ; la saisie manuelle propose cet enseignant",
         "audience": [
           "admin"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Une matière peut être confiée à plusieurs enseignants, affichés sur chaque fiche ; retirer un enseignant qui a déjà des créneaux demande une confirmation, sans supprimer ces créneaux",
-        "audience": [
-          "direction",
-          "secrétariat"
         ],
         "pull_request": null
       }
@@ -104,6 +103,14 @@
     ],
     "Fixed": [
       {
+        "text": "Génération de l'emploi du temps : les minutes trop courtes pour faire un cours sont signalées à la fin de la génération",
+        "audience": [
+          "administration",
+          "direction des études"
+        ],
+        "pull_request": 568
+      },
+      {
         "text": "Matières et emploi du temps : les pastilles et avatars d'enseignants retrouvent leur couleur, et l'écran « Enseignants de la classe » s'aligne en colonnes sur ordinateur",
         "audience": [
           "direction",
@@ -142,14 +149,6 @@
           "admin",
           "directeur",
           "comptable"
-        ],
-        "pull_request": null
-      },
-      {
-        "text": "Depuis la consultation d'une attestation ou d'un certificat, le détail ouvre la fiche de l'élève",
-        "audience": [
-          "admin",
-          "directeur"
         ],
         "pull_request": null
       }

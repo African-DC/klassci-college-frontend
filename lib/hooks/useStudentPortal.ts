@@ -38,6 +38,14 @@ export function useStudentTimetable() {
   })
 }
 
+export function useStudentTimetableEvents() {
+  return useQuery({
+    queryKey: ["student-portal", "timetable", "events"] as const,
+    queryFn: () => studentPortalApi.getTimetableEvents(),
+    staleTime: 1000 * 60 * 10,
+  })
+}
+
 export function useStudentFees() {
   return useQuery({
     queryKey: studentPortalKeys.fees(),
