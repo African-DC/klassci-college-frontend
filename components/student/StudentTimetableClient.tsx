@@ -3,7 +3,10 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
-import { useStudentTimetable } from "@/lib/hooks/useStudentPortal"
+import { useStudentTimetable, useStudentTimetableEvents } from "@/lib/hooks/useStudentPortal"
+import { SchoolEventCard } from "@/components/timetable/SchoolEventCard"
+import { durationLabel } from "@/lib/timetable/durations"
+import { orderedTimetableEntries } from "@/lib/timetable/entries"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
@@ -34,6 +37,9 @@ function getSubjectColor(subjectId: number): string {
 
 export function StudentTimetableClient() {
   const { data: slots, isLoading, isError, refetch } = useStudentTimetable()
+  const {
+    data: events = [], isLoading: eventsLoading, isError: eventsError, refetch: refetchEvents,
+  } = useStudentTimetableEvents()
 
   // Grouper les créneaux par jour
   const slotsByDay = DAYS.reduce((acc, day) => {
@@ -52,38 +58,45 @@ export function StudentTimetableClient() {
 
       {isError ? (
         <DataError message="Impossible de charger l'emploi du temps" onRetry={() => refetch()} />
-      ) : isLoading ? (
+      ) : isLoading || eventsLoading ? (
         <TimetableSkeleton />
-      ) : !slots || slots.length === 0 ? (
+      ) : (!slots || slots.length === 0) && events.length === 0 ? (
         <div className="py-12 text-center text-sm text-muted-foreground">
           Aucun emploi du temps disponible.
         </div>
       ) : (
         <div className="space-y-4">
+          {eventsError && (
+            <DataError compact message="Impossible de charger les pauses." onRetry={() => refetchEvents()} />
+          )}
           {DAYS.map((day) => {
             const daySlots = slotsByDay[day]
-            if (daySlots.length === 0) return null
+            const dayEvents = events.filter(event => event.day === day)
+            if (daySlots.length === 0 && dayEvents.length === 0) return null
             return (
               <div key={day}>
                 <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                   {DAY_FULL[day]}
                 </h2>
                 <div className="space-y-2">
-                  {daySlots.map((slot) => (
+                  {orderedTimetableEntries(daySlots, dayEvents).map(entry => entry.kind === "event"
+                    ? <SchoolEventCard key={`event-${entry.item.id}`} event={entry.item} />
+                    : (
                     <Card
-                      key={slot.id}
-                      className={`border ${getSubjectColor(slot.subject_id)} shadow-none`}
+                      key={entry.item.id}
+                      className={`border ${getSubjectColor(entry.item.subject_id)} shadow-none`}
                     >
                       <CardContent className="flex items-center gap-3 p-3">
                         <div className="text-center min-w-[50px]">
-                          <p className="text-xs font-bold">{slot.start_time}</p>
-                          <p className="text-[10px] text-muted-foreground">{slot.end_time}</p>
+                          <p className="text-xs font-bold">{entry.item.start_time}</p>
+                          <p className="text-[10px] text-muted-foreground">{entry.item.end_time}</p>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold truncate">{slot.subject_name}</p>
+                          <p className="text-sm font-semibold truncate">{entry.item.subject_name}</p>
+                          <p className="text-xs text-muted-foreground">{durationLabel(entry.item.start_time, entry.item.end_time)}</p>
                           <p className="text-xs opacity-75">
-                            {slot.teacher_name}
-                            {slot.room && ` • ${slot.room}`}
+                            {entry.item.teacher_name}
+                            {entry.item.room && ` • ${entry.item.room}`}
                           </p>
                         </div>
                       </CardContent>

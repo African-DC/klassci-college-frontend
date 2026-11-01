@@ -1,5 +1,8 @@
 import { z } from "zod"
 import { UpcomingEnrollmentFeesSchema } from "@/lib/contracts/upcoming-enrollment"
+import { normalizeScheduleEvent } from "@/lib/api/schedule-events"
+import { dayToFr } from "@/lib/timetable/days"
+import type { ScheduleEvent } from "@/lib/contracts/schedule-events"
 import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import { cashRemaining } from "@/lib/contracts/payment"
 import { mapFeeStatus } from "./student-portal"
@@ -32,6 +35,21 @@ const ParentChildFeesRawSchema = z.object({
   upcoming: z.array(UpcomingEnrollmentFeesSchema).default([]),
 })
 
+const ChildTimetableRawSchema = z.object({
+  student_id: z.number(),
+  class_name: z.string(),
+  slots: z.array(z.object({
+    id: z.number(),
+    day: z.string(),
+    start_time: z.string(),
+    end_time: z.string(),
+    subject_name: z.string(),
+    teacher_name: z.string(),
+    room_name: z.string().nullish(),
+  })),
+  events: z.array(z.unknown()).nullish(),
+})
+
 export interface ChildTimetableSlot {
   id: number
   day: string
@@ -46,6 +64,7 @@ export interface ChildTimetableResponse {
   student_id: number
   class_name: string
   slots: ChildTimetableSlot[]
+  events?: ScheduleEvent[]
 }
 
 // Extrait l'item de la réponse API, qu'elle soit { data: T } ou T directement
@@ -120,6 +139,18 @@ export const parentPortalApi = {
   // Emploi du temps d'un enfant
   getChildTimetable: async (childId: number): Promise<ChildTimetableResponse> => {
     const res = await apiFetch<unknown>(`/parent/children/${childId}/timetable`)
-    return unwrapResponse(res) as ChildTimetableResponse
+    const raw = safeValidate(ChildTimetableRawSchema, unwrapResponse(res), `GET /parent/children/${childId}/timetable`)
+    return {
+      student_id: raw.student_id,
+      class_name: raw.class_name,
+      slots: raw.slots.map(slot => ({
+        ...slot,
+        day: dayToFr(slot.day),
+        start_time: slot.start_time.slice(0, 5),
+        end_time: slot.end_time.slice(0, 5),
+        room_name: slot.room_name ?? null,
+      })),
+      events: (raw.events ?? []).map(normalizeScheduleEvent),
+    }
   },
 }

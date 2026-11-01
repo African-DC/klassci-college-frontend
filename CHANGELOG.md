@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- Emploi du temps : récréations, pauses et séances spéciales récurrentes, indépendantes des matières, configurables par établissement ou classe, avec contraintes de conflit et affichage dédié *(administration)* (#568)
 - Assistance : pages premium responsive pour déclarer un incident avec son code, suivre les dossiers et traiter les signalements dans la console technique *(admin et support KLASSCI)*
 - Paramètres : horaires scolaires et durée des créneaux personnalisables par établissement dans l'onglet Emploi du temps *(direction, administration)*
 - Recherche des enseignants : noms dans tous les ordres, accents, espaces et petites erreurs de frappe, avec recherche sur l'ensemble des enseignants du tenant *(direction, secrétariat)*
@@ -66,6 +67,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 - Frais : une famille réinscrite voit à part ce qu'elle doit pour l'année suivante, sans le mêler à l'année en cours *(élève, parent)* (#572)
+- Génération de l'emploi du temps : les minutes trop courtes pour faire un cours sont signalées à la fin de la génération *(administration, direction des études)* (#568)
 - Matières et emploi du temps : les pastilles et avatars d'enseignants retrouvent leur couleur, et l'écran « Enseignants de la classe » s'aligne en colonnes sur ordinateur *(direction, secrétariat)*
 - Glisser une matière du catalogue vers un niveau qui en portait déjà une autre ne répond plus à tort « existe déjà » *(direction, secrétariat)* (#543)
 - L'export Excel ou PDF d'une liste de classe contient tous les élèves, et plus seulement les vingt premiers affichés à l'écran *(admin, secrétariat)* (#487)
