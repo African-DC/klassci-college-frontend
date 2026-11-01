@@ -113,7 +113,7 @@ export function ScheduleEventsManager({ classId }: { classId?: number | null }) 
       <Dialog open={opened} onOpenChange={v => { if (!v) { setShowForm(false); setPendingDeletion(null) } setOpened(v) }}>
         <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-2xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Rythme scolaire et séances spéciales</DialogTitle>
+            <DialogTitle className="px-8 sm:pl-0">Rythme scolaire et séances spéciales</DialogTitle>
             <DialogDescription>
               Les pauses bloquantes sont exclues des cours et de leur génération.
               Les horaires s'appliquent chaque semaine de l'année scolaire.
