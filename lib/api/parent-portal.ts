@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { normalizeScheduleEvent } from "@/lib/api/schedule-events"
+import { dayToFr } from "@/lib/timetable/days"
 import type { ScheduleEvent } from "@/lib/contracts/schedule-events"
 import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import { cashRemaining } from "@/lib/contracts/payment"
@@ -30,6 +31,21 @@ const ParentChildFeesRawSchema = z.object({
   total_due: z.coerce.number(),
   total_paid: z.coerce.number(),
   fees: z.array(ParentFeeRawSchema).default([]),
+})
+
+const ChildTimetableRawSchema = z.object({
+  student_id: z.number(),
+  class_name: z.string(),
+  slots: z.array(z.object({
+    id: z.number(),
+    day: z.string(),
+    start_time: z.string(),
+    end_time: z.string(),
+    subject_name: z.string(),
+    teacher_name: z.string(),
+    room_name: z.string().nullish(),
+  })),
+  events: z.array(z.unknown()).nullish(),
 })
 
 export interface ChildTimetableSlot {
@@ -120,18 +136,16 @@ export const parentPortalApi = {
   // Emploi du temps d'un enfant
   getChildTimetable: async (childId: number): Promise<ChildTimetableResponse> => {
     const res = await apiFetch<unknown>(`/parent/children/${childId}/timetable`)
-    const raw = unwrapResponse<ChildTimetableResponse>(res)
-    const enToFr: Record<string, string> = {
-      monday: "lundi", tuesday: "mardi", wednesday: "mercredi",
-      thursday: "jeudi", friday: "vendredi", saturday: "samedi",
-    }
+    const raw = safeValidate(ChildTimetableRawSchema, unwrapResponse(res), `GET /parent/children/${childId}/timetable`)
     return {
-      ...raw,
+      student_id: raw.student_id,
+      class_name: raw.class_name,
       slots: raw.slots.map(slot => ({
         ...slot,
-        day: enToFr[slot.day] ?? slot.day,
+        day: dayToFr(slot.day),
         start_time: slot.start_time.slice(0, 5),
         end_time: slot.end_time.slice(0, 5),
+        room_name: slot.room_name ?? null,
       })),
       events: (raw.events ?? []).map(normalizeScheduleEvent),
     }

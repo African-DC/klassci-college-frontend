@@ -97,7 +97,7 @@ export default function TimetablePage() {
           )
         } else if (status.status === "failed") {
           stopPolling()
-          toast.error("Échec de la génération", { description: status.message ?? "Erreur inconnue" })
+          toast.error("Échec de la génération", { description: status.message ?? "Erreur inconnue", duration: 12000 })
         }
       } catch {
         stopPolling()

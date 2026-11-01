@@ -5,7 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { DataError } from "@/components/shared/DataError"
 import { useStudentTimetable, useStudentTimetableEvents } from "@/lib/hooks/useStudentPortal"
 import { SchoolEventCard } from "@/components/timetable/SchoolEventCard"
-import { durationLabel, orderedTimetableEntries } from "@/lib/timetable/durations"
+import { durationLabel } from "@/lib/timetable/durations"
+import { orderedTimetableEntries } from "@/lib/timetable/entries"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
@@ -36,7 +37,9 @@ function getSubjectColor(subjectId: number): string {
 
 export function StudentTimetableClient() {
   const { data: slots, isLoading, isError, refetch } = useStudentTimetable()
-  const { data: events = [], isLoading: eventsLoading } = useStudentTimetableEvents()
+  const {
+    data: events = [], isLoading: eventsLoading, isError: eventsError, refetch: refetchEvents,
+  } = useStudentTimetableEvents()
 
   // Grouper les créneaux par jour
   const slotsByDay = DAYS.reduce((acc, day) => {
@@ -63,6 +66,9 @@ export function StudentTimetableClient() {
         </div>
       ) : (
         <div className="space-y-4">
+          {eventsError && (
+            <DataError compact message="Impossible de charger les pauses." onRetry={() => refetchEvents()} />
+          )}
           {DAYS.map((day) => {
             const daySlots = slotsByDay[day]
             const dayEvents = events.filter(event => event.day === day)

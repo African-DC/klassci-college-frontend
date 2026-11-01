@@ -27,10 +27,6 @@ export function useScheduleEventMutations() {
       }) => scheduleEventsApi.createMany(data, days),
       onSuccess: refresh,
     }),
-    create: useMutation({
-      mutationFn: (data: ScheduleEventCreate) => scheduleEventsApi.create(data),
-      onSuccess: refresh,
-    }),
     update: useMutation({
       mutationFn: ({ id, data }: { id: number; data: ScheduleEventCreate }) =>
         scheduleEventsApi.update(id, data),

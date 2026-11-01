@@ -11,7 +11,7 @@ export const EVENT_LABELS: Record<(typeof EVENT_CATEGORIES)[number], string> = {
   other: "Autre activité",
 }
 
-export const ScheduleEventCreateSchema = z.object({
+const ScheduleEventFieldsSchema = z.object({
   academic_year_id: z.number().int().positive(),
   class_id: z.number().int().positive().nullable(),
   title: z.string().trim().min(1, "Indiquez un titre").max(100),
@@ -20,10 +20,17 @@ export const ScheduleEventCreateSchema = z.object({
   day: z.enum(DAYS),
   start_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Heure invalide"),
   end_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Heure invalide"),
-}).refine(v => v.start_time < v.end_time, {
+})
+
+const orderedTimes = (v: { start_time: string; end_time: string }) => v.start_time < v.end_time
+const ORDER_ERROR = {
   path: ["end_time"],
   message: "L'heure de fin doit être après l'heure de début",
-})
-export const ScheduleEventSchema = z.intersection(ScheduleEventCreateSchema, z.object({ id: z.number() }))
+}
+
+export const ScheduleEventCreateSchema = ScheduleEventFieldsSchema.refine(orderedTimes, ORDER_ERROR)
+export const ScheduleEventSchema = ScheduleEventFieldsSchema
+  .extend({ id: z.number() })
+  .refine(orderedTimes, ORDER_ERROR)
 export type ScheduleEvent = z.infer<typeof ScheduleEventSchema>
 export type ScheduleEventCreate = z.infer<typeof ScheduleEventCreateSchema>

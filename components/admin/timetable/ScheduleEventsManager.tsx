@@ -1,86 +1,50 @@
 "use client"
 
 import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { CalendarClock, Pencil, Plus, Trash2 } from "lucide-react"
+import { CalendarClock } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Skeleton } from "@/components/ui/skeleton"
+import {
+  AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useAcademicYears } from "@/lib/hooks/useAcademicYears"
-import { useInfiniteClasses } from "@/lib/hooks/useClasses"
-import { durationLabel } from "@/lib/timetable/durations"
 import { usePermissions } from "@/lib/hooks/usePermissions"
 import { useScheduleEventMutations, useScheduleEvents } from "@/lib/hooks/useScheduleEvents"
-import {
-  DAYS, EVENT_CATEGORIES, EVENT_LABELS, ScheduleEventCreateSchema,
-  type ScheduleEvent, type ScheduleEventCreate,
-} from "@/lib/contracts/schedule-events"
-
-const DAY_NAMES: Record<string, string> = {
-  lundi: "Lundi", mardi: "Mardi", mercredi: "Mercredi",
-  jeudi: "Jeudi", vendredi: "Vendredi", samedi: "Samedi",
-}
-
-function initial(yearId: number, classId: number | null = null): ScheduleEventCreate {
-  return {
-    academic_year_id: yearId, class_id: classId, title: "Récréation",
-    category: "recess", blocks_courses: true, day: "lundi",
-    start_time: "10:00", end_time: "10:15",
-  }
-}
+import type { ScheduleEvent, ScheduleEventCreate } from "@/lib/contracts/schedule-events"
+import { ScheduleEventsList } from "@/components/admin/timetable/ScheduleEventsList"
+import { ScheduleEventForm } from "@/components/admin/timetable/ScheduleEventForm"
 
 export function ScheduleEventsManager({ classId }: { classId?: number | null }) {
   const [opened, setOpened] = useState(false)
   const [editing, setEditing] = useState<ScheduleEvent | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [formKey, setFormKey] = useState(0)
   const [pendingDeletion, setPendingDeletion] = useState<number | null>(null)
-  const [selectedDays, setSelectedDays] = useState<ScheduleEventCreate["day"][]>([
-    "lundi", "mardi", "mercredi", "jeudi", "vendredi",
-  ])
   const { data: years } = useAcademicYears()
   const yearId = years?.items.find(y => y.is_current)?.id ?? null
-  const { data: classes, scrollInfini } = useInfiniteClasses({ size: 50 })
   const { has } = usePermissions()
   const canRead = has("timetable:read")
   const canWrite = has("timetable:write")
-  const { data: events, isLoading, isError, refetch } =
+  const { data: events, isLoading, isError, error, refetch } =
     useScheduleEvents(opened && canRead ? yearId : null, classId ?? undefined)
   const actions = useScheduleEventMutations()
-  const form = useForm<ScheduleEventCreate>({
-    resolver: zodResolver(ScheduleEventCreateSchema),
-    defaultValues: initial(yearId ?? 0, classId ?? null),
-  })
   const isBusy =
-    actions.create.isPending || actions.createMany.isPending
-    || actions.update.isPending || actions.remove.isPending
+    actions.createMany.isPending || actions.update.isPending || actions.remove.isPending
+
   function begin(event?: ScheduleEvent) {
     setEditing(event ?? null)
-    setSelectedDays(event ? [event.day] : [...DAYS.slice(0, 5)])
-    form.reset(event ? {
-      academic_year_id: event.academic_year_id, class_id: event.class_id,
-      title: event.title, category: event.category,
-      blocks_courses: event.blocks_courses, day: event.day,
-      start_time: event.start_time, end_time: event.end_time,
-    } : initial(yearId ?? 0, classId ?? null))
+    setFormKey(key => key + 1)
     setShowForm(true)
   }
-  async function submit(values: ScheduleEventCreate) {
+
+  async function submit(values: ScheduleEventCreate, days: ScheduleEventCreate["day"][]) {
     try {
       if (editing) {
         await actions.update.mutateAsync({ id: editing.id, data: values })
       } else {
-        if (!selectedDays.length) {
-          form.setError("day", { message: "Sélectionnez au moins un jour." })
-          return
-        }
-        await actions.createMany.mutateAsync({ data: values, days: selectedDays })
+        await actions.createMany.mutateAsync({ data: values, days })
       }
       toast.success(editing ? "Activité modifiée" : "Activité ajoutée")
       setShowForm(false)
@@ -91,6 +55,7 @@ export function ScheduleEventsManager({ classId }: { classId?: number | null }) 
       })
     }
   }
+
   async function remove() {
     if (pendingDeletion === null) return
     try {
@@ -121,129 +86,42 @@ export function ScheduleEventsManager({ classId }: { classId?: number | null }) 
           </DialogHeader>
           {!yearId ? <p role="status" className="text-sm text-muted-foreground">Configurez d'abord l'année scolaire en cours.</p>
           : !showForm ? (
-            <div className="space-y-3">
-              {canWrite && <Button type="button" onClick={() => begin()}>
-                <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Ajouter une période
-              </Button>}
-              {isLoading ? <Skeleton className="h-24 w-full" />
-              : isError ? <Button variant="outline" onClick={() => refetch()}>Réessayer</Button>
-              : !events?.length ? <p className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">Aucune période définie.</p>
-              : <div className="space-y-2">
-                {events.map(event => (
-                  <Card key={event.id} className="shadow-none">
-                    <CardContent className="flex flex-wrap items-center justify-between gap-3 p-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold">{event.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {DAY_NAMES[event.day]} · {event.start_time}–{event.end_time} ({durationLabel(event.start_time, event.end_time)}) · {event.class_id === null ? "Tout l'établissement" : classes?.items.find(c => c.id === event.class_id)?.name ?? "Classe"} · {event.blocks_courses ? "Bloque les cours" : "Activité informative"}
-                        </p>
-                      </div>
-                      {canWrite && <div className="flex items-center gap-1">
-                        <Button type="button" variant="outline" size="icon" aria-label={`Modifier ${event.title}`} onClick={() => begin(event)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button type="button" variant="ghost" size="icon" aria-label={`Supprimer ${event.title}`} onClick={() => setPendingDeletion(event.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>}
-              {pendingDeletion !== null && <div role="alertdialog" aria-label="Confirmer la suppression" className="rounded-lg border p-3">
-                <p className="mb-3 text-sm">Supprimer définitivement cette période ?</p>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setPendingDeletion(null)}>Annuler</Button>
-                  <Button variant="destructive" disabled={isBusy} onClick={remove}>Confirmer</Button>
-                </div>
-              </div>}
-            </div>
-          ) : <form onSubmit={form.handleSubmit(submit)} className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="event-title">Intitulé</Label>
-                <Input id="event-title" {...form.register("title")} />
-                {form.formState.errors.title && <p role="alert" className="text-xs text-destructive">{form.formState.errors.title.message}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label>Type</Label>
-                <Select value={form.watch("category")} onValueChange={v => {
-                  const category = v as ScheduleEventCreate["category"]
-                  form.setValue("category", category, { shouldValidate: true })
-                  if (!editing) form.setValue("title", EVENT_LABELS[category])
-                }}>
-                  <SelectTrigger aria-label="Type de période"><SelectValue /></SelectTrigger>
-                  <SelectContent>{EVENT_CATEGORIES.map(k => <SelectItem key={k} value={k}>{EVENT_LABELS[k]}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>{editing ? "Jour" : "Jours de récurrence"}</Label>
-                {editing ? (
-                  <Select value={form.watch("day")} onValueChange={v =>
-                    form.setValue("day", v as ScheduleEventCreate["day"], { shouldValidate: true })}>
-                    <SelectTrigger aria-label="Jour de la période"><SelectValue /></SelectTrigger>
-                    <SelectContent>{DAYS.map(day =>
-                      <SelectItem key={day} value={day}>{DAY_NAMES[day]}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <div className="flex flex-wrap gap-x-3 gap-y-2 rounded-lg border p-3">
-                    {DAYS.map(day => (
-                      <label key={day} className="flex items-center gap-2 text-xs">
-                        <Checkbox
-                          checked={selectedDays.includes(day)}
-                          onCheckedChange={checked => {
-                            setSelectedDays(previous => checked
-                              ? [...previous, day].filter((value, index, values) => values.indexOf(value) === index)
-                              : previous.filter(value => value !== day))
-                          }}
-                        />
-                        {DAY_NAMES[day]}
-                      </label>
-                    ))}
-                  </div>
-                )}
-                {!editing && selectedDays.length === 0 &&
-                  <p role="alert" className="text-xs text-destructive">Choisissez au moins un jour.</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="event-start">Début</Label>
-                <Input id="event-start" type="time" {...form.register("start_time")} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="event-end">Fin</Label>
-                <Input id="event-end" type="time" {...form.register("end_time")} />
-                {form.formState.errors.end_time && <p role="alert" className="text-xs text-destructive">{form.formState.errors.end_time.message}</p>}
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label>Portée</Label>
-                <Select value={form.watch("class_id")?.toString() ?? "school"} onValueChange={v => form.setValue("class_id", v === "school" ? null : Number(v), { shouldValidate: true })}>
-                  <SelectTrigger aria-label="Classes concernées"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="school">Tout l'établissement</SelectItem>
-                    {(classes?.items ?? []).map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                {scrollInfini.resteAcharger && (
-                  <Button type="button" size="sm" variant="ghost"
-                    disabled={scrollInfini.chargeEnCours}
-                    onClick={scrollInfini.chargerSuite}>
-                    {scrollInfini.chargeEnCours ? "Chargement…" : "Afficher les classes suivantes"}
-                  </Button>
-                )}
-              </div>
-            </div>
-            <label className="flex items-center gap-3 rounded-lg border p-3 text-sm">
-              <Checkbox checked={form.watch("blocks_courses")} onCheckedChange={value => form.setValue("blocks_courses", value === true)} />
-              Empêcher les cours pendant cette période
-            </label>
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Retour</Button>
-              <Button type="submit" disabled={isBusy}>Enregistrer</Button>
-            </div>
-          </form>}
+            <ScheduleEventsList
+              events={events}
+              isLoading={isLoading}
+              isError={isError}
+              error={error}
+              canWrite={canWrite}
+              onRetry={() => refetch()}
+              onAdd={() => begin()}
+              onEdit={begin}
+              onDelete={setPendingDeletion}
+            />
+          ) : (
+            <ScheduleEventForm
+              key={formKey}
+              yearId={yearId}
+              classId={classId ?? null}
+              editing={editing}
+              isBusy={isBusy}
+              onCancel={() => setShowForm(false)}
+              onSubmit={submit}
+            />
+          )}
         </DialogContent>
       </Dialog>
+      <AlertDialog open={pendingDeletion !== null} onOpenChange={open => { if (!open) setPendingDeletion(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>Supprimer définitivement cette période ?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setPendingDeletion(null)}>Annuler</Button>
+            <Button variant="destructive" disabled={isBusy} onClick={remove}>Confirmer</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

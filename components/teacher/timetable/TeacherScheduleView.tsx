@@ -6,8 +6,11 @@ import { useMyTimetable, useTeacherTimetable, useMySchoolEvents } from "@/lib/ho
 import { SchoolEventCard } from "@/components/timetable/SchoolEventCard"
 import type { TimetableSlot } from "@/lib/contracts/timetable"
 import { Skeleton } from "@/components/ui/skeleton"
-import { durationLabel, orderedTimetableEntries } from "@/lib/timetable/durations"
+import { durationLabel } from "@/lib/timetable/durations"
+import { orderedTimetableEntries } from "@/lib/timetable/entries"
 import { visibleTimeLabels } from "@/lib/timetable/time-labels"
+import { enMinutes } from "@/lib/timetable/semaine"
+import { DataError } from "@/components/shared/DataError"
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"] as const
 const DAY_LABELS: Record<string, string> = {
@@ -34,10 +37,7 @@ const SLOT_COLORS = [
   "bg-indigo-50 border-indigo-200 text-indigo-800",
 ]
 
-function timeToMinutes(t: string): number {
-  const [h, m] = t.split(":").map(Number)
-  return h * 60 + m
-}
+const timeToMinutes = (t: string): number => enMinutes(t) ?? NaN
 
 interface TeacherScheduleViewProps {
   /**
@@ -59,6 +59,7 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
   const isLoading = useOwn ? ownQuery.isLoading : adminQuery.isLoading
   const error = useOwn ? ownQuery.error : adminQuery.error
   const events = useOwn ? (schoolEventsQuery.data ?? []) : []
+  const eventsFailed = useOwn && schoolEventsQuery.isError
 
   if (error) {
     return (
@@ -145,6 +146,9 @@ export function TeacherScheduleView({ teacherId }: TeacherScheduleViewProps) {
 
   return (
     <>
+    {eventsFailed && (
+      <DataError compact message="Impossible de charger les pauses." onRetry={() => schoolEventsQuery.refetch()} />
+    )}
     {/* Mobile : liste jour-par-jour, plus lisible sur Itel S661 que la grille
         7 colonnes 900px qui necessite un scroll horizontal invisible. */}
     <div className="space-y-4 md:hidden">

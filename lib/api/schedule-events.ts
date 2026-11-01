@@ -1,28 +1,35 @@
+import { z } from "zod"
 import { apiFetch, safeValidate } from "@/lib/api/client"
+import { dayToEn, dayToFr } from "@/lib/timetable/days"
 import {
   ScheduleEventSchema, ScheduleEventCreateSchema,
   type ScheduleEvent, type ScheduleEventCreate,
 } from "@/lib/contracts/schedule-events"
 
-const EN: Record<string, string> = {
-  lundi: "monday", mardi: "tuesday", mercredi: "wednesday",
-  jeudi: "thursday", vendredi: "friday", samedi: "saturday",
+// Forme brute du serveur : jour en anglais, heures possiblement avec secondes.
+const ScheduleEventRawSchema = z.object({
+  day: z.string(),
+  start_time: z.string(),
+  end_time: z.string(),
+}).passthrough()
+
+/** Le serveur enveloppe parfois la réponse dans `{ data }`. */
+function unwrapData(value: unknown): unknown {
+  return typeof value === "object" && value !== null && "data" in value ? value.data : value
 }
-const FR: Record<string, string> = Object.fromEntries(
-  Object.entries(EN).map(([fr, en]) => [en, fr]),
-)
+
 export function normalizeScheduleEvent(value: unknown): ScheduleEvent {
-  const event = value as Record<string, unknown>
+  const raw = safeValidate(ScheduleEventRawSchema, value, "schedule-event")
   return safeValidate(ScheduleEventSchema, {
-    ...event,
-    day: FR[String(event.day)] ?? event.day,
-    start_time: String(event.start_time ?? "").slice(0, 5),
-    end_time: String(event.end_time ?? "").slice(0, 5),
+    ...raw,
+    day: dayToFr(raw.day),
+    start_time: raw.start_time.slice(0, 5),
+    end_time: raw.end_time.slice(0, 5),
   }, "schedule-event")
 }
 function payload(data: ScheduleEventCreate) {
   const parsed = ScheduleEventCreateSchema.parse(data)
-  return { ...parsed, day: EN[parsed.day] }
+  return { ...parsed, day: dayToEn(parsed.day) }
 }
 export const scheduleEventsApi = {
   list: async (yearId: number, classId?: number) => {
@@ -42,17 +49,11 @@ export const scheduleEventsApi = {
     const items = Array.isArray(data) ? data : (data as { data?: unknown[] }).data ?? []
     return items.map(normalizeScheduleEvent)
   },
-  create: async (input: ScheduleEventCreate) => {
-    const data = await apiFetch<unknown>("/timetable/events", {
-      method: "POST", body: JSON.stringify(payload(input)),
-    })
-    return normalizeScheduleEvent((data as { data?: unknown })?.data ?? data)
-  },
   update: async (id: number, input: ScheduleEventCreate) => {
     const data = await apiFetch<unknown>(`/timetable/events/${id}`, {
       method: "PUT", body: JSON.stringify(payload(input)),
     })
-    return normalizeScheduleEvent(data)
+    return normalizeScheduleEvent(unwrapData(data))
   },
   delete: async (id: number) =>
     apiFetch<void>(`/timetable/events/${id}`, { method: "DELETE" }),

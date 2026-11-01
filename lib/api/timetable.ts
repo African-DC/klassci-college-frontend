@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { normalizeScheduleEvent } from "@/lib/api/schedule-events"
+import { dayToEn, dayToFr } from "@/lib/timetable/days"
 import type { ScheduleEvent } from "@/lib/contracts/schedule-events"
 import { getSession } from "next-auth/react"
 import { apiFetch, safeValidate } from "./client"
@@ -32,17 +33,6 @@ export type {
 const TimetableSlotArraySchema = z.array(TimetableSlotSchema)
 const TeacherAvailabilityArraySchema = z.array(TeacherAvailabilitySchema)
 
-// Day translation: FE uses French, BE uses English
-const FR_TO_EN: Record<string, string> = {
-  lundi: "monday", mardi: "tuesday", mercredi: "wednesday",
-  jeudi: "thursday", vendredi: "friday", samedi: "saturday",
-}
-const EN_TO_FR: Record<string, string> = {
-  monday: "lundi", tuesday: "mardi", wednesday: "mercredi",
-  thursday: "jeudi", friday: "vendredi", saturday: "samedi",
-}
-function dayToEn(day: string): string { return FR_TO_EN[day] ?? day }
-function dayToFr<D extends string>(day: D): D { return (EN_TO_FR[day] ?? day) as D }
 function slotsToFr<T extends { day: string }>(slots: T[]): T[] {
   return slots.map((s) => ({ ...s, day: dayToFr(s.day) }))
 }
