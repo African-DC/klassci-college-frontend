@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { UpcomingEnrollmentFeesSchema } from "@/lib/contracts/upcoming-enrollment"
 
 // Contrats pour le portail parent — endpoints /parent/*
 
@@ -72,6 +73,7 @@ export const ParentChildFeesResponseSchema = z.object({
   total_paid: z.coerce.number(),
   total_remaining: z.coerce.number(),
   fees: z.array(ParentChildFeeItemSchema),
+  upcoming: UpcomingEnrollmentFeesSchema.nullish(),
 })
 
 // Bulletins d'un enfant

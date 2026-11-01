@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { UpcomingEnrollmentFeesSchema } from "@/lib/contracts/upcoming-enrollment"
 
 // Contrats pour le portail élève — endpoints /student/*
 
@@ -77,6 +78,7 @@ export const StudentFeesResponseSchema = z.object({
   total_paid: z.coerce.number(),
   total_remaining: z.coerce.number(),
   fees: z.array(StudentFeeItemSchema),
+  upcoming: UpcomingEnrollmentFeesSchema.nullish(),
 })
 
 // Bulletins publiés

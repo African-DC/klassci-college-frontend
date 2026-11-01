@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { UpcomingEnrollmentFeesSchema } from "@/lib/contracts/upcoming-enrollment"
 import { cashRemaining } from "@/lib/contracts/payment"
 import { apiFetch, apiFetchBlob, safeValidate } from "./client"
 import {
@@ -61,6 +62,7 @@ const StudentFeesRawSchema = z.object({
   total_paid: z.coerce.number(),
   balance: z.coerce.number(),
   fees: z.array(StudentFeeRawSchema).default([]),
+  upcoming: UpcomingEnrollmentFeesSchema.nullish(),
 })
 
 export function mapFeeStatus(
@@ -160,6 +162,7 @@ export const studentPortalApi = {
       total_paid: raw.total_paid,
       total_remaining: fees.reduce((sum, f) => sum + f.remaining, 0),
       fees,
+      upcoming: raw.upcoming ?? null,
     }
   },
 
