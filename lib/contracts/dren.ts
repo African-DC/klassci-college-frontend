@@ -9,6 +9,7 @@ export const ClassStatsSchema = z.object({
   total_students: z.number(),
   male_count: z.number(),
   female_count: z.number(),
+  unspecified_count: z.number().default(0),
   average: z.coerce.number().nullable().optional(),
 })
 
@@ -18,6 +19,10 @@ export const LevelStatsSchema = z.object({
   total_students: z.number(),
   male_count: z.number(),
   female_count: z.number(),
+  unspecified_count: z.number().default(0),
+  // Taux du niveau, sur le même trimestre que celui de l'établissement.
+  // Absent quand le niveau n'a encore aucun bulletin : ce n'est pas 0 %.
+  success_rate: z.number().nullable().optional(),
   classes: z.array(ClassStatsSchema),
 })
 
@@ -34,6 +39,7 @@ export const DrenStatsSchema = z.object({
   total_students: z.number(),
   male_count: z.number(),
   female_count: z.number(),
+  unspecified_count: z.number().default(0),
   success_rate: z.number().nullable().optional(),
   failure_rate: z.number().nullable().optional(),
   redoublement_rate: z.number().nullable().optional(),

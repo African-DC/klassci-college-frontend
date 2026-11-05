@@ -47,7 +47,7 @@ export function StaffHero() {
       label: "Élèves inscrits",
       value: dash(data?.enrolled_students),
       icon: GraduationCap,
-      hint: data ? `${data.enrollment_validated ?? 0} validées` : undefined,
+      hint: data ? `+ ${data.enrollment_pending ?? 0} en validation` : undefined,
     },
   ]
 
