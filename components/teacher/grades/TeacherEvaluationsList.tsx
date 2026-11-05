@@ -34,25 +34,18 @@ import {
 } from "@/components/ui/table"
 import { DataError } from "@/components/shared/DataError"
 import { ListSearchBar } from "@/components/shared/list/ListSearchBar"
+import { EvaluationMobileCard } from "./EvaluationMobileCard"
+import {
+  EvaluationProgress,
+  EvaluationStatusBadge,
+  TYPE_LABELS,
+  evaluationState,
+  isDone,
+  isOverdue,
+} from "./evaluation-status"
 import { matchesSearch } from "@/lib/utils/list-search"
 
-const TYPE_LABELS: Record<string, string> = {
-  controle: "Contrôle",
-  devoir: "Devoir",
-  examen: "Examen",
-  oral: "Oral",
-}
-
 type FilterTab = "all" | "todo" | "overdue" | "done"
-
-function isOverdue(evalDate: string, gradedStudents: number, totalStudents: number): boolean {
-  const daysAgo = (Date.now() - new Date(evalDate).getTime()) / (1000 * 60 * 60 * 24)
-  return daysAgo > 3 && gradedStudents < totalStudents
-}
-
-function isDone(gradedStudents: number, totalStudents: number): boolean {
-  return totalStudents > 0 && gradedStudents === totalStudents
-}
 
 export function TeacherEvaluationsList() {
   const { data, isLoading, isError, refetch } = useTeacherEvaluations()
@@ -101,7 +94,7 @@ export function TeacherEvaluationsList() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
       {/* ─── Hero ──────────────────────────────────────────────────── */}
       <div className="rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-5">
         <div className="flex items-start gap-3">
@@ -202,8 +195,22 @@ export function TeacherEvaluationsList() {
         </div>
       )}
 
-      {/* ─── Liste ────────────────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-xl border bg-card">
+      {/* ─── Liste mobile : une carte par évaluation ─────────────── */}
+      {!isLoading && filtered.length > 0 && (
+        <ul className="space-y-2 md:hidden">
+          {filtered.map((evaluation) => (
+            <EvaluationMobileCard key={evaluation.id} evaluation={evaluation} />
+          ))}
+        </ul>
+      )}
+
+      {/* ─── Liste ordinateur (et états vide / chargement sur mobile) ── */}
+      <div
+        className={cn(
+          "overflow-hidden rounded-xl border bg-card",
+          !isLoading && filtered.length > 0 && "hidden md:block",
+        )}
+      >
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -258,12 +265,7 @@ interface EvaluationRowProps {
 }
 
 function EvaluationRow({ evaluation }: EvaluationRowProps) {
-  const overdue = isOverdue(evaluation.date, evaluation.graded_students, evaluation.total_students)
-  const complete = isDone(evaluation.graded_students, evaluation.total_students)
-  const progressPct =
-    evaluation.total_students > 0
-      ? (evaluation.graded_students / evaluation.total_students) * 100
-      : 0
+  const { overdue, complete } = evaluationState(evaluation)
 
   return (
     <TableRow className={cn(overdue && "bg-destructive/5")}>
@@ -284,46 +286,13 @@ function EvaluationRow({ evaluation }: EvaluationRowProps) {
         })}
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
-            <div
-              className={cn(
-                "h-full rounded-full transition-all",
-                complete ? "bg-emerald-500" : overdue ? "bg-destructive" : "bg-primary",
-              )}
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {evaluation.graded_students}/{evaluation.total_students}
-          </span>
-        </div>
+        <EvaluationProgress evaluation={evaluation} />
       </TableCell>
       <TableCell>
-        {overdue ? (
-          <Badge variant="destructive" className="gap-1 text-[10px]">
-            <AlertTriangle className="h-3 w-3" />
-            En retard
-          </Badge>
-        ) : complete ? (
-          <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 text-[10px] gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            Complète
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="gap-1 text-[10px]">
-            <Hourglass className="h-3 w-3" />
-            En cours
-          </Badge>
-        )}
+        <EvaluationStatusBadge evaluation={evaluation} />
       </TableCell>
       <TableCell className="text-right">
-        <Button
-          asChild
-          size="sm"
-          variant={complete ? "outline" : "default"}
-          className="h-8"
-        >
+        <Button asChild size="sm" variant={complete ? "outline" : "default"} className="h-8">
           <Link href={`/teacher/grades/${evaluation.class_id}/${evaluation.id}` as Route}>
             <Edit3 className="mr-1 h-3 w-3" />
             {complete ? "Réviser" : "Saisir"}

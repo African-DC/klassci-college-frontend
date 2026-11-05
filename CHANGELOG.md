@@ -66,6 +66,10 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - En corrigeant le niveau antérieur d'un élève sans toucher à sa qualité, l'écran annonce que la qualité sera recalculée : Redoublant si ce niveau est celui de la classe *(secrétariat, éducateur)*
 
 ### Fixed
+- Statistiques DREN : le graphique montre le vrai taux de réussite de chaque niveau, et les élèves sans sexe renseigné sont signalés *(direction)* (#577)
+- Statistiques DREN : les boutons Excel et PDF annoncent la préparation du fichier au lieu de sembler sans effet *(direction)* (#577)
+- Tableau de bord : « élèves inscrits » affiche le même effectif que les statistiques DREN *(administration)* (#577)
+- Notes & saisies : la liste des évaluations s'affiche en cartes sur téléphone, sans défilement de côté *(enseignant)* (#577)
 - Frais : une famille réinscrite voit à part ce qu'elle doit pour l'année suivante, sans le mêler à l'année en cours *(élève, parent)* (#572)
 - Génération de l'emploi du temps : les minutes trop courtes pour faire un cours sont signalées à la fin de la génération *(administration, direction des études)* (#568)
 - Matières et emploi du temps : les pastilles et avatars d'enseignants retrouvent leur couleur, et l'écran « Enseignants de la classe » s'aligne en colonnes sur ordinateur *(direction, secrétariat)*

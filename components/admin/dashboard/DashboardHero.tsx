@@ -29,7 +29,7 @@ export function DashboardHero() {
       value: dash(data?.enrolled_students),
       icon: GraduationCap,
       hint: data
-        ? `${data.enrollment_validated ?? 0} validées · ${data.enrollment_pending ?? 0} en attente`
+        ? `+ ${data.enrollment_pending ?? 0} en validation · ${data.enrollment_prospect ?? 0} prospects`
         : undefined,
     },
     { label: "Paiements en attente", value: dash(data?.pending_payments), icon: Wallet, hint: "À traiter" },
