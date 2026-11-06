@@ -196,7 +196,7 @@ export function InstallmentOverview({ academicYearId }: { academicYearId: number
               ].map((item) => (
                 <div key={item.label} className="min-w-0 rounded-xl border bg-muted/30 p-3">
                   <p className="text-xs text-muted-foreground">{item.label}</p>
-                  <p className="mt-1 truncate text-lg font-semibold tabular-nums sm:text-xl">{item.value}</p>
+                  <p className="mt-1 text-base font-semibold leading-tight tabular-nums break-words sm:text-xl">{item.value}</p>
                 </div>
               ))}
             </div>

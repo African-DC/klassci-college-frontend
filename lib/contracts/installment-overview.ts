@@ -67,8 +67,18 @@ export const SCHEDULE_STATES: { value: ScheduleOverviewState; label: string }[] 
   { value: "no_fees", label: "Sans frais" },
 ]
 
+/** Le filtre parle d'un ensemble (« Soldés »), le badge d'un seul élève (« Soldé »). */
+const ROW_LABELS: Partial<Record<ScheduleOverviewState, string>> = {
+  settled: "Soldé",
+  partial_schedule: "Partiellement planifié",
+}
+
 export function scheduleStatusLabel(state: string): string {
-  return SCHEDULE_STATES.find((entry) => entry.value === state)?.label ?? state
+  return (
+    ROW_LABELS[state as ScheduleOverviewState] ??
+    SCHEDULE_STATES.find((entry) => entry.value === state)?.label ??
+    state
+  )
 }
 
 export function scheduleSourceLabelForRow(source: string): string {

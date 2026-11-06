@@ -67,6 +67,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - En corrigeant le niveau antérieur d'un élève sans toucher à sa qualité, l'écran annonce que la qualité sera recalculée : Redoublant si ce niveau est celui de la classe *(secrétariat, éducateur)*
 
 ### Fixed
+- Suivi des échéanciers sur téléphone : les montants des indicateurs s'affichent en entier et chaque élève soldé porte le badge « Soldé » *(direction, administration)*
 - Notes & saisies : sur téléphone, la liste ne dépasse plus du bord de l'écran ; les titres longs passent sur deux lignes *(enseignant)* (#579)
 - Statistiques DREN : le graphique montre le vrai taux de réussite de chaque niveau, et les élèves sans sexe renseigné sont signalés *(direction)* (#577)
 - Statistiques DREN : les boutons Excel et PDF annoncent la préparation du fichier au lieu de sembler sans effet *(direction)* (#577)

@@ -1,9 +1,9 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-11-06T00:47:10Z",
+  "generated_at": "2026-11-06T13:24:23Z",
   "version": "Unreleased",
   "released": false,
-  "total": 382,
+  "total": 383,
   "sections": {
     "Added": [
       {
@@ -103,6 +103,14 @@
     ],
     "Fixed": [
       {
+        "text": "Suivi des échéanciers sur téléphone : les montants des indicateurs s'affichent en entier et chaque élève soldé porte le badge « Soldé »",
+        "audience": [
+          "direction",
+          "administration"
+        ],
+        "pull_request": null
+      },
+      {
         "text": "Notes & saisies : sur téléphone, la liste ne dépasse plus du bord de l'écran ; les titres longs passent sur deux lignes",
         "audience": [
           "enseignant"
@@ -136,14 +144,6 @@
           "enseignant"
         ],
         "pull_request": 577
-      },
-      {
-        "text": "Frais : une famille réinscrite voit à part ce qu'elle doit pour l'année suivante, sans le mêler à l'année en cours",
-        "audience": [
-          "élève",
-          "parent"
-        ],
-        "pull_request": 572
       }
     ],
     "Security": [

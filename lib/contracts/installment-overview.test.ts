@@ -61,6 +61,8 @@ describe("schedule overview contract", () => {
   it("labels both individual agreements and school grids", () => {
     expect(scheduleSourceLabelForRow("negotiated")).toBe("Accord individuel")
     expect(scheduleSourceLabelForRow("standard")).toBe("Grille établissement")
+    expect(scheduleStatusLabel("settled")).toBe("Soldé")
+    expect(scheduleStatusLabel("partial_schedule")).toBe("Partiellement planifié")
     expect(scheduleStatusLabel("late")).toBe("En retard")
   })
 })

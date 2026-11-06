@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-11-06T00:47:10Z",
+  "generated_at": "2026-11-06T13:24:23Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -2005,6 +2005,14 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Suivi des échéanciers sur téléphone : les montants des indicateurs s'affichent en entier et chaque élève soldé porte le badge « Soldé »",
+            "audience": [
+              "direction",
+              "administration"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Notes & saisies : sur téléphone, la liste ne dépasse plus du bord de l'écran ; les titres longs passent sur deux lignes",
             "audience": [
