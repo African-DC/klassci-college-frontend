@@ -4,11 +4,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { installmentsApi } from "@/lib/api/installments"
 import type { InstallmentDraft } from "@/lib/contracts/installment"
+import type { ScheduleOverviewParams } from "@/lib/contracts/installment-overview"
 
 export const installmentKeys = {
   all: ["installments"] as const,
   grid: (yearId: number) => ["installments", "grid", yearId] as const,
   schedule: (enrollmentId: number) => ["installments", "schedule", enrollmentId] as const,
+  overview: (filters: ScheduleOverviewParams | null) => ["installments", "overview", filters] as const,
 }
 
 export function useInstallmentGrid(academicYearId: number | undefined) {
@@ -44,5 +46,15 @@ export function useReplaceInstallmentGrid(academicYearId: number | undefined) {
     onError: (err) => {
       toast.error("Enregistrement impossible", { description: err.message })
     },
+  })
+}
+
+/** Échéanciers consolidés : aucun fetch financier avant permission effective. */
+export function useScheduleOverview(filters: ScheduleOverviewParams | null) {
+  return useQuery({
+    queryKey: installmentKeys.overview(filters),
+    queryFn: () => installmentsApi.overview(filters as ScheduleOverviewParams),
+    enabled: Boolean(filters),
+    staleTime: 1000 * 60,
   })
 }
