@@ -33,16 +33,21 @@ export function SuccessRateChart({ data }: SuccessRateChartProps) {
   return (
     <Card className="border-0 shadow-sm ring-1 ring-border">
       <CardHeader>
-        <CardTitle className="text-base font-medium">Taux de reussite par niveau</CardTitle>
+        <CardTitle className="text-base font-medium">Taux de réussite par niveau</CardTitle>
       </CardHeader>
       <CardContent>
+        {data.length === 0 ? (
+          <p className="flex h-[300px] items-center justify-center text-center text-sm text-muted-foreground">
+            Aucun bulletin calculé pour l&apos;instant : le taux par niveau apparaîtra après la première génération des bulletins.
+          </p>
+        ) : (
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis dataKey="level" className="text-xs" />
             <YAxis domain={[0, 100]} unit="%" className="text-xs" />
             <Tooltip
-              formatter={(value: number) => [`${value.toFixed(1)}%`, "Taux de reussite"]}
+              formatter={(value: number) => [`${value.toFixed(1)}%`, "Taux de réussite"]}
               contentStyle={{
                 borderRadius: "8px",
                 border: "1px solid hsl(var(--border))",
@@ -56,6 +61,7 @@ export function SuccessRateChart({ data }: SuccessRateChartProps) {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   )

@@ -1,10 +1,10 @@
-﻿FROM node:20-bookworm-slim AS deps
+﻿FROM node:22-bookworm-slim AS deps
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-FROM node:20-bookworm-slim AS builder
+FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1 \
     NODE_OPTIONS=--max-old-space-size=4096 \
@@ -21,7 +21,7 @@ RUN pnpm exec next build \
     && cp -r .next/static .next/standalone/.next/static \
     && if [ -d public ]; then cp -r public .next/standalone/public; fi
 
-FROM node:20-bookworm-slim AS runner
+FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \

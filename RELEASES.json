@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-11-01T19:26:29Z",
+  "generated_at": "2026-11-06T13:24:23Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -10,6 +10,13 @@
       "released": false,
       "sections": {
         "Added": [
+          {
+            "text": "La page Tranches de paiement présente le suivi par classe et état, avec retards exigibles et exports Excel ou PDF, sur mobile et ordinateur",
+            "audience": [
+              "administration"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Emploi du temps : récréations, pauses et séances spéciales récurrentes, indépendantes des matières, configurables par établissement ou classe, avec contraintes de conflit et affichage dédié",
             "audience": [
@@ -1998,6 +2005,49 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Suivi des échéanciers sur téléphone : les montants des indicateurs s'affichent en entier et chaque élève soldé porte le badge « Soldé »",
+            "audience": [
+              "direction",
+              "administration"
+            ],
+            "pull_request": null
+          },
+          {
+            "text": "Notes & saisies : sur téléphone, la liste ne dépasse plus du bord de l'écran ; les titres longs passent sur deux lignes",
+            "audience": [
+              "enseignant"
+            ],
+            "pull_request": 579
+          },
+          {
+            "text": "Statistiques DREN : le graphique montre le vrai taux de réussite de chaque niveau, et les élèves sans sexe renseigné sont signalés",
+            "audience": [
+              "direction"
+            ],
+            "pull_request": 577
+          },
+          {
+            "text": "Statistiques DREN : les boutons Excel et PDF annoncent la préparation du fichier au lieu de sembler sans effet",
+            "audience": [
+              "direction"
+            ],
+            "pull_request": 577
+          },
+          {
+            "text": "Tableau de bord : « élèves inscrits » affiche le même effectif que les statistiques DREN",
+            "audience": [
+              "administration"
+            ],
+            "pull_request": 577
+          },
+          {
+            "text": "Notes & saisies : la liste des évaluations s'affiche en cartes sur téléphone, sans défilement de côté",
+            "audience": [
+              "enseignant"
+            ],
+            "pull_request": 577
+          },
           {
             "text": "Frais : une famille réinscrite voit à part ce qu'elle doit pour l'année suivante, sans le mêler à l'année en cours",
             "audience": [

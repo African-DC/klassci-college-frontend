@@ -41,16 +41,23 @@ export function DrenPageClient() {
 
   // Téléchargement authentifié via blob
   const handleDownload = useCallback(async (type: "excel" | "pdf") => {
-    if (!activeYearId) return
+    if (!activeYearId) {
+      toast.info("Choisissez une année scolaire avant d'exporter.")
+      return
+    }
     setDownloading(type)
+    // La génération peut prendre plusieurs secondes : on le dit, au lieu de
+    // laisser croire que le bouton ne répond pas.
+    const pending = toast.loading(`Préparation du fichier ${type === "excel" ? "Excel" : "PDF"}…`)
     try {
       const blob = type === "excel"
         ? await drenApi.downloadExcel(activeYearId)
         : await drenApi.downloadPdf(activeYearId)
       downloadBlob(blob, `stats-dren-${activeYearId}.${type === "excel" ? "xlsx" : "pdf"}`)
+      toast.success("Fichier téléchargé", { id: pending })
     } catch (err) {
       console.error(`[DREN] ${type} download failed:`, err)
-      toast.error(err instanceof Error ? err.message : `Impossible de télécharger le fichier ${type.toUpperCase()}`)
+      toast.error(err instanceof Error ? err.message : `Impossible de télécharger le fichier ${type.toUpperCase()}`, { id: pending })
     } finally {
       setDownloading(null)
     }
@@ -80,7 +87,9 @@ export function DrenPageClient() {
               type="button"
               className={`${heroGlassBtn} disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={() => handleDownload("excel")}
-              disabled={downloading === "excel"}
+              disabled={downloading === "excel" || !activeYearId}
+              aria-busy={downloading === "excel"}
+              aria-label="Télécharger les statistiques DREN au format Excel"
             >
               {downloading === "excel" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
               Excel
@@ -99,7 +108,8 @@ export function DrenPageClient() {
               type="button"
               className={`${heroAccentBtn} disabled:cursor-not-allowed disabled:opacity-50`}
               onClick={() => handleDownload("pdf")}
-              disabled={downloading === "pdf"}
+              disabled={downloading === "pdf" || !activeYearId}
+              aria-busy={downloading === "pdf"}
               aria-label="Télécharger le PDF des statistiques DREN"
             >
               {downloading === "pdf" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -154,6 +164,7 @@ export function DrenPageClient() {
               icon={BarChart3}
               label="Garçons / Filles"
               value={`${stats.male_count} / ${stats.female_count}`}
+              hint={stats.unspecified_count > 0 ? `${stats.unspecified_count} sans sexe renseigné` : undefined}
             />
             <KpiCard
               icon={TrendingUp}
@@ -165,7 +176,11 @@ export function DrenPageClient() {
           {/* Graphiques */}
           <div className="grid gap-6 lg:grid-cols-2">
             <EnrollmentByLevelChart data={stats.levels.map((l) => ({ level: l.level_name, male: l.male_count, female: l.female_count }))} />
-            <SuccessRateChart data={stats.levels.map((l) => ({ level: l.level_name, rate: l.total_students > 0 ? (stats.success_rate ?? 0) : 0 }))} />
+            <SuccessRateChart
+              data={stats.levels
+                .filter((l) => l.success_rate != null)
+                .map((l) => ({ level: l.level_name, rate: l.success_rate as number }))}
+            />
           </div>
 
           {/* Tableau détaillé */}
@@ -181,11 +196,13 @@ function KpiCard({
   icon: Icon,
   label,
   value,
+  hint,
   className,
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   value: string
+  hint?: string
   className?: string
 }) {
   return (
@@ -197,6 +214,7 @@ function KpiCard({
         <div>
           <p className="text-xs text-muted-foreground">{label}</p>
           <p className={`text-lg font-bold ${className ?? ""}`}>{value}</p>
+          {hint ? <p className="text-xs text-amber-700 dark:text-amber-400">{hint}</p> : null}
         </div>
       </CardContent>
     </Card>

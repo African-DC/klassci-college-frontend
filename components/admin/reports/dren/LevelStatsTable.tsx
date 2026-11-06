@@ -22,15 +22,19 @@ export function LevelStatsTable({ data }: LevelStatsTableProps) {
       total_students: acc.total_students + level.total_students,
       male_count: acc.male_count + level.male_count,
       female_count: acc.female_count + level.female_count,
+      unspecified_count: acc.unspecified_count + level.unspecified_count,
       class_count: acc.class_count + level.classes.length,
     }),
-    { total_students: 0, male_count: 0, female_count: 0, class_count: 0 },
+    { total_students: 0, male_count: 0, female_count: 0, unspecified_count: 0, class_count: 0 },
   )
+  // La colonne n'apparaît que si un élève n'a pas de sexe renseigné : sinon
+  // Garçons + Filles ne font pas l'effectif, et le tableau semble faux.
+  const showUnspecified = totals.unspecified_count > 0
 
   return (
     <Card className="border-0 shadow-sm ring-1 ring-border">
       <CardHeader>
-        <CardTitle className="text-base font-medium">Detail par niveau</CardTitle>
+        <CardTitle className="text-base font-medium">Détail par niveau</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
@@ -38,8 +42,10 @@ export function LevelStatsTable({ data }: LevelStatsTableProps) {
             <TableRow>
               <TableHead>Niveau</TableHead>
               <TableHead className="text-center">Effectif</TableHead>
-              <TableHead className="text-center">Garcons</TableHead>
+              <TableHead className="text-center">Garçons</TableHead>
               <TableHead className="text-center">Filles</TableHead>
+              {showUnspecified && <TableHead className="text-center">Non renseigné</TableHead>}
+              <TableHead className="text-center">Réussite</TableHead>
               <TableHead className="text-center">Classes</TableHead>
             </TableRow>
           </TableHeader>
@@ -50,6 +56,10 @@ export function LevelStatsTable({ data }: LevelStatsTableProps) {
                 <TableCell className="text-center">{level.total_students}</TableCell>
                 <TableCell className="text-center">{level.male_count}</TableCell>
                 <TableCell className="text-center">{level.female_count}</TableCell>
+                {showUnspecified && <TableCell className="text-center">{level.unspecified_count}</TableCell>}
+                <TableCell className="text-center tabular-nums">
+                  {level.success_rate != null ? `${level.success_rate.toFixed(1)} %` : "—"}
+                </TableCell>
                 <TableCell className="text-center">{level.classes.length}</TableCell>
               </TableRow>
             ))}
@@ -59,6 +69,8 @@ export function LevelStatsTable({ data }: LevelStatsTableProps) {
               <TableCell className="text-center">{totals.total_students}</TableCell>
               <TableCell className="text-center">{totals.male_count}</TableCell>
               <TableCell className="text-center">{totals.female_count}</TableCell>
+              {showUnspecified && <TableCell className="text-center">{totals.unspecified_count}</TableCell>}
+              <TableCell className="text-center">—</TableCell>
               <TableCell className="text-center">{totals.class_count}</TableCell>
             </TableRow>
           </TableBody>
