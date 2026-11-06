@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- La page Tranches de paiement présente le suivi par classe et état, avec retards exigibles et exports Excel ou PDF, sur mobile et ordinateur *(administration)*
 - Emploi du temps : récréations, pauses et séances spéciales récurrentes, indépendantes des matières, configurables par établissement ou classe, avec contraintes de conflit et affichage dédié *(administration)* (#568)
 - Assistance : pages premium responsive pour déclarer un incident avec son code, suivre les dossiers et traiter les signalements dans la console technique *(admin et support KLASSCI)*
 - Paramètres : horaires scolaires et durée des créneaux personnalisables par établissement dans l'onglet Emploi du temps *(direction, administration)*
