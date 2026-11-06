@@ -17,6 +17,7 @@ import { useInstallmentGrid } from "@/lib/hooks/useInstallments"
 import { fixedTotal, hasPercentageLine, percentageTotal } from "@/lib/contracts/installment"
 import { formatFcfa } from "@/lib/utils/money"
 import { InstallmentGridEditor } from "./InstallmentGridEditor"
+import { InstallmentOverview } from "./InstallmentOverview"
 
 /**
  * Configuration des tranches d'une année scolaire.
@@ -61,7 +62,7 @@ export function InstallmentsPageClient() {
       <PageHero
         icon={CalendarClock}
         title="Tranches de paiement"
-        subtitle="Découpage du total des frais obligatoires dans le temps"
+        subtitle="Configuration des tranches et suivi des échéanciers de paiement"
         kpis={kpis}
       />
 
@@ -90,6 +91,8 @@ export function InstallmentsPageClient() {
       </Card>
 
       <InstallmentGridEditor academicYearId={yearId} />
+
+      <InstallmentOverview academicYearId={yearId} />
     </div>
   )
 }
