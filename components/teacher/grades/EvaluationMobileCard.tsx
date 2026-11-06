@@ -15,6 +15,10 @@ import {
  * Une évaluation sur téléphone : ce que l'enseignant doit voir avant de toucher
  * « Saisir », sans faire défiler la page de côté. Le tableau de 8 colonnes,
  * lui, débordait de 170 px à 375 px de large (recette du 2026-11-05).
+ *
+ * Pas de `truncate` ici : un texte sans retour à la ligne impose toute sa
+ * longueur comme largeur minimale au conteneur du portail, qui s'élargissait
+ * alors de 17 px au-delà de l'écran (recette de contrôle du 2026-11-06).
  */
 export function EvaluationMobileCard({ evaluation }: { evaluation: TeacherUpcomingEval }) {
   const { overdue, complete } = evaluationState(evaluation)
@@ -32,8 +36,8 @@ export function EvaluationMobileCard({ evaluation }: { evaluation: TeacherUpcomi
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-medium">{evaluation.title}</p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          <p className="line-clamp-2 break-words font-medium">{evaluation.title}</p>
+          <p className="mt-0.5 line-clamp-2 break-words text-xs text-muted-foreground">
             {TYPE_LABELS[evaluation.type] ?? evaluation.type} · {evaluation.class_name} ·{" "}
             {evaluation.subject_name} · {date}
           </p>

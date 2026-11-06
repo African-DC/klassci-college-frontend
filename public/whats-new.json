@@ -1,9 +1,9 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-11-05T22:43:58Z",
+  "generated_at": "2026-11-06T00:47:10Z",
   "version": "Unreleased",
   "released": false,
-  "total": 380,
+  "total": 381,
   "sections": {
     "Added": [
       {
@@ -103,6 +103,13 @@
     ],
     "Fixed": [
       {
+        "text": "Notes & saisies : sur téléphone, la liste ne dépasse plus du bord de l'écran ; les titres longs passent sur deux lignes",
+        "audience": [
+          "enseignant"
+        ],
+        "pull_request": 579
+      },
+      {
         "text": "Statistiques DREN : le graphique montre le vrai taux de réussite de chaque niveau, et les élèves sans sexe renseigné sont signalés",
         "audience": [
           "direction"
@@ -137,14 +144,6 @@
           "parent"
         ],
         "pull_request": 572
-      },
-      {
-        "text": "Génération de l'emploi du temps : les minutes trop courtes pour faire un cours sont signalées à la fin de la génération",
-        "audience": [
-          "administration",
-          "direction des études"
-        ],
-        "pull_request": 568
       }
     ],
     "Security": [
