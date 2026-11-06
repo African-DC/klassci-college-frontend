@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-11-05T22:43:58Z",
+  "generated_at": "2026-11-06T00:47:10Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -1998,6 +1998,13 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Notes & saisies : sur téléphone, la liste ne dépasse plus du bord de l'écran ; les titres longs passent sur deux lignes",
+            "audience": [
+              "enseignant"
+            ],
+            "pull_request": 579
+          },
           {
             "text": "Statistiques DREN : le graphique montre le vrai taux de réussite de chaque niveau, et les élèves sans sexe renseigné sont signalés",
             "audience": [
