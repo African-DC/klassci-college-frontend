@@ -9,6 +9,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 ## [Unreleased]
 
 ### Added
+- La page Tranches de paiement présente le suivi par classe et état, avec retards exigibles et exports Excel ou PDF, sur mobile et ordinateur *(administration)*
 - Emploi du temps : récréations, pauses et séances spéciales récurrentes, indépendantes des matières, configurables par établissement ou classe, avec contraintes de conflit et affichage dédié *(administration)* (#568)
 - Assistance : pages premium responsive pour déclarer un incident avec son code, suivre les dossiers et traiter les signalements dans la console technique *(admin et support KLASSCI)*
 - Paramètres : horaires scolaires et durée des créneaux personnalisables par établissement dans l'onglet Emploi du temps *(direction, administration)*
@@ -66,6 +67,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - En corrigeant le niveau antérieur d'un élève sans toucher à sa qualité, l'écran annonce que la qualité sera recalculée : Redoublant si ce niveau est celui de la classe *(secrétariat, éducateur)*
 
 ### Fixed
+- Suivi des échéanciers sur téléphone : les montants des indicateurs s'affichent en entier et chaque élève soldé porte le badge « Soldé » *(direction, administration)*
 - Notes & saisies : sur téléphone, la liste ne dépasse plus du bord de l'écran ; les titres longs passent sur deux lignes *(enseignant)* (#579)
 - Statistiques DREN : le graphique montre le vrai taux de réussite de chaque niveau, et les élèves sans sexe renseigné sont signalés *(direction)* (#577)
 - Statistiques DREN : les boutons Excel et PDF annoncent la préparation du fichier au lieu de sembler sans effet *(direction)* (#577)
