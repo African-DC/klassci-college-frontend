@@ -65,7 +65,12 @@ export function InstallmentOverview({ academicYearId }: { academicYearId: number
     if (!filter || !data || data.total === 0 || exporting) return
     setExporting(format)
     try {
-      const { page: _page, size: _size, ...allFiltered } = filter
+      const allFiltered = {
+        academic_year_id: filter.academic_year_id,
+        ...(filter.class_id ? { class_id: filter.class_id } : {}),
+        ...(filter.search ? { search: filter.search } : {}),
+        state: filter.state,
+      }
       const blob = await installmentsApi.exportOverview(allFiltered, format)
       downloadBlob(blob, `echeanciers-${filter.academic_year_id}.${format}`)
       toast.success(format === "xlsx" ? "Échéanciers Excel téléchargés" : "Échéanciers PDF téléchargés")
