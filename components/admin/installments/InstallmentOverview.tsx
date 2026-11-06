@@ -89,9 +89,9 @@ export function InstallmentOverview({ academicYearId }: { academicYearId: number
     return (
       <Card className="border-border/70">
         <CardContent className="p-5 text-sm text-muted-foreground">
-          La consultation des échéanciers consolidés et des dettes des familles nécessite
-          la permission financière <code>payments:read:all</code>. La configuration des
-          tranches reste indépendante de cet accès.
+          Le suivi des échéanciers de toutes les familles est réservé aux comptes qui
+          consultent les paiements de toutes les caisses. Demandez cet accès à la direction ;
+          la configuration des tranches reste disponible.
         </CardContent>
       </Card>
     )
@@ -115,7 +115,7 @@ export function InstallmentOverview({ academicYearId }: { academicYearId: number
           <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0">
             <Button
               type="button" variant="outline" size="sm"
-              className="h-10 flex-1 sm:flex-none"
+              className="h-11 flex-1 sm:h-10 sm:flex-none"
               disabled={!data?.total || isFetching || Boolean(exporting)}
               onClick={() => void exportSchedules("xlsx")}
             >
@@ -124,7 +124,7 @@ export function InstallmentOverview({ academicYearId }: { academicYearId: number
             </Button>
             <Button
               type="button" variant="outline" size="sm"
-              className="h-10 flex-1 sm:flex-none"
+              className="h-11 flex-1 sm:h-10 sm:flex-none"
               disabled={!data?.total || isFetching || Boolean(exporting)}
               onClick={() => void exportSchedules("pdf")}
             >
@@ -217,10 +217,10 @@ export function InstallmentOverview({ academicYearId }: { academicYearId: number
                 {isFetching ? " · Actualisation…" : ""}
               </p>
               <div className="flex gap-2">
-                <Button type="button" variant="outline" size="sm" className="h-10" disabled={page <= 1 || isFetching} onClick={() => setPage((p) => Math.max(p - 1, 1))}>
+                <Button type="button" variant="outline" size="sm" className="h-11 sm:h-10" disabled={page <= 1 || isFetching} onClick={() => setPage((p) => Math.max(p - 1, 1))}>
                   <ChevronLeft aria-hidden="true" className="mr-1 h-4 w-4" /> Précédent
                 </Button>
-                <Button type="button" variant="outline" size="sm" className="h-10" disabled={page >= totalPages || isFetching} onClick={() => setPage((p) => p + 1)}>
+                <Button type="button" variant="outline" size="sm" className="h-11 sm:h-10" disabled={page >= totalPages || isFetching} onClick={() => setPage((p) => p + 1)}>
                   Suivant <ChevronRight aria-hidden="true" className="ml-1 h-4 w-4" />
                 </Button>
               </div>
