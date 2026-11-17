@@ -1,7 +1,7 @@
 {
   "product": "klassci-college-frontend",
   "source": "CHANGELOG.md",
-  "generated_at": "2026-11-06T13:24:23Z",
+  "generated_at": "2026-11-17T22:24:55Z",
   "current_version": "0.1.0-alpha",
   "versions": [
     {
@@ -2005,6 +2005,14 @@
           }
         ],
         "Fixed": [
+          {
+            "text": "Inscriptions : le bandeau et le sous-titre comptent l'année choisie dans la liste, l'année en cours par défaut, au lieu de toutes les années mêlées",
+            "audience": [
+              "administration",
+              "direction"
+            ],
+            "pull_request": null
+          },
           {
             "text": "Suivi des échéanciers sur téléphone : les montants des indicateurs s'affichent en entier et chaque élève soldé porte le badge « Soldé »",
             "audience": [

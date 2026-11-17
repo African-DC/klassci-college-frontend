@@ -13,10 +13,11 @@ export const dashboardKeys = {
  * Agrégats KPI serveur (corrects quelle que soit la volumétrie). Partagé entre
  * toutes les pages admin via une seule requête mise en cache.
  */
-export function useAdminSummary() {
+export function useAdminSummary(academicYearId?: number) {
   return useQuery({
-    queryKey: dashboardKeys.summary,
-    queryFn: dashboardApi.summary,
+    // Clé préfixée par `summary` : les invalidations existantes la couvrent.
+    queryKey: [...dashboardKeys.summary, academicYearId ?? "current"] as const,
+    queryFn: () => dashboardApi.summary(academicYearId),
     staleTime: 1000 * 60 * 2,
     retry: 1,
   })

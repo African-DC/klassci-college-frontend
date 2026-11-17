@@ -114,12 +114,17 @@ function matchesAssignmentChip(enrollment: Enrollment, chip: AssignmentChipKey):
   }
 }
 
-export function EnrollmentsTable() {
+interface EnrollmentsTableProps {
+  /** Année choisie dans le filtre ; partagée avec le bandeau de la page. */
+  pickedYearId: number | undefined
+  onPickYear: (yearId: number | undefined) => void
+}
+
+export function EnrollmentsTable({ pickedYearId, onPickYear }: EnrollmentsTableProps) {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<string>("a_valider")
   const [classId, setClassId] = useState<string>("")
-  const [pickedYearId, setPickedYearId] = useState<number | undefined>(undefined)
   const [assignmentChip, setAssignmentChip] = useState<AssignmentChipKey>("tous")
   const [validateTarget, setValidateTarget] = useState<Enrollment | null>(null)
   const [aEncaisser, setAEncaisser] = useState<Enrollment | null>(null)
@@ -247,7 +252,7 @@ export function EnrollmentsTable() {
         onReset={() => {
           setStatus("a_valider")
           setClassId("")
-          setPickedYearId(undefined)
+          onPickYear(undefined)
         }}
       >
         <Select
@@ -285,7 +290,7 @@ export function EnrollmentsTable() {
         </Select>
         <Select
           value={academicYearId ? String(academicYearId) : undefined}
-          onValueChange={(v) => setPickedYearId(Number(v))}
+          onValueChange={(v) => onPickYear(Number(v))}
         >
           <SelectTrigger className="h-10 w-[160px]" aria-label="Année scolaire">
             <SelectValue placeholder="Année scolaire" />
