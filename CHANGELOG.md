@@ -67,6 +67,7 @@ le projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 - En corrigeant le niveau antérieur d'un élève sans toucher à sa qualité, l'écran annonce que la qualité sera recalculée : Redoublant si ce niveau est celui de la classe *(secrétariat, éducateur)*
 
 ### Fixed
+- Inscriptions : les pastilles Affectation affichent le total de la sélection et filtrent toutes les inscriptions, pas seulement celles déjà chargées par le défilement *(administration, direction)*
 - Inscriptions : le bandeau et le sous-titre comptent l'année choisie dans la liste, l'année en cours par défaut, au lieu de toutes les années mêlées *(administration, direction)*
 - Suivi des échéanciers sur téléphone : les montants des indicateurs s'affichent en entier et chaque élève soldé porte le badge « Soldé » *(direction, administration)*
 - Notes & saisies : sur téléphone, la liste ne dépasse plus du bord de l'écran ; les titres longs passent sur deux lignes *(enseignant)* (#579)

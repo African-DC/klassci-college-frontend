@@ -6,6 +6,7 @@ import type { Route } from "next"
 import {
   useBulkValidateEnrollments,
   useDeleteEnrollment,
+  useEnrollmentAssignmentCounts,
   useInfiniteEnrollments,
   useValidateEnrollment,
 } from "@/lib/hooks/useEnrollments"
@@ -17,7 +18,7 @@ import { checkoutTarget } from "@/components/admin/payments/checkout/checkout-ta
 import { usePermissions } from "@/lib/hooks/usePermissions"
 import { BulkValidateBar } from "@/components/admin/enrollments/BulkValidateBar"
 import { StudentInitialsAvatar, colonnesInscriptions } from "@/components/admin/enrollments/enrollment-columns"
-import type { Enrollment } from "@/lib/contracts/enrollment"
+import type { AssignmentPill, Enrollment } from "@/lib/contracts/enrollment"
 import { Badge } from "@/components/ui/badge"
 import {
   AlertDialog,
@@ -66,7 +67,8 @@ function FilterChip({
   tone = "default",
 }: {
   label: string
-  count: number
+  /** Absent tant que le serveur n'a pas répondu : on n'affiche pas un faux zéro. */
+  count: number | undefined
   isActive: boolean
   onClick: () => void
   tone?: "default" | "warning"
@@ -91,28 +93,12 @@ function FilterChip({
             : "bg-background text-muted-foreground",
         )}
       >
-        {count}
+        {count ?? "…"}
       </span>
     </button>
   )
 }
 
-type AssignmentChipKey = "tous" | "affectes" | "non_affectes" | "non_renseigne"
-
-// Affecté et réaffecté sont tous deux subventionnés par l'État : côté filtre
-// ils forment une seule cohorte, celle dont l'école ne facture qu'une part.
-function matchesAssignmentChip(enrollment: Enrollment, chip: AssignmentChipKey): boolean {
-  switch (chip) {
-    case "affectes":
-      return enrollment.assignment_status === "affecte" || enrollment.assignment_status === "reaffecte"
-    case "non_affectes":
-      return enrollment.assignment_status === "non_affecte"
-    case "non_renseigne":
-      return !enrollment.assignment_status
-    default:
-      return true
-  }
-}
 
 interface EnrollmentsTableProps {
   /** Année choisie dans le filtre ; partagée avec le bandeau de la page. */
@@ -125,7 +111,7 @@ export function EnrollmentsTable({ pickedYearId, onPickYear }: EnrollmentsTableP
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<string>("a_valider")
   const [classId, setClassId] = useState<string>("")
-  const [assignmentChip, setAssignmentChip] = useState<AssignmentChipKey>("tous")
+  const [assignmentChip, setAssignmentChip] = useState<AssignmentPill>("tous")
   const [validateTarget, setValidateTarget] = useState<Enrollment | null>(null)
   const [aEncaisser, setAEncaisser] = useState<Enrollment | null>(null)
   // Les boutons suivent les droits de CETTE école, jamais un nom de rôle :
@@ -145,9 +131,22 @@ export function EnrollmentsTable({ pickedYearId, onPickYear }: EnrollmentsTableP
       ...(status ? { status } : {}),
       ...(classId ? { class_id: Number(classId) } : {}),
       ...(academicYearId != null ? { academic_year_id: academicYearId } : {}),
+      ...(assignmentChip !== "tous" ? { assignment: assignmentChip } : {}),
+    }),
+    [debouncedSearch, status, classId, academicYearId, assignmentChip],
+  )
+  // Les pastilles comptent toute la sélection, côté serveur : la liste se
+  // charge par pages, et compter les lignes affichées sous-estimait tout.
+  const countFilters = useMemo(
+    () => ({
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
+      ...(status ? { status } : {}),
+      ...(classId ? { class_id: Number(classId) } : {}),
+      ...(academicYearId != null ? { academic_year_id: academicYearId } : {}),
     }),
     [debouncedSearch, status, classId, academicYearId],
   )
+  const { data: assignmentCounts } = useEnrollmentAssignmentCounts(countFilters)
 
   const { data, isLoading, isError, error, refetch, scrollInfini } = useInfiniteEnrollments(params)
   const deleteMutation = useDeleteEnrollment()
@@ -159,29 +158,16 @@ export function EnrollmentsTable({ pickedYearId, onPickYear }: EnrollmentsTableP
 
   const allItems = data?.items ?? []
 
-  const assignmentCounts = useMemo(() => {
-    let affectes = 0
-    let nonAffectes = 0
-    let nonRenseigne = 0
-    for (const e of allItems) {
-      if (matchesAssignmentChip(e, "affectes")) affectes += 1
-      else if (matchesAssignmentChip(e, "non_affectes")) nonAffectes += 1
-      else nonRenseigne += 1
-    }
-    return { tous: allItems.length, affectes, nonAffectes, nonRenseigne }
-  }, [allItems])
-
-  const filteredItems = useMemo(
-    () => allItems.filter((e) => matchesAssignmentChip(e, assignmentChip)),
-    [allItems, assignmentChip],
-  )
+  // Le filtre d'affectation est appliqué par le serveur : la page chargée
+  // est déjà la bonne sélection.
+  const filteredItems = allItems
 
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
   }, [])
 
-  const handleAssignmentChipClick = useCallback((key: AssignmentChipKey) => {
+  const handleAssignmentChipClick = useCallback((key: AssignmentPill) => {
     setAssignmentChip(key)
   }, [])
 
@@ -314,25 +300,25 @@ export function EnrollmentsTable({ pickedYearId, onPickYear }: EnrollmentsTableP
         <span className="shrink-0 text-xs font-medium text-muted-foreground">Affectation</span>
         <FilterChip
           label="Tous"
-          count={assignmentCounts.tous}
+          count={assignmentCounts?.tous}
           isActive={assignmentChip === "tous"}
           onClick={() => handleAssignmentChipClick("tous")}
         />
         <FilterChip
           label="Affectés"
-          count={assignmentCounts.affectes}
+          count={assignmentCounts?.affectes}
           isActive={assignmentChip === "affectes"}
           onClick={() => handleAssignmentChipClick("affectes")}
         />
         <FilterChip
           label="Non affectés"
-          count={assignmentCounts.nonAffectes}
+          count={assignmentCounts?.non_affectes}
           isActive={assignmentChip === "non_affectes"}
           onClick={() => handleAssignmentChipClick("non_affectes")}
         />
         <FilterChip
           label="Non renseigné"
-          count={assignmentCounts.nonRenseigne}
+          count={assignmentCounts?.non_renseigne}
           isActive={assignmentChip === "non_renseigne"}
           onClick={() => handleAssignmentChipClick("non_renseigne")}
         />
