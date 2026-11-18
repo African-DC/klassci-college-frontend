@@ -1,5 +1,6 @@
 import { z } from "zod"
 import {
+  AssignmentCountsSchema,
   BulkValidateResultSchema,
   EnrollmentSchema,
   FeeRegenerationResultSchema,
@@ -7,6 +8,7 @@ import {
   NewStudentSuggestionSchema,
 } from "@/lib/contracts/enrollment"
 import type {
+  AssignmentCounts,
   BulkValidateResult,
   Enrollment,
   EnrollmentCreate,
@@ -57,6 +59,15 @@ export const enrollmentsApi = {
     "/enrollments",
     EnrollmentSchema,
   ),
+
+  /** Totaux des pastilles « Affectation » pour les mêmes filtres que la liste. */
+  assignmentCounts: async (filters: Record<string, string | number>): Promise<AssignmentCounts> => {
+    const query = new URLSearchParams()
+    Object.entries(filters).forEach(([key, value]) => query.set(key, String(value)))
+    const qs = query.toString()
+    const data = await apiFetch<unknown>(`/enrollments/assignment-counts${qs ? `?${qs}` : ""}`)
+    return safeValidate(AssignmentCountsSchema, data, "GET /enrollments/assignment-counts")
+  },
 
   /**
    * Ce que la case « nouvel élève » doit afficher avant que le guichet ne tranche.
