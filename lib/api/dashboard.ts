@@ -15,6 +15,12 @@ export const dashboardApi = {
   activity: async (): Promise<DashboardActivity> =>
     apiFetch("/dashboard/activity", { schema: DashboardActivitySchema }),
 
-  summary: async (): Promise<AdminSummary> =>
-    apiFetch("/dashboard/summary", { schema: AdminSummarySchema }),
+  /** Sans année, les inscriptions comptées sont celles de l'année en cours. */
+  summary: async (academicYearId?: number): Promise<AdminSummary> =>
+    apiFetch(
+      academicYearId != null
+        ? `/dashboard/summary?academic_year_id=${academicYearId}`
+        : "/dashboard/summary",
+      { schema: AdminSummarySchema },
+    ),
 }

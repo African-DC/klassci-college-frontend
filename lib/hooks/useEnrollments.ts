@@ -30,6 +30,15 @@ const {
 
 export { enrollmentKeys }
 export const useEnrollments = useList
+
+/** Préfixée par `enrollments` : toute création, validation ou suppression la rafraîchit. */
+export function useEnrollmentAssignmentCounts(filters: Record<string, string | number>) {
+  return useQuery({
+    queryKey: [...enrollmentKeys.all, "assignment-counts", filters] as const,
+    queryFn: () => enrollmentsApi.assignmentCounts(filters),
+    staleTime: 1000 * 30,
+  })
+}
 export const useInfiniteEnrollments = useInfiniteList
 export const useEnrollment = useDetail
 export const useCreateEnrollment = useCreate

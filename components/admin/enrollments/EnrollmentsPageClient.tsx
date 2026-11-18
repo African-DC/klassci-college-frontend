@@ -8,11 +8,11 @@ import type { Route } from "next"
 import { PageHero, heroAccentBtn, heroGlassBtn, type HeroKpi } from "@/components/shared/PageHero"
 import { EnrollmentsTable } from "./EnrollmentsTable"
 import { EnrollmentCreateModal } from "./EnrollmentCreateModal"
-import { useEnrollments } from "@/lib/hooks/useEnrollments"
 import { useAdminSummary } from "@/lib/hooks/useDashboard"
+import { useCurrentAcademicYearId } from "@/lib/hooks/useCurrentAcademicYear"
+import type { AdminSummary } from "@/lib/contracts/dashboard"
 
-function useEnrollmentsKpis(): HeroKpi[] {
-  const { data } = useAdminSummary()
+function useEnrollmentsKpis(data: AdminSummary | undefined): HeroKpi[] {
   return useMemo(() => {
     const e = data?.enrollments
     return [
@@ -24,21 +24,18 @@ function useEnrollmentsKpis(): HeroKpi[] {
   }, [data])
 }
 
-// Subtitle informatif sans redondance avec les chips. Le total renseigne
-// l'admin sur la volumétrie de la queue ; les counts par statut sont sur
-// la chips bar juste en dessous.
-function EnrollmentsSubtitle() {
-  const { data, isLoading } = useEnrollments({ size: 1 })
-  if (isLoading || !data) {
+// Le bandeau, le sous-titre et la liste parlent de la même année : mêlées
+// toutes années, les compteurs annonçaient un total introuvable ailleurs.
+function EnrollmentsSubtitle({ total, yearName }: { total: number | undefined; yearName: string | undefined }) {
+  if (total == null || !yearName) {
     return <span>Gérez les inscriptions des élèves</span>
   }
-  const total = data.total ?? 0
   if (total === 0) {
-    return <span>Aucune inscription pour le moment</span>
+    return <span>Aucune inscription en {yearName}</span>
   }
   return (
     <span>
-      {total} inscription{total > 1 ? "s" : ""} au total
+      {total} inscription{total > 1 ? "s" : ""} en {yearName}
     </span>
   )
 }
@@ -47,7 +44,11 @@ export function EnrollmentsPageClient() {
   const searchParams = useSearchParams()
   const [createOpen, setCreateOpen] = useState(false)
   const [preselectedStudentId, setPreselectedStudentId] = useState<number | undefined>(undefined)
-  const kpis = useEnrollmentsKpis()
+  const [pickedYearId, setPickedYearId] = useState<number | undefined>(undefined)
+  const { academicYearId, years } = useCurrentAcademicYearId(pickedYearId)
+  const yearName = years?.find((y) => y.id === academicYearId)?.name
+  const { data: summary } = useAdminSummary(academicYearId)
+  const kpis = useEnrollmentsKpis(summary)
 
   useEffect(() => {
     if (searchParams.get("action") === "create") {
@@ -65,7 +66,7 @@ export function EnrollmentsPageClient() {
       <PageHero
         icon={GraduationCap}
         title="Inscriptions"
-        subtitle={<EnrollmentsSubtitle />}
+        subtitle={<EnrollmentsSubtitle total={summary?.enrollments.total} yearName={yearName} />}
         actions={
           <>
             {/*
@@ -86,7 +87,7 @@ export function EnrollmentsPageClient() {
         kpis={kpis}
       />
 
-      <EnrollmentsTable />
+      <EnrollmentsTable pickedYearId={pickedYearId} onPickYear={setPickedYearId} />
 
       <EnrollmentCreateModal
         open={createOpen}

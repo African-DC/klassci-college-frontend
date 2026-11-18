@@ -1,9 +1,9 @@
 {
   "product": "klassci-college-frontend",
-  "generated_at": "2026-11-06T13:24:23Z",
+  "generated_at": "2026-11-17T22:47:34Z",
   "version": "Unreleased",
   "released": false,
-  "total": 383,
+  "total": 385,
   "sections": {
     "Added": [
       {
@@ -103,6 +103,22 @@
     ],
     "Fixed": [
       {
+        "text": "Inscriptions : les pastilles Affectation affichent le total de la sélection et filtrent toutes les inscriptions, pas seulement celles déjà chargées par le défilement",
+        "audience": [
+          "administration",
+          "direction"
+        ],
+        "pull_request": null
+      },
+      {
+        "text": "Inscriptions : le bandeau et le sous-titre comptent l'année choisie dans la liste, l'année en cours par défaut, au lieu de toutes les années mêlées",
+        "audience": [
+          "administration",
+          "direction"
+        ],
+        "pull_request": null
+      },
+      {
         "text": "Suivi des échéanciers sur téléphone : les montants des indicateurs s'affichent en entier et chaque élève soldé porte le badge « Soldé »",
         "audience": [
           "direction",
@@ -128,20 +144,6 @@
         "text": "Statistiques DREN : les boutons Excel et PDF annoncent la préparation du fichier au lieu de sembler sans effet",
         "audience": [
           "direction"
-        ],
-        "pull_request": 577
-      },
-      {
-        "text": "Tableau de bord : « élèves inscrits » affiche le même effectif que les statistiques DREN",
-        "audience": [
-          "administration"
-        ],
-        "pull_request": 577
-      },
-      {
-        "text": "Notes & saisies : la liste des évaluations s'affiche en cartes sur téléphone, sans défilement de côté",
-        "audience": [
-          "enseignant"
         ],
         "pull_request": 577
       }

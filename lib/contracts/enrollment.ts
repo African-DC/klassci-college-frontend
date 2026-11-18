@@ -340,3 +340,16 @@ export const FeeRegenerationResultSchema = z.object({
 })
 
 export type FeeRegenerationResult = z.infer<typeof FeeRegenerationResultSchema>
+
+/** Pastilles « Affectation » de la liste des inscriptions. */
+export const ASSIGNMENT_PILLS = ["tous", "affectes", "non_affectes", "non_renseigne"] as const
+export type AssignmentPill = (typeof ASSIGNMENT_PILLS)[number]
+
+/** Totaux par pastille, calculés par le serveur sur tous les résultats filtrés. */
+export const AssignmentCountsSchema = z.object({
+  tous: z.number(),
+  affectes: z.number(),
+  non_affectes: z.number(),
+  non_renseigne: z.number(),
+})
+export type AssignmentCounts = z.infer<typeof AssignmentCountsSchema>
